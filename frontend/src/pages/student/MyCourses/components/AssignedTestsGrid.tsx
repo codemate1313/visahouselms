@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import type { StudentPlanModule } from "@/api/types";
-import { AlertCircleIcon, ArrowIcon, CheckCircleIcon, ClockIcon, ModuleTypeIcon } from "../icons";
+import { ArrowIcon, ModuleTypeIcon } from "../icons";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/Button/Button";
 import { myCoursesStrings as strings } from "../MyCourses.strings";
@@ -26,6 +26,8 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
         const retakeAvailable = Boolean(module.retake_available);
         const moduleTypeClass = `type-${module.module_type || "default"}`;
 
+        const categoryTitle = typeLabels[module.module_type as keyof typeof typeLabels] ?? module.module_type;
+
         return (
           <div
             className={`premium-test-card ${moduleTypeClass}${isLocked ? " is-locked" : ""}${isExhausted ? " is-exhausted" : ""}`}
@@ -41,63 +43,51 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                 <div className="premium-lock-orb">
                   <Icon name="lock" />
                 </div>
-                <span className="premium-lock-title">Locked Course</span>
+                <span className="premium-lock-title">Course Locked</span>
+                <span className="premium-lock-sub">Upgrade your plan to unlock</span>
               </div>
             )}
 
-            {/* Card Header */}
-            <div className="premium-card-header">
+            {/* Top Bar: Icon on Left, Status Badge on Right */}
+            <div className="premium-card-top-bar">
               <div className="premium-icon-box">
                 <ModuleTypeIcon type={module.module_type} />
               </div>
-              <span className="premium-type-chip">
-                {typeLabels[module.module_type as keyof typeof typeLabels] ?? module.module_type}
-              </span>
+
               {isExhausted ? (
-                <span className="premium-exhausted-chip" title={strings.attemptStatus.exhaustedTooltip}>
-                  <AlertCircleIcon />
-                  <span>Attempt Exhausted</span>
+                <span className="premium-status-badge is-exhausted" title={strings.attemptStatus.exhaustedTooltip}>
+                  <span className="badge-dot" />
+                  <span>Completed</span>
                 </span>
               ) : retakeAvailable ? (
-                <span className="premium-retake-chip">
-                  <CheckCircleIcon />
-                  <span>Retake Approved</span>
+                <span className="premium-status-badge is-retake">
+                  <span className="badge-dot" />
+                  <span>Retake Ready</span>
                 </span>
               ) : isDemo && !isLocked ? (
-                <span className="premium-demo-chip" title={strings.demo.chipTooltip}>
-                  {strings.demo.chip}
+                <span className="premium-status-badge is-demo" title={strings.demo.chipTooltip}>
+                  <span className="badge-dot" />
+                  <span>Free Trial</span>
+                </span>
+              ) : !isLocked ? (
+                <span className="premium-status-badge is-ready">
+                  <span className="badge-dot" />
+                  <span>Ready</span>
                 </span>
               ) : null}
             </div>
 
-            {/* Card Body */}
-            <div className="premium-card-body">
-              <h3 className="premium-card-title">{module.title}</h3>
-
-              <div className="premium-card-meta-list">
-                <span className="premium-meta-pill">
-                  <ClockIcon /> {strings.minutesSuffix(module.duration_minutes)}
-                </span>
-                <span className="premium-meta-pill text-muted">
-                  Academic Practice
-                </span>
-                {!isLocked && (module.sittings_remaining ?? 0) > 0 && (
-                  <span className="premium-meta-pill is-sitting" title={strings.sittings.tooltip}>
-                    {strings.sittings.left(module.sittings_remaining ?? 0)}
-                  </span>
-                )}
-                {!isLocked && module.access_days_remaining != null && (
-                  <span
-                    className={`premium-meta-pill${module.access_days_remaining <= 14 ? " is-expiring" : ""}`}
-                    title={strings.access.tooltip(formatDay(module.access_expires_at))}
-                  >
-                    <ClockIcon /> {strings.access.daysLeft(module.access_days_remaining)}
-                  </span>
-                )}
-              </div>
+            {/* Middle: Full-width Title & Subtitle */}
+            <div className="premium-card-content">
+              <h3 className="premium-card-title" title={module.title}>
+                {module.title}
+              </h3>
+              <p className="premium-category-sub">
+                {strings.minutesSuffix(module.duration_minutes)} · {categoryTitle}
+              </p>
             </div>
 
-            {/* Card Footer */}
+            {/* Card Footer: High-contrast Action CTA */}
             <div className="premium-card-footer">
               {isLocked ? (
                 <Button
@@ -106,9 +96,9 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                   leftIcon={<Icon name="lock" />}
                   rightIcon={<ArrowIcon />}
                   onClick={() => onStartModule(moduleId, module.module_type, true)}
-                  className="start-test-btn is-locked"
+                  className="start-test-btn is-locked-btn"
                 >
-                  Unlock Plan
+                  Unlock Course
                 </Button>
               ) : isExhausted ? (
                 module.latest_attempt_id ? (
@@ -119,7 +109,7 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                       rightIcon={<ArrowIcon />}
                       className="start-test-btn is-exhausted-btn"
                     >
-                      Attempt Exhausted · View Result
+                      View  Result
                     </Button>
                   </Link>
                 ) : (
@@ -130,7 +120,7 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                     className="start-test-btn is-exhausted-btn"
                     title={strings.attemptStatus.exhaustedTooltip}
                   >
-                    Attempt Exhausted
+                    Attempt Completed
                   </Button>
                 )
               ) : (
@@ -140,7 +130,7 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                   isLoading={isStarting}
                   rightIcon={<ArrowIcon />}
                   onClick={() => onStartModule(moduleId, module.module_type, false)}
-                  className="start-test-btn"
+                  className="start-test-btn is-start-btn"
                 >
                   {retakeAvailable
                     ? strings.attemptStatus.startRetakeBtn
@@ -155,14 +145,4 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
       })}
     </div>
   );
-}
-
-/** Renders a stored timestamp as a plain calendar date.
- *  Kept local so the card never has to care whether the API sent a date or a
- *  full timestamp. */
-function formatDay(value: string | null | undefined): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }

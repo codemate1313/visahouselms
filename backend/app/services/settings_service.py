@@ -27,7 +27,12 @@ def get_setting(db: Session, key: str) -> Optional[str]:
     row = db.query(Setting).filter(Setting.key == key, Setting.institute_id.is_(None)).first()
     if row is None or row.value is None:
         return None
-    return decrypt_value(row.value) if row.is_encrypted else row.value
+    if row.is_encrypted:
+        try:
+            return decrypt_value(row.value)
+        except SettingsDecryptionError:
+            return None
+    return row.value
 
 
 def set_setting(db: Session, key: str, value: Optional[str]) -> None:

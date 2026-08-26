@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { AnalysisBandStatus, StudentResultAnalysis } from "@/api/types";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 
@@ -71,55 +72,74 @@ function ScoreRow({
 
 function ScoreDial({
   label,
-  caption,
+  stepIndex,
   marks,
   percentage,
   status,
   note,
   onClick,
   isClickable = false,
+  isLarge = false,
 }: {
   label: string;
-  caption?: string;
+  stepIndex?: number;
   marks?: string | null;
   percentage: string;
   status: AnalysisBandStatus;
   note?: string;
   onClick?: () => void;
   isClickable?: boolean;
+  isLarge?: boolean;
 }) {
   const isPending = status === "pending";
   const pct = isPending ? 0 : Number(percentage);
-  const radius = 24;
-  const strokeWidth = 3.5;
+  const radius = isLarge ? 32 : 24;
+  const strokeWidth = isLarge ? 4 : 3.5;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (Math.max(0, Math.min(100, pct)) / 100) * circumference;
+  const svgSize = isLarge ? 76 : 56;
+  const center = isLarge ? 38 : 28;
 
-  let strokeColor = "#e2e8f0";
-  if (status === "strong") strokeColor = "#1f7a4d";
-  if (status === "steady") strokeColor = "#d97706";
-  if (status === "priority") strokeColor = "var(--primary)";
+  let strokeColor = "#cbd5e1";
+  if (status === "strong") {
+    strokeColor = "#10b981";
+  } else if (status === "steady") {
+    strokeColor = "#f59e0b";
+  } else if (status === "priority") {
+    strokeColor = "#f43f5e";
+  }
 
   return (
     <div
-      className={`score-dial-card is-${status} ${isClickable ? "is-clickable" : ""}`}
+      className={`score-dial-card is-${status} ${isClickable ? "is-clickable" : ""} ${isLarge ? "is-large" : ""}`}
       onClick={onClick}
     >
-      {caption && !isClickable ? <div className="score-dial-tooltip">{caption}</div> : null}
-      
+      {/* Top Header with Step indicator */}
+      {isLarge ? (
+        <div className="score-dial-card-head">
+          <div className="score-dial-step-tag">
+            {typeof stepIndex === "number" && (
+              <span className="score-dial-step-num">{String(stepIndex).padStart(2, "0")}</span>
+            )}
+            <span className="score-dial-part-name">{label}</span>
+          </div>
+        </div>
+      ) : null}
+
       <div className="score-dial-visual">
-        <svg width="56" height="56" viewBox="0 0 56 56">
+        <svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
           <circle
-            cx="28"
-            cy="28"
+            cx={center}
+            cy={center}
             r={radius}
             fill="transparent"
-            stroke="#f1f5f9"
+            stroke="currentColor"
+            className="score-dial-track"
             strokeWidth={strokeWidth}
           />
           <circle
-            cx="28"
-            cy="28"
+            cx={center}
+            cy={center}
             r={radius}
             fill="transparent"
             stroke={strokeColor}
@@ -127,22 +147,31 @@ function ScoreDial({
             strokeDasharray={circumference}
             strokeDashoffset={isPending ? circumference : strokeDashoffset}
             strokeLinecap="round"
-            transform="rotate(-90 28 28)"
+            transform={`rotate(-90 ${center} ${center})`}
+            className="score-dial-ring"
           />
         </svg>
         <div className="score-dial-percent">
           {isPending ? (
             <span className="score-dial-pending-dot" />
           ) : (
-            `${trim(percentage)}%`
+            <>
+              <span className="score-dial-percent-number">{trim(percentage)}</span>
+              <span className="score-dial-percent-sign">%</span>
+            </>
           )}
         </div>
       </div>
 
       <div className="score-dial-info">
-        <div className="score-dial-label">{label}</div>
+        {!isLarge && <div className="score-dial-label">{label}</div>}
         <div className="score-dial-marks-row">
-          {marks ? <span className="score-dial-marks">{marks}</span> : null}
+          {marks ? (
+            <span className="score-dial-marks-badge">
+              <strong>{marks}</strong>
+              <small>marks</small>
+            </span>
+          ) : null}
           {isPending && <span className="score-dial-pending-text">{statusLabel(status)}</span>}
         </div>
         {note ? <div className="score-dial-note">{note}</div> : null}
@@ -161,6 +190,20 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
   const pacing = analysis.pacing;
 
   const [selectedSkill, setSelectedSkill] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (!selectedSkill) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedSkill(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [selectedSkill]);
 
   // Group sub-parts by skill (listening, reading, writing, speaking)
   const skillGroups: Record<string, { label: string; subParts: typeof parts }> = {
@@ -231,6 +274,8 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
       };
     });
 
+  const singleModule = aggregatedSkills.length === 1 ? aggregatedSkills[0] : null;
+
   return (
     <>
       {progression && (
@@ -293,21 +338,46 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
         <section className="analysis-block" aria-label={t.partBreakdown.heading}>
           <div className="analysis-block-head">
             <h3>{t.partBreakdown.heading}</h3>
-            <p>{t.partBreakdown.subheading} Click any skill for a detailed part-by-part breakdown.</p>
+            <p>
+              {singleModule
+                ? t.partBreakdown.subheading
+                : `${t.partBreakdown.subheading} Click any skill for a detailed part-by-part breakdown.`}
+            </p>
           </div>
-          <div className="analysis-score-dials-grid">
-            {aggregatedSkills.map((skill) => (
-              <ScoreDial
-                key={skill.skill}
-                label={skill.label}
-                marks={skill.marks}
-                percentage={skill.percentage}
-                status={skill.status}
-                isClickable={true}
-                onClick={() => setSelectedSkill(skill)}
-                note={skill.isPending ? t.partBreakdown.awaitingExaminer : undefined}
-              />
-            ))}
+          <div className="analysis-score-dials-grid is-individual">
+            {singleModule
+              ? singleModule.subParts.map((part: any, idx: number) => (
+                  <ScoreDial
+                    key={part.part_code || part.label}
+                    label={part.label}
+                    stepIndex={idx + 1}
+                    marks={part.marks || (part.total > 0 ? `${part.correct} / ${part.total}` : null)}
+                    percentage={part.percentage}
+                    status={part.status}
+                    isLarge={true}
+                    note={
+                      part.status === "pending"
+                        ? t.partBreakdown.awaitingExaminer
+                        : part.unanswered
+                          ? t.partBreakdown.unansweredSuffix(part.unanswered)
+                          : undefined
+                    }
+                  />
+                ))
+              : aggregatedSkills.map((skill, idx) => (
+                  <ScoreDial
+                    key={skill.skill}
+                    label={skill.label}
+                    stepIndex={idx + 1}
+                    marks={skill.marks}
+                    percentage={skill.percentage}
+                    status={skill.status}
+                    isLarge={true}
+                    isClickable={true}
+                    onClick={() => setSelectedSkill(skill)}
+                    note={skill.isPending ? t.partBreakdown.awaitingExaminer : undefined}
+                  />
+                ))}
           </div>
         </section>
       )}
@@ -382,45 +452,53 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
         </section>
       )}
 
-      {selectedSkill && (
-        <div className="score-details-modal-overlay" onClick={() => setSelectedSkill(null)}>
-          <div className="score-details-modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="score-details-modal-header">
-              <h3>{selectedSkill.label} Breakdown</h3>
-              <button className="score-details-modal-close-btn" onClick={() => setSelectedSkill(null)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            <div className="score-details-modal-body">
-              <p className="score-details-modal-subheading">
-                Every part of the {selectedSkill.label} section, what it tests, and what you scored.
-              </p>
-              <div className="analysis-score-dials-grid">
-                {selectedSkill.subParts.map((part: any) => (
-                  <ScoreDial
-                    key={part.part_code || part.label}
-                    label={part.label}
-                    caption={part.focus}
-                    marks={part.marks}
-                    percentage={part.percentage}
-                    status={part.status}
-                    note={
-                      part.status === "pending"
-                        ? t.partBreakdown.awaitingExaminer
-                        : part.unanswered
-                          ? t.partBreakdown.unansweredSuffix(part.unanswered)
-                          : undefined
-                    }
-                  />
-                ))}
+      {selectedSkill &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="score-details-modal-overlay" onClick={() => setSelectedSkill(null)}>
+            <div className="score-details-modal-container" onClick={(e) => e.stopPropagation()}>
+              <div className="score-details-modal-header">
+                <h3>{selectedSkill.label} Breakdown</h3>
+                <button
+                  className="score-details-modal-close-btn"
+                  onClick={() => setSelectedSkill(null)}
+                  aria-label="Close"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              <div className="score-details-modal-body">
+                <p className="score-details-modal-subheading">
+                  Every part of the {selectedSkill.label} section, what it tests, and what you scored.
+                </p>
+                <div className="analysis-score-dials-grid is-individual">
+                  {selectedSkill.subParts.map((part: any, idx: number) => (
+                    <ScoreDial
+                      key={part.part_code || part.label}
+                      label={part.label}
+                      stepIndex={idx + 1}
+                      marks={part.marks}
+                      percentage={part.percentage}
+                      status={part.status}
+                      isLarge={true}
+                      note={
+                        part.status === "pending"
+                          ? t.partBreakdown.awaitingExaminer
+                          : part.unanswered
+                            ? t.partBreakdown.unansweredSuffix(part.unanswered)
+                            : undefined
+                      }
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
