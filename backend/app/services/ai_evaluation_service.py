@@ -777,6 +777,44 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
     }
 
 
+def _request_summary(payload: dict, config: dict) -> dict:
+    """A readable record of what was sent, for the AI evaluation log.
+
+    Deliberately a description and not a copy: a Speaking request carries the
+    recording as base64, and nobody needs megabytes of that in a log row."""
+    submissions = []
+    for item in payload.get("responses", []):
+        if "audio_b64" in item:
+            submissions.append({
+                "prompt": str(item.get("prompt") or "")[:300],
+                "kind": "audio",
+                # base64 inflates by 4/3; report what the recording weighs.
+                "audio_kb": round(len(item["audio_b64"]) * 3 / 4 / 1024),
+                "format": item.get("mime_type"),
+            })
+        else:
+            text = str(item.get("text") or "")
+            submissions.append({
+                "prompt": str(item.get("prompt") or "")[:300],
+                "kind": "text",
+                "words": len(text.split()),
+                "characters": len(text),
+            })
+    return {
+        "provider": config.get("provider"),
+        "model": config.get("model"),
+        "key_label": config.get("key_label"),
+        "skill": payload.get("skill"),
+        "part_title": payload.get("part", {}).get("title"),
+        "skill_focus": payload.get("part", {}).get("skill_focus"),
+        "criteria": [
+            {"criterion": item.get("criterion"), "max_marks": str(item.get("max_marks"))}
+            for item in payload.get("rubric", [])
+        ],
+        "submissions": submissions,
+    }
+
+
 def _gemini_response_schema(rubric: list) -> Optional[dict]:
     """OpenAPI-subset schema Gemini validates its own JSON against.
 
@@ -1232,6 +1270,15 @@ def _normalize(result: dict, part: ExamModulePart) -> dict:
     }
 
 
+def _readable_response(raw: object) -> str:
+    """The provider's own reply, kept for the log. Truncated: a rationale-heavy
+    response is a few KB, but a misbehaving endpoint can return anything."""
+    try:
+        return json.dumps(raw, indent=2, default=str)[:8000]
+    except Exception:
+        return str(raw)[:8000]
+
+
 def _evaluation_in_flight(db: Session, attempt_id: int, part_id: int) -> bool:
     """True while another request for this same part is still with a provider.
 
@@ -1284,11 +1331,15 @@ def request_suggestion(
             provider=config["provider"],
             model=config.get("model"),
             status="running",
+            request_summary=_request_summary(payload, config),
         )
         db.add(record)
         db.flush()
+        started = time.monotonic()
         try:
             raw = (evaluator or _remote_evaluator)(config, payload)
+            record.duration_ms = int((time.monotonic() - started) * 1000)
+            record.response_raw = _readable_response(raw)
             suggestion = _normalize(raw, part)
             record.status = "completed"
             record.suggestions = suggestion
@@ -1300,6 +1351,7 @@ def request_suggestion(
         except HTTPException as exc:
             last_error = exc
             record.status = "failed"
+            record.duration_ms = int((time.monotonic() - started) * 1000)
             record.error = str(exc.detail)[:4000]
             db.add(record)
             failed_records.append(record)
@@ -1313,6 +1365,7 @@ def request_suggestion(
         except Exception as exc:
             last_error = exc
             record.status = "failed"
+            record.duration_ms = int((time.monotonic() - started) * 1000)
             record.error = str(exc)[:4000]
             db.add(record)
             failed_records.append(record)

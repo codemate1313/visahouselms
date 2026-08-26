@@ -9714,3 +9714,231 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   AI marking log
+   --------------------------------------------------------------------------
+   Shares the logs table chrome above; everything here is the parts that table
+   does not have - the outcome pill, the "what we asked / what came back" cards
+   in the detail dialog, and the score table inside them. Colours come from the
+   tokens so both themes follow the palette rather than a second set of greys.
+   ========================================================================== */
+
+.logs-type-bar {
+  margin-bottom: 12px;
+}
+
+.ai-log-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ai-log-pill-ok {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #047857;
+}
+
+.ai-log-pill-failed {
+  background: rgba(225, 29, 46, 0.12);
+  border-color: rgba(225, 29, 46, 0.3);
+  color: #b91c2b;
+}
+
+.ai-log-pill-running {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.32);
+  color: #b45309;
+}
+
+.ai-log-target {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ai-log-module {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.ai-log-part,
+.ai-log-summary-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---- detail dialog ---- */
+
+.ai-log-headline {
+  margin: 14px 0 4px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.ai-log-card {
+  margin-top: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.ai-log-card.is-failure {
+  border-left: 3px solid var(--primary);
+}
+
+.ai-log-card h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+.ai-log-lead {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.ai-log-advice,
+.ai-log-note {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.ai-log-quote {
+  margin: 0 0 8px;
+  padding: 10px 14px;
+  border-left: 2px solid var(--border);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.ai-log-list {
+  margin: 0 0 10px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.ai-log-prompt {
+  color: var(--text-muted);
+}
+
+.ai-log-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.ai-log-chip-list li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.ai-log-chip-list li span {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* `.super-admin-portal .data-table` forces `min-width: 1100px` and fixed,
+   equal columns on every table in the portal - right for a full-width records
+   page, wrong inside a dialog, where it pushed the score table into a sideways
+   scroll and clipped the reason column. This table opts out. */
+/* The `table` in each selector is load-bearing: the portal rule that sets the
+   1100px floor lives in a stylesheet that loads after this one, so matching it
+   on specificity alone would lose on source order. */
+table.ai-log-score-table,
+.super-admin-portal table.ai-log-score-table,
+.dashboard-content table.ai-log-score-table {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: auto !important;
+}
+
+.ai-log-score-table th,
+.ai-log-score-table td {
+  white-space: normal;
+  font-size: 12.5px;
+  line-height: 1.55;
+  vertical-align: top;
+}
+
+.ai-log-score-table td:first-child,
+.ai-log-score-table td:nth-child(2),
+.ai-log-score-table td:nth-child(3) {
+  white-space: nowrap;
+}
+
+.ai-log-score-table .ai-log-marks {
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.ai-log-details {
+  margin-top: 10px;
+}
+
+.ai-log-details summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.ai-log-details summary:hover {
+  color: var(--text);
+}
+
+[data-theme="dark"] .ai-log-pill-ok {
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .ai-log-pill-failed {
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .ai-log-pill-running {
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .ai-log-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .ai-log-chip-list li {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}

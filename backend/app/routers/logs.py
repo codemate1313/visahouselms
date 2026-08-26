@@ -9,7 +9,7 @@ from app.database import get_db
 from app.dependencies.auth import require_role
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
-from app.services import log_service
+from app.services import ai_log_service, log_service
 
 router = APIRouter(
     prefix="/super-admin/logs",
@@ -53,6 +53,33 @@ def _validate_type(log_type: str) -> None:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Unknown log type '{log_type}'",
         )
+
+
+# Registered before the catch-all `/{log_type}` routes below, which would
+# otherwise swallow "ai-evaluations" as an unknown log type.
+@router.get("/ai-evaluations")
+def list_ai_evaluations(
+    page: int = 1,
+    page_size: int = 50,
+    status_filter: Optional[str] = None,
+    search: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    items, total = ai_log_service.query_evaluations(
+        db, page=page, page_size=page_size, status=status_filter, search=search
+    )
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+
+@router.get("/ai-evaluations/{evaluation_id}")
+def get_ai_evaluation(evaluation_id: int, db: Session = Depends(get_db)):
+    detail = ai_log_service.evaluation_detail(db, evaluation_id)
+    if detail is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No AI evaluation with id {evaluation_id}",
+        )
+    return detail
 
 
 @router.get("/{log_type}/export.csv")

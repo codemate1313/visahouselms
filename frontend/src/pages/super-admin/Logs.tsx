@@ -4,8 +4,9 @@ import { extractErrorMessage } from "@/api/errors";
 import { Modal, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { AiEvaluationLog } from "./AiEvaluationLog";
 
-type LogType = "error" | "crash" | "request";
+type LogType = "error" | "crash" | "request" | "ai";
 
 interface LogResponse {
   items: Record<string, unknown>[];
@@ -14,7 +15,7 @@ interface LogResponse {
   page_size: number;
 }
 
-const LOG_TYPES: LogType[] = ["error", "request", "crash"];
+const LOG_TYPES: LogType[] = ["error", "request", "crash", "ai"];
 const DETAIL_PRIORITY = [
   "id",
   "level",
@@ -174,6 +175,7 @@ export function Logs() {
   searchRef.current = search;
 
   const loadLogs = useCallback(async () => {
+    if (type === "ai") return; // the AI log loads itself
     setLoading(true);
     setError(null);
     try {
@@ -201,20 +203,37 @@ export function Logs() {
     setTimeout(() => setCopiedKey(null), 2000);
   }
 
+  const typeTabs = (
+    <SegmentedControl
+      ariaLabel="Log type"
+      onChange={setType}
+      options={LOG_TYPES.map((value) => ({
+        label:
+          value === "error" ? "Errors"
+          : value === "request" ? "Requests"
+          : value === "crash" ? "Crashes"
+          : "AI Marking",
+        value,
+      }))}
+      size="sm"
+      value={type}
+    />
+  );
+
+  if (type === "ai") {
+    return (
+      <div className="logs-page-container">
+        <div className="logs-filter-toolbar logs-type-bar">{typeTabs}</div>
+        <AiEvaluationLog onCountChange={setItemCount} />
+      </div>
+    );
+  }
+
   return (
     <div className="logs-page-container">
       {/* Top Filter Bar */}
       <div className="logs-filter-toolbar">
-        <SegmentedControl
-          ariaLabel="Log type"
-          onChange={setType}
-          options={LOG_TYPES.map((value) => ({
-            label: value === "error" ? "Errors" : value === "request" ? "Requests" : "Crashes",
-            value,
-          }))}
-          size="sm"
-          value={type}
-        />
+        {typeTabs}
 
         <div className="logs-filter-actions">
           <SearchInput

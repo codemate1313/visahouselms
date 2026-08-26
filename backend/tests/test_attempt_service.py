@@ -886,6 +886,108 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(set(enum), {item["criterion"] for item in part.rubric})
         self.assertIsNone(ai_evaluation_service._gemini_response_schema([]))
 
+    def test_ai_evaluation_log_records_both_halves_of_the_exchange(self):
+        """The AI marking log has to answer "what did we ask, what came back".
+
+        Both are recorded at request time, so a failure that never produced a
+        grade still explains itself.
+        """
+        from app.services import ai_log_service
+
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "One two three four five."})
+        attempt_service.submit_attempt(self.db, attempt)
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+
+        def evaluator(_config, payload):
+            return {
+                "criteria": [
+                    {"criterion": item["criterion"], "marks_awarded": 6, "rationale": "Clear development."}
+                    for item in payload["rubric"]
+                ],
+                "comment": "Solid draft.",
+                "confidence": 0.8,
+            }
+
+        ai_evaluation_service.request_suggestion(
+            self.db, self.instructor, attempt, part, evaluator=evaluator
+        )
+
+        rows, total = ai_log_service.query_evaluations(self.db)
+        self.assertEqual(total, 1)
+        self.assertEqual(rows[0]["status_label"], "Marked successfully")
+        self.assertIn("out of", rows[0]["summary"])
+        self.assertIsNotNone(rows[0]["duration_ms"])
+        self.assertEqual(rows[0]["student_email"], self.student.email)
+
+        detail = ai_log_service.evaluation_detail(self.db, rows[0]["id"])
+        self.assertTrue(detail["asked"]["recorded"])
+        self.assertEqual(
+            {item["criterion"] for item in detail["asked"]["criteria"]},
+            {item["criterion"] for item in part.rubric},
+        )
+        self.assertEqual(detail["asked"]["submissions"][0]["description"], "5 words of writing")
+        self.assertEqual(len(detail["answered"]["scores"]), len(part.rubric))
+        self.assertEqual(detail["answered"]["comment"], "Solid draft.")
+        self.assertIn("criteria", detail["answered"]["raw"])
+        self.assertIsNone(detail["failure"])
+
+    def test_ai_evaluation_log_explains_a_failure_in_plain_language(self):
+        from app.services import ai_log_service
+
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "An academic response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+
+        def rate_limited(_config, _payload):
+            raise HTTPException(status_code=429, detail="Google Gemini API rate limit reached (15 RPM free tier limit).")
+
+        with self.assertRaises(HTTPException):
+            ai_evaluation_service.request_suggestion(
+                self.db, self.instructor, attempt, part, evaluator=rate_limited
+            )
+
+        rows, _ = ai_log_service.query_evaluations(self.db, status="failed")
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["status_label"], "Could not mark")
+        self.assertIn("too many were sent", rows[0]["summary"])
+
+        detail = ai_log_service.evaluation_detail(self.db, rows[0]["id"])
+        self.assertIn("refused the request", detail["failure"]["what_happened"])
+        self.assertIn("provider", detail["failure"]["what_to_do"])
+        self.assertIn("rate limit", detail["failure"]["technical_detail"].lower())
+        # The request half is still there even though nothing came back.
+        self.assertTrue(detail["asked"]["criteria"])
+        self.assertEqual(detail["answered"]["scores"], [])
+
+    def test_failure_explanations_cover_the_common_provider_errors(self):
+        from app.services import ai_log_service
+
+        cases = {
+            "ReadTimeout: timed out": "longer to answer",
+            "Unexpected or duplicate criterion: Handwriting": "do not match",
+            "Gemini API returned unparseable output": "could not read",
+            "401 Unauthorized: invalid key": "rejected the API key",
+            "No audio recording found for this Speaking part to evaluate": "nothing to mark",
+        }
+        for error, expected in cases.items():
+            with self.subTest(error=error):
+                self.assertIn(expected, ai_log_service.explain_failure(error)["what_happened"])
+        self.assertIsNone(ai_log_service.explain_failure(None))
+
     def test_ai_evaluation_fails_over_to_next_configured_key(self):
         self._subscribe_student_for_ai()
         module = self._build_writing_module()

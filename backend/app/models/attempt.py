@@ -346,6 +346,12 @@ class AiEvaluation(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="completed")
     suggestions: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # What was asked and what came back, for the AI evaluation log. The summary
+    # describes the request (rubric, response sizes, model) rather than copying
+    # it - a Speaking request carries megabytes of base64 audio.
+    request_summary: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    response_raw: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     attempt: Mapped[TestAttempt] = relationship()
