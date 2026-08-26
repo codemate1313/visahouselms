@@ -10,7 +10,7 @@ import "./Invoice.css";
 import { commonActions } from "@/content/common.strings";
 import { Icon } from "@/components/icons";
 import { SearchableSelect } from "@/components/ui";
-import { formatDate } from "@/utils/date";
+import { formatDate, formatDateTime } from "@/utils/date";
 
 interface PaymentDetail {
   id: number;
@@ -333,7 +333,8 @@ export function Invoice() {
   const finalAmtNum = Number(payment.final_amount) || 1;
   const paidAmtNum = Number(payment.amount_paid) || 0;
   const dueAmtNum = Number(payment.due_amount) || 0;
-  const paidPercentage = Math.min(100, Math.round((paidAmtNum / finalAmtNum) * 100));
+  const paidRatio = (paidAmtNum / finalAmtNum) * 100;
+  const paidPercentage = dueAmtNum > 0 ? Math.min(99, Math.floor(paidRatio)) : 100;
 
   const isPaid = payment.status === "paid" || dueAmtNum === 0;
   const isPartial = payment.status === "partial" || (paidAmtNum > 0 && dueAmtNum > 0);
@@ -486,7 +487,7 @@ export function Invoice() {
                 <p className="invoice-info-card-sub">{strings.transactionRef}: {payment.gateway_reference}</p>
               )}
               {payment.paid_at && (
-                <p className="invoice-info-card-sub">{strings.fullyPaidOn}: {new Date(payment.paid_at).toLocaleString()}</p>
+                <p className="invoice-info-card-sub">{strings.fullyPaidOn}: {formatDateTime(payment.paid_at)}</p>
               )}
             </div>
           </div>
@@ -556,14 +557,14 @@ export function Invoice() {
             <div className="invoice-timeline-items">
               <div className="invoice-timeline-item item-paid">
                 <span className="invoice-timeline-text">Invoice created & issued</span>
-                <span className="invoice-timeline-date">{new Date(payment.created_at).toLocaleString()}</span>
+                <span className="invoice-timeline-date">{formatDateTime(payment.created_at)}</span>
               </div>
               {paidAmtNum > 0 && (
                 <div className="invoice-timeline-item item-paid">
                   <span className="invoice-timeline-text">
                     Payment of {formatCurrencyAmount(payment.amount_paid, payment.currency)} received via {payment.payment_method_name || payment.gateway || "Card"}
                   </span>
-                  <span className="invoice-timeline-date">{payment.paid_at ? new Date(payment.paid_at).toLocaleString() : new Date(payment.created_at).toLocaleString()}</span>
+                  <span className="invoice-timeline-date">{formatDateTime(payment.paid_at ?? payment.created_at)}</span>
                 </div>
               )}
               {dueAmtNum > 0 && (

@@ -1,5 +1,6 @@
 import { instructorDashboardStrings as strings } from "../InstructorDashboard.strings";
 import { Icon, type IconName } from "@/components/icons";
+import { formatDateTime } from "@/utils/date";
 
 interface ActivityItem {
   action: string;
@@ -80,7 +81,7 @@ export function RecentActivityPanel({ activity }: RecentActivityPanelProps) {
               </div>
               <div className="activity-info">
                 <span>{formatActivity(item.action, item.entity_type, item.entity_id)}</span>
-                <time>{item.created_at ? new Date(item.created_at).toLocaleString() : "—"}</time>
+                <time>{formatDateTime(item.created_at)}</time>
               </div>
             </li>
           ))}

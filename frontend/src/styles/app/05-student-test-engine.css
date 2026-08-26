@@ -370,16 +370,16 @@ body.test-runner-route-active #root {
    danger weight rather than looking like another step button. */
 .test-runner-end-exam {
   padding: 9px 22px;
-  border: 1px solid var(--danger, #dc2626);
+  border: 1px solid var(--danger-fill, #dc2626);
   border-radius: var(--radius-md, 8px);
-  background: var(--danger, #dc2626);
+  background: var(--danger-fill, #dc2626);
   color: #ffffff;
   font-weight: 700;
 }
 
 .test-runner-end-exam:hover:not(:disabled) {
-  background: var(--danger-hover, #b91c1c);
-  border-color: var(--danger-hover, #b91c1c);
+  background: var(--danger-fill-hover, #b91c1c);
+  border-color: var(--danger-fill-hover, #b91c1c);
 }
 
 .test-runner-end-exam:disabled {

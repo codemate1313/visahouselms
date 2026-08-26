@@ -58,18 +58,18 @@
   height: 38px;
   padding: 0 18px;
   border-radius: var(--radius-sm);
-  background: #10b981;
+  background: var(--primary);
   color: #ffffff !important;
   font-weight: 600;
   font-size: 13.5px;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 4px 12px var(--primary-soft);
   transition: all 180ms ease;
 }
 
 .btn-action-primary:hover {
-  background: #059669;
+  background: var(--primary-hover);
   color: #ffffff !important;
 }
 

@@ -3341,7 +3341,7 @@ body {
 }
 
 .seat-panel-bar-fill[data-tone="amber"] { background: var(--warning); }
-.seat-panel-bar-fill[data-tone="red"] { background: var(--danger); }
+.seat-panel-bar-fill[data-tone="red"] { background: var(--danger-fill, var(--danger)); }
 
 .seat-panel-breakdown {
   display: flex;

@@ -4,9 +4,11 @@ import { confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { Badge, Button, DataTableCard, Input, Modal, SearchInput, Textarea } from "@/components/ui";
+import { useToastStore } from "@/store/toastStore";
 import "./GrammarContentPage.css";
 
 export function GrammarContentPage() {
+  const showError = useToastStore((state) => state.showError);
   const [items, setItems] = useState<GrammarContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +92,7 @@ export function GrammarContentPage() {
       const updated = await grammarContentApi.toggleContentStatus(item.id);
       setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
     } catch (err: any) {
-      alert(err?.response?.data?.detail || "Failed to toggle status.");
+      showError(err?.response?.data?.detail || "Failed to toggle status.");
     }
   };
 
@@ -105,7 +107,7 @@ export function GrammarContentPage() {
       await grammarContentApi.deleteContent(item.id);
       setItems((prev) => prev.filter((i) => i.id !== item.id));
     } catch (err: any) {
-      alert(err?.response?.data?.detail || "Failed to delete item.");
+      showError(err?.response?.data?.detail || "Failed to delete item.");
     }
   };
 

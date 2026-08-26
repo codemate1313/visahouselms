@@ -2713,9 +2713,9 @@ button.danger-text,
 
 button.danger-text:hover,
 .danger-text:hover {
-  background: var(--danger, #dc2626) !important;
+  background: var(--danger-fill, #dc2626) !important;
   color: #ffffff !important;
-  border-color: var(--danger, #dc2626) !important;
+  border-color: var(--danger-fill, #dc2626) !important;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
 }
 

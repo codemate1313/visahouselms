@@ -1234,10 +1234,10 @@ h3 {
   border-radius: 50%;
   background: #10b981;
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-  animation: pulseDot 2s infinite ease-in-out;
+  animation: otp-pulse-dot 2s infinite ease-in-out;
 }
 
-@keyframes pulseDot {
+@keyframes otp-pulse-dot {
   0%, 100% {
     transform: scale(1);
     opacity: 1;

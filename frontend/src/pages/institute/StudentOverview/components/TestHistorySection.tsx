@@ -1,9 +1,10 @@
 import type { AttemptRecord } from "../types";
 import { studentOverviewStrings as strings } from "../StudentOverview.strings";
 import { Badge } from "@/components/ui";
+import { formatDateTime } from "@/utils/date";
 
 function dateTime(value: string | null) {
-  return value ? new Date(value).toLocaleString() : "-";
+  return formatDateTime(value, "-");
 }
 
 interface TestHistorySectionProps {

@@ -7,6 +7,7 @@ import { Icon } from "@/components/icons";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
+import { formatDateTime } from "@/utils/date";
 import { isEqual } from "@/utils/isEqual";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 import { formatBytes } from "../helpers";
@@ -187,7 +188,7 @@ export function BackupsTab() {
                   <td>
                     <Badge tone={row.status === "done" ? "green" : "amber"}>{row.status}</Badge>
                   </td>
-                  <td>{new Date(row.created_at).toLocaleString()}</td>
+                  <td>{formatDateTime(row.created_at)}</td>
                   <td className="table-actions">
                     <button onClick={() => download(row)} aria-label="Download backup" data-tooltip="Download backup">
                       <Icon name="download" />

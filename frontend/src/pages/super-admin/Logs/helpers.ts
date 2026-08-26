@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/utils/date";
 import { logsStrings as strings } from "./Logs.strings";
 import type { LogRow, LogType } from "./types";
 
@@ -45,7 +46,7 @@ export function cellValue(row: LogRow, key: string): string {
   const value = row[key];
   if (value == null) return "—";
   if (key === "created_at" || key === "detected_at") {
-    return new Date(String(value)).toLocaleString();
+    return formatDateTime(String(value));
   }
   if (key === "latency_ms") return `${value} ms`;
   const text = String(value);

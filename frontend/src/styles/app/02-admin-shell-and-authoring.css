@@ -2197,10 +2197,10 @@
 }
 /* Pre-Exam Stage Animation */
 .stage-fade-in {
-  animation: stage-slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: authoring-stage-slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes stage-slide-in {
+@keyframes authoring-stage-slide-in {
   from {
     opacity: 0;
     transform: translateX(20px) scale(0.985);
@@ -3608,10 +3608,10 @@
   border-radius: 50%;
   background: currentColor;
   box-shadow: 0 0 0 2px currentColor;
-  animation: pulseDot 2s infinite ease-in-out;
+  animation: vh-status-pulse-dot 2s infinite ease-in-out;
 }
 
-@keyframes pulseDot {
+@keyframes vh-status-pulse-dot {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(0.8); }
 }
@@ -5375,7 +5375,7 @@ label {
   color: var(--text);
 }
 
-input:not([type="radio"]):not([type="checkbox"]) {
+:where(input:not([type="radio"]):not([type="checkbox"]):not(.ui-input):not(.ui-search-control):not(.select-search-input)) {
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;
@@ -5442,13 +5442,13 @@ select:hover {
   background-color: var(--surface-muted);
 }
 
-input:focus {
+:where(input:not(.ui-input):not(.ui-search-control):not(.select-search-input)):focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
-button {
+:where(button) {
   cursor: pointer;
   border: none;
   border-radius: 9px;
@@ -5461,17 +5461,17 @@ button {
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.05s;
 }
 
-button:hover:not(:disabled) {
+:where(button):hover:not(:disabled) {
   background: var(--primary-hover);
   color: #ffffff;
   box-shadow: 0 7px 18px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
-button:active:not(:disabled) {
+:where(button):active:not(:disabled) {
   transform: translateY(1px);
 }
 
-button:disabled {
+:where(button):disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -5552,11 +5552,11 @@ button[aria-label*="Close" i]:not(.dashboard-detail-close):active:not(:disabled)
 }
 
 button.danger {
-  background: var(--danger);
+  background: var(--danger-fill, var(--danger));
 }
 
 button.danger:hover:not(:disabled) {
-  background: var(--danger-hover);
+  background: var(--danger-fill-hover, var(--danger-hover));
 }
 
 /* ---------- Reusable collapsible panels ---------- */
@@ -8182,7 +8182,7 @@ button.secondary-button:hover,
 .badge-delivered,
 .badge-paid {
   background: rgba(16, 185, 129, 0.1);
-  color: #059669;
+  color: #047857;
   border-color: rgba(16, 185, 129, 0.25);
 }
 
@@ -8217,7 +8217,7 @@ button.secondary-button:hover,
 .badge-revoked,
 .badge-none {
   background: rgba(110, 110, 115, 0.08);
-  color: #6e6e73;
+  color: #52525b;
   border-color: rgba(110, 110, 115, 0.2);
 }
 

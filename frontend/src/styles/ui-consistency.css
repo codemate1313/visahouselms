@@ -132,10 +132,10 @@ button.danger-text {
 
 button.danger-text:hover:not(:disabled),
 button.danger-text:focus-visible:not(:disabled) {
-  background: var(--danger);
-  border-color: var(--danger);
+  background: var(--danger-fill, var(--danger));
+  border-color: var(--danger-fill, var(--danger));
   color: #ffffff;
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--danger) 28%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--danger-fill, var(--danger)) 28%, transparent);
 }
 
 button.danger-text:disabled {
@@ -164,7 +164,7 @@ button.danger-text:disabled {
 
 [data-theme="dark"] button.danger-text:hover:not(:disabled),
 [data-theme="dark"] button.danger-text:focus-visible:not(:disabled) {
-  background: var(--danger);
+  background: var(--danger-fill, #dc2626);
   border-color: #fb7185;
   color: #ffffff;
 }
@@ -1256,14 +1256,14 @@ html {
 }
 
 .premium-modal-btn.confirm-btn.btn-danger {
-  background: #ef4444;
-  border-color: #ef4444;
+  background: var(--danger-fill, #dc2626);
+  border-color: var(--danger-fill, #dc2626);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 
 .premium-modal-btn.confirm-btn.btn-danger:hover {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: var(--danger-fill-hover, #b91c1c);
+  border-color: var(--danger-fill-hover, #b91c1c);
   box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
 }
 

@@ -1,8 +1,9 @@
 import { MetricCard } from "@/components/dashboard/MetricCard";
+import { formatDateTime } from "@/utils/date";
 import { studentOverviewStrings as strings } from "../StudentOverview.strings";
 
 function dateTime(value: string | null) {
-  return value ? new Date(value).toLocaleString() : "-";
+  return formatDateTime(value, "-");
 }
 
 interface StudentStatTilesProps {

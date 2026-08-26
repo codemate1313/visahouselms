@@ -1,4 +1,4 @@
-import type { LabelHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
+import { useId, type LabelHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from "react";
 import "./Textarea.css";
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -24,8 +24,8 @@ export function Textarea({
   value,
   ...rest
 }: TextareaProps) {
-  const textareaId =
-    id ?? (typeof label === "string" ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
+  const generatedId = useId();
+  const textareaId = id ?? generatedId;
   const count = typeof value === "string" ? value.length : 0;
 
   return (

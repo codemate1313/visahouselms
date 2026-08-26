@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, LabelHTMLAttributes, ReactNode } from "react";
+import { useId, type InputHTMLAttributes, type LabelHTMLAttributes, type ReactNode } from "react";
 import "./Input.css";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -12,7 +12,8 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
  * with `style`, `className`, or a wrapping form-grid layout.
  */
 export function Input({ label, error, id, className = "", labelProps, ...rest }: InputProps) {
-  const inputId = id ?? (typeof label === "string" ? label.toLowerCase().replace(/\s+/g, "-") : undefined);
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
 
   return (
     <div className="ui-field">

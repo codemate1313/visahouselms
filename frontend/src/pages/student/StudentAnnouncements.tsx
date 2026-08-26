@@ -4,10 +4,11 @@ import { apiClient } from "@/api/client";
 import type { Announcement } from "@/api/types";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { Badge, PageHeader } from "@/components/ui";
+import { formatDateTime } from "@/utils/date";
 import { studentAnnouncementsStrings as strings } from "./StudentAnnouncements.strings";
 
 function formatDate(value: string | null) {
-  return value ? new Date(value).toLocaleString() : "";
+  return formatDateTime(value, "");
 }
 
 export function StudentAnnouncements() {

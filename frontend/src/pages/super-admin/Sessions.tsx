@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
 import { Badge, Button, IconButton, PageHeader } from "@/components/ui";
+import { formatDateTime } from "@/utils/date";
 import { sessionsStrings as strings } from "./Sessions.strings";
 
 interface SessionInfo {
@@ -127,8 +128,8 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
                     {sessionLocation(session)}
                   </span>
                 </td>
-                <td>{new Date(session.created_at).toLocaleString()}</td>
-                <td>{new Date(session.expires_at).toLocaleString()}</td>
+                <td>{formatDateTime(session.created_at)}</td>
+                <td>{formatDateTime(session.expires_at)}</td>
                 <td className="table-actions">
                   <div className="table-actions sessions-table-actions">
                     {!session.is_current && (

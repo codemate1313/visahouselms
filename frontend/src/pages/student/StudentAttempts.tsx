@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import type { AttemptSummary } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
+import { formatDateTime } from "@/utils/date";
 import { studentAttemptsStrings as strings } from "./StudentAttempts.strings";
 import type { BadgeTone } from "@/components/ui";
 
@@ -116,7 +117,7 @@ export function StudentAttempts() {
           {statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}
         </Badge>
       </td>
-      <td>{new Date(attempt.started_at).toLocaleString()}</td>
+      <td>{formatDateTime(attempt.started_at)}</td>
       <td>
         {attempt.raw_score && attempt.max_score
           ? `${attempt.raw_score} / ${attempt.max_score}`

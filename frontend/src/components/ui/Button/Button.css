@@ -100,14 +100,14 @@ button.ui-btn-secondary:hover:not(:disabled) {
 
 .ui-btn-danger,
 button.ui-btn-danger {
-  background: var(--danger);
-  border: 1px solid var(--danger);
+  background: var(--danger-fill, var(--danger));
+  border: 1px solid var(--danger-fill, var(--danger));
   color: #ffffff;
 }
 
 .ui-btn-danger:hover:not(:disabled),
 button.ui-btn-danger:hover:not(:disabled) {
-  background: var(--danger-hover);
+  background: var(--danger-fill-hover, var(--danger-hover));
 }
 
 .ui-btn-text {

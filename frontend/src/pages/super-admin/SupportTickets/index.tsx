@@ -2,6 +2,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useSearchParams } from "react-router-dom";
 import { apiClient, API_BASE_URL } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
+import { confirmAction } from "@/components/confirmDialog";
 import type {
   SupportTicket,
   SupportTicketListResponse,
@@ -272,6 +273,18 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const setItemCount = usePageTitleStore((state) => state.setItemCount);
   const showSuccess = useToastStore((state) => state.showSuccess);
+
+  const requestChatClose = useCallback(async () => {
+    if (replyText.trim() || attachedFiles.length > 0) {
+      const confirmed = await confirmAction("Discard unsent reply?", {
+        title: "Discard reply",
+        confirmText: "Discard",
+        variant: "warning",
+      });
+      if (!confirmed) return;
+    }
+    setIsChatOpen(false);
+  }, [attachedFiles.length, replyText]);
 
   const selectedTicket = useMemo(
     () => tickets.find((ticket) => ticket.id === selectedId) ?? tickets[0] ?? null,
@@ -718,12 +731,13 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
       {/* Interactive Support Messenger Chat Modal */}
       <Modal
         open={isChatOpen && Boolean(selectedTicket)}
-        onClose={() => setIsChatOpen(false)}
+        onClose={() => { void requestChatClose(); }}
         onBeforeClose={() => {
           // A half-typed reply or a picked attachment is real, easy-to-lose work -
           // Escape and outside-click are natural habits, so confirm before it's gone.
           if (replyText.trim() || attachedFiles.length > 0) {
-            return window.confirm("Discard unsent reply?");
+            void requestChatClose();
+            return false;
           }
           return true;
         }}

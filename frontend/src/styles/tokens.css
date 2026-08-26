@@ -39,8 +39,10 @@
   --primary: #b80f28;
   --primary-hover: #900a1c;
   --primary-soft: color-mix(in srgb, var(--primary) 14%, transparent);
-  --danger: #b80f28;
-  --danger-hover: #900a1c;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --danger-fill: #dc2626;
+  --danger-fill-hover: #b91c1c;
   --success: #1f7a4d;
   --info: #2563eb;
   --warning: #9a6a17;
@@ -335,7 +337,15 @@ textarea:focus::-moz-placeholder,
   --text: #f4f4f5;
   --text-muted: #a1a1aa;
   --border: rgba(255, 255, 255, 0.18);
+  --primary-text: #fda4af;
+  --danger: #fca5a5;
+  --danger-hover: #f87171;
+  --danger-fill: #dc2626;
+  --danger-fill-hover: #b91c1c;
+  --success: #6ee7b7;
   --info: #93c5fd;
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.18);
   --nav-bg: rgba(22, 22, 26, 0.92);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-bg: rgba(22, 22, 26, 0.85);

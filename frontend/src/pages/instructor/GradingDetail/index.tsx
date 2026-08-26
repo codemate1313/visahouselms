@@ -6,6 +6,7 @@ import type { AttemptPart, GradingDetail as GradingDetailType, GradingQueueItem,
 import { Badge, Button, LinkButton, Modal, PageHeader } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
+import { formatDateTime } from "@/utils/date";
 import { gradingDetailStrings as strings } from "./GradingDetail.strings";
 import { PartGradingCard } from "./components/PartGradingCard";
 import { FloatingRubricPanel } from "./components/FloatingRubricPanel";
@@ -413,7 +414,7 @@ export function GradingDetail() {
             {detail.flags.map((flag, index) => (
               <li key={index}>
                 <span>{flag.flag_type.replace("_", " ")}</span>
-                <time>{new Date(flag.occurred_at).toLocaleString()}</time>
+                <time>{formatDateTime(flag.occurred_at)}</time>
               </li>
             ))}
           </ul>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
 import { useToastStore } from "@/store/toastStore";
 import "@/styles/voucher-ui.css";
+import { formatCurrencyAmount } from "@/utils/currency";
 import { formatDate } from "@/utils/date";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/utils/razorpay";
 
@@ -26,6 +27,7 @@ interface VoucherOffering {
   description?: string;
   price: string;
   discount_price?: string;
+  currency?: string;
   validity_days: number;
   gst_percentage: string;
   is_active: boolean;
@@ -59,6 +61,9 @@ export function VouchersSection() {
   // Success Modal State
   const [purchaseSuccess, setPurchaseSuccess] = useState<PurchaseSuccess | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const formatOfferingPrice = (offering: VoucherOffering, amount?: string) =>
+    formatCurrencyAmount(amount ?? offering.discount_price ?? offering.price, offering.currency ?? "INR");
 
   const fetchOfferings = useCallback(async () => {
     try {
@@ -231,11 +236,11 @@ export function VouchersSection() {
                 <div className="pt-3 border-t vh-pub-divider mt-auto">
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-black">
-                      ₹{parseFloat(vo.discount_price || vo.price).toLocaleString("en-IN")}
+                      {formatOfferingPrice(vo)}
                     </span>
                     {vo.discount_price && (
                       <span className="text-sm vh-pub-muted line-through">
-                        ₹{parseFloat(vo.price).toLocaleString("en-IN")}
+                        {formatOfferingPrice(vo, vo.price)}
                       </span>
                     )}
                   </div>
@@ -287,7 +292,7 @@ export function VouchersSection() {
               </div>
               <div className="text-right">
                 <div className="text-lg font-black">
-                  ₹{parseFloat(selectedOffering.discount_price || selectedOffering.price).toLocaleString("en-IN")}
+                  {formatOfferingPrice(selectedOffering)}
                 </div>
               </div>
             </div>
@@ -334,7 +339,7 @@ export function VouchersSection() {
                 disabled={submitting}
                 className="w-full py-3.5 vh-pub-cta disabled:opacity-50 font-bold rounded-xl text-sm transition-all shadow-lg mt-2"
               >
-                {submitting ? "Processing Purchase..." : `Pay ₹${parseFloat(selectedOffering.discount_price || selectedOffering.price).toLocaleString("en-IN")} & Get Code`}
+                {submitting ? "Processing Purchase..." : `Pay ${formatOfferingPrice(selectedOffering)} & Get Code`}
               </button>
             </form>
           </div>
@@ -370,7 +375,7 @@ export function VouchersSection() {
             <div className="text-xs vh-pub-muted vh-pub-detail-box space-y-1 text-left p-4 rounded-xl">
               <div><strong>Purchase Ref:</strong> {purchaseSuccess.purchase_number}</div>
               <div><strong>Valid Until:</strong> {formatDate(purchaseSuccess.valid_until)}</div>
-              <div><strong>Amount Paid:</strong> ₹{parseFloat(purchaseSuccess.final_amount).toLocaleString("en-IN")}</div>
+              <div><strong>Amount Paid:</strong> {formatCurrencyAmount(purchaseSuccess.final_amount, selectedOffering?.currency ?? "INR")}</div>
             </div>
 
             <button

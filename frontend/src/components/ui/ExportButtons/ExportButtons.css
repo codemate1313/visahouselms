@@ -59,12 +59,15 @@
   border: 1.5px solid #fca5a5 !important;
 }
 
-.export-btn.export-pdf:hover,
-.export-btn.export-pdf:focus {
+.export-btn.export-pdf:hover {
   background: #dc2626 !important;
   color: #ffffff !important;
   border-color: #dc2626 !important;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
+}
+
+.export-btn.export-pdf:focus-visible {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.24), 0 1px 3px rgba(17, 17, 19, 0.04) !important;
 }
 
 .export-btn.export-excel {
@@ -73,12 +76,15 @@
   border: 1.5px solid #86efac !important;
 }
 
-.export-btn.export-excel:hover,
-.export-btn.export-excel:focus {
+.export-btn.export-excel:hover {
   background: #16a34a !important;
   color: #ffffff !important;
   border-color: #16a34a !important;
   box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25) !important;
+}
+
+.export-btn.export-excel:focus-visible {
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.24), 0 1px 3px rgba(17, 17, 19, 0.04) !important;
 }
 
 [data-theme="dark"] .export-btn.export-pdf,
@@ -98,13 +104,16 @@
 }
 
 [data-theme="dark"] .export-btn.export-pdf:hover,
-[data-theme="dark"] .export-btn.export-pdf:focus,
-[data-theme="dark"] button.export-btn.export-pdf:hover,
-[data-theme="dark"] button.export-btn.export-pdf:focus {
+[data-theme="dark"] button.export-btn.export-pdf:hover {
   background: #dc2626 !important;
   color: #ffffff !important;
   border-color: #dc2626 !important;
   box-shadow: 0 8px 18px rgba(220, 38, 38, 0.35) !important;
+}
+
+[data-theme="dark"] .export-btn.export-pdf:focus-visible,
+[data-theme="dark"] button.export-btn.export-pdf:focus-visible {
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.28), 0 4px 12px rgba(0, 0, 0, 0.25) !important;
 }
 
 [data-theme="dark"] .export-btn.export-pdf:hover svg,
@@ -132,13 +141,16 @@
 }
 
 [data-theme="dark"] .export-btn.export-excel:hover,
-[data-theme="dark"] .export-btn.export-excel:focus,
-[data-theme="dark"] button.export-btn.export-excel:hover,
-[data-theme="dark"] button.export-btn.export-excel:focus {
+[data-theme="dark"] button.export-btn.export-excel:hover {
   background: #16a34a !important;
   color: #ffffff !important;
   border-color: #16a34a !important;
   box-shadow: 0 8px 18px rgba(22, 163, 74, 0.35) !important;
+}
+
+[data-theme="dark"] .export-btn.export-excel:focus-visible,
+[data-theme="dark"] button.export-btn.export-excel:focus-visible {
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.28), 0 4px 12px rgba(0, 0, 0, 0.25) !important;
 }
 
 [data-theme="dark"] .export-btn.export-excel:hover svg,

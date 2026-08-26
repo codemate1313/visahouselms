@@ -28,7 +28,7 @@ export function SeatPanel({ capacity, onShowReclaimable, onShowPastStudents }: S
   const used = seats.used;
   const total = seats.total;
   const free = seats.free ?? 0;
-  const pct = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
+  const pct = total > 0 ? (free > 0 ? Math.min(99, Math.floor((used / total) * 100)) : 100) : 0;
   const tone = free === 0 ? "red" : free <= Math.max(1, Math.round(total * 0.1)) ? "amber" : "green";
 
   return (

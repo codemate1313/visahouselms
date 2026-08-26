@@ -33,7 +33,7 @@ export const attemptResultStrings = {
     aiGradedBadge: "Evaluated by AI",
   },
   analysis: {
-    eyebrow: "Personalized coaching",
+    eyebrow: "Personalised coaching",
     heading: "Performance analysis",
     aiEvaluated: "AI evaluated",
     cefrAnalysis: "CEFR analysis",
