@@ -13,6 +13,7 @@ from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
 from app.schemas.user import (
     ChangePasswordRequest,
+    DirectStudentCreate,
     DirectoryUserOut,
     DirectoryUserPage,
     ForceResetRequest,
@@ -131,6 +132,29 @@ def get_directory_user(user_id: int, db: Session = Depends(get_db)):
         super_admin_service.get_directory_user_or_404(db, user_id),
         None,
     )
+
+
+@router.post("/users/students")
+def create_direct_student_user(
+    payload: DirectStudentCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    user, temporary_password = super_admin_service.create_direct_student(
+        db,
+        actor,
+        payload.email,
+        payload.first_name,
+        payload.last_name,
+        payload.phone_number,
+        payload.address,
+        _client_ip(request),
+    )
+    return {
+        "user": super_admin_service.serialize_directory_user(user, None),
+        "temporary_password": temporary_password,
+    }
 
 
 @router.patch("/users/{user_id}", response_model=DirectoryUserOut)

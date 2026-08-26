@@ -180,6 +180,7 @@ export const router = createBrowserRouter([
           // remain the place accounts are actually managed.
           { path: "users", element: <Navigate to="/super-admin/users/all-users" replace /> },
           { path: "users/:role", element: <Users /> },
+          { path: "users/students/new", element: <DirectStudentForm /> },
           { path: "users/:id/edit", element: <DirectStudentForm /> },
           // The old single-role list screens now live as tabs of the directory.
           { path: "accounts", element: <Navigate to="/super-admin/users/super-admins" replace /> },
@@ -278,6 +279,7 @@ export const router = createBrowserRouter([
           { path: "institutes/:id/students/:studentId", element: <DeveloperStudentOverview /> },
           { path: "institutes/:id/students/:studentId/edit", element: <DeveloperStudentForm /> },
           { path: "users", element: <Navigate to={`/${developerAccessSlug}/users/super-admins`} replace /> },
+          { path: "users/students/new", element: <DirectStudentForm portalBasePath={`/${developerAccessSlug}`} /> },
           { path: "users/:role", element: <Users basePath={`/${developerAccessSlug}`} /> },
           { path: "users/:id/edit", element: <DirectStudentForm portalBasePath={`/${developerAccessSlug}`} /> },
           { path: "accounts", element: <Navigate to={`/${developerAccessSlug}/users/super-admins`} replace /> },

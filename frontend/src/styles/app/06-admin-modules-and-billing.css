@@ -1958,6 +1958,10 @@
   font-weight: 800;
 }
 
+[data-theme="dark"] .portal-breadcrumb-item.is-active {
+  color: color-mix(in srgb, var(--primary, #a81c1c) 30%, #ffffff) !important;
+}
+
 .portal-breadcrumb-link {
   color: var(--text-muted, #64748b);
   text-decoration: none !important;
@@ -1969,10 +1973,18 @@
   text-decoration: underline !important;
 }
 
+[data-theme="dark"] .portal-breadcrumb-link:hover {
+  color: color-mix(in srgb, var(--primary, #a81c1c) 30%, #ffffff) !important;
+}
+
 .portal-breadcrumb-separator {
   color: #cbd5e1;
   font-size: 10px;
   font-weight: 400;
+}
+
+[data-theme="dark"] .portal-breadcrumb-separator {
+  color: rgba(242, 242, 245, 0.52) !important;
 }
 
 /* Remove on-screen entry count from filter bars since it is now dynamically shown in the App Bar */
@@ -5001,6 +5013,19 @@
   border-radius: 11px !important;
 }
 
+.start-test-btn.ui-btn-primary,
+button.start-test-btn.ui-btn-primary,
+.start-test-btn.ui-btn-primary:hover:not(:disabled),
+button.start-test-btn.ui-btn-primary:hover:not(:disabled) {
+  color: #ffffff !important;
+}
+
+.start-test-btn.ui-btn-primary svg,
+button.start-test-btn.ui-btn-primary svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
 .start-test-btn.is-exhausted-btn {
   border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
   color: var(--primary) !important;
@@ -5674,20 +5699,26 @@
 }
 
 [data-theme="dark"] .achievement-grid article {
-  background: #16161a !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #222228 !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
   color: #f7f7fa !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 14px 28px rgba(0, 0, 0, 0.18) !important;
 }
 
 [data-theme="dark"] .achievement-grid article.is-locked {
-  background: rgba(255, 255, 255, 0.035) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: #24242a !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
   color: #aeb6c5 !important;
 }
 
 [data-theme="dark"] .achievement-grid article.is-earned {
+  background: linear-gradient(145deg, rgba(22, 163, 74, 0.16), #232a27) !important;
   border-color: rgba(22, 163, 74, 0.45) !important;
-  box-shadow: inset 0 3px 0 #16a34a !important;
+  box-shadow:
+    inset 0 3px 0 #16a34a,
+    0 14px 28px rgba(0, 0, 0, 0.22) !important;
 }
 
 [data-theme="dark"] .achievement-grid .achievement-icon {
@@ -5715,6 +5746,23 @@
 [data-theme="dark"] .achievement-grid h3 {
   color: #f7f7fa !important;
   -webkit-text-fill-color: #f7f7fa !important;
+}
+
+[data-theme="dark"] .progress-section.collapsible-panel {
+  background: #151519 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+[data-theme="dark"] .progress-section .panel-heading {
+  background: #232329 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+[data-theme="dark"] .achievement-grid article:hover {
+  background: #2a2a31 !important;
+  border-color: color-mix(in srgb, var(--primary, #e11d2e) 36%, rgba(255, 255, 255, 0.2)) !important;
+  transform: translateY(-1px);
 }
 
 [data-theme="dark"] .card-header,
@@ -6992,10 +7040,32 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
   -webkit-text-fill-color: #f7f7fa !important;
 }
 
+[data-theme="dark"] .role-profile-page .page-eyebrow,
+[data-theme="dark"] .role-profile-page .collapsible-panel-eyebrow {
+  color: color-mix(in srgb, var(--primary) 30%, #ffffff) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--primary) 30%, #ffffff) !important;
+}
+
+[data-theme="dark"] .role-profile-page .collapsible-panel-title {
+  color: #f7f7fa !important;
+  -webkit-text-fill-color: #f7f7fa !important;
+}
+
+[data-theme="dark"] .role-profile-page .collapsible-panel-description {
+  color: #aeb6c5 !important;
+  -webkit-text-fill-color: #aeb6c5 !important;
+}
+
 [data-theme="dark"] .role-profile-email,
 [data-theme="dark"] .role-profile-photo-info span {
   color: #aeb6c5 !important;
   -webkit-text-fill-color: #aeb6c5 !important;
+}
+
+[data-theme="dark"] .role-profile-page .collapsible-panel-static-header,
+[data-theme="dark"] .role-profile-page .collapsible-panel-toggle {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 [data-theme="dark"] .role-profile-upload-zone,
@@ -7017,7 +7087,7 @@ html[data-theme="dark"] body .dashboard .chip-option.active>span {
 }
 
 [data-theme="dark"] .role-profile-upload-button svg {
-  color: var(--primary) !important;
+  color: color-mix(in srgb, var(--primary) 30%, #ffffff) !important;
 }
 
 [data-theme="dark"] .role-profile-form input,

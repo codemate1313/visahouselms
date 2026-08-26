@@ -118,6 +118,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
   // Students and institute instructors live inside an institute, so creating
   // one from the directory asks which institute first.
   const [showInstituteModal, setShowInstituteModal] = useState(false);
+  const [newStudentKind, setNewStudentKind] = useState<"direct" | "institute">("direct");
   const [newStudentInstituteId, setNewStudentInstituteId] = useState<string>("");
   const [inspectingUserId, setInspectingUserId] = useState<number | null>(null);
 
@@ -565,6 +566,7 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
             onClick={
               TENANT_NEW_PATH[activeRole]
                 ? () => {
+                    setNewStudentKind(activeRole === "STUDENT" ? "direct" : "institute");
                     setNewStudentInstituteId(selectedInstituteId);
                     setShowInstituteModal(true);
                   }
@@ -676,30 +678,84 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
 
       <ConfirmModal
         isOpen={showInstituteModal}
-        title={strings.selectInstituteModal.title}
+        title={activeRole === "STUDENT" ? strings.selectInstituteModal.title : strings.selectInstituteModal.instituteTitle}
         message={
-          <div style={{ marginTop: 12 }}>
-            <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
-              {strings.selectInstituteModal.label}
-            </label>
-            <SearchableSelect
-              options={institutes.map((inst) => ({ value: String(inst.id), label: inst.name }))}
-              value={newStudentInstituteId}
-              onChange={(val) => setNewStudentInstituteId(String(val))}
-              placeholder="Search and select an institute..."
-              searchable={true}
-            />
+          <div style={{ display: "grid", gap: 16, marginTop: 12 }}>
+            {activeRole === "STUDENT" && (
+              <div style={{ display: "grid", gap: 10 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-muted)" }}>
+                  {strings.selectInstituteModal.typeLabel}
+                </span>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {[
+                    {
+                      value: "direct" as const,
+                      title: strings.selectInstituteModal.directTitle,
+                      description: strings.selectInstituteModal.directDescription,
+                    },
+                    {
+                      value: "institute" as const,
+                      title: strings.selectInstituteModal.instituteTitleOption,
+                      description: strings.selectInstituteModal.instituteDescription,
+                    },
+                  ].map((option) => {
+                    const selected = newStudentKind === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setNewStudentKind(option.value)}
+                        style={{
+                          border: selected ? "1px solid var(--primary)" : "1px solid var(--border)",
+                          borderRadius: 12,
+                          background: selected ? "var(--primary-soft)" : "var(--surface)",
+                          color: "var(--text)",
+                          padding: "14px 12px",
+                          textAlign: "left",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <strong style={{ display: "block", marginBottom: 5 }}>{option.title}</strong>
+                        <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>
+                          {option.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {(activeRole !== "STUDENT" || newStudentKind === "institute") && (
+              <div>
+                <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>
+                  {strings.selectInstituteModal.label}
+                </label>
+                <SearchableSelect
+                  options={institutes.map((inst) => ({ value: String(inst.id), label: inst.name }))}
+                  value={newStudentInstituteId}
+                  onChange={(val) => setNewStudentInstituteId(String(val))}
+                  placeholder="Search and select an institute..."
+                  searchable={true}
+                />
+              </div>
+            )}
           </div>
         }
         confirmText={strings.selectInstituteModal.continue}
         cancelText={strings.selectInstituteModal.cancel}
         variant="primary"
         onConfirm={() => {
+          if (activeRole === "STUDENT" && newStudentKind === "direct") {
+            navigate(`${basePath}/users/students/new`);
+            return;
+          }
           const buildPath = activeRole ? TENANT_NEW_PATH[activeRole] : undefined;
           if (newStudentInstituteId && buildPath) navigate(buildPath(newStudentInstituteId, basePath));
         }}
         onClose={() => {
           setShowInstituteModal(false);
+          setNewStudentKind("direct");
           setNewStudentInstituteId("");
         }}
       />

@@ -99,6 +99,27 @@ class DirectoryUserManagementTests(unittest.TestCase):
             super_admin_service.set_directory_user_active(self.db, self.actor, 99999, False)
         self.assertEqual(raised.exception.status_code, 404)
 
+    def test_super_admin_can_create_direct_student(self) -> None:
+        user, temporary_password = super_admin_service.create_direct_student(
+            self.db,
+            self.actor,
+            email="new-direct@directory.test",
+            first_name="New",
+            last_name="Direct",
+            phone_number="9876543210",
+            address="123 Direct Street",
+        )
+
+        self.assertTrue(temporary_password)
+        self.assertEqual(user.email, "new-direct@directory.test")
+        self.assertEqual(user.role_id, self.role_ids[STUDENT])
+        self.assertIsNone(user.institute_id)
+        self.assertTrue(user.force_password_reset)
+        self.assertIsNone(user.password_changed_at)
+
+        page = super_admin_service.list_directory_users(self.db, role=STUDENT, direct=True)
+        self.assertIn(user.id, [row["id"] for row in page["items"]])
+
     def test_delete_moves_direct_student_to_deleted_directory_segment(self) -> None:
         now = datetime.utcnow()
         self.db.add(

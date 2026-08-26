@@ -10,6 +10,7 @@ import { GsapInteractionLayer } from "./components/GsapInteractionLayer";
 import { ResponsiveTableCards } from "./components/ResponsiveTableCards";
 import { SessionHeartbeat } from "./components/SessionHeartbeat";
 import { useApplyTheme } from "./hooks/useApplyTheme";
+import { usePrintLightTheme } from "./hooks/usePrintLightTheme";
 
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { MaintenanceNotice } from "./components/MaintenanceNotice";
@@ -21,6 +22,7 @@ function App() {
   const initialized = useAuthStore((state) => state.initialized);
 
   useApplyTheme();
+  usePrintLightTheme();
 
   useEffect(() => {
     // One page view per navigation. The data router exposes a subscription that

@@ -278,6 +278,18 @@
   padding: 32px;
 }
 
+.role-profile-form-panel .collapsible-panel-header,
+.role-profile-form-panel .collapsible-panel-static-header,
+.role-profile-form-panel .collapsible-panel-toggle,
+.role-profile-form-panel .collapsible-panel-copy,
+.role-profile-form-panel .collapsible-panel-description {
+  max-width: 100%;
+}
+
+.role-profile-form-panel .collapsible-panel-description {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 
 .role-profile-form {
   display: flex;

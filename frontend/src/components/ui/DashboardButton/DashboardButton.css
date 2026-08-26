@@ -3,6 +3,7 @@
      the colour of text drawn on the sidebar's active pill (#ffffff in dark
      mode), which made primary buttons white-on-white. */
   --dashboard-button-accent: var(--primary);
+  --dashboard-button-readable-accent: var(--dashboard-button-accent);
   --primary-hover: color-mix(in srgb, var(--dashboard-button-accent) 86%, #000000);
   --primary-soft: color-mix(in srgb, var(--dashboard-button-accent) 20%, transparent);
   border-radius: 14px;
@@ -29,20 +30,20 @@
 
 .dashboard-btn.ui-btn-secondary,
 .dashboard-btn.ui-btn-ghost {
-  color: var(--dashboard-button-accent);
+  color: var(--dashboard-button-readable-accent);
   border-color: color-mix(in srgb, var(--dashboard-button-accent) 34%, var(--border));
   box-shadow: none;
 }
 
 .dashboard-btn.ui-btn-secondary:hover:not(:disabled),
 .dashboard-btn.ui-btn-ghost:hover:not(:disabled) {
-  color: var(--dashboard-button-accent);
+  color: var(--dashboard-button-readable-accent);
   border-color: var(--dashboard-button-accent);
   background: color-mix(in srgb, var(--dashboard-button-accent) 10%, var(--surface));
 }
 
 .dashboard-btn.ui-btn-text {
-  color: var(--dashboard-button-accent);
+  color: var(--dashboard-button-readable-accent);
 }
 
 .dashboard-btn.ui-btn-danger {
@@ -60,11 +61,25 @@
 
 [data-theme="dark"] .dashboard-btn.ui-btn-secondary,
 [data-theme="dark"] .dashboard-btn.ui-btn-ghost {
+  --dashboard-button-readable-accent: color-mix(in srgb, var(--dashboard-button-accent) 24%, #ffffff);
   background: color-mix(in srgb, var(--dashboard-button-accent) 8%, rgba(255, 255, 255, 0.06));
   border-color: color-mix(in srgb, var(--dashboard-button-accent) 36%, rgba(255, 255, 255, 0.14));
+  color: var(--dashboard-button-readable-accent) !important;
 }
 
 [data-theme="dark"] .dashboard-btn.ui-btn-secondary:hover:not(:disabled),
 [data-theme="dark"] .dashboard-btn.ui-btn-ghost:hover:not(:disabled) {
   background: color-mix(in srgb, var(--dashboard-button-accent) 14%, rgba(255, 255, 255, 0.08));
+  color: var(--dashboard-button-readable-accent) !important;
+}
+
+[data-theme="dark"] .dashboard-btn.ui-btn-primary {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .dashboard-btn.ui-btn-secondary svg,
+[data-theme="dark"] .dashboard-btn.ui-btn-ghost svg,
+[data-theme="dark"] .dashboard-btn.ui-btn-text svg {
+  color: currentColor;
+  stroke: currentColor;
 }

@@ -1,0 +1,96 @@
+/* ==========================================================================
+   Shared print reset
+   --------------------------------------------------------------------------
+   Loaded last, so it settles ties against the page-level `@media print`
+   blocks it is meant to support (Invoice, StudentPurchaseHistory, vouchers).
+
+   Two jobs:
+
+   1. Strip the application shell. Everything the app prints is a document
+      inside a portal chrome that has no business on paper - sidebars, top
+      bars, toasts, floating action buttons - and every printable page was
+      repeating its own list of things to hide.
+
+   2. Force the paper back to ink-on-white when the dark theme is on. The
+      primary fix for that is `usePrintLightTheme`, which drops `data-theme`
+      to light for the duration of the job so the dark overrides stop matching
+      at all. These rules are the fallback for a browser that prints without
+      firing `beforeprint` (some in-app/embedded webviews): they are written
+      with an `:root[data-theme][data-theme][data-theme] body` prefix purely to outrank the
+      `[data-theme="dark"] .dashboard { background: #0d0e12 !important }`
+      blanket in `06-admin-modules-and-billing.css`, which is what turned the
+      invoice into a black sheet with invisible text.
+   ========================================================================== */
+
+@media print {
+  html,
+  html[data-theme],
+  :root[data-theme][data-theme][data-theme] body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    /* Inherited by the whole tree, so document colour survives a print with
+       "Background graphics" switched off. */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page shells: transparent, so a document card sits on white paper instead
+     of on a full-height tinted (or in dark mode, near-black) panel. */
+  :root[data-theme][data-theme][data-theme] body #root,
+  :root[data-theme][data-theme][data-theme] body .dashboard,
+  :root[data-theme][data-theme][data-theme] body .dashboard-content,
+  :root[data-theme][data-theme][data-theme] body .dashboard-overview,
+  :root[data-theme][data-theme][data-theme] body .super-admin-portal,
+  :root[data-theme][data-theme][data-theme] body .super-admin-portal main,
+  :root[data-theme][data-theme][data-theme] body .institute-branded-portal,
+  :root[data-theme][data-theme][data-theme] body .institute-branded-portal main,
+  :root[data-theme][data-theme][data-theme] body .student-layout,
+  :root[data-theme][data-theme][data-theme] body .student-layout main,
+  :root[data-theme][data-theme][data-theme] body .portal-main,
+  :root[data-theme][data-theme][data-theme] body .page-content {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Application chrome never prints. */
+  :root[data-theme][data-theme][data-theme] body :is(
+    .no-print,
+    .dashboard-sidebar,
+    .portal-sidebar,
+    .super-admin-sidebar,
+    .sidebar-container,
+    .portal-app-bar,
+    .portal-top-bar,
+    .dashboard-topbar,
+    .impersonation-banner,
+    .maintenance-notice,
+    .connectivity-notice,
+    .toast-container,
+    .snackbar-container,
+    .global-loader,
+    .scroll-to-top
+  ) {
+    display: none !important;
+  }
+
+  /* Links print as plain text - a portal URL under every label is noise on a
+     receipt. */
+  :root[data-theme][data-theme][data-theme] body a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  /* The dark theme paints portal text through `-webkit-text-fill-color`, which
+     wins over `color` at paint time - white-on-white unless it is handed back
+     to whatever colour each element resolves to. */
+  :root[data-theme][data-theme][data-theme] body * {
+    -webkit-text-fill-color: currentColor !important;
+  }
+}

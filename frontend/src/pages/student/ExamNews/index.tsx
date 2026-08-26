@@ -18,11 +18,11 @@ export interface ExamNewsItem {
   tests: string[];
 }
 
-const CATEGORY_STYLES: Record<string, { label: string; color: string }> = {
-  immigration: { label: "Immigration", color: "#10b981" },
-  visa: { label: "Visa Policy", color: "#0284c7" },
-  study: { label: "Study Abroad", color: "#f59e0b" },
-  exam: { label: "Exam Updates", color: "#e11d48" },
+const CATEGORY_STYLES: Record<string, { label: string; className: string }> = {
+  immigration: { label: "Immigration", className: "cat-immigration" },
+  visa: { label: "Visa Policy", className: "cat-visa" },
+  study: { label: "Study Abroad", className: "cat-study" },
+  exam: { label: "Exam Updates", className: "cat-exam" },
 };
 
 function getCategoryInfo(category: string) {
@@ -30,7 +30,7 @@ function getCategoryInfo(category: string) {
   return (
     CATEGORY_STYLES[normalized] || {
       label: strings.categories[category as keyof typeof strings.categories] ?? category,
-      color: "#b91c2b",
+      className: "cat-default",
     }
   );
 }
@@ -109,16 +109,9 @@ export function ExamNews() {
                       </div>
 
                       <span
-                        className="exam-news-clean-cat-badge"
-                        style={{
-                          backgroundColor: `${catInfo.color}14`,
-                          color: catInfo.color,
-                        }}
+                        className={`exam-news-clean-cat-badge ${catInfo.className}`}
                       >
-                        <span
-                          className="exam-news-clean-cat-dot"
-                          style={{ backgroundColor: catInfo.color }}
-                        />
+                        <span className="exam-news-clean-cat-dot" />
                         <span>{catInfo.label}</span>
                       </span>
                     </div>
@@ -162,8 +155,7 @@ export function ExamNews() {
                     <div className="exam-news-clean-footer">
                       <div className="exam-news-clean-source">
                         <div
-                          className="exam-news-clean-source-avatar"
-                          style={{ backgroundColor: `${catInfo.color}18`, color: catInfo.color }}
+                          className={`exam-news-clean-source-avatar ${catInfo.className}`}
                         >
                           {sourceInitial}
                         </div>

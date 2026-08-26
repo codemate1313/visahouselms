@@ -117,6 +117,19 @@ class ProfileUpdateRequest(BaseModel):
         return _clean_required_phone(value)
 
 
+class DirectStudentCreate(BaseModel):
+    email: EmailStr
+    first_name: str
+    last_name: str
+    phone_number: str
+    address: Optional[str] = None
+
+    @field_validator("phone_number")
+    @classmethod
+    def check_phone_number(cls, value: str) -> str:
+        return _clean_required_phone(value)
+
+
 class SessionLocationOut(BaseModel):
     label: str
     city: Optional[str] = None

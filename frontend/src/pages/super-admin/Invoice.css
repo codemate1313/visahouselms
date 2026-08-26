@@ -1130,6 +1130,7 @@ button.invoice-modal-close:hover svg * {
     width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
+    color: #0f172a !important;
   }
 
   /* Main Card Wrapper - Clean Borderless Sheet */
@@ -1349,6 +1350,7 @@ button.invoice-modal-close:hover svg * {
 
   /* Table Area - Modern Editorial Table */
   .invoice-table-wrapper {
+    background: #ffffff !important;
     border: none !important;
     border-radius: 0 !important;
     margin-bottom: 14px !important;
@@ -1512,5 +1514,98 @@ button.invoice-modal-close:hover svg * {
     font-weight: 800 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* --- Dark-theme fallback -------------------------------------------------
+     `usePrintLightTheme` drops the document to the light theme for the
+     duration of a print job, so in a normal browser none of this is needed:
+     no `[data-theme="dark"]` selector matches while the sheet is being laid
+     out. It is kept for engines that print without firing `beforeprint`
+     (some embedded webviews), because the dark rules this undoes either carry
+     `!important` themselves (`[data-theme="dark"] .invoice-timeline-text`,
+     the global `[data-theme="dark"] h1..h6` blanket in
+     `06-admin-modules-and-billing.css`) or are inherited from a shell that
+     does (`.dashboard { color: #f3f4f6 !important }`) - which is what printed
+     this invoice as a black sheet with white-on-white text.
+
+     The `:root[data-theme][data-theme][data-theme] body` prefix exists only to out-rank those; the
+     values are the same ones the plain-class rules above already set, so the
+     light path prints identically either way. Order matters below: the
+     blanket first, then the exceptions that carry their own ink. */
+  :root[data-theme][data-theme][data-theme] body .invoice-page-container,
+  :root[data-theme][data-theme][data-theme] body .invoice-page-container * {
+    color: #0f172a !important;
+    /* The dark theme paints most portal text through `-webkit-text-fill-color`,
+       which wins over `color` at paint time however the colour was set. */
+    -webkit-text-fill-color: currentColor !important;
+    box-shadow: none !important;
+  }
+
+  :root[data-theme][data-theme][data-theme] body .invoice-brand-subtitle,
+  :root[data-theme][data-theme][data-theme] body .invoice-date-stamp,
+  :root[data-theme][data-theme][data-theme] body .invoice-metric-label,
+  :root[data-theme][data-theme][data-theme] body .invoice-info-card-sub,
+  :root[data-theme][data-theme][data-theme] body .invoice-total-row,
+  :root[data-theme][data-theme][data-theme] body .invoice-total-row span,
+  :root[data-theme][data-theme][data-theme] body .invoice-timeline-text,
+  :root[data-theme][data-theme][data-theme] body .invoice-timeline-date,
+  :root[data-theme][data-theme][data-theme] body .invoice-footer-note {
+    color: #475569 !important;
+  }
+
+  :root[data-theme][data-theme][data-theme] body .invoice-info-card-header,
+  :root[data-theme][data-theme][data-theme] body .invoice-info-card-header svg,
+  :root[data-theme][data-theme][data-theme] body .invoice-timeline-title,
+  :root[data-theme][data-theme][data-theme] body .invoice-item-tag,
+  :root[data-theme][data-theme][data-theme] body .invoice-seal-badge,
+  :root[data-theme][data-theme][data-theme] body .status-pill,
+  :root[data-theme][data-theme][data-theme] body .invoice-metric-tile.tile-highlight-paid .invoice-metric-value,
+  :root[data-theme][data-theme][data-theme] body .invoice-metric-tile.tile-highlight-due .invoice-metric-value,
+  :root[data-theme][data-theme][data-theme] body .invoice-total-row.grand-total,
+  :root[data-theme][data-theme][data-theme] body .invoice-total-row.grand-total span,
+  :root[data-theme][data-theme][data-theme] body .invoice-total-row.due-row,
+  :root[data-theme][data-theme][data-theme] body .invoice-total-row.due-row span {
+    color: #a31c28 !important;
+  }
+
+  :root[data-theme][data-theme][data-theme] body .invoice-brand-logo-mark {
+    color: #ffffff !important;
+  }
+
+  :root[data-theme][data-theme][data-theme] body .invoice-card-wrapper,
+  :root[data-theme][data-theme][data-theme] body .invoice-card-body,
+  :root[data-theme][data-theme][data-theme] body .invoice-table-wrapper,
+  :root[data-theme][data-theme][data-theme] body .invoice-table,
+  :root[data-theme][data-theme][data-theme] body .invoice-table tr,
+  :root[data-theme][data-theme][data-theme] body .invoice-table th,
+  :root[data-theme][data-theme][data-theme] body .invoice-table td {
+    background: #ffffff !important;
+  }
+
+  /* Left to the rules above: the header rule and the totals divider are part
+     of the print design, not theme leakage. */
+  :root[data-theme][data-theme][data-theme] body .invoice-card-wrapper,
+  :root[data-theme][data-theme][data-theme] body .invoice-table-wrapper {
+    border-color: #e2e8f0 !important;
+  }
+
+  :root[data-theme][data-theme][data-theme] body .invoice-metrics-banner,
+  :root[data-theme][data-theme][data-theme] body .invoice-info-card,
+  :root[data-theme][data-theme][data-theme] body .invoice-timeline-card,
+  :root[data-theme][data-theme][data-theme] body .invoice-number-tag {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  :root[data-theme][data-theme][data-theme] body .status-pill,
+  :root[data-theme][data-theme][data-theme] body .invoice-item-tag,
+  :root[data-theme][data-theme][data-theme] body .invoice-seal-badge,
+  :root[data-theme][data-theme][data-theme] body .invoice-total-row.due-row {
+    background: #fff1f2 !important;
+  }
+
+  :root[data-theme][data-theme][data-theme] body .invoice-brand-logo-mark,
+  :root[data-theme][data-theme][data-theme] body .invoice-timeline-item::before {
+    background: #a31c28 !important;
   }
 }

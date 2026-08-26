@@ -944,6 +944,39 @@ def get_direct_student_or_404(db: Session, user_id: int) -> User:
     return user
 
 
+def create_direct_student(
+    db: Session,
+    actor: User,
+    email: str,
+    first_name: str,
+    last_name: str,
+    phone_number: str,
+    address: Optional[str] = None,
+    ip_address: Optional[str] = None,
+) -> tuple[User, str]:
+    role = _role_or_500(db, STUDENT)
+    temporary_password = _temporary_password()
+    user = User(
+        email=account_service.ensure_user_credentials_available(db, email),
+        password_hash=hash_password(temporary_password),
+        role_id=role.id,
+        first_name=first_name,
+        last_name=last_name,
+        phone_number=phone_number,
+        address=address,
+        institute_id=None,
+        is_active=True,
+        force_password_reset=True,
+        password_changed_at=None,
+    )
+    db.add(user)
+    db.flush()
+    _write_audit_log(db, actor, "student.direct.create", user.id, ip_address)
+    db.commit()
+    db.refresh(user)
+    return user, temporary_password
+
+
 def get_directory_user_or_404(db: Session, user_id: int, *, include_deleted: bool = False) -> User:
     query = (
         db.query(User)

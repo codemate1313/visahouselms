@@ -269,10 +269,7 @@ export function StudentVouchers() {
                       {/* Top Header Row */}
                       <div className="sv-card-top">
                         <div className="sv-exam-header-left">
-                          <span
-                            className="sv-exam-indicator-dot"
-                            style={{ backgroundColor: vo.voucher_type_badge_color || "#e11d48" }}
-                          />
+                          <span className="sv-exam-indicator-dot" />
                           <span className="sv-exam-title-tag">
                             {vo.voucher_type_name}
                           </span>
@@ -399,10 +396,7 @@ export function StudentVouchers() {
                       {/* Top Header - Clean realistic layout */}
                       <div className="sv-card-top">
                         <div className="sv-exam-header-left">
-                          <span
-                            className="sv-exam-indicator-dot"
-                            style={{ backgroundColor: v.voucher_type_badge_color || "#e11d48" }}
-                          />
+                          <span className="sv-exam-indicator-dot" />
                           <span className="sv-exam-title-tag">
                             {v.voucher_type_name}
                           </span>
