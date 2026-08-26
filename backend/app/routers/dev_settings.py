@@ -126,6 +126,8 @@ def put_ai_evaluation(
     set_settings_group(db, "ai", {key: str(value) if isinstance(value, bool) else value for key, value in data.items()})
     if api_keys is not None:
         ai_evaluation_service.save_configured_keys(db, api_keys)
+    if ai_evaluation_service.config_status(db)["configured"]:
+        job_service.recover_missing_ai_auto_grade_jobs(db)
     _audit(db, actor, "dev_settings.update_ai_evaluation", request)
     return ai_evaluation_service.config_status(db)
 
@@ -449,4 +451,3 @@ def put_static_otp(
         "enabled": is_static_otp_enabled(db),
         "code": get_static_otp_code(db),
     }
-
