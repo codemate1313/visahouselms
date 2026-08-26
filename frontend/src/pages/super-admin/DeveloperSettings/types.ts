@@ -1,4 +1,4 @@
-export type Tab = "typography" | "otp" | "smtp" | "fcm" | "ai" | "payment-gateways" | "maintenance" | "backups" | "seed" | "slider" | "contact";
+export type Tab = "typography" | "otp" | "smtp" | "fcm" | "ai" | "google-oauth" | "payment-gateways" | "maintenance" | "backups" | "seed" | "slider" | "contact";
 
 
 

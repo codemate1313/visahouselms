@@ -11,6 +11,7 @@ import { ContactSocialTab } from "./components/ContactSocialTab";
 import { SmtpTab } from "./components/SmtpTab";
 import { FcmTab } from "./components/FcmTab";
 import { AiEvaluationTab } from "./components/AiEvaluationTab";
+import { GoogleOAuthTab } from "./components/GoogleOAuthTab";
 import { PaymentGatewaysTab } from "./components/PaymentGatewaysTab";
 import { MaintenanceTab } from "./components/MaintenanceTab";
 import { BackupsTab } from "./components/BackupsTab";
@@ -50,6 +51,7 @@ export function DeveloperSettings() {
       {tab === "smtp" && <SmtpTab />}
       {tab === "fcm" && <FcmTab />}
       {tab === "ai" && <AiEvaluationTab />}
+      {tab === "google-oauth" && <GoogleOAuthTab />}
       {tab === "payment-gateways" && <PaymentGatewaysTab />}
       {tab === "maintenance" && <MaintenanceTab />}
       {tab === "backups" && <BackupsTab />}

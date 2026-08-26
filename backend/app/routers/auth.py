@@ -40,6 +40,7 @@ from app.schemas.auth import (
     VerifyOtpRequest,
 )
 from app.services import account_service, auth_service, email_template_service, institute_service, smtp_service, totp_service
+from app.services.settings_service import get_setting
 from app.models.role import DEVELOPER
 from app.models.user import User
 
@@ -151,8 +152,17 @@ def _frontend_redirect(path: str, params: dict[str, str]) -> RedirectResponse:
     return RedirectResponse(f"{settings.frontend_url.rstrip('/')}{path}{separator}{urlencode(params)}")
 
 
-def _google_redirect_uri(request: Request) -> str:
-    return settings.google_redirect_uri or str(request.url_for("google_callback"))
+def _google_client_id(db: Session) -> Optional[str]:
+    return get_setting(db, "google_oauth.client_id") or settings.google_client_id
+
+
+def _google_client_secret(db: Session) -> Optional[str]:
+    return get_setting(db, "google_oauth.client_secret") or settings.google_client_secret
+
+
+def _google_redirect_uri(request: Request, db: Session) -> str:
+    configured = get_setting(db, "google_oauth.redirect_uri") or settings.google_redirect_uri
+    return configured or str(request.url_for("google_callback"))
 
 
 def _skips_login_otp(user: User) -> bool:
@@ -204,8 +214,11 @@ def google_login(
     remember_me: bool = True,
     device_id: Optional[str] = Query(default=None, min_length=16, max_length=200),
     device_name: Optional[str] = Query(default=None, max_length=120),
+    db: Session = Depends(get_db),
 ):
-    if not settings.google_client_id or not settings.google_client_secret:
+    client_id = _google_client_id(db)
+    client_secret = _google_client_secret(db)
+    if not client_id or not client_secret:
         return _frontend_redirect(_safe_return_path(return_path), {"role": role, "google_error": "Google login is not configured"})
 
     device_identifier = _device_identifier(request, response, device_id)
@@ -219,8 +232,8 @@ def google_login(
     )
     query = urlencode(
         {
-            "client_id": settings.google_client_id,
-            "redirect_uri": _google_redirect_uri(request),
+            "client_id": client_id,
+            "redirect_uri": _google_redirect_uri(request, db),
             "response_type": "code",
             "scope": "openid email profile",
             "state": state,
@@ -263,9 +276,9 @@ def google_callback(
             GOOGLE_TOKEN_URL,
             data={
                 "code": code,
-                "client_id": settings.google_client_id,
-                "client_secret": settings.google_client_secret,
-                "redirect_uri": _google_redirect_uri(request),
+                "client_id": _google_client_id(db),
+                "client_secret": _google_client_secret(db),
+                "redirect_uri": _google_redirect_uri(request, db),
                 "grant_type": "authorization_code",
             },
             timeout=10,

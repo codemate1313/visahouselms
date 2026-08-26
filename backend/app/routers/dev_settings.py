@@ -11,6 +11,7 @@ from app.schemas.dev import (
     AiEvaluationSettingsIn,
     BackupSettingsIn,
     FcmSettingsIn,
+    GoogleOAuthSettingsIn,
     LogSettingsIn,
     PaymentGatewaySettingsIn,
     SmtpSettingsIn,
@@ -402,6 +403,25 @@ def put_payment_gateways(
     set_settings_group(db, "payment_gateways", data)
     _audit(db, actor, "dev_settings.update_payment_gateways", request)
     return get_settings_group(db, "payment_gateways")
+
+
+# ---------- Google OAuth ----------
+
+@router.get("/google-oauth")
+def get_google_oauth(db: Session = Depends(get_db)):
+    return get_settings_group(db, "google_oauth")
+
+
+@router.put("/google-oauth")
+def put_google_oauth(
+    payload: GoogleOAuthSettingsIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    set_settings_group(db, "google_oauth", payload.model_dump())
+    _audit(db, actor, "dev_settings.update_google_oauth", request)
+    return get_settings_group(db, "google_oauth")
 
 
 # ---------- STATIC TESTING OTP ----------

@@ -81,3 +81,9 @@ class StaticOtpSettingsIn(BaseModel):
     enabled: bool = True
     code: Optional[str] = "123456"
 
+
+class GoogleOAuthSettingsIn(BaseModel):
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None  # write-only; masked value leaves stored secret untouched
+    redirect_uri: Optional[str] = None
+

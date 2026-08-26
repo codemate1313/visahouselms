@@ -16,6 +16,7 @@ SECRET_KEYS = {
     "payment_gateways.razorpay_webhook_secret",
     "payment_gateways.stripe_secret_key",
     "payment_gateways.stripe_webhook_secret",
+    "google_oauth.client_secret",
 }
 
 SECRET_PLACEHOLDER = "********"
