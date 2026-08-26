@@ -8,6 +8,7 @@ interface NotepadGapsGroupProps {
   savingIds: Set<number>;
   maxAnswerWords?: number;
   onChangeResponse: (questionId: number, response: AttemptResponse, debounce?: boolean) => void;
+  hideRings?: boolean;
 }
 
 type LineToken =
@@ -57,6 +58,7 @@ export function NotepadGapsGroup({
   savingIds,
   maxAnswerWords,
   onChangeResponse,
+  hideRings = false,
 }: NotepadGapsGroupProps) {
   const notepad = questions[0]?.passage?.trim() || buildFallbackNotepad(questions);
   const { heading, lines } = useMemo(() => {
@@ -71,9 +73,11 @@ export function NotepadGapsGroup({
 
   return (
     <article className="test-runner-notepad" aria-label="Notepad">
-      <span className="test-runner-notepad-rings" aria-hidden="true">
-        {[0, 1, 2, 3, 4].map((ring) => <i key={ring} />)}
-      </span>
+      {!hideRings && (
+        <span className="test-runner-notepad-rings" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((ring) => <i key={ring} />)}
+        </span>
+      )}
       {heading && <h3 className="test-runner-notepad-heading">{heading}</h3>}
       <ul className="test-runner-notepad-lines">
         {lines.map((line, lineIndex) => (

@@ -1649,6 +1649,7 @@ export function TestRunner() {
                 onChangeResponse={updateResponse}
                 onRecord={recordSpeakingAnswer}
                 languageCertSkin={languageCertSkin}
+                moduleType={attempt.module_type}
               />
             </>
           )}

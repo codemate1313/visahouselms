@@ -19,6 +19,7 @@ interface QuestionPaneProps {
   onRecord: (questionId: number) => void;
   /** Final Test only: the exam skin's writing toolbar carries undo/redo. */
   languageCertSkin?: boolean;
+  moduleType?: string;
 }
 
 export function QuestionPane({
@@ -30,6 +31,7 @@ export function QuestionPane({
   onChangeResponse,
   onRecord,
   languageCertSkin = false,
+  moduleType,
 }: QuestionPaneProps) {
   const t = strings.questionPane;
   const isReading1a = currentPart.part_code === "reading_1a";
@@ -75,6 +77,7 @@ export function QuestionPane({
           savingIds={savingIds}
           maxAnswerWords={currentPart.answer_constraints.max_answer_words}
           onChangeResponse={onChangeResponse}
+          hideRings={moduleType === "full_mock" || moduleType === "listening"}
         />
       ) : usesSharedCloze ? (
         <SharedClozeGroup
