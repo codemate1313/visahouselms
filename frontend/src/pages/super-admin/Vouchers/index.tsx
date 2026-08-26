@@ -98,6 +98,14 @@ const COLOR_PRESETS = [
   "#1e293b", // Slate / Dark
 ];
 
+const PURCHASE_STATUS_OPTIONS = [
+  { value: "all", label: "All payment statuses" },
+  { value: "completed", label: "Paid" },
+  { value: "pending", label: "Awaiting payment" },
+  { value: "failed", label: "Failed" },
+  { value: "refunded", label: "Refunded" },
+];
+
 /** A purchase is only a sale once its payment was verified. Pending rows are
  * checkout attempts holding a reserved code, and failed ones released it. */
 function purchaseStatusTone(status: string): BadgeTone {
@@ -125,6 +133,7 @@ export function Vouchers() {
   const [gstRates, setGstRates] = useState<GstRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [unusedSearch, setUnusedSearch] = useState("");
   const [unusedTypeFilter, setUnusedTypeFilter] = useState("all");
   const [purchasesPage, setPurchasesPage] = useState(1);
@@ -209,7 +218,7 @@ export function Vouchers() {
   // restarts from page 1.
   useEffect(() => {
     setPurchasesPage(1);
-  }, [search]);
+  }, [search, paymentStatusFilter]);
 
   useEffect(() => {
     setUnusedPage(1);
@@ -523,8 +532,9 @@ export function Vouchers() {
 
   // KPI Metrics Calculation
   const totalAvailableStock = types.reduce((acc, t) => acc + (t.stock?.available || 0), 0);
-  const totalPurchasedCount = purchases.length;
-  const totalRevenue = purchases.reduce((acc, p) => acc + (parseFloat(p.final_amount) || 0), 0);
+  const paidPurchases = purchases.filter((purchase) => purchase.status === "completed");
+  const totalPurchasedCount = paidPurchases.length;
+  const totalRevenue = paidPurchases.reduce((acc, p) => acc + (parseFloat(p.final_amount) || 0), 0);
 
   // Dropdown Options
   const typeSelectOptions = types.map((t) => ({
@@ -543,6 +553,13 @@ export function Vouchers() {
     { value: "all", label: "All voucher types" },
     ...types.map((t) => ({ value: t.name, label: t.name })),
   ];
+  const filteredPurchases = useMemo(
+    () =>
+      purchases.filter(
+        (purchase) => paymentStatusFilter === "all" || purchase.status === paymentStatusFilter
+      ),
+    [purchases, paymentStatusFilter]
+  );
   const filteredUnusedCodes = useMemo(() => {
     const query = unusedSearch.trim().toLowerCase();
     return unusedCodes.filter((code) => {
@@ -568,8 +585,8 @@ export function Vouchers() {
   const selectedVisibleUnusedCount = filteredUnusedIds.filter((id) => selectedUnusedIds.has(id)).length;
   const selectedAvailableUnusedCount = availableFilteredUnusedIds.filter((id) => selectedUnusedIds.has(id)).length;
 
-  const purchasesTotalPages = Math.max(1, Math.ceil(purchases.length / PAGE_SIZE));
-  const pagedPurchases = purchases.slice((purchasesPage - 1) * PAGE_SIZE, purchasesPage * PAGE_SIZE);
+  const purchasesTotalPages = Math.max(1, Math.ceil(filteredPurchases.length / PAGE_SIZE));
+  const pagedPurchases = filteredPurchases.slice((purchasesPage - 1) * PAGE_SIZE, purchasesPage * PAGE_SIZE);
   const unusedTotalPages = Math.max(1, Math.ceil(filteredUnusedCodes.length / PAGE_SIZE));
   const pagedUnusedCodes = filteredUnusedCodes.slice((unusedPage - 1) * PAGE_SIZE, unusedPage * PAGE_SIZE);
 
@@ -621,7 +638,7 @@ export function Vouchers() {
             <>
               Showing <strong>
                 {activeTab === "purchases"
-                  ? purchases.length
+                  ? filteredPurchases.length
                   : activeTab === "unused"
                   ? filteredUnusedCodes.length
                   : activeTab === "offerings"
@@ -632,12 +649,21 @@ export function Vouchers() {
           }
         >
           {activeTab === "purchases" && (
-            <SearchInput
-              placeholder={s.purchases.searchPlaceholder}
-              value={search}
-              onChange={(val) => setSearch(val)}
-              width={320}
-            />
+            <>
+              <SearchInput
+                placeholder={s.purchases.searchPlaceholder}
+                value={search}
+                onChange={(val) => setSearch(val)}
+                width={320}
+              />
+              <SearchableSelect
+                options={PURCHASE_STATUS_OPTIONS}
+                value={paymentStatusFilter}
+                onChange={(val) => setPaymentStatusFilter(String(val))}
+                placeholder="All payment statuses"
+                searchable={false}
+              />
+            </>
           )}
           {activeTab === "unused" && (
             <>
@@ -708,10 +734,10 @@ export function Vouchers() {
                 </tr>
               </thead>
               <tbody>
-                {purchases.length === 0 ? (
+                {filteredPurchases.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="ui-empty-row">
-                      {s.purchases.noPurchases}
+                      {purchases.length === 0 ? s.purchases.noPurchases : "No voucher purchases match the current filters."}
                     </td>
                   </tr>
                 ) : (
@@ -742,9 +768,13 @@ export function Vouchers() {
                         <Badge tone={purchaseStatusTone(p.status)}>{purchaseStatusLabel(p.status)}</Badge>
                       </td>
                       <td>
-                        <strong className="text-slate-900 dark:text-white">
-                          {formatCurrencyAmount(p.final_amount)}
-                        </strong>
+                        {p.status === "completed" ? (
+                          <strong className="text-slate-900 dark:text-white">
+                            {formatCurrencyAmount(p.final_amount)}
+                          </strong>
+                        ) : (
+                          <span className="text-xs text-slate-500">Not paid</span>
+                        )}
                         <div className="text-[10px] text-slate-400 uppercase font-bold">{p.gateway}</div>
                       </td>
                       <td>
@@ -753,9 +783,13 @@ export function Vouchers() {
                         </span>
                       </td>
                       <td className="text-right">
-                        <Button variant="secondary" size="small" onClick={() => setSelectedInvoice(p)}>
-                          Invoice
-                        </Button>
+                        {p.status === "completed" ? (
+                          <Button variant="secondary" size="small" onClick={() => setSelectedInvoice(p)}>
+                            Invoice
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-slate-500">No invoice</span>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -769,7 +803,7 @@ export function Vouchers() {
                 <Icon name="arrowLeft" /> Previous
               </button>
               <span>
-                Page {purchasesPage} of {purchasesTotalPages} ({purchases.length} total)
+                Page {purchasesPage} of {purchasesTotalPages} ({filteredPurchases.length} total)
               </span>
               <button
                 type="button"
