@@ -51,6 +51,11 @@ FAILURE_EXPLANATIONS = (
         "Check the key in Developer Settings - it may be expired, revoked, or missing billing.",
     ),
     (
+        ("too large to send",),
+        "The recordings for this part were too big to send to the AI.",
+        "Long video answers are the usual cause. An instructor can still mark it; shorter recordings will go through next time.",
+    ),
+    (
         ("no audio recording", "no textual response"),
         "There was nothing to mark - the student's answer was empty when the AI was asked.",
         "Nothing to fix here; the part goes to an instructor as normal.",

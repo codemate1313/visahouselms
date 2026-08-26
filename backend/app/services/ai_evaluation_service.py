@@ -44,6 +44,10 @@ RATE_LIMIT_KEY_SWITCH_SECONDS = 2.0
 # part. Long enough to cover a slow provider call, short enough that a crashed
 # worker cannot wedge a part for ever.
 IN_FLIGHT_WINDOW_SECONDS = 300
+# Gemini accepts about 20 MB of inline data per request. Speaking answers are
+# recorded as video/webm, so a single long answer can be several MB and a part
+# with three of them can pass the limit - budget the whole part, not each file.
+MAX_INLINE_BYTES_PER_PART = 18 * 1024 * 1024
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 MASKED_SECRET = "********"
@@ -850,6 +854,8 @@ def get_student_ai_evaluation_history(db: Session, user: User) -> dict:
 def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
     answers = {answer.question_id: answer for answer in attempt.answers}
     responses = []
+    skipped: list[str] = []
+    inline_bytes = 0
     
     for question in sorted(part.questions, key=lambda item: item.sort_order):
         answer = answers.get(question.id)
@@ -875,13 +881,17 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
                     else:
                         mime_type = "audio/webm"
                 
-                # Max 10MB audio inline payload safeguard
-                if len(audio_bytes) <= 10 * 1024 * 1024:
+                if inline_bytes + len(audio_bytes) <= MAX_INLINE_BYTES_PER_PART:
+                    inline_bytes += len(audio_bytes)
                     responses.append({
                         "prompt": question.prompt,
                         "audio_b64": base64.b64encode(audio_bytes).decode("utf-8"),
                         "mime_type": mime_type,
                     })
+                else:
+                    # Dropping this silently is how a part ended up "awaiting
+                    # examiner marking" with no reason anywhere.
+                    skipped.append(f"{len(audio_bytes) / 1024 / 1024:.1f} MB")
         elif text_resp:
             responses.append({
                 "prompt": question.prompt,
@@ -889,6 +899,14 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
             })
 
     if not responses:
+        if skipped:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"The recordings for this part are too large to send for AI marking "
+                    f"({', '.join(skipped)}; the limit is {MAX_INLINE_BYTES_PER_PART // 1024 // 1024} MB per part)."
+                ),
+            )
         if part.section_type == "speaking":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1462,7 +1480,25 @@ def request_suggestion(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI evaluation is not enabled or fully configured")
 
     limits = _limit_rows(db, attempt, int(configs_to_try[0].get("monthly_limit") or DEFAULT_MONTHLY_LIMIT))
-    payload = _payload(attempt, part)
+    try:
+        payload = _payload(attempt, part)
+    except HTTPException as exc:
+        # Building the request used to fail before any row existed, so a part
+        # that could not be sent at all left no trace: the AI marking log had
+        # nothing for it and the student just saw "awaiting examiner marking"
+        # with no reason. Record the attempt, then re-raise as before.
+        db.add(AiEvaluation(
+            attempt_id=attempt.id,
+            part_id=part.id,
+            requested_by_id=actor.id,
+            provider=configs_to_try[0].get("provider") or "unknown",
+            model=configs_to_try[0].get("model"),
+            status="failed",
+            error=_redact_secrets(exc.detail)[:4000],
+            duration_ms=0,
+        ))
+        db.commit()
+        raise
     last_error: Optional[Exception] = None
     failed_records: list[AiEvaluation] = []
 
@@ -1566,6 +1602,10 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
         except HTTPException as exc:
             if exc.status_code == 429:
                 quota_exhausted = True
+                # The next part would land in the same closed window. Speaking
+                # parts are large, so one rate-limited part used to take the
+                # rest of the paper down with it.
+                time.sleep(RATE_LIMIT_RETRY_SECONDS)
             continue
         except Exception:
             logger.exception(
@@ -1612,6 +1652,24 @@ def retry_attempt_evaluation(db: Session, attempt: TestAttempt) -> dict:
         and (grades_by_part.get(part.id) is None or grades_by_part[part.id].status == PART_GRADE_PENDING)
     ]
     if not pending:
+        # Distinguish "already marked" from "AI is switched off for these
+        # parts" - they look identical to a student, and only one of them is
+        # something anybody can act on.
+        ai_disabled = [
+            part
+            for part in attempt.module.parts
+            if not part.auto_marked
+            and not part.ai_evaluation_enabled
+            and (grades_by_part.get(part.id) is None or grades_by_part[part.id].status == PART_GRADE_PENDING)
+        ]
+        if ai_disabled:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"AI marking is switched off for the {len(ai_disabled)} remaining "
+                    f"part{'s' if len(ai_disabled) != 1 else ''} of this test, so an instructor will mark them."
+                ),
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Every part of this attempt has already been marked.",
@@ -1628,7 +1686,8 @@ def retry_attempt_evaluation(db: Session, attempt: TestAttempt) -> dict:
         "queued": job is not None,
         "parts": len(pending),
         "message": (
-            "Sent back to the AI. This page updates as soon as it answers."
+            f"Sent {len(pending)} part{'s' if len(pending) != 1 else ''} back to the AI. "
+            "This page updates as soon as it answers."
             if job is not None
             else "The AI is already working on this test."
         ),
