@@ -958,7 +958,7 @@ export function Home() {
               </div>
             </div>
           ) : (
-            <div className="vh-blog-empty">No student stories yet — check back soon.</div>
+            <div className="vh-blog-empty">No student stories yet — please check back soon.</div>
           )}
         </section>
 
