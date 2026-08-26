@@ -153,7 +153,7 @@ def _detect_provider(
     if preferred == "custom_json" and endpoint:
         provider = "custom_json"
         reason = "Using selected Custom JSON evaluator endpoint."
-    elif secret.startswith("AIza"):
+    elif secret.startswith(("AIza", "AQ.")):
         provider = "gemini"
         reason = "Detected Google API key format used by Gemini."
     elif secret.startswith("sk-ant-"):
