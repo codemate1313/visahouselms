@@ -103,7 +103,6 @@ const PURCHASE_STATUS_OPTIONS = [
   { value: "completed", label: "Paid" },
   { value: "pending", label: "Awaiting payment" },
   { value: "failed", label: "Failed" },
-  { value: "refunded", label: "Refunded" },
 ];
 
 /** A purchase is only a sale once its payment was verified. Pending rows are
