@@ -1420,7 +1420,9 @@ export function TestRunner() {
     : isInstituteStudent ? "IN" : "VH";
   const brandMark = logoUrl
     ? <img src={logoUrl} alt={`${branding?.institute_name ?? "Institute"} logo`} />
-    : brandInitials;
+    : isInstituteStudent
+      ? brandInitials
+      : <img src="/brand/vh-mark-96.png" alt="Visa House Logo" />;
   const testContext = branding?.institute_name ?? (isInstituteStudent ? "Institute" : "Visa House LMS");
   const violationModal = violationNotice ? (
     <ViolationPolicyModal
