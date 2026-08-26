@@ -40,7 +40,14 @@
   margin: 0 auto;
   padding: 24px 24px 60px;
   position: relative;
+  overflow: clip;
   animation: onboarding-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@supports not (overflow: clip) {
+  .onboarding-wrapper {
+    overflow: hidden;
+  }
 }
 
 @keyframes onboarding-fade-in {

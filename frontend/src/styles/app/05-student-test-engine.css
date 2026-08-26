@@ -364,11 +364,16 @@
 }
 
 .test-runner-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   min-height: 100dvh;
+  padding: 24px;
+  background: var(--bg);
   font-size: 15px;
   color: var(--text-muted);
 }

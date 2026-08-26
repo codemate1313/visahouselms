@@ -4820,6 +4820,16 @@
 }
 
 /* Premium Tests Grid & Cards */
+.my-courses-page {
+  overflow: clip;
+}
+
+@supports not (overflow: clip) {
+  .my-courses-page {
+    overflow: hidden;
+  }
+}
+
 .premium-tests-grid {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)) !important;
@@ -5066,6 +5076,12 @@ button.start-test-btn.ui-btn-primary svg {
   border: 1px dashed var(--slate-300, #d4d4d8);
 }
 
+.premium-test-card.is-locked:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border, #d4d4d8));
+  box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.08);
+}
+
 .premium-lock-overlay {
   position: absolute;
   inset: 0;
@@ -5085,7 +5101,7 @@ button.start-test-btn.ui-btn-primary svg {
 }
 
 .premium-lock-overlay:hover {
-  background: rgba(255, 255, 255, 0.88);
+  background: color-mix(in srgb, var(--surface, #ffffff) 84%, transparent);
 }
 
 .premium-lock-orb {
@@ -5119,6 +5135,30 @@ button.start-test-btn.ui-btn-primary svg {
   font-size: 15px;
   font-weight: 800;
   color: #111113;
+}
+
+[data-theme="dark"] .premium-test-card.is-locked {
+  background: #18181d;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="dark"] .premium-test-card.is-locked:hover {
+  background: #1d1d23;
+  border-color: color-mix(in srgb, var(--primary) 32%, rgba(255, 255, 255, 0.16));
+  box-shadow: 0 18px 34px -10px rgba(0, 0, 0, 0.42);
+}
+
+[data-theme="dark"] .premium-lock-overlay {
+  background: color-mix(in srgb, #151519 88%, transparent);
+  border-radius: 22px;
+}
+
+[data-theme="dark"] .premium-lock-overlay:hover {
+  background: color-mix(in srgb, #1c1c22 92%, transparent);
+}
+
+[data-theme="dark"] .premium-lock-title {
+  color: #f7f7fa;
 }
 
 
