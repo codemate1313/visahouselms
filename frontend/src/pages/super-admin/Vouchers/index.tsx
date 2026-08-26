@@ -496,7 +496,7 @@ export function Vouchers() {
   }
 
   async function handleDisableSelectedCodes() {
-    const codeIds = filteredUnusedIds.filter((id) => selectedUnusedIds.has(id));
+    const codeIds = availableFilteredUnusedIds.filter((id) => selectedUnusedIds.has(id));
     if (codeIds.length === 0) return;
     if (!await confirmDelete(`Disable ${codeIds.length} selected voucher code${codeIds.length === 1 ? "" : "s"}? They will no longer be sold to students.`, "Disable Selected Voucher Codes")) return;
     try {
@@ -505,6 +505,19 @@ export function Vouchers() {
       fetchData();
     } catch (err: any) {
       showError(err.response?.data?.detail || "Failed to disable selected voucher codes");
+    }
+  }
+
+  async function handleDeleteSelectedCodes() {
+    const codeIds = filteredUnusedIds.filter((id) => selectedUnusedIds.has(id));
+    if (codeIds.length === 0) return;
+    if (!await confirmDelete(`Permanently delete ${codeIds.length} selected voucher code${codeIds.length === 1 ? "" : "s"}? This cannot be undone.`, "Delete Selected Voucher Codes")) return;
+    try {
+      const res = await api.post("/vouchers/admin/codes/delete", { code_ids: codeIds });
+      showSuccess(res.data?.message || "Selected voucher codes deleted.");
+      fetchData();
+    } catch (err: any) {
+      showError(err.response?.data?.detail || "Failed to delete selected voucher codes");
     }
   }
 
@@ -543,12 +556,17 @@ export function Vouchers() {
     });
   }, [unusedCodes, unusedSearch, unusedTypeFilter]);
   const filteredUnusedIds = useMemo(
+    () => filteredUnusedCodes.map((code) => code.id),
+    [filteredUnusedCodes]
+  );
+  const availableFilteredUnusedIds = useMemo(
     () => filteredUnusedCodes.filter((code) => code.status === "available").map((code) => code.id),
     [filteredUnusedCodes]
   );
   const allVisibleUnusedSelected =
     filteredUnusedIds.length > 0 && filteredUnusedIds.every((id) => selectedUnusedIds.has(id));
   const selectedVisibleUnusedCount = filteredUnusedIds.filter((id) => selectedUnusedIds.has(id)).length;
+  const selectedAvailableUnusedCount = availableFilteredUnusedIds.filter((id) => selectedUnusedIds.has(id)).length;
 
   const purchasesTotalPages = Math.max(1, Math.ceil(purchases.length / PAGE_SIZE));
   const pagedPurchases = purchases.slice((purchasesPage - 1) * PAGE_SIZE, purchasesPage * PAGE_SIZE);
@@ -639,10 +657,18 @@ export function Vouchers() {
               <Button
                 variant="danger"
                 size="small"
-                disabled={selectedVisibleUnusedCount === 0}
+                disabled={selectedAvailableUnusedCount === 0}
                 onClick={handleDisableSelectedCodes}
               >
-                <Icon name="revoke" /> Disable selected ({selectedVisibleUnusedCount})
+                <Icon name="revoke" /> Disable selected ({selectedAvailableUnusedCount})
+              </Button>
+              <Button
+                variant="danger"
+                size="small"
+                disabled={selectedVisibleUnusedCount === 0}
+                onClick={handleDeleteSelectedCodes}
+              >
+                <Icon name="trash" /> Delete selected ({selectedVisibleUnusedCount})
               </Button>
             </>
           )}
@@ -797,7 +823,6 @@ export function Vouchers() {
                         className="voucher-code-checkbox"
                         aria-label={`Select voucher code ${uc.code}`}
                         checked={selectedUnusedIds.has(uc.id)}
-                        disabled={uc.status !== "available"}
                         onChange={(event) => toggleUnusedCodeSelection(uc.id, event.target.checked)}
                       />
                     </td>

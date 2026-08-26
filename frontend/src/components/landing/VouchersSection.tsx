@@ -99,6 +99,19 @@ export function VouchersSection() {
         buyer_phone: buyerPhone,
       });
 
+      const cancelPendingPurchase = async () => {
+        try {
+          await api.post("/vouchers/public/cancel", {
+            purchase_id: order.purchase_id,
+            razorpay_order_id: order.order_id,
+          });
+          fetchOfferings();
+        } catch (err) {
+          console.warn("Could not cancel pending voucher purchase", err);
+        }
+      };
+
+      let paymentSucceeded = false;
       openRazorpayCheckout({
         keyId: order.key_id,
         orderId: order.order_id,
@@ -108,6 +121,7 @@ export function VouchersSection() {
         prefillName: buyerName,
         prefillEmail: buyerEmail,
         onSuccess: async (response) => {
+          paymentSucceeded = true;
           // Step 2: the backend verifies the signed receipt and only then
           // returns the code.
           try {
@@ -123,9 +137,15 @@ export function VouchersSection() {
             setSubmitting(false);
           }
         },
-        onDismiss: () => setSubmitting(false),
+        onDismiss: () => {
+          if (!paymentSucceeded) {
+            void cancelPendingPurchase();
+          }
+          setSubmitting(false);
+        },
         onFailure: (message) => {
           showError(message);
+          void cancelPendingPurchase();
           setSubmitting(false);
         },
       });

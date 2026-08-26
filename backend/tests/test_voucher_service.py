@@ -255,6 +255,76 @@ class VoucherPurchaseTests(unittest.TestCase):
         self.assertEqual(context.exception.status_code, 400)
         self.assertEqual(self._my_vouchers(), [])
 
+    def test_cancel_pending_purchase_releases_reserved_code(self) -> None:
+        order = self._place_order()
+        purchase = self.db.get(VoucherPurchase, order["purchase_id"])
+        reserved_code_id = purchase.voucher_code_id
+
+        result = voucher_service.cancel_pending_voucher_purchase(
+            self.db,
+            purchase_id=order["purchase_id"],
+            razorpay_order_id=ORDER_ID,
+            student_user_id=self.student.id,
+        )
+
+        self.assertTrue(result["cancelled"])
+        self.assertEqual(purchase.status, "failed")
+        self.assertIsNone(purchase.voucher_code_id)
+        code = self.db.get(VoucherCode, reserved_code_id)
+        self.assertEqual(code.status, "available")
+        self.assertIsNone(code.purchase_id)
+
+    def test_student_cannot_cancel_another_students_pending_purchase(self) -> None:
+        order = self._place_order()
+        other_student = User(
+            email="other-buyer@example.com",
+            password_hash=hash_password("StudentPass!1"),
+            role_id=self.student.role_id,
+            first_name="Other",
+            last_name="Buyer",
+            is_active=True,
+        )
+        self.db.add(other_student)
+        self.db.commit()
+
+        with self.assertRaises(HTTPException) as context:
+            voucher_service.cancel_pending_voucher_purchase(
+                self.db,
+                purchase_id=order["purchase_id"],
+                razorpay_order_id=ORDER_ID,
+                student_user_id=other_student.id,
+            )
+
+        self.assertEqual(context.exception.status_code, 404)
+        purchase = self.db.get(VoucherPurchase, order["purchase_id"])
+        code = self.db.get(VoucherCode, purchase.voucher_code_id)
+        self.assertEqual(purchase.status, "pending")
+        self.assertEqual(code.status, "reserved")
+
+    def test_bulk_delete_removes_only_unused_codes(self) -> None:
+        order = self._place_order()
+        reserved_purchase = self.db.get(VoucherPurchase, order["purchase_id"])
+        reserved_code_id = reserved_purchase.voucher_code_id
+        unused_codes = (
+            self.db.query(VoucherCode)
+            .filter(VoucherCode.id != reserved_code_id)
+            .order_by(VoucherCode.id.asc())
+            .all()
+        )
+        unused_codes[1].status = "disabled"
+        self.db.commit()
+
+        result = voucher_service.delete_voucher_codes(
+            self.db,
+            [reserved_code_id, unused_codes[0].id, unused_codes[1].id],
+        )
+
+        self.assertEqual(result["deleted"], 2)
+        self.assertEqual(result["skipped"], 1)
+        self.assertIsNotNone(self.db.get(VoucherCode, reserved_code_id))
+        self.assertIsNone(self.db.get(VoucherCode, unused_codes[0].id))
+        self.assertIsNone(self.db.get(VoucherCode, unused_codes[1].id))
+
 
 if __name__ == "__main__":
     unittest.main()

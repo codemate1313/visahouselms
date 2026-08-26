@@ -580,6 +580,27 @@ def _fail_purchase_and_release_code(db: Session, purchase: VoucherPurchase) -> N
     db.commit()
 
 
+def cancel_pending_voucher_purchase(
+    db: Session,
+    purchase_id: int,
+    razorpay_order_id: str,
+    student_user_id: Optional[int] = None,
+) -> dict:
+    """Release a code reserved for a checkout the buyer abandoned."""
+    purchase = db.get(VoucherPurchase, purchase_id)
+    if purchase is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Purchase not found")
+    if student_user_id is not None and purchase.student_id != student_user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Purchase not found")
+    if not purchase.gateway_transaction_id or purchase.gateway_transaction_id != razorpay_order_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Purchase could not be cancelled")
+    if purchase.status != "pending":
+        return {"message": "Purchase is no longer pending.", "cancelled": False, "status": purchase.status}
+
+    _fail_purchase_and_release_code(db, purchase)
+    return {"message": "Pending voucher purchase cancelled.", "cancelled": True, "status": "failed"}
+
+
 def verify_voucher_payment(
     db: Session,
     purchase_id: int,
@@ -804,6 +825,32 @@ def delete_voucher_code(db: Session, code_id: int) -> dict:
     db.delete(vc)
     db.commit()
     return {"message": "Voucher code deleted successfully"}
+
+
+def delete_voucher_codes(db: Session, code_ids: List[int]) -> dict:
+    unique_ids = sorted({int(code_id) for code_id in code_ids if int(code_id) > 0})
+    if not unique_ids:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No voucher codes selected")
+
+    codes = db.query(VoucherCode).filter(VoucherCode.id.in_(unique_ids)).all()
+    found_ids = {code.id for code in codes}
+    missing = len(unique_ids) - len(found_ids)
+    deleted = 0
+    skipped = missing
+
+    for code in codes:
+        if code.status in ("available", "disabled"):
+            db.delete(code)
+            deleted += 1
+        else:
+            skipped += 1
+
+    db.commit()
+    return {
+        "message": f"Deleted {deleted} voucher code{'s' if deleted != 1 else ''}.",
+        "deleted": deleted,
+        "skipped": skipped,
+    }
 
 
 def disable_voucher_code(db: Session, code_id: int) -> dict:

@@ -83,6 +83,11 @@ class VoucherVerifyRequest(BaseModel):
     razorpay_signature: str
 
 
+class VoucherCancelRequest(BaseModel):
+    purchase_id: int
+    razorpay_order_id: str
+
+
 # ==========================================
 # PUBLIC & STUDENT ENDPOINTS
 # ==========================================
@@ -120,6 +125,17 @@ def verify_voucher_public(req: VoucherVerifyRequest, db: Session = Depends(get_d
     )
 
 
+@router.post("/public/cancel")
+def cancel_voucher_public(req: VoucherCancelRequest, db: Session = Depends(get_db)):
+    """Release a reserved code when public checkout is closed before payment."""
+    return voucher_service.cancel_pending_voucher_purchase(
+        db=db,
+        purchase_id=req.purchase_id,
+        razorpay_order_id=req.razorpay_order_id,
+        student_user_id=None,
+    )
+
+
 @router.post("/student/order")
 def create_voucher_order_student(
     req: VoucherOrderRequest,
@@ -149,6 +165,21 @@ def verify_voucher_student(
         razorpay_payment_id=req.razorpay_payment_id,
         razorpay_order_id=req.razorpay_order_id,
         razorpay_signature=req.razorpay_signature,
+    )
+
+
+@router.post("/student/cancel")
+def cancel_voucher_student(
+    req: VoucherCancelRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Release a reserved code when student checkout is closed before payment."""
+    return voucher_service.cancel_pending_voucher_purchase(
+        db=db,
+        purchase_id=req.purchase_id,
+        razorpay_order_id=req.razorpay_order_id,
+        student_user_id=current_user.id,
     )
 
 
@@ -423,3 +454,12 @@ def admin_delete_voucher_code(
     admin: User = Depends(_require_super_admin),
 ):
     return voucher_service.delete_voucher_code(db, code_id)
+
+
+@router.post("/admin/codes/delete")
+def admin_delete_voucher_codes(
+    payload: VoucherCodeBulkAction,
+    db: Session = Depends(get_db),
+    admin: User = Depends(_require_super_admin),
+):
+    return voucher_service.delete_voucher_codes(db, payload.code_ids)

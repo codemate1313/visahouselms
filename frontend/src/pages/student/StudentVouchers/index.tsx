@@ -121,6 +121,19 @@ export function StudentVouchers() {
         buyer_phone: user.phone_number || null,
       });
 
+      const cancelPendingPurchase = async () => {
+        try {
+          await api.post("/vouchers/student/cancel", {
+            purchase_id: order.purchase_id,
+            razorpay_order_id: order.order_id,
+          });
+          fetchData();
+        } catch (err) {
+          console.warn("Could not cancel pending voucher purchase", err);
+        }
+      };
+
+      let paymentSucceeded = false;
       openRazorpayCheckout({
         keyId: order.key_id,
         orderId: order.order_id,
@@ -130,6 +143,7 @@ export function StudentVouchers() {
         prefillName: buyerName,
         prefillEmail: user.email,
         onSuccess: async (response) => {
+          paymentSucceeded = true;
           try {
             // Step 2: verify the receipt, then release code
             await api.post("/vouchers/student/verify", {
@@ -147,9 +161,15 @@ export function StudentVouchers() {
             setPurchasingId(null);
           }
         },
-        onDismiss: () => setPurchasingId(null),
+        onDismiss: () => {
+          if (!paymentSucceeded) {
+            void cancelPendingPurchase();
+          }
+          setPurchasingId(null);
+        },
         onFailure: (message) => {
           showError(message);
+          void cancelPendingPurchase();
           setPurchasingId(null);
         },
       });
