@@ -426,6 +426,16 @@ export function TestRunner() {
   );
   const isSpeakingPhase = isSplitCompositeAttempt && currentPart?.section_type === "speaking";
 
+  const lastNonSpeakingIndex = useMemo(() => {
+    if (!attempt) return -1;
+    for (let i = attempt.parts.length - 1; i >= 0; i--) {
+      if (attempt.parts[i].section_type !== "speaking") {
+        return i;
+      }
+    }
+    return -1;
+  }, [attempt]);
+
   // Countdown timer. The server's expires_at is the outer bound - it rejects
   // writes past its own clock independently - and the block allowance, where
   // there is one, is the inner bound. Whichever runs out first ends the sitting.
@@ -1656,6 +1666,7 @@ export function TestRunner() {
           onRequestSubmit={() => setConfirmSubmit(true)}
           continueToSpeaking={isSplitCompositeAttempt}
           languageCertSkin={languageCertSkin}
+          hideSubmit={isSplitCompositeAttempt && partIndex !== lastNonSpeakingIndex}
         />
       )}
 
