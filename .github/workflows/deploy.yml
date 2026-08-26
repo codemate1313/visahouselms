@@ -1,6 +1,7 @@
 name: Continuous Deployment to Hostinger VPS
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
