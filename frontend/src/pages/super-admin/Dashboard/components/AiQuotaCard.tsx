@@ -267,34 +267,38 @@ export function AiQuotaCard() {
                 </span>
               </header>
 
-              {LIMIT_FIELDS.map(({ field, label, short, usage }) => (
-                <div key={field} className="ai-quota-metric">
-                  <div className="ai-quota-metric-head">
-                    <span>
-                      {label} <code>{short}</code>
-                    </span>
-                    <span>
-                      {compact(usage(key))}
-                      {key.limits[field] ? ` / ${compact(key.limits[field] as number)}` : " used"}
-                      {key.usage_percent[field] !== null ? ` · ${key.usage_percent[field]}%` : ""}
-                    </span>
+              {LIMIT_FIELDS.map(({ field, label, short, usage }) => {
+                const used = usage(key);
+                const pct = key.usage_percent[field];
+                return (
+                  <div key={field} className="ai-quota-metric">
+                    <div className="ai-quota-metric-head">
+                      <span className="ai-quota-metric-label">
+                        {label} <code className="ai-quota-code-chip">{short}</code>
+                      </span>
+                      <div className="ai-quota-metric-input-wrapper">
+                        <span className="ai-quota-used-val">{compact(used)} used</span>
+                        <span className="ai-quota-slash">/</span>
+                        <input
+                          type="number"
+                          min={0}
+                          className="ai-quota-limit-inline-input"
+                          placeholder="No limit"
+                          value={limitDraft[key.key]?.[field] ?? ""}
+                          onChange={(event) =>
+                            setLimitDraft((current) => ({
+                              ...current,
+                              [key.key]: { ...current[key.key], [field]: event.target.value },
+                            }))
+                          }
+                        />
+                        {pct !== null && <span className="ai-quota-pct-chip">({pct}%)</span>}
+                      </div>
+                    </div>
+                    <UsageBar percent={pct} />
                   </div>
-                  <UsageBar percent={key.usage_percent[field]} />
-                  <input
-                    type="number"
-                    min={0}
-                    className="ai-quota-limit-input"
-                    placeholder={`Your ${short} limit from AI Studio`}
-                    value={limitDraft[key.key]?.[field] ?? ""}
-                    onChange={(event) =>
-                      setLimitDraft((current) => ({
-                        ...current,
-                        [key.key]: { ...current[key.key], [field]: event.target.value },
-                      }))
-                    }
-                  />
-                </div>
-              ))}
+                );
+              })}
 
               <p className="ai-quota-note">
                 {key.requests_today} request{key.requests_today === 1 ? "" : "s"} today · {compact(key.tokens_today)} tokens ·{" "}
