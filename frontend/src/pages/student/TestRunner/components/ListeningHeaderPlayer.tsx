@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { API_BASE_URL } from "@/api/client";
 import type { Attempt } from "@/api/types";
+import { useAuthStore } from "@/store/authStore";
 
 interface ListeningHeaderPlayerProps {
   attemptId: number;
@@ -12,6 +13,7 @@ interface ListeningHeaderPlayerProps {
   autoAdvance?: boolean;
   /** Final Test only: the compact PeopleCert transport replaces the wide bar. */
   languageCertSkin?: boolean;
+  isFinal?: boolean;
 }
 
 /** Seconds of silence before the recording starts, so the candidate can read
@@ -120,8 +122,12 @@ export function ListeningHeaderPlayer({
   onAudioComplete,
   autoAdvance = false,
   languageCertSkin = false,
+  isFinal = false,
 }: ListeningHeaderPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const user = useAuthStore((state) => state.user);
+  const showSkip = user?.email === "tarund4355@gmail.com" && isFinal;
 
   const completedKey = audioCompletedKey(attemptId, currentPart.id);
   const allCompletedKey = `vh:listening:all_completed:${attemptId}`;
@@ -177,6 +183,17 @@ export function ListeningHeaderPlayer({
      without a gap, and a reload picks up mid-recording rather than granting
      another five seconds of reading time. */
   const waitsBeforeStart = playlistIndex === 0 && resumeFrom === 0;
+
+  const handleSkipAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    removeStorage(getSessionStorage(), storageKey);
+    writeStorage(getLocalStorage(), completedKey, "true");
+    setPhase("finished");
+    onAudioLockChange?.(false);
+    onAudioComplete?.();
+  };
 
   /* The countdown holds the part locked before a note is played, then starts
      the recording. Navigation stays locked from the moment the part opens so
@@ -386,7 +403,31 @@ export function ListeningHeaderPlayer({
         {/* Rendered unconditionally - see `.lc-audio-status`. The element
             holds its line whether or not there is anything to announce, so the
             paper below does not shift when the message changes. */}
-        <p className="lc-audio-status" role="status">{statusText}</p>
+        <p className="lc-audio-status" role="status">
+          {statusText}
+          {showSkip && (
+            <button
+              type="button"
+              onClick={handleSkipAudio}
+              style={{
+                marginLeft: "12px",
+                padding: "4px 8px",
+                background: "#ef4444",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "4px",
+                fontSize: "11px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                display: "inline-block",
+                verticalAlign: "middle",
+              }}
+            >
+              Skip Audio (Test)
+            </button>
+          )}
+        </p>
       </div>
     );
   }
@@ -434,6 +475,27 @@ export function ListeningHeaderPlayer({
             aria-label="Audio volume"
             onChange={(event) => setVolume(Number(event.target.value))}
           />
+          {showSkip && (
+            <button
+              type="button"
+              onClick={handleSkipAudio}
+              style={{
+                marginLeft: "12px",
+                padding: "6px 12px",
+                background: "#ef4444",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              Skip Audio (Test)
+            </button>
+          )}
         </div>
       </div>
     </div>

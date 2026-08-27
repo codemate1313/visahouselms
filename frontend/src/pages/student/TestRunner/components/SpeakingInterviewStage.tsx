@@ -8,6 +8,7 @@ import { hasAttemptResponse } from "@/pages/student/attemptMetrics";
 import { unlockSharedAudioContext } from "@/lib/talking-avatar.js";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { formatTime } from "../helpers";
+import { useAuthStore } from "@/store/authStore";
 import "./SpeakingInterviewStage.css";
 
 /* `starting` is the microphone spinning up between preparation and recording.
@@ -128,6 +129,7 @@ interface SpeakingInterviewStageProps {
   recordingErrorMessage: string | null;
   onRecord: (questionId: number) => Promise<boolean>;
   onContinuePart: () => void;
+  isFinal?: boolean;
 }
 
 export function SpeakingInterviewStage({
@@ -146,6 +148,7 @@ export function SpeakingInterviewStage({
   recordingErrorMessage,
   onRecord,
   onContinuePart,
+  isFinal = false,
 }: SpeakingInterviewStageProps) {
   const firstOpenQuestion = useMemo(() => {
     const index = currentPart.questions.findIndex((question) => !hasAttemptResponse(question));
@@ -337,6 +340,9 @@ export function SpeakingInterviewStage({
     onContinuePart();
   };
 
+  const user = useAuthStore((state) => state.user);
+  const showSkip = user?.email === "tarund4355@gmail.com" && isFinal;
+
   const hasCandidateText = Boolean(question.passage?.trim());
   const candidatePdfUrl = question.interaction?.candidate_material_url
     ? `${API_BASE_URL}${question.interaction.candidate_material_url}`
@@ -344,7 +350,7 @@ export function SpeakingInterviewStage({
   const candidateImageUrl = question.image_url ? `${API_BASE_URL}${question.image_url}` : null;
   const hasCandidateAttachment = Boolean(candidateImageUrl || candidatePdfUrl);
   const recordingFailedForQuestion = recordingFailedQuestionId === question.id && Boolean(recordingErrorMessage);
-  const canStartManually = mode === "ready" && manualStartOffered;
+  const canStartManually = mode === "ready" && (manualStartOffered || showSkip);
   const isSubmittingAnswer = mode === "uploading" || (mode === "complete" && isLastQuestion && isLastTestPart);
   /* Silence is not evidence the examiner audio is still on its way - it is
      indistinguishable, to the candidate, from playback having quietly failed.
@@ -426,7 +432,28 @@ export function SpeakingInterviewStage({
                 <strong>{formatTime(preparationLeft)}</strong>
                 <span>READING PREP</span>
               </div>
-              <div className="speaking-prep-status">{t.recordingStartsAutomatically}</div>
+              <div className="speaking-prep-status">
+                {t.recordingStartsAutomatically}
+                {showSkip && (
+                  <button
+                    type="button"
+                    onClick={startRecording}
+                    style={{
+                      marginLeft: "12px",
+                      padding: "4px 8px",
+                      background: "#ef4444",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "4px",
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Skip Prep
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="speaking-interview-control-dock">
@@ -586,7 +613,30 @@ export function SpeakingInterviewStage({
                     </span>
                   ) : t.playingQuestion
                 : mode === "preparing"
-                    ? t.recordingStartsAutomatically
+                    ? (
+                      <>
+                        {t.recordingStartsAutomatically}
+                        {showSkip && (
+                          <button
+                            type="button"
+                            onClick={startRecording}
+                            style={{
+                              marginLeft: "12px",
+                              padding: "4px 8px",
+                              background: "#ef4444",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "4px",
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Skip Prep
+                          </button>
+                        )}
+                      </>
+                    )
                     : mode === "starting"
                       ? t.startingRecording
                       : mode === "recording"
