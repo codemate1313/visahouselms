@@ -5043,3 +5043,40 @@ button.danger-text:hover,
   background-color: #34d399; /* Dark active state */
 }
 
+/* Refresh button and spin animation */
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.refresh-btn:hover {
+  background: var(--border);
+  color: var(--text);
+  transform: scale(1.06);
+}
+
+.refresh-btn:active {
+  transform: scale(0.94);
+}
+
+.refresh-btn svg.spin {
+  animation: spin-anim 0.8s linear infinite;
+}
+
+@keyframes spin-anim {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

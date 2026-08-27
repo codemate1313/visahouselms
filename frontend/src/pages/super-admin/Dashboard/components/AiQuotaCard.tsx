@@ -123,6 +123,7 @@ export function AiQuotaCard() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [limitDraft, setLimitDraft] = useState<Record<string, { rpm: string; tpm: string; rpd: string }>>({});
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -147,6 +148,16 @@ export function AiQuotaCard() {
       setError(extractErrorMessage(err, "Could not load AI quota."));
     }
   }, []);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setError(null);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [load]);
 
   useEffect(() => {
     void load();
@@ -213,9 +224,31 @@ export function AiQuotaCard() {
             <span className="page-eyebrow">AI marking</span>
             <h3>Quota across your keys</h3>
           </div>
-          <Badge tone={!data.enabled ? "gray" : worst !== null && worst >= 90 ? "red" : data.totals.rate_limited_today ? "amber" : "green"}>
-            {!data.enabled ? "Switched off" : worst !== null && worst >= 90 ? "Near limit" : data.totals.rate_limited_today ? "Hit limits today" : "Healthy"}
-          </Badge>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing || busy}
+              className="refresh-btn"
+              title="Refresh quota status"
+              aria-label="Refresh quota status"
+            >
+              <svg
+                className={refreshing ? "spin" : ""}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ width: "16px", height: "16px" }}
+              >
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.73-.73" />
+              </svg>
+            </button>
+            <Badge tone={!data.enabled ? "gray" : worst !== null && worst >= 90 ? "red" : data.totals.rate_limited_today ? "amber" : "green"}>
+              {!data.enabled ? "Switched off" : worst !== null && worst >= 90 ? "Near limit" : data.totals.rate_limited_today ? "Hit limits today" : "Healthy"}
+            </Badge>
+          </div>
         </div>
 
         <div className="ai-quota-figures">
