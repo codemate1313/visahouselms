@@ -49,6 +49,11 @@ IN_FLIGHT_WINDOW_SECONDS = 300
 # and a part with three of them can pass the limit - budget the whole part, not
 # each file.
 MAX_INLINE_BYTES_PER_PART = 18 * 1024 * 1024
+# What counts as "nothing was said". Opus at the recorder's bitrate is roughly
+# 3 KB a second, so this is about two seconds - long enough to clear a click or
+# a breath, short enough that any real attempt at an answer is above it.
+MIN_AUDIO_BYTES = 8 * 1024
+MIN_WRITTEN_CHARACTERS = 15
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 MASKED_SECRET = "********"
@@ -869,6 +874,72 @@ def _speaking_audio_mime_type(path: Path) -> str:
     if mime_type and mime_type.startswith("audio/"):
         return mime_type
     return "audio/webm"
+
+
+def _unanswered_reason(attempt: TestAttempt, part: ExamModulePart) -> Optional[str]:
+    """Why this part cannot be marked, in words a student can read - or None
+    when there is genuinely something to mark.
+
+    An empty part is not an error to escalate, it is a zero. Leaving it pending
+    put a blank answer in an instructor's queue and left the student's result
+    unfinished for days, for a part nobody needed to listen to.
+    """
+    answers = {answer.question_id: answer for answer in attempt.answers}
+    if part.section_type == "speaking":
+        recorded = 0
+        captured = 0
+        for question in part.questions:
+            answer = answers.get(question.id)
+            if answer is None or not answer.audio_path:
+                continue
+            full_path = settings.storage_path / answer.audio_path
+            if not full_path.exists():
+                continue
+            recorded += 1
+            captured += full_path.stat().st_size
+        if recorded == 0:
+            return "No recording was captured for this part."
+        if captured < MIN_AUDIO_BYTES:
+            return "The recording for this part is silent or barely a second long, so there is nothing to assess."
+        return None
+
+    written = 0
+    for question in part.questions:
+        answer = answers.get(question.id)
+        text = ((answer.response or {}).get("text") if answer and answer.response else None) or ""
+        written += len(str(text).strip())
+    if written == 0:
+        return "No written answer was submitted for this part."
+    if written < MIN_WRITTEN_CHARACTERS:
+        return "The answer for this part is too short to assess."
+    return None
+
+
+def _apply_zero_grade(db: Session, attempt: TestAttempt, part: ExamModulePart, reason: str) -> None:
+    """Score every rubric criterion zero, and say why on the result."""
+    criteria = [
+        {
+            "criterion": item.get("criterion"),
+            "max_marks": str(item.get("max_marks")),
+            "marks_awarded": "0",
+            "cefr_level": cefr_service.criterion_level(0, item.get("max_marks")),
+            "rationale": reason,
+        }
+        for item in (part.rubric or [])
+        if item.get("criterion")
+    ]
+    grade = next((item for item in attempt.part_grades if item.part_id == part.id), None)
+    if grade is None:
+        grade = AttemptPartGrade(attempt_id=attempt.id, part_id=part.id)
+        db.add(grade)
+        attempt.part_grades.append(grade)
+    grade.criteria = criteria
+    grade.total_marks = Decimal("0")
+    grade.comment = f"{reason} An instructor can change this if you think a recording was lost."
+    grade.grader_id = None
+    grade.status = PART_GRADE_AI_GRADED
+    grade.graded_at = _now()
+    db.add(grade)
 
 
 def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
