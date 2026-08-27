@@ -16,7 +16,7 @@ import { useHeroSlides } from "@/hooks/useHeroSlides";
 import { API_BASE_URL } from "@/api/client";
 import { useContactSettings } from "./useContactSettings";
 import { EVERYTHING_CARDS, HERO_SLIDES, STEP_CARDS, type TestimonialCard } from "./Home.data";
-import { ModuleIcon, ModulePreview, StepIcon, StepCardVisualPreview } from "./Home.previews";
+import { ModuleIcon, ModulePreview, StepCardVisualPreview } from "./Home.previews";
 import type { BlogListItem } from "./blogTypes";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -871,17 +871,7 @@ export function Home() {
                   key={s.num}
                   className="vh-steps-gsap-card"
                 >
-                  <div className="vh-step-card-header">
-                    <div className="vh-step-num-badge">{s.num}</div>
-                    <div className="vh-step-card-icon">
-                      <StepIcon index={i} />
-                    </div>
-                  </div>
-
-                  <div className="vh-step-card-content">
-                    <h3>{s.title}</h3>
-                    <StepCardVisualPreview index={i} />
-                  </div>
+                  <StepCardVisualPreview index={i} />
                 </div>
               ))}
             </div>
