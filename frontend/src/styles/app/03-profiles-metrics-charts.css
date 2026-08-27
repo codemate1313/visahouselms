@@ -4934,3 +4934,60 @@ button.danger-text:hover,
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.1);
 }
+
+/* Slider toggle switch styles */
+.ai-switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.ai-switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ai-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border);
+  transition: .25s ease;
+  border-radius: 24px;
+}
+
+.ai-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: .25s ease;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.ai-switch-toggle input:checked + .ai-switch-slider {
+  background-color: #10b981; /* Emerald green when active */
+}
+
+.ai-switch-toggle input:checked + .ai-switch-slider:before {
+  transform: translateX(22px);
+}
+
+[data-theme="dark"] .ai-switch-slider {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .ai-switch-toggle input:checked + .ai-switch-slider {
+  background-color: #34d399; /* Dark active state */
+}
+

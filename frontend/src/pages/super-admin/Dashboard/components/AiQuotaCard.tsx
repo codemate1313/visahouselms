@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Badge, Checkbox, Modal } from "@/components/ui";
+import { Badge, Modal } from "@/components/ui";
 import { formatDateTime } from "@/utils/date";
 
 /**
@@ -44,6 +44,20 @@ interface QuotaSummary {
   day_started_at: string;
   limits_declared: boolean;
   limits_note: string;
+}
+
+function getPlaceholderLimit(model: string | null | undefined, field: "rpm" | "tpm" | "rpd"): string {
+  const m = (model || "").toLowerCase();
+  if (m.includes("pro")) {
+    if (field === "rpm") return "2";
+    if (field === "tpm") return "32000";
+    if (field === "rpd") return "50";
+  }
+  // Default to Flash limits (which are the standard default tier)
+  if (field === "rpm") return "15";
+  if (field === "tpm") return "40000";
+  if (field === "rpd") return "1500";
+  return "";
 }
 
 const LIMIT_FIELDS = [
@@ -236,20 +250,24 @@ export function AiQuotaCard() {
           {notice && <p className="success-text">{notice}</p>}
 
           <section className="ai-quota-switch-row">
-            <label className="toggle-row">
-              <Checkbox
-                checked={data.enabled}
-                disabled={busy}
-                onChange={(event) => void toggleMarking(event.target.checked)}
-              />
-              <span>
-                <strong>Use AI marking</strong>
-                <small>
+            <div className="toggle-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+              <span style={{ marginRight: "16px" }}>
+                <strong style={{ display: "block", fontSize: "14px" }}>Use AI marking</strong>
+                <small style={{ display: "block", marginTop: "4px", fontSize: "12px", lineHeight: "1.4", color: "var(--text-muted)" }}>
                   Off sends every Writing and Speaking answer straight to its instructor queue, and stops anything
                   already queued from calling the provider.
                 </small>
               </span>
-            </label>
+              <label className="ai-switch-toggle" style={{ margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={data.enabled}
+                  disabled={busy}
+                  onChange={(event) => void toggleMarking(event.target.checked)}
+                />
+                <span className="ai-switch-slider" />
+              </label>
+            </div>
           </section>
 
           <p className="ai-quota-note">{data.limits_note}</p>
@@ -269,7 +287,13 @@ export function AiQuotaCard() {
 
               {LIMIT_FIELDS.map(({ field, label, short, usage }) => {
                 const used = usage(key);
-                const pct = key.usage_percent[field];
+                const defaultLimitStr = getPlaceholderLimit(key.model, field);
+                const userLimitStr = limitDraft[key.key]?.[field] ?? "";
+                
+                // Calculate dynamic percentage: fallback to placeholder limits if no custom ceiling is entered
+                const effectiveLimit = userLimitStr ? Number(userLimitStr) : (key.limits[field] || (defaultLimitStr ? Number(defaultLimitStr) : null));
+                const pct = effectiveLimit && effectiveLimit > 0 ? Math.round((used / effectiveLimit) * 100) : null;
+                
                 return (
                   <div key={field} className="ai-quota-metric">
                     <div className="ai-quota-metric-head">
@@ -283,7 +307,7 @@ export function AiQuotaCard() {
                           type="number"
                           min={0}
                           className="ai-quota-limit-inline-input"
-                          placeholder="No limit"
+                          placeholder={defaultLimitStr ? compact(Number(defaultLimitStr)) : "No limit"}
                           value={limitDraft[key.key]?.[field] ?? ""}
                           onChange={(event) =>
                             setLimitDraft((current) => ({
