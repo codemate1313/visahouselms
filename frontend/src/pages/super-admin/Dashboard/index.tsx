@@ -89,8 +89,12 @@ export function Dashboard() {
       )}
       {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
       <ExecutiveMetricGrid summary={summary} revenueTrend={revenueTrend} onOpen={openMetric} />
-      {summary.permissions.can_view_monetary_analytics && summary.revenue && <DashboardCharts summary={summary} />}
-      <AiQuotaCard />
+      <div className="dashboard-charts-grid">
+        {summary.permissions.can_view_monetary_analytics && summary.revenue && (
+          <DashboardCharts summary={summary} />
+        )}
+        <AiQuotaCard />
+      </div>
 
       {selectedMetric && (
         <MetricDetailModal

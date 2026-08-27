@@ -207,7 +207,7 @@ export function AiQuotaCard() {
 
   return (
     <>
-      <section className="chart-card ai-quota-card">
+      <section className="chart-card reference-styled-chart ai-quota-card">
         <div className="ai-quota-head">
           <div>
             <span className="page-eyebrow">AI marking</span>
