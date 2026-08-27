@@ -45,7 +45,7 @@ export function StudentProgress() {
   const earned = badges.filter((badge) => badge.earned);
 
   return (
-    <div>
+    <div className="student-progress-page">
       <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
 
       <LeaderboardPanel

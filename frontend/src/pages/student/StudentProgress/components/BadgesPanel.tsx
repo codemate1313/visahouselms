@@ -1,18 +1,8 @@
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { Icon, type IconName } from "@/components/icons";
 import type { StudentBadge } from "@/api/types";
 import { studentProgressStrings as strings } from "../StudentProgress.strings";
 import { formatDate } from "@/utils/date";
-
-const BADGE_ICONS: Record<string, IconName> = {
-  flag: "grading",
-  compass: "analytics",
-  spark: "overview",
-  crown: "products",
-  grid: "overview",
-  target: "due",
-  streak: "analytics",
-};
+import { Badge3DEmblem } from "./Badge3DEmblem";
 
 interface BadgesPanelProps {
   badges: StudentBadge[];
@@ -34,15 +24,17 @@ export function BadgesPanel({ badges, earnedCount }: BadgesPanelProps) {
     >
       <div className="achievement-grid">
         {badges.map((badge) => (
-          <article key={badge.code} className={badge.earned ? "is-earned" : "is-locked"}>
-            <div className="achievement-icon">
-              <Icon name={BADGE_ICONS[badge.icon] ?? "grading"} />
-            </div>
-            <div>
-              <span>{badge.earned ? t.earned : t.locked}</span>
-              <h3>{badge.name}</h3>
-              <p>{badge.description}</p>
-              {badge.awarded_at && <time>{formatDate(badge.awarded_at)}</time>}
+          <article key={badge.code} className={`badge-card-3d ${badge.earned ? "is-earned" : "is-locked"}`}>
+            <Badge3DEmblem code={badge.code} earned={badge.earned} />
+            <div className="badge-card-details">
+              <div className="badge-card-status-row">
+                <span className="badge-card-status">
+                  {badge.earned ? "✓ Earned" : "🔒 Locked"}
+                </span>
+                {badge.awarded_at && <time className="badge-card-time">{formatDate(badge.awarded_at)}</time>}
+              </div>
+              <h3 className="badge-card-title">{badge.name}</h3>
+              <p className="badge-card-desc">{badge.description}</p>
             </div>
           </article>
         ))}
@@ -50,3 +42,4 @@ export function BadgesPanel({ badges, earnedCount }: BadgesPanelProps) {
     </CollapsiblePanel>
   );
 }
+

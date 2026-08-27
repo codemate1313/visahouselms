@@ -1,50 +1,82 @@
+import { useState } from "react";
 import type { AttemptMetrics } from "@/pages/student/attemptMetrics";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 import { RADIAL_COLORS } from "./resultRadialColors";
 
 interface ResultRadialProps {
   metrics: AttemptMetrics;
+  activeSegment?: string | null;
+  onHoverSegment?: (key: string | null) => void;
 }
 
-export function ResultRadial({ metrics }: ResultRadialProps) {
+export function ResultRadial({ metrics, activeSegment, onHoverSegment }: ResultRadialProps) {
+  const [internalHover, setInternalHover] = useState<string | null>(null);
+  const currentHover = activeSegment !== undefined ? activeSegment : internalHover;
+
+  const setHover = (key: string | null) => {
+    setInternalHover(key);
+    onHoverSegment?.(key);
+  };
+
   const segments = [
-    { key: "correct", value: metrics.correct, color: RADIAL_COLORS.correct },
-    { key: "incorrect", value: metrics.incorrect, color: RADIAL_COLORS.incorrect },
-    { key: "pending", value: metrics.pending, color: RADIAL_COLORS.pending },
-    { key: "unanswered", value: metrics.unanswered, color: RADIAL_COLORS.unanswered },
-  ];
+    { key: "correct", label: strings.metrics.correct, value: metrics.correct, color: RADIAL_COLORS.correct },
+    { key: "incorrect", label: strings.metrics.incorrect, value: metrics.incorrect, color: RADIAL_COLORS.incorrect },
+    { key: "pending", label: strings.metrics.awaitingReview, value: metrics.pending, color: RADIAL_COLORS.pending },
+    { key: "unanswered", label: strings.metrics.unanswered, value: metrics.unanswered, color: RADIAL_COLORS.unanswered },
+  ].filter((s) => s.value > 0);
+
   let offset = 0;
+  const activeObj = segments.find((s) => s.key === currentHover);
+  const activePercent = activeObj && metrics.total > 0 ? Math.round((activeObj.value / metrics.total) * 100) : 0;
 
   return (
     <div className="result-radial" role="img" aria-label={`${metrics.attempted} of ${metrics.total} attempted, ${metrics.correct} correct`}>
       <svg viewBox="0 0 200 200" aria-hidden="true">
-        <circle className="result-radial-track" cx="100" cy="100" r="76" pathLength="100" />
-        {metrics.total > 0 && segments.map((segment) => {
-          const percentage = segment.value * 100 / metrics.total;
-          const dashOffset = -offset;
-          offset += percentage;
-          return (
-            <circle
-              key={segment.key}
-              className="result-radial-segment"
-              cx="100"
-              cy="100"
-              r="76"
-              pathLength="100"
-              stroke={segment.color}
-              strokeDasharray={`${percentage} ${100 - percentage}`}
-              strokeDashoffset={dashOffset}
-            />
-          );
-        })}
+        <circle className="result-radial-track" cx="100" cy="100" r="74" pathLength="100" />
+        {metrics.total > 0 &&
+          segments.map((segment) => {
+            const percentage = (segment.value * 100) / metrics.total;
+            const dashOffset = -offset;
+            offset += percentage;
+            const isHovered = currentHover === segment.key;
+            const isDimmed = currentHover !== null && !isHovered;
+
+            return (
+              <circle
+                key={segment.key}
+                className={`result-radial-segment ${isHovered ? "is-hovered" : ""} ${isDimmed ? "is-dimmed" : ""}`}
+                cx="100"
+                cy="100"
+                r="74"
+                pathLength="100"
+                stroke={segment.color}
+                strokeDasharray={`${percentage} ${100 - percentage}`}
+                strokeDashoffset={dashOffset}
+                onMouseEnter={() => setHover(segment.key)}
+                onMouseLeave={() => setHover(null)}
+              />
+            );
+          })}
       </svg>
       <div className="result-radial-center">
-        <strong>
-          {metrics.attempted}
-          <span>/{metrics.total}</span>
-        </strong>
-        <small>{strings.metrics.attemptedSuffix}</small>
+        {activeObj ? (
+          <div className="result-radial-active-content" style={{ color: activeObj.color }}>
+            <strong className="result-radial-active-val">{activeObj.value}</strong>
+            <small className="result-radial-active-lbl">
+              {activeObj.label} ({activePercent}%)
+            </small>
+          </div>
+        ) : (
+          <div className="result-radial-default-content">
+            <strong>
+              {metrics.attempted}
+              <span>/{metrics.total}</span>
+            </strong>
+            <small>{strings.metrics.attemptedSuffix}</small>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+

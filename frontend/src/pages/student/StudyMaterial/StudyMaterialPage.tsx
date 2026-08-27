@@ -63,22 +63,6 @@ export function StudyMaterialPage() {
 
   return (
     <div className="sm-container">
-      <div className="sm-hero">
-        <div className="sm-hero-header">
-          <div className="sm-hero-title-group">
-            <h1>Study Material</h1>
-            <p>Access and download all grammar and preparation study materials.</p>
-          </div>
-          <div className="sm-hero-stats">
-            <div className="sm-stat-badge">
-              <Icon name="filePdf" className="sm-stat-icon" />
-              <span>Total {materials.length} PDF {materials.length === 1 ? "resource" : "resources"}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
       {error && (
         <div
           className="error-banner"

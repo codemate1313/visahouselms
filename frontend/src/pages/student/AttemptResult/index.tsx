@@ -8,10 +8,11 @@ import { attemptResultStrings as strings } from "./AttemptResult.strings";
 import { PerformanceOverviewPanel } from "./components/PerformanceOverviewPanel";
 import { AnalysisPanel } from "./components/AnalysisPanel";
 import { ReevaluationStatus } from "@/components/ReevaluationStatus";
-import { ReevaluationRequestForm } from "./components/ReevaluationRequestForm";
+import { ReevaluationRequestModal } from "./components/ReevaluationRequestForm";
 import { RetakeRequestStatus } from "./components/RetakeRequestStatus";
-import { RetakeRequestForm } from "./components/RetakeRequestForm";
-import { Badge, LinkButton } from "@/components/ui";
+import { RetakeRequestModal } from "./components/RetakeRequestForm";
+import { Badge } from "@/components/ui";
+import { Icon } from "@/components/icons";
 
 // AI auto-grading runs as a background job right after submission (a
 // provider call can take a while), so a freshly submitted human-graded
@@ -28,8 +29,10 @@ export function AttemptResult() {
   const [reviewReason, setReviewReason] = useState("");
   const [requestingReview, setRequestingReview] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [retakeReason, setRetakeReason] = useState("");
   const [requestingRetake, setRequestingRetake] = useState(false);
+  const [showRetakeModal, setShowRetakeModal] = useState(false);
   const mountedAtRef = useRef(new Date().toISOString());
   // The poll gives up after a minute. Grading can legitimately still be
   // running at that point, so the page has to say so instead of leaving a
@@ -203,6 +206,7 @@ export function AttemptResult() {
       );
       setAttempt((current) => current ? { ...current, reevaluation: data } : current);
       setReviewReason("");
+      setShowReviewModal(false);
     } catch (err: unknown) {
       setReviewError(extractErrorMessage(err, strings.reevaluationForm.errors.submit));
     } finally {
@@ -219,6 +223,7 @@ export function AttemptResult() {
       const { data } = await apiClient.post(`/student/attempts/${attempt.id}/retake-request`, { reason: retakeReason });
       setAttempt((current) => current ? { ...current, retake_request: data } : current);
       setRetakeReason("");
+      setShowRetakeModal(false);
     } catch (err: unknown) {
       setReviewError(extractErrorMessage(err, strings.retake.errors.submit));
     } finally {
@@ -261,9 +266,6 @@ export function AttemptResult() {
             )}
           </p>
         </div>
-        <LinkButton to="/student/attempts">
-          {strings.allAttempts}
-        </LinkButton>
       </div>
 
       <PerformanceOverviewPanel attempt={attempt} metrics={metrics} awaitingAiGrading={awaitingAiGrading} />
@@ -289,8 +291,56 @@ export function AttemptResult() {
         />
       )}
 
+      {attempt.retake_request && <RetakeRequestStatus retakeRequest={attempt.retake_request} />}
+
+      {/* Option 2: Sleek Single-Line Support Action Strip */}
+      {(canRequestReview || canRequestRetake) && (
+        <div className="result-support-strip">
+          <div className="result-support-strip-left">
+            <div className="result-support-strip-icon-wrap">
+              <Icon name="help" className="result-support-strip-icon" />
+            </div>
+            <div className="result-support-strip-text">
+              <h4>{strings.supportStrip.title}</h4>
+              <p>{strings.supportStrip.subtitle}</p>
+            </div>
+          </div>
+          <div className="result-support-strip-actions">
+            {canRequestReview && (
+              <button
+                type="button"
+                className="result-support-btn"
+                onClick={() => {
+                  setReviewError(null);
+                  setShowReviewModal(true);
+                }}
+              >
+                <Icon name="instructors" />
+                <span>{strings.supportStrip.reviewBtn}</span>
+              </button>
+            )}
+            {canRequestRetake && (
+              <button
+                type="button"
+                className="result-support-btn"
+                onClick={() => {
+                  setReviewError(null);
+                  setShowRetakeModal(true);
+                }}
+              >
+                <Icon name="due" />
+                <span>{strings.supportStrip.retakeBtn}</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Review Request Modal */}
       {canRequestReview && (
-        <ReevaluationRequestForm
+        <ReevaluationRequestModal
+          open={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
           reviewReason={reviewReason}
           onReviewReasonChange={setReviewReason}
           requesting={requestingReview}
@@ -299,13 +349,15 @@ export function AttemptResult() {
         />
       )}
 
-      {attempt.retake_request && <RetakeRequestStatus retakeRequest={attempt.retake_request} />}
-
+      {/* Retake Request Modal */}
       {canRequestRetake && (
-        <RetakeRequestForm
+        <RetakeRequestModal
+          open={showRetakeModal}
+          onClose={() => setShowRetakeModal(false)}
           reason={retakeReason}
           onReasonChange={setRetakeReason}
           requesting={requestingRetake}
+          error={reviewError}
           onSubmit={requestRetake}
         />
       )}

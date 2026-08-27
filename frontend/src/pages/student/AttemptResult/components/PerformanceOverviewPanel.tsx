@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Attempt } from "@/api/types";
 import type { AttemptMetrics } from "@/pages/student/attemptMetrics";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
@@ -13,15 +14,17 @@ interface PerformanceOverviewPanelProps {
 }
 
 export function PerformanceOverviewPanel({ attempt, metrics, awaitingAiGrading }: PerformanceOverviewPanelProps) {
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const t = strings.overview;
   const m = strings.metrics;
+
   const metricRows = [
-    { label: m.totalQuestions, value: metrics.total, color: "var(--shade-72737a)" },
-    { label: m.attempted, value: metrics.attempted, color: "var(--shade-303138)" },
-    { label: m.correct, value: metrics.correct, color: RADIAL_COLORS.correct },
-    { label: m.incorrect, value: metrics.incorrect, color: RADIAL_COLORS.incorrect },
-    ...(metrics.pending ? [{ label: m.awaitingReview, value: metrics.pending, color: RADIAL_COLORS.pending }] : []),
-    { label: m.unanswered, value: metrics.unanswered, color: RADIAL_COLORS.unanswered },
+    { key: "total", label: m.totalQuestions, value: metrics.total, color: "var(--text-muted, #71717a)" },
+    { key: "attempted", label: m.attempted, value: metrics.attempted, color: "var(--text, #18181b)" },
+    { key: "correct", label: m.correct, value: metrics.correct, color: RADIAL_COLORS.correct },
+    { key: "incorrect", label: m.incorrect, value: metrics.incorrect, color: RADIAL_COLORS.incorrect },
+    ...(metrics.pending ? [{ key: "pending", label: m.awaitingReview, value: metrics.pending, color: RADIAL_COLORS.pending }] : []),
+    { key: "unanswered", label: m.unanswered, value: metrics.unanswered, color: RADIAL_COLORS.unanswered },
   ];
 
   return (
@@ -34,7 +37,7 @@ export function PerformanceOverviewPanel({ attempt, metrics, awaitingAiGrading }
         <div className="result-overview-score">
           <span>{t.cefrLevel}</span>
           {awaitingAiGrading ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "34px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "30px" }}>
               <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "3px" }}>
                 <span style={{ width: "6px", height: "6px", flex: "0 0 6px" }} />
                 <span style={{ width: "6px", height: "6px", flex: "0 0 6px" }} />
@@ -48,18 +51,31 @@ export function PerformanceOverviewPanel({ attempt, metrics, awaitingAiGrading }
       </div>
 
       <div className="result-overview-body">
-        <ResultRadial metrics={metrics} />
-        <div className="result-metric-list">
-          {metricRows.map((metric) => (
-            <div key={metric.label}>
-              <span className="result-metric-dot" style={{ backgroundColor: metric.color }} />
-              <span>{metric.label}</span>
-              <strong>{metric.value}</strong>
-            </div>
-          ))}
+        <div className="result-radial-container">
+          <ResultRadial metrics={metrics} activeSegment={hoveredKey} onHoverSegment={setHoveredKey} />
         </div>
+
+        <div className="result-metric-list">
+          {metricRows.map((metric) => {
+            const isInteractive = ["correct", "incorrect", "pending", "unanswered"].includes(metric.key);
+            const isHovered = hoveredKey === metric.key;
+            return (
+              <div
+                key={metric.key}
+                className={`result-metric-row ${isInteractive ? "is-interactive" : ""} ${isHovered ? "is-active" : ""}`}
+                onMouseEnter={() => isInteractive && setHoveredKey(metric.key)}
+                onMouseLeave={() => isInteractive && setHoveredKey(null)}
+              >
+                <span className="result-metric-dot" style={{ backgroundColor: metric.color }} />
+                <span className="result-metric-label">{metric.label}</span>
+                <strong className="result-metric-value">{metric.value}</strong>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="result-overview-meta">
-          <div>
+          <div className="result-meta-item">
             <span>{t.score}</span>
             {awaitingAiGrading ? (
               <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "24px" }}>
@@ -73,11 +89,11 @@ export function PerformanceOverviewPanel({ attempt, metrics, awaitingAiGrading }
               <strong>{attempt.raw_score != null && attempt.max_score != null ? `${attempt.raw_score} / ${attempt.max_score}` : t.pending}</strong>
             )}
           </div>
-          <div>
+          <div className="result-meta-item">
             <span>{t.submitted}</span>
             <strong>{attempt.submitted_at ? formatDate(attempt.submitted_at) : "-"}</strong>
           </div>
-          <LinkButton to={`/student/attempts/${attempt.id}/result/details`}>
+          <LinkButton to={`/student/attempts/${attempt.id}/result/details`} className="result-detail-review-btn">
             {t.viewDetailedReview}
           </LinkButton>
         </div>
@@ -85,3 +101,4 @@ export function PerformanceOverviewPanel({ attempt, metrics, awaitingAiGrading }
     </section>
   );
 }
+

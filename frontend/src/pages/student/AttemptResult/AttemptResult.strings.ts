@@ -134,4 +134,10 @@ export const attemptResultStrings = {
     submitting: "Submitting...",
     submit: "Submit retake request",
   },
+  supportStrip: {
+    title: "Need help with this attempt?",
+    subtitle: "Request an instructor review for manual scoring or submit a test retake appeal.",
+    reviewBtn: "Request Human Review",
+    retakeBtn: "Raise Retake Request",
+  },
 } as const;

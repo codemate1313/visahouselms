@@ -186,6 +186,312 @@ function ScoreDial({
   );
 }
 
+function CriterionIcon({ name }: { name: string }) {
+  const lower = name.toLowerCase();
+  if (lower.includes("task") || lower.includes("fulfilment") || lower.includes("effect") || lower.includes("achievement")) {
+    return (
+      <span className="rubric-icon is-task" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <circle cx="12" cy="12" r="6" />
+          <circle cx="12" cy="12" r="2" />
+        </svg>
+      </span>
+    );
+  }
+  if (lower.includes("coherence") || lower.includes("cohesion") || lower.includes("link")) {
+    return (
+      <span className="rubric-icon is-coherence" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+        </svg>
+      </span>
+    );
+  }
+  if (lower.includes("grammar") || lower.includes("accuracy") || lower.includes("structure")) {
+    return (
+      <span className="rubric-icon is-grammar" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+        </svg>
+      </span>
+    );
+  }
+  if (lower.includes("vocabulary") || lower.includes("lexical") || lower.includes("lexicon")) {
+    return (
+      <span className="rubric-icon is-vocab" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        </svg>
+      </span>
+    );
+  }
+  // Default / Fluency / Pronunciation
+  return (
+    <span className="rubric-icon is-fluency" aria-hidden="true">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+        <line x1="12" y1="19" x2="12" y2="23" />
+        <line x1="8" y1="23" x2="16" y2="23" />
+      </svg>
+    </span>
+  );
+}
+
+function RubricMatrixTable({ criteria }: { criteria: NonNullable<StudentResultAnalysis["criteria_breakdown"]> }) {
+  const skills = Array.from(new Set(criteria.map((c) => c.skill || "general")));
+  const [activeSkill, setActiveSkill] = useState<string>(skills[0] || "general");
+
+  const filteredCriteria = criteria.filter((c) => (c.skill || "general") === activeSkill);
+
+  // Natural numeric sort for parts: Speaking 1, Speaking 2, Speaking 3, Speaking 4
+  const parts = Array.from(new Set(filteredCriteria.map((c) => c.part_label))).sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+  );
+  const criteriaNames = Array.from(new Set(filteredCriteria.map((c) => c.criterion)));
+
+  const cellMap: Record<string, Record<string, (typeof filteredCriteria)[0]>> = {};
+  const rowTotals: Record<string, { awarded: number; max: number }> = {};
+  const colTotals: Record<string, { awarded: number; max: number }> = {};
+  let grandAwarded = 0;
+  let grandMax = 0;
+
+  criteriaNames.forEach((name) => {
+    rowTotals[name] = { awarded: 0, max: 0 };
+    cellMap[name] = {};
+  });
+  parts.forEach((p) => {
+    colTotals[p] = { awarded: 0, max: 0 };
+  });
+
+  filteredCriteria.forEach((item) => {
+    cellMap[item.criterion] = cellMap[item.criterion] || {};
+    cellMap[item.criterion][item.part_label] = item;
+
+    const [awarded, max] = marksFrom(item.marks);
+    if (rowTotals[item.criterion]) {
+      rowTotals[item.criterion].awarded += awarded;
+      rowTotals[item.criterion].max += max;
+    }
+    if (colTotals[item.part_label]) {
+      colTotals[item.part_label].awarded += awarded;
+      colTotals[item.part_label].max += max;
+    }
+    grandAwarded += awarded;
+    grandMax += max;
+  });
+
+  const [hoveredCell, setHoveredCell] = useState<{
+    item: (typeof filteredCriteria)[0];
+    rect: DOMRect;
+  } | null>(null);
+
+  const isAbove = hoveredCell ? hoveredCell.rect.top > 170 : true;
+
+  return (
+    <div className="rubric-matrix-container">
+      {/* Skill Tabs if multiple skills exist */}
+      {skills.length > 1 && (
+        <div className="rubric-matrix-tabs">
+          {skills.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`rubric-matrix-tab ${activeSkill === s ? "is-active" : ""}`}
+              onClick={() => {
+                setActiveSkill(s);
+                setHoveredCell(null);
+              }}
+            >
+              {s.charAt(0).toUpperCase() + s.slice(1)} Rubric
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Matrix Table */}
+      <div className="rubric-matrix-table-wrap">
+        <table className="rubric-matrix-table">
+          <thead>
+            <tr>
+              <th className="rubric-col-criterion">
+                <span>Rubric Criteria</span>
+              </th>
+              {parts.map((p) => {
+                const colTotal = colTotals[p];
+                const pct = colTotal && colTotal.max > 0 ? (colTotal.awarded / colTotal.max) * 100 : 0;
+                const status = pct >= 75 ? "strong" : pct >= 50 ? "steady" : "priority";
+                return (
+                  <th key={p} className="rubric-col-part">
+                    <div className="rubric-part-header-card">
+                      <span className="rubric-part-name">{p}</span>
+                      <span className={`rubric-part-tag is-${status}`}>
+                        {colTotal?.awarded ?? 0}/{colTotal?.max ?? 0} ({pct.toFixed(0)}%)
+                      </span>
+                    </div>
+                  </th>
+                );
+              })}
+              <th className="rubric-col-total">
+                <span>Overall</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {criteriaNames.map((criterion) => {
+              const rowTotal = rowTotals[criterion] || { awarded: 0, max: 0 };
+              const rowPct = rowTotal.max > 0 ? (rowTotal.awarded / rowTotal.max) * 100 : 0;
+              const rowStatus: AnalysisBandStatus = rowPct >= 75 ? "strong" : rowPct >= 50 ? "steady" : "priority";
+
+              return (
+                <tr key={criterion}>
+                  <td className="rubric-cell-criterion">
+                    <div className="rubric-criterion-label-wrap">
+                      <CriterionIcon name={criterion} />
+                      <strong className="rubric-criterion-name">{criterion}</strong>
+                    </div>
+                  </td>
+                  {parts.map((part) => {
+                    const item = cellMap[criterion]?.[part];
+                    if (!item) {
+                      return (
+                        <td key={part} className="rubric-cell-score is-empty">
+                          <span className="rubric-empty-dash">—</span>
+                        </td>
+                      );
+                    }
+                    const isHovered =
+                      hoveredCell?.item.part_label === item.part_label &&
+                      hoveredCell?.item.criterion === item.criterion;
+
+                    return (
+                      <td key={part} className="rubric-cell-score">
+                        <button
+                          type="button"
+                          className={`rubric-score-badge is-${item.status} ${isHovered ? "is-selected" : ""} ${item.action ? "has-action" : ""}`}
+                          onMouseEnter={(e) => {
+                            setHoveredCell({
+                              item,
+                              rect: e.currentTarget.getBoundingClientRect(),
+                            });
+                          }}
+                          onMouseLeave={() => setHoveredCell(null)}
+                          onFocus={(e) => {
+                            setHoveredCell({
+                              item,
+                              rect: e.currentTarget.getBoundingClientRect(),
+                            });
+                          }}
+                          onBlur={() => setHoveredCell(null)}
+                          title={item.action ? `View feedback: ${item.action}` : `${item.marks}`}
+                        >
+                          <span className="rubric-score-marks">{item.marks}</span>
+                        </button>
+                      </td>
+                    );
+                  })}
+                  <td className="rubric-cell-total">
+                    <div className={`rubric-overall-pill is-${rowStatus}`}>
+                      <span className="rubric-overall-marks">
+                        {rowTotal.awarded} / {rowTotal.max}
+                      </span>
+                      <div className="rubric-overall-track">
+                        <div
+                          className={`rubric-overall-bar is-${rowStatus}`}
+                          style={{ width: `${Math.min(100, Math.max(0, rowPct))}%` }}
+                        />
+                      </div>
+                      <span className="rubric-overall-pct">{rowPct.toFixed(0)}%</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr className="rubric-footer-row">
+              <td className="rubric-cell-criterion-total">
+                <div className="rubric-footer-label">
+                  <strong>Total Section Marks</strong>
+                </div>
+              </td>
+              {parts.map((p) => {
+                const colTotal = colTotals[p] || { awarded: 0, max: 0 };
+                const pct = colTotal.max > 0 ? (colTotal.awarded / colTotal.max) * 100 : 0;
+                const status: AnalysisBandStatus = pct >= 75 ? "strong" : pct >= 50 ? "steady" : "priority";
+                return (
+                  <td key={p} className="rubric-cell-part-total">
+                    <div className={`rubric-part-total-badge is-${status}`}>
+                      <span className="rubric-part-total-num">
+                        {colTotal.awarded} / {colTotal.max}
+                      </span>
+                      <span className="rubric-part-total-pct">{pct.toFixed(0)}%</span>
+                    </div>
+                  </td>
+                );
+              })}
+              <td className="rubric-cell-grand-total">
+                <div className="rubric-grand-total-card">
+                  <span className="rubric-grand-total-num">
+                    {grandAwarded} / {grandMax}
+                  </span>
+                  <span className="rubric-grand-total-pct">
+                    {grandMax > 0 ? ((grandAwarded / grandMax) * 100).toFixed(0) : 0}% Grand Total
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      {/* Floating Hover Tooltip Anchored to Score Cell */}
+      {hoveredCell && typeof document !== "undefined" && createPortal(
+        <div
+          className={`rubric-hover-tooltip is-${hoveredCell.item.status} ${isAbove ? "is-above" : "is-below"}`}
+          style={{
+            position: "fixed",
+            top: isAbove ? `${hoveredCell.rect.top - 10}px` : `${hoveredCell.rect.bottom + 10}px`,
+            left: `${Math.max(180, Math.min(window.innerWidth - 180, hoveredCell.rect.left + hoveredCell.rect.width / 2))}px`,
+            transform: isAbove ? "translate(-50%, -100%)" : "translate(-50%, 0)",
+            zIndex: 9999999,
+          }}
+        >
+          <div className="rubric-tooltip-accent-line" />
+          <div className="rubric-tooltip-content">
+            <div className="rubric-tooltip-head">
+              <span className="rubric-tooltip-tag">{hoveredCell.item.part_label}</span>
+              <strong className="rubric-tooltip-criterion">{hoveredCell.item.criterion}</strong>
+              <span className={`rubric-tooltip-score is-${hoveredCell.item.status}`}>
+                Score: {hoveredCell.item.marks} ({trim(hoveredCell.item.percentage)}%)
+              </span>
+            </div>
+            {hoveredCell.item.action ? (
+              <div className="rubric-tooltip-body">
+                <div className="rubric-tooltip-quote-icon" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                  </svg>
+                </div>
+                <p className="rubric-tooltip-text">{hoveredCell.item.action}</p>
+              </div>
+            ) : (
+              <div className="rubric-tooltip-body">
+                <p className="rubric-tooltip-text is-neutral">Awarded full marks for this criterion.</p>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
 export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysis }) {
   const progression = analysis.progression;
   const focusAreas = analysis.focus_areas ?? [];
@@ -196,15 +502,6 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
   const pacing = analysis.pacing;
 
   const [selectedSkill, setSelectedSkill] = useState<any | null>(null);
-  const [collapsedParts, setCollapsedParts] = useState<string[]>([]);
-
-  // Preserve the order the service ranked the criteria in, grouped by part.
-  const criteriaByPart = criteria.reduce<[string, typeof criteria][]>((groups, row) => {
-    const existing = groups.find(([label]) => label === row.part_label);
-    if (existing) existing[1].push(row);
-    else groups.push([row.part_label, [row]]);
-    return groups;
-  }, []);
 
   useEffect(() => {
     if (!selectedSkill) return;
@@ -460,53 +757,9 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
         <section className="analysis-block" aria-label={t.criteria.heading}>
           <div className="analysis-block-head">
             <h3>{t.criteria.heading}</h3>
-            <p>{t.criteria.subheading}</p>
+            <p>{t.criteria.subheading} Click any cell to view detailed examiner feedback and recommendations.</p>
           </div>
-          {/* One group per part, each collapsible: a four-skill paper puts
-              sixteen bars on the page, which buries everything below it. */}
-          <div className="analysis-criteria-groups">
-            {criteriaByPart.map(([partLabel, rows]) => {
-              const collapsed = collapsedParts.includes(partLabel);
-              const awarded = rows.reduce((total, row) => total + marksFrom(row.marks)[0], 0);
-              const maximum = rows.reduce((total, row) => total + marksFrom(row.marks)[1], 0);
-              return (
-                <div key={partLabel} className={`analysis-criteria-group ${collapsed ? "is-collapsed" : ""}`}>
-                  <button
-                    type="button"
-                    className="analysis-criteria-toggle"
-                    aria-expanded={!collapsed}
-                    onClick={() =>
-                      setCollapsedParts((current) =>
-                        current.includes(partLabel)
-                          ? current.filter((item) => item !== partLabel)
-                          : [...current, partLabel],
-                      )
-                    }
-                  >
-                    <span className="analysis-criteria-chevron" aria-hidden="true" />
-                    <strong>{partLabel}</strong>
-                    <span className="analysis-criteria-total">
-                      {trim(String(awarded))} / {trim(String(maximum))}
-                    </span>
-                  </button>
-                  {!collapsed && (
-                    <div className="analysis-score-list">
-                      {rows.map((row) => (
-                        <ScoreRow
-                          key={`${row.part_label}-${row.criterion}`}
-                          label={row.criterion}
-                          marks={row.marks}
-                          percentage={row.percentage}
-                          status={row.status}
-                          note={row.status === "priority" ? row.action : undefined}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <RubricMatrixTable criteria={criteria} />
         </section>
       )}
 

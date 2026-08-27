@@ -55,6 +55,7 @@ type PageMetaRoute = {
 };
 
 const namedPageRoutes: PageMetaRoute[] = [
+  // Super Admin Routes
   { match: "/super-admin/dashboard", eyebrow: "Platform Overview", title: (name) => `${getGreeting()}, ${name}` },
   { match: "/super-admin/users/super-admins", eyebrow: "User Management", title: "Super Admins" },
   { match: "/super-admin/users/sa-instructors", eyebrow: "User Management", title: "SA Instructors" },
@@ -74,7 +75,6 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/grading", eyebrow: "Academics", title: "Grading Oversight" },
   { match: "/super-admin/notifications", eyebrow: "Notifications", title: "Platform Notifications" },
   { match: "/super-admin/inbox", eyebrow: "Notifications", title: "Notifications Inbox" },
-  { match: "/institute-portal/notifications", eyebrow: "Notifications", title: "Notifications Inbox" },
   { match: "/super-admin/testimonials", eyebrow: "CMS & Content", title: "Student Testimonials" },
   { match: "/super-admin/blogs/new", eyebrow: "CMS & Content", title: "Create Article" },
   { match: /\/super-admin\/blogs\/.+/, eyebrow: "CMS & Content", title: "Edit Article" },
@@ -84,11 +84,8 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/onboarding/new", eyebrow: "SaaS Management", title: "New Institute Onboarding" },
   { match: /\/super-admin\/onboarding\/\d+/, eyebrow: "SaaS Management", title: "Edit Institute Onboarding" },
   { match: "/super-admin/onboarding", eyebrow: "SaaS Management", title: "Institute Onboarding" },
-  // The form itself titles the specific catalogue; the bar stays neutral so it
-  // does not contradict an institute tier being edited.
   { match: "/super-admin/plans/new", eyebrow: "SaaS Management", title: "Create Plan" },
   { match: /\/super-admin\/plans\/\d+/, eyebrow: "SaaS Management", title: "Edit Plan" },
-  // One screen lists both catalogues, switched by the audience control on it.
   { match: "/super-admin/plans", eyebrow: "SaaS Management", title: "Subscription Plans" },
   { match: "/super-admin/subscriptions", eyebrow: "SaaS Management", title: "Access Agreements" },
   { match: "/super-admin/trial-config", eyebrow: "SaaS Management", title: "Trial Settings" },
@@ -100,21 +97,73 @@ const namedPageRoutes: PageMetaRoute[] = [
   { match: "/super-admin/payment-methods", eyebrow: "SaaS Management", title: "Payment Methods" },
   { match: "/super-admin/gst-rates", eyebrow: "SaaS Management", title: "GST Master" },
   { match: "/super-admin/revenue", eyebrow: "SaaS Management", title: "Revenue Dashboard" },
-  { match: "/institute-instructor/dashboard", eyebrow: "Instructor workspace", title: "Dashboard" },
   { match: /\/super-admin\/institutes\/\d+\/branding/, eyebrow: "SaaS Management", title: "Institute Branding" },
   { match: /\/super-admin\/institutes\/\d+\/accounts/, eyebrow: "SaaS Management", title: "Institute Accounts" },
   { match: /\/super-admin\/institutes\/\d+\/students/, eyebrow: "SaaS Management", title: "Institute Students" },
   { match: "/super-admin/institutes/new", eyebrow: "SaaS Management", title: "Create Institute" },
   { match: /\/super-admin\/institutes\/\d+/, eyebrow: "SaaS Management", title: "Edit Institute" },
   { match: "/super-admin/institutes", eyebrow: "SaaS Management", title: "Institutes" },
-  { match: ["/super-admin/support-tickets", "/institute-portal/support-tickets", "/institute/support-tickets"], eyebrow: "Support & Helpdesk", title: "Support Tickets" },
   { match: "/super-admin/retake-requests", eyebrow: "Academics", title: "Retake Requests" },
   { match: "/super-admin/vouchers", eyebrow: "SaaS Management", title: "Vouchers" },
   { match: "/super-admin/institute-signups", eyebrow: "SaaS Management", title: "Institute Applications" },
   { match: ["/super-admin/dev-settings", "/super-admin/platform-settings"], eyebrow: "Settings", title: "Platform Settings" },
   { match: "/super-admin/logs", eyebrow: "Settings", title: "System Logs" },
   { match: "/super-admin/terminal", eyebrow: "Settings", title: "CMD Terminal" },
+
+  // Student Portal Routes (Ordered specific before general)
+  { match: "/student/dashboard", eyebrow: "Overview", title: (name) => `${getGreeting()}, ${name}` },
+  { match: ["/student/courses", "/student/course-catalog", "/student/plans"], eyebrow: "Academics", title: "Plans & Upgrades" },
+  { match: "/student/my-courses", eyebrow: "Academics", title: "My Tests" },
+  { match: /\/student\/attempts\/\d+\/result\/details/, eyebrow: "Academics", title: "Question Review" },
+  { match: /\/student\/attempts\/\d+\/result/, eyebrow: "Academics", title: "Attempt Result" },
+  { match: /\/student\/attempts\/\d+\/take/, eyebrow: "Examination", title: "Live Test Runner" },
+  { match: "/student/attempts", eyebrow: "Academics", title: "My Test History" },
   { match: "/student/study-material", eyebrow: "Academics", title: "Study Material" },
+  { match: "/student/progress", eyebrow: "Analytics", title: "Progress" },
+  { match: "/student/news", eyebrow: "Information", title: "News" },
+  { match: "/student/announcements", eyebrow: "Communications", title: "Announcements" },
+  { match: "/student/notifications", eyebrow: "Notifications", title: "Notifications Inbox" },
+  { match: "/student/vouchers", eyebrow: "Academics", title: "Exam Vouchers" },
+  { match: "/student/purchase-history", eyebrow: "Billing", title: "Purchase History" },
+  { match: "/student/support", eyebrow: "Support & Helpdesk", title: "Raise a Query" },
+
+  // Institute Admin Routes
+  { match: "/institute-portal/dashboard", eyebrow: "Institute Workspace", title: (name) => `${getGreeting()}, ${name}` },
+  { match: "/institute-portal/setup", eyebrow: "Onboarding", title: "Institute Setup" },
+  { match: "/institute-portal/students/new", eyebrow: "Members", title: "Add Student" },
+  { match: /\/institute-portal\/students\/\d+\/edit/, eyebrow: "Members", title: "Edit Student" },
+  { match: /\/institute-portal\/students\/\d+/, eyebrow: "Members", title: "Student Overview" },
+  { match: "/institute-portal/students", eyebrow: "Members", title: "Students" },
+  { match: "/institute-portal/staff/new", eyebrow: "Members", title: "Add Instructor" },
+  { match: /\/institute-portal\/staff\/\d+/, eyebrow: "Members", title: "Edit Instructor" },
+  { match: "/institute-portal/staff", eyebrow: "Members", title: "Faculty Staff" },
+  { match: "/institute-portal/billing", eyebrow: "Finance", title: "Billing & Invoices" },
+  { match: "/institute-portal/branding", eyebrow: "Customization", title: "Institute Branding" },
+  { match: "/institute-portal/announcements", eyebrow: "Communications", title: "Institute Announcements" },
+  { match: "/institute-portal/notifications", eyebrow: "Notifications", title: "Notifications Inbox" },
+  { match: ["/institute-portal/support-tickets", "/institute/support-tickets"], eyebrow: "Support & Helpdesk", title: "Support Tickets" },
+  { match: "/institute-portal/support", eyebrow: "Support & Helpdesk", title: "Support Center" },
+
+  // SA Instructor Routes
+  { match: "/super-admin/instructor/dashboard", eyebrow: "Instructor Workspace", title: (name) => `${getGreeting()}, ${name}` },
+  { match: /\/super-admin\/instructor\/modules\/new\/.+/, eyebrow: "Course Management", title: "Create Module" },
+  { match: /\/super-admin\/instructor\/modules\/\d+/, eyebrow: "Course Management", title: "Edit Module" },
+  { match: "/super-admin/instructor/modules", eyebrow: "Course Management", title: "Module Workspace" },
+  { match: /\/super-admin\/instructor\/grading\/\d+/, eyebrow: "Academics", title: "Grade Submission" },
+  { match: "/super-admin/instructor/grading", eyebrow: "Academics", title: "Grading Queue" },
+  { match: "/super-admin/instructor/grammar-content", eyebrow: "Academics", title: "Grammar Content" },
+  { match: "/super-admin/instructor/notifications", eyebrow: "Notifications", title: "Notifications Inbox" },
+  { match: "/super-admin/instructor/support", eyebrow: "Support & Helpdesk", title: "Support Center" },
+
+  // Institute Instructor Routes
+  { match: "/institute-instructor/dashboard", eyebrow: "Instructor Workspace", title: (name) => `${getGreeting()}, ${name}` },
+  { match: /\/institute-instructor\/grading\/\d+/, eyebrow: "Academics", title: "Grade Submission" },
+  { match: "/institute-instructor/grading", eyebrow: "Academics", title: "Grading Queue" },
+  { match: "/institute-instructor/notifications", eyebrow: "Notifications", title: "Notifications Inbox" },
+  { match: "/institute-instructor/support", eyebrow: "Support & Helpdesk", title: "Support Center" },
+
+  // Common Support & Account Routes
+  { match: ["/super-admin/support-tickets", "/institute-portal/support-tickets", "/institute/support-tickets"], eyebrow: "Support & Helpdesk", title: "Support Tickets" },
   { match: ["/super-admin/profile", "/institute-portal/profile", "/instructor-portal/profile", "/institute-instructor/profile", "/student/profile"], eyebrow: "Account", title: "My Profile" },
   { match: ["/super-admin/sessions", "/institute-portal/sessions", "/instructor-portal/sessions", "/institute-instructor/sessions", "/student/sessions"], eyebrow: "Account", title: "Active Sessions" },
   { match: ["/super-admin/change-password", "/institute-portal/change-password", "/instructor-portal/change-password", "/institute-instructor/change-password", "/student/change-password"], eyebrow: "Account", title: "Change Password" },
@@ -122,7 +171,9 @@ const namedPageRoutes: PageMetaRoute[] = [
 
 function routeMatches(pathname: string, matcher: PageMetaRoute["match"]): boolean {
   if (Array.isArray(matcher)) return matcher.some((item) => routeMatches(pathname, item));
-  if (typeof matcher === "string") return pathname.startsWith(matcher);
+  if (typeof matcher === "string") {
+    return pathname === matcher || pathname.startsWith(matcher.endsWith("/") ? matcher : `${matcher}/`);
+  }
   return matcher.test(pathname);
 }
 
@@ -328,6 +379,61 @@ function getBreadcrumbs(pathname: string, eyebrow: string, title: string): Bread
       { label: eyebrow },
       { label: "Payments", path: "/super-admin/payments" },
       { label: "Invoice" }
+    ];
+  }
+
+  // Student test attempts sub-routes
+  if (/\/student\/attempts\/\d+\/result\/details\b/.test(pathname)) {
+    const attemptId = pathname.match(/\/student\/attempts\/(\d+)\/result\/details/)?.[1];
+    return [
+      { label: eyebrow },
+      { label: "My Test History", path: "/student/attempts" },
+      { label: "Attempt Result", path: `/student/attempts/${attemptId}/result` },
+      { label: "Question Review" }
+    ];
+  }
+  if (/\/student\/attempts\/\d+\/result\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "My Test History", path: "/student/attempts" },
+      { label: "Attempt Result" }
+    ];
+  }
+
+  // Institute sub-routes
+  if (pathname === "/institute-portal/students/new") {
+    return [
+      { label: eyebrow },
+      { label: "Students", path: "/institute-portal/students" },
+      { label: "Add Student" }
+    ];
+  }
+  if (/\/institute-portal\/students\/\d+\/edit\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Students", path: "/institute-portal/students" },
+      { label: "Edit Student" }
+    ];
+  }
+  if (/\/institute-portal\/students\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Students", path: "/institute-portal/students" },
+      { label: "Student Overview" }
+    ];
+  }
+  if (pathname === "/institute-portal/staff/new") {
+    return [
+      { label: eyebrow },
+      { label: "Faculty Staff", path: "/institute-portal/staff" },
+      { label: "Add Instructor" }
+    ];
+  }
+  if (/\/institute-portal\/staff\/\d+\b/.test(pathname)) {
+    return [
+      { label: eyebrow },
+      { label: "Faculty Staff", path: "/institute-portal/staff" },
+      { label: "Edit Instructor" }
     ];
   }
 

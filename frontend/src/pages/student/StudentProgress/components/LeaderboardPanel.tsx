@@ -151,6 +151,56 @@ export function LeaderboardPanel({
             </div>
           </div>
 
+          {/* Current User Standings Card (Positioned Above Table) */}
+          {leaderboard.current_student && (
+            <div className="current-user-standing-card">
+              <div className="user-standing-card-header">
+                <div className="user-standing-eyebrow">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  <span>Your Current Standing</span>
+                </div>
+                <span className="user-standing-cohort-badge">
+                  {scope === "global" ? "Global Cohort" : "Institute Cohort"}
+                </span>
+              </div>
+              <div className="user-standing-card-body">
+                <div className="user-standing-rank-badge">
+                  <small>Rank</small>
+                  <strong>#{leaderboard.current_student.rank}</strong>
+                </div>
+
+                <div className="user-standing-profile">
+                  <div className="user-standing-avatar">
+                    {(leaderboard.current_student.display_name || "Y").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="user-standing-name-wrap">
+                    <strong className="user-standing-name">{leaderboard.current_student.display_name}</strong>
+                    <span className="you-label">{t.you}</span>
+                  </div>
+                </div>
+
+                <div className="user-standing-stats-grid">
+                  <div className="user-standing-stat">
+                    <span>{t.tests}</span>
+                    <strong>{leaderboard.current_student.attempts_count}</strong>
+                  </div>
+                  <div className="user-standing-stat">
+                    <span>{t.average}</span>
+                    <strong>{leaderboard.current_student.average_percentage}%</strong>
+                  </div>
+                  <div className="user-standing-stat">
+                    <span>{t.bestCefr}</span>
+                    <Badge tone="gray">
+                      {leaderboard.current_student.best_cefr_level ?? "-"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="table-wrap">
             <table className="data-table leaderboard-table">
               <thead>
@@ -185,40 +235,6 @@ export function LeaderboardPanel({
               </tbody>
             </table>
           </div>
-
-          {/* Current User Standings Line */}
-          {leaderboard.current_student && (
-            <div className="current-user-rank-line">
-              <div className="user-rank-title">Your Current Standing</div>
-              <div className="user-rank-row">
-                <div className="user-rank-cell rank">
-                  <span>Rank</span>
-                  <strong>#{leaderboard.current_student.rank}</strong>
-                </div>
-                <div className="user-rank-cell student">
-                  <span>Student</span>
-                  <strong>
-                    {leaderboard.current_student.display_name}{" "}
-                    <span className="you-label">{t.you}</span>
-                  </strong>
-                </div>
-                <div className="user-rank-cell tests">
-                  <span>Tests</span>
-                  <strong>{leaderboard.current_student.attempts_count}</strong>
-                </div>
-                <div className="user-rank-cell average">
-                  <span>Average</span>
-                  <strong>{leaderboard.current_student.average_percentage}%</strong>
-                </div>
-                <div className="user-rank-cell cefr">
-                  <span>Best CEFR</span>
-                  <Badge tone="gray">
-                    {leaderboard.current_student.best_cefr_level ?? "-"}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          )}
         </>
       ) : (
         <p className="empty-message">{t.empty}</p>

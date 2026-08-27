@@ -1,38 +1,78 @@
 import type { FormEvent } from "react";
-import { RequiredMark } from "@/components/ui";
+import { Modal, RequiredMark } from "@/components/ui";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 
-interface RetakeRequestFormProps {
+interface RetakeRequestModalProps {
+  open: boolean;
+  onClose: () => void;
   reason: string;
   onReasonChange: (value: string) => void;
   requesting: boolean;
+  error?: string | null;
   onSubmit: (event: FormEvent) => void;
 }
 
-export function RetakeRequestForm({ reason, onReasonChange, requesting, onSubmit }: RetakeRequestFormProps) {
+export function RetakeRequestModal({
+  open,
+  onClose,
+  reason,
+  onReasonChange,
+  requesting,
+  error,
+  onSubmit,
+}: RetakeRequestModalProps) {
   const t = strings.retakeForm;
+
   return (
-    <form className="workspace-panel reevaluation-form" onSubmit={onSubmit}>
-      <div className="panel-heading">
-        <div>
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="md"
+      title={
+        <div className="result-modal-header-block">
           <span className="page-eyebrow">{t.eyebrow}</span>
           <h2>{t.heading}</h2>
-          <p>{t.description}</p>
         </div>
-      </div>
-      <label htmlFor="retake-reason">{t.reasonLabel}<RequiredMark /></label>
-      <textarea
-        id="retake-reason"
-        rows={4}
-        minLength={1}
-        maxLength={2000}
-        required
-        value={reason}
-        onChange={(event) => onReasonChange(event.target.value)}
-      />
-      <div className="form-actions">
-        <button disabled={requesting || reason.trim().length === 0}>{requesting ? t.submitting : t.submit}</button>
-      </div>
-    </form>
+      }
+      actions={
+        <div className="result-modal-actions-bar">
+          <button type="button" className="ui-btn ui-btn-secondary" onClick={onClose} disabled={requesting}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="ui-btn ui-btn-primary"
+            onClick={onSubmit}
+            disabled={requesting || reason.trim().length === 0}
+          >
+            {requesting ? t.submitting : t.submit}
+          </button>
+        </div>
+      }
+    >
+      <form onSubmit={onSubmit} className="result-modal-form-content">
+        <p className="result-modal-description">{t.description}</p>
+        {error && <p className="error-text">{error}</p>}
+        <label htmlFor="retake-reason" className="result-modal-label">
+          {t.reasonLabel} <RequiredMark />
+        </label>
+        <textarea
+          id="retake-reason"
+          rows={4}
+          minLength={1}
+          maxLength={2000}
+          required
+          value={reason}
+          onChange={(event) => onReasonChange(event.target.value)}
+          placeholder="Explain what occurred during the test (e.g. power cut, technical glitch, mic issue)..."
+          className="ui-textarea"
+          autoFocus
+        />
+        <div className="result-modal-char-count">
+          <span>{reason.length} / 2000</span>
+        </div>
+      </form>
+    </Modal>
   );
 }
+

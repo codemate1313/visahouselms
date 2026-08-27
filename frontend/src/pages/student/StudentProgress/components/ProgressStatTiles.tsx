@@ -11,7 +11,7 @@ interface ProgressStatTilesProps {
 export function ProgressStatTiles({ badges, earnedCount, leaderboard }: ProgressStatTilesProps) {
   const t = strings.stats;
   return (
-    <div className="metric-grid">
+    <div className="progress-stat-tiles metric-grid">
       <MetricCard label={t.badgesEarned} value={`${earnedCount} / ${badges.length}`} tone="amber" icon="check" />
       <MetricCard label={t.instituteRank} value={leaderboard.current_student ? `#${leaderboard.current_student.rank}` : "-"} tone="blue" icon="analytics" />
       <MetricCard label={t.averageScore} value={leaderboard.current_student ? `${leaderboard.current_student.average_percentage}%` : "-"} tone="green" icon="dashboard" />
