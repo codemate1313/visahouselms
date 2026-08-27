@@ -102,7 +102,7 @@ fi
   printf "VITE_DEVELOPER_ACCESS_SLUG=%s\n" "$developer_slug"
 } > .env.production
 
-npm ci
+npm ci --include=dev
 npm run build
 cd ..
 
