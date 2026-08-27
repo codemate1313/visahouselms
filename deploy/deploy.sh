@@ -105,7 +105,7 @@ fi
 npm cache clean --force
 rm -rf node_modules
 npm install --include=dev
-npm run build
+./node_modules/.bin/tsc -b && ./node_modules/.bin/vite build
 cd ..
 
 # 5. Sync systemd service, fix writable directories, and restart

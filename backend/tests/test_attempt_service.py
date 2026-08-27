@@ -1039,6 +1039,71 @@ class AttemptServiceTestCase(unittest.TestCase):
                 self.assertIn(expected, ai_log_service.explain_failure(error)["what_happened"])
         self.assertIsNone(ai_log_service.explain_failure(None))
 
+    def test_empty_answer_scores_zero_instead_of_waiting_for_an_instructor(self):
+        """A part with nothing in it is a zero, not a queue item.
+
+        It used to be sent to the provider, rejected as "no response found",
+        recorded as a failure and left pending - so a blank answer held up the
+        student's whole result behind an instructor who had nothing to read.
+        """
+        self._enable_ai_evaluation()
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        parts = sorted(attempt.module.parts, key=lambda item: item.sort_order)
+        # First part answered properly, second left blank.
+        for question in parts[0].questions:
+            attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed academic response."})
+        for question in parts[1].questions:
+            attempt_service.save_answer(self.db, attempt, question.id, {"text": "   "})
+        attempt_service.submit_attempt(self.db, attempt)
+
+        def evaluator(_config, payload):
+            return {
+                "criteria": [
+                    {"criterion": item["criterion"], "marks_awarded": 6, "rationale": "Evidence in the response."}
+                    for item in payload["rubric"]
+                ],
+                "comment": "Solid draft.",
+                "confidence": 0.8,
+            }
+
+        with patch.object(ai_evaluation_service, "_remote_evaluator", side_effect=evaluator):
+            ai_evaluation_service.auto_evaluate_submission(self.db, attempt)
+
+        grades = {grade.part_id: grade for grade in attempt.part_grades}
+        answered, blank = grades[parts[0].id], grades[parts[1].id]
+
+        self.assertEqual(answered.status, PART_GRADE_AI_GRADED)
+        self.assertGreater(Decimal(answered.total_marks), Decimal("0"))
+
+        self.assertEqual(blank.status, PART_GRADE_AI_GRADED)
+        self.assertEqual(Decimal(blank.total_marks), Decimal("0"))
+        self.assertTrue(all(item["marks_awarded"] == "0" for item in blank.criteria))
+        self.assertIn("No written answer", blank.comment)
+        # And it is on the record as settled, not as a provider failure.
+        row = self.db.query(AiEvaluation).filter_by(part_id=parts[1].id).one()
+        self.assertEqual(row.status, "auto_zero")
+        self.assertEqual(row.provider, "system")
+
+    def test_short_recording_counts_as_no_answer(self):
+        module = self._build_writing_module()
+        part = sorted(module.parts, key=lambda item: item.sort_order)[0]
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+
+        self.assertIn("No written answer", ai_evaluation_service._unanswered_reason(attempt, part))
+        for question in part.questions:
+            attempt_service.save_answer(self.db, attempt, question.id, {"text": "too short"})
+        self.db.refresh(attempt)
+        self.assertIn("too short to assess", ai_evaluation_service._unanswered_reason(attempt, part))
+        for question in part.questions:
+            attempt_service.save_answer(self.db, attempt, question.id, {"text": "A properly developed academic answer."})
+        self.db.refresh(attempt)
+        self.assertIsNone(ai_evaluation_service._unanswered_reason(attempt, part))
+
     def test_ai_evaluation_fails_over_to_next_configured_key(self):
         self._subscribe_student_for_ai()
         module = self._build_writing_module()

@@ -1717,6 +1717,26 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
         if grade is not None and grade.status != PART_GRADE_PENDING:
             continue  # already graded (human beat the job to it, or re-run)
 
+        # An empty or near-silent answer is a zero, not something to send to a
+        # provider and then queue for a human. Settle it here so the student's
+        # result finishes instead of waiting on a part with nothing in it.
+        unanswered = _unanswered_reason(attempt, part)
+        if unanswered:
+            _apply_zero_grade(db, attempt, part, unanswered)
+            db.add(AiEvaluation(
+                attempt_id=attempt.id,
+                part_id=part.id,
+                requested_by_id=attempt.user_id,
+                provider="system",
+                model=None,
+                status="auto_zero",
+                error=unanswered,
+                duration_ms=0,
+                request_summary={"skill": part.section_type, "part_title": part.title, "criteria": part.rubric or []},
+            ))
+            db.commit()
+            continue
+
         try:
             suggestion = request_suggestion(db, attempt.user, attempt, part)
         except HTTPException as exc:
@@ -1794,6 +1814,25 @@ def retry_attempt_evaluation(db: Session, attempt: TestAttempt) -> dict:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Every part of this attempt has already been marked.",
         )
+    if all(_unanswered_reason(attempt, part) for part in pending):
+        # Nothing to send, but they should not stay pending either - settle
+        # them now so the retry actually finishes the attempt.
+        for part in pending:
+            _apply_zero_grade(db, attempt, part, _unanswered_reason(attempt, part) or "Nothing was submitted for this part.")
+        db.commit()
+        from app.services.attempt_service import _finalize_if_all_graded
+
+        _finalize_if_all_graded(db, attempt)
+        db.commit()
+        return {
+            "queued": False,
+            "parts": len(pending),
+            "message": (
+                f"{len(pending)} part{'s' if len(pending) != 1 else ''} had no answer recorded, so they scored zero. "
+                "Ask an instructor to review if you think a recording was lost."
+            ),
+        }
+
     if any(_evaluation_in_flight(db, attempt.id, part.id) for part in pending):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

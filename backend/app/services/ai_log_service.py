@@ -20,6 +20,7 @@ STATUS_LABELS = {
     "completed": "Marked successfully",
     "failed": "Could not mark",
     "running": "Still waiting on the AI",
+    "auto_zero": "Scored zero - nothing submitted",
 }
 
 # Ordered: the first pattern that matches an error decides the explanation, so
@@ -121,6 +122,9 @@ def _one_line_outcome(record: AiEvaluation) -> str:
     """The sentence that sits in the table row."""
     if record.status == "running":
         return "Sent to the AI - no answer back yet."
+    if record.status == "auto_zero":
+        # Never sent to a provider: there was nothing in the part to send.
+        return record.error or "Scored zero because nothing was submitted for this part."
     if record.status == "failed":
         explanation = explain_failure(record.error)
         return explanation["what_happened"] if explanation else "The AI could not complete this evaluation."
