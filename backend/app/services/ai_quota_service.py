@@ -24,7 +24,14 @@ from app.services.settings_service import get_setting, set_setting
 # would report a full allowance while Google still counted yesterday's calls.
 PACIFIC_OFFSET_HOURS = -8
 
-UNASSIGNED_KEY = "Unattributed"
+# Rows that never reached a provider: an empty part scored zero locally, or a
+# request that failed while it was still being built. Real outcomes worth
+# seeing, but they cost no quota, so they are counted apart from usage.
+NON_PROVIDER_STATUSES = {"auto_zero", "not_sent"}
+
+# Evaluations recorded before per-key attribution existed. Nothing new lands
+# here - every dispatched call now carries the label of the key that paid.
+UNASSIGNED_KEY = "Before per-key tracking"
 
 
 def _now() -> datetime:
@@ -114,6 +121,7 @@ def usage_summary(db: Session) -> dict:
             "tokens_today": 0,
             "failed_today": 0,
             "rate_limited_today": 0,
+            "not_sent_today": 0,
             "enabled": True,
         })
 
@@ -131,6 +139,12 @@ def usage_summary(db: Session) -> dict:
             continue
         entry = bucket(_bucket_label(record))
         tokens = record.tokens_used or 0
+
+        if record.status in NON_PROVIDER_STATUSES:
+            # Counted, but never as quota - Google was not called.
+            if created >= day_start:
+                entry["not_sent_today"] += 1
+            continue
 
         if created >= day_start:
             entry["requests_today"] += 1
@@ -181,6 +195,7 @@ def usage_summary(db: Session) -> dict:
         "tokens_today": sum(item["tokens_today"] for item in keys),
         "failed_today": sum(item["failed_today"] for item in keys),
         "rate_limited_today": sum(item["rate_limited_today"] for item in keys),
+        "not_sent_today": sum(item["not_sent_today"] for item in keys),
     }
 
     return {
@@ -190,6 +205,9 @@ def usage_summary(db: Session) -> dict:
         "totals": totals,
         "series": series,
         "day_started_at": day_start,
+        # So the screen can say when the daily allowance comes back rather than
+        # only when it started counting.
+        "day_resets_at": day_start + timedelta(days=1),
         "limits_declared": bool(limits),
         # Said plainly on the screen: these ceilings are typed in, not read from
         # Google, because there is no API that reports them.

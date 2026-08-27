@@ -1597,7 +1597,10 @@ def request_suggestion(
             requested_by_id=actor.id,
             provider=configs_to_try[0].get("provider") or "unknown",
             model=configs_to_try[0].get("model"),
-            status="failed",
+            # Distinct from "failed": nothing was sent, so no key was charged
+            # and this must not appear as quota the platform spent.
+            status="not_sent",
+            key_label=(configs_to_try[0].get("key_label") or "")[:80] or None,
             error=_redact_secrets(exc.detail)[:4000],
             duration_ms=0,
         ))

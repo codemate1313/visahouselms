@@ -25,6 +25,7 @@ interface QuotaKey {
   tokens_today: number;
   failed_today: number;
   rate_limited_today: number;
+  not_sent_today: number;
   limits: { rpm: number | null; tpm: number | null; rpd: number | null };
   usage_percent: { rpm: number | null; tpm: number | null; rpd: number | null };
 }
@@ -39,9 +40,11 @@ interface QuotaSummary {
     tokens_today: number;
     failed_today: number;
     rate_limited_today: number;
+    not_sent_today: number;
   };
   series: { hour: string; requests: number; tokens: number; failed: number }[];
   day_started_at: string;
+  day_resets_at: string;
   limits_declared: boolean;
   limits_note: string;
 }
@@ -65,6 +68,12 @@ const LIMIT_FIELDS = [
   { field: "tpm" as const, label: "Tokens per minute", short: "TPM", usage: (k: QuotaKey) => k.tokens_last_minute },
   { field: "rpd" as const, label: "Requests per day", short: "RPD", usage: (k: QuotaKey) => k.requests_today },
 ];
+
+/** Exact below 100k, so "1,455 left of 1,500" does not collapse into
+ *  "1.5k left of 1.5k" and hide the very number the row exists to show. */
+function readable(value: number): string {
+  return value < 100_000 ? value.toLocaleString() : compact(value);
+}
 
 function compact(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
@@ -270,7 +279,10 @@ export function AiQuotaCard() {
             </div>
           </section>
 
-          <p className="ai-quota-note">{data.limits_note}</p>
+          <p className="ai-quota-note">
+            {data.limits_note} Until you enter one, the bars use the standard free-tier figure for the model as an
+            assumption - the used counts are always real.
+          </p>
           <p className="ai-quota-note">
             The day counter follows Google's reset at midnight Pacific — this one started {formatDateTime(data.day_started_at)}.
           </p>
@@ -294,15 +306,38 @@ export function AiQuotaCard() {
                 const effectiveLimit = userLimitStr ? Number(userLimitStr) : (key.limits[field] || (defaultLimitStr ? Number(defaultLimitStr) : null));
                 const pct = effectiveLimit && effectiveLimit > 0 ? Math.round((used / effectiveLimit) * 100) : null;
                 
+                const remaining = effectiveLimit !== null ? Math.max(0, effectiveLimit - used) : null;
+                const assumed = !userLimitStr && !key.limits[field];
+
                 return (
                   <div key={field} className="ai-quota-metric">
                     <div className="ai-quota-metric-head">
                       <span className="ai-quota-metric-label">
                         {label} <code className="ai-quota-code-chip">{short}</code>
                       </span>
-                      <div className="ai-quota-metric-input-wrapper">
-                        <span className="ai-quota-used-val">{compact(used)} used</span>
-                        <span className="ai-quota-slash">/</span>
+                      <span className="ai-quota-metric-reading">
+                        {remaining !== null ? (
+                          <>
+                            <b>{readable(remaining)}</b> left of {readable(effectiveLimit as number)}
+                            {pct !== null ? (
+                              <span className={`ai-quota-pct-chip ${toneFor(pct)}`}>{pct}% used</span>
+                            ) : null}
+                          </>
+                        ) : (
+                          <>
+                            <b>{readable(used)}</b> used · no limit set
+                          </>
+                        )}
+                      </span>
+                    </div>
+                    <UsageBar percent={pct} />
+                    <div className="ai-quota-metric-foot">
+                      <span>
+                        {readable(used)} used{field === "rpd" ? ` today · resets ${formatDateTime(data.day_resets_at)}` : " in the last minute"}
+                        {assumed ? " · limit assumed, not confirmed" : ""}
+                      </span>
+                      <label className="ai-quota-limit-field">
+                        Your {short} limit
                         <input
                           type="number"
                           min={0}
@@ -316,18 +351,24 @@ export function AiQuotaCard() {
                             }))
                           }
                         />
-                        {pct !== null && <span className="ai-quota-pct-chip">({pct}%)</span>}
-                      </div>
+                      </label>
                     </div>
-                    <UsageBar percent={pct} />
                   </div>
                 );
               })}
 
               <p className="ai-quota-note">
-                {key.requests_today} request{key.requests_today === 1 ? "" : "s"} today · {compact(key.tokens_today)} tokens ·{" "}
+                {key.requests_today} request{key.requests_today === 1 ? "" : "s"} sent today · {compact(key.tokens_today)} tokens ·{" "}
                 {key.failed_today} failed, of which {key.rate_limited_today} were rate limits.
+                {key.not_sent_today > 0
+                  ? ` A further ${key.not_sent_today} answer${key.not_sent_today === 1 ? " was" : "s were"} settled without calling the AI (empty answers score zero), so they used no quota.`
+                  : ""}
               </p>
+              {key.key === "Before per-key tracking" && (
+                <p className="ai-quota-note">
+                  Evaluations recorded before the platform tracked which key paid for each call. Nothing new is added here.
+                </p>
+              )}
             </section>
           ))}
 

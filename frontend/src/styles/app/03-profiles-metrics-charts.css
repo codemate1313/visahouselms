@@ -4909,10 +4909,60 @@ button.danger-text:hover,
   box-shadow: 0 0 0 2px rgba(167, 30, 43, 0.15);
 }
 
+/* The share tracks the same ramp as the bar: amber at 60%, crimson at 90%.
+   A fixed amber read as a warning even at 0% used. */
 .ai-quota-pct-chip {
   font-size: 11.5px;
   font-weight: 750;
-  color: #d97706;
+  color: var(--text-muted);
+}
+
+.ai-quota-pct-chip.is-ok { color: #1f7a4d; }
+.ai-quota-pct-chip.is-warning { color: #d97706; }
+.ai-quota-pct-chip.is-critical { color: var(--primary); }
+
+[data-theme="dark"] .ai-quota-pct-chip.is-ok { color: #6ee7b7; }
+[data-theme="dark"] .ai-quota-pct-chip.is-warning { color: #fbbf24; }
+[data-theme="dark"] .ai-quota-pct-chip.is-critical { color: #fca5a5; }
+
+/* The reading comes first - what is left, of how much - with the used figure
+   and the limit field underneath, so the row answers "how much have I got"
+   before it asks anything of the reader. */
+.ai-quota-metric-reading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ai-quota-metric-reading b {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--text);
+}
+
+.ai-quota-metric-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ai-quota-limit-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 [data-theme="dark"] .ai-quota-bar {
