@@ -178,70 +178,8 @@ export function MyCourses() {
         </div>
       ) : (
         <div className="my-courses-content-wrapper">
-          {/* Top Hero Membership Card */}
+          {/* Unified Single-Row Filter & Metadata Bar */}
           <div className="my-courses-hero-card">
-            <div className="my-courses-hero-left">
-              <h2 className="my-courses-hero-title">
-                {access.state === "active" || access.state === "grace" ? access.plan.name : strings.demo.heroTitle}
-              </h2>
-              <p className="my-courses-hero-desc">
-                {access.state === "active" || access.state === "grace"
-                  ? access.plan.description || strings.defaultPlanDescription
-                  : strings.demo.heroDescription}
-              </p>
-            </div>
-            <div className="my-courses-hero-right">
-              {!isInstituteStudent && access.expires_at && (
-                <div className="my-courses-validity-tag">
-                  <Icon name="due" />
-                  <span>{strings.accessUntil(formatDate(access.expires_at))}</span>
-                </div>
-              )}
-              {/* Trial days remaining pill — only for direct demo-access students */}
-              {!isInstituteStudent &&
-                access.state !== "active" &&
-                access.state !== "grace" &&
-                access.demo != null &&
-                access.demo.is_enabled && (
-                  <div
-                    className={[
-                      "my-courses-trial-badge",
-                      access.demo.days_remaining === 0
-                        ? "trial-expired"
-                        : access.demo.days_remaining != null && access.demo.days_remaining <= 3
-                          ? "trial-urgent"
-                          : "trial-ok",
-                    ].join(" ")}
-                    title={
-                      access.demo.days_remaining != null && access.demo.days_remaining > 0
-                        ? `Trial started ${access.demo.duration_days}-day period`
-                        : undefined
-                    }
-                  >
-                    <Icon name="due" />
-                    <span>
-                      {access.demo.days_remaining === 0
-                        ? strings.demo.trialExpired
-                        : access.demo.days_remaining === 1
-                          ? strings.demo.trialLastDay
-                          : strings.demo.trialDaysLeft(access.demo.days_remaining ?? 0)}
-                    </span>
-                  </div>
-                )}
-              {!isInstituteStudent && access.state !== "active" && access.state !== "grace" && (
-                <Button variant="primary" onClick={() => navigate("/student/courses")}>
-                  {strings.demo.browsePlans}
-                </Button>
-              )}
-              <div className="my-courses-count-tag">
-                <Icon name="plan" />
-                <span>{strings.testsCount(allModules.length)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Filter Bar: Global SearchableSelect Dropdowns + SearchInput */}
-          {allModules.length > 0 && (
             <ModuleFilterBar
               availableTypes={availableTypes}
               typeFilter={typeFilter}
@@ -252,8 +190,58 @@ export function MyCourses() {
               onSearchChange={setSearch}
               typeCounts={typeCounts}
               statusCounts={statusCounts}
+              rightContent={
+                <div className="my-courses-hero-right">
+                  {!isInstituteStudent && access.expires_at && (
+                    <div className="my-courses-validity-tag">
+                      <Icon name="due" />
+                      <span>{strings.accessUntil(formatDate(access.expires_at))}</span>
+                    </div>
+                  )}
+                  {/* Trial days remaining pill — only for direct demo-access students */}
+                  {!isInstituteStudent &&
+                    access.state !== "active" &&
+                    access.state !== "grace" &&
+                    access.demo != null &&
+                    access.demo.is_enabled && (
+                      <div
+                        className={[
+                          "my-courses-trial-badge",
+                          access.demo.days_remaining === 0
+                            ? "trial-expired"
+                            : access.demo.days_remaining != null && access.demo.days_remaining <= 3
+                              ? "trial-urgent"
+                              : "trial-ok",
+                        ].join(" ")}
+                        title={
+                          access.demo.days_remaining != null && access.demo.days_remaining > 0
+                            ? `Trial started ${access.demo.duration_days}-day period`
+                            : undefined
+                        }
+                      >
+                        <Icon name="due" />
+                        <span>
+                          {access.demo.days_remaining === 0
+                            ? strings.demo.trialExpired
+                            : access.demo.days_remaining === 1
+                              ? strings.demo.trialLastDay
+                              : strings.demo.trialDaysLeft(access.demo.days_remaining ?? 0)}
+                        </span>
+                      </div>
+                    )}
+                  {!isInstituteStudent && access.state !== "active" && access.state !== "grace" && (
+                    <Button variant="primary" size="sm" onClick={() => navigate("/student/courses")}>
+                      {strings.demo.browsePlans}
+                    </Button>
+                  )}
+                  <div className="my-courses-count-tag">
+                    <Icon name="plan" />
+                    <span>{strings.testsCount(allModules.length)}</span>
+                  </div>
+                </div>
+              }
             />
-          )}
+          </div>
 
           {/* Test Cards Grid */}
           {!allModules.length ? (

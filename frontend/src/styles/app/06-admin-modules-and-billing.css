@@ -4632,18 +4632,17 @@
   gap: 16px;
 }
 
-/* My Courses Hero Membership Banner */
+/* My Courses Unified Single-Row Hero & Filter Header Card */
 .my-courses-hero-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 18px 24px;
+  padding: 12px 18px;
   background: var(--surface, #ffffff);
   border: 1px solid var(--border, #e4e4e7);
-  border-radius: 18px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px -6px rgba(0, 0, 0, 0.04);
-  margin-bottom: 0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 6px 18px -4px rgba(0, 0, 0, 0.04);
+  margin-bottom: 8px;
+  width: 100%;
 }
 
 [data-theme="dark"] .my-courses-hero-card {
@@ -4651,30 +4650,46 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.4);
 }
 
-.my-courses-hero-title {
-  font-size: 20px;
-  font-weight: 650;
-  color: var(--text, #111113);
-  margin: 0 0 4px 0;
-  letter-spacing: -0.01em;
+.assigned-tests-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
 }
 
-[data-theme="dark"] .my-courses-hero-title {
-  color: #ffffff;
+.assigned-tests-filter-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
 }
 
-.my-courses-hero-desc {
-  font-size: 12.5px;
-  line-height: 1.45;
-  color: var(--text-muted, #6e6e73);
-  margin: 0;
+.assigned-tests-filter-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
-[data-theme="dark"] .my-courses-hero-desc {
-  color: #a1a1aa;
+.assigned-tests-filter-bar .assigned-tests-search-input {
+  min-width: 220px;
+  width: 260px;
+}
+
+.assigned-tests-filter-bar .assigned-tests-type-select {
+  min-width: 175px;
+  width: 190px;
+}
+
+.assigned-tests-filter-bar .assigned-tests-status-select {
+  min-width: 170px;
+  width: 180px;
 }
 
 .my-courses-hero-right {
@@ -4696,6 +4711,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text, #3f3f46);
+  white-space: nowrap;
 }
 
 [data-theme="dark"] .my-courses-validity-tag,
@@ -4716,6 +4732,7 @@
   font-weight: 600;
   letter-spacing: 0.01em;
   transition: box-shadow 0.2s;
+  white-space: nowrap;
 }
 
 .my-courses-trial-badge.trial-ok {
@@ -4743,37 +4760,27 @@
   50% { box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 15%, transparent); }
 }
 
-/* Assigned Tests Filter Bar using Global FilterBar & SearchableSelect */
-.assigned-tests-filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin: 6px 0 16px 0;
-  width: 100%;
-}
-
-.assigned-tests-filter-bar .assigned-tests-search-input {
-  min-width: 260px;
-  flex: 1 1 260px;
-  max-width: 380px;
-}
-
-.assigned-tests-filter-bar .assigned-tests-type-select {
-  min-width: 200px;
-  width: 220px;
-}
-
-.assigned-tests-filter-bar .assigned-tests-status-select {
-  min-width: 180px;
-  width: 195px;
-}
-
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .assigned-tests-filter-bar {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 12px;
+  }
+
+  .assigned-tests-filter-left,
+  .assigned-tests-filter-right {
+    width: 100%;
+  }
+
+  .assigned-tests-filter-right {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .assigned-tests-filter-left {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .assigned-tests-filter-bar .assigned-tests-search-input,
@@ -4782,6 +4789,10 @@
     width: 100%;
     min-width: 100%;
     max-width: 100%;
+  }
+
+  .assigned-tests-filter-right {
+    justify-content: flex-start;
   }
 }
 

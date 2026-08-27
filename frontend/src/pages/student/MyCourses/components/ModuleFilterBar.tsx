@@ -1,4 +1,5 @@
-import { FilterBar, SearchInput, SearchableSelect } from "@/components/ui";
+import type { ReactNode } from "react";
+import { SearchInput, SearchableSelect } from "@/components/ui";
 import { myCoursesStrings as strings } from "../MyCourses.strings";
 
 interface ModuleFilterBarProps {
@@ -15,6 +16,7 @@ interface ModuleFilterBarProps {
     unattempted: number;
     completed: number;
   };
+  rightContent?: ReactNode;
 }
 
 export function ModuleFilterBar({
@@ -27,6 +29,7 @@ export function ModuleFilterBar({
   onSearchChange,
   typeCounts = {},
   statusCounts = { all: 0, unattempted: 0, completed: 0 },
+  rightContent,
 }: ModuleFilterBarProps) {
   const typeLabels = strings.moduleTypeLabels;
 
@@ -49,32 +52,36 @@ export function ModuleFilterBar({
   ];
 
   return (
-    <FilterBar className="assigned-tests-filter-bar">
-      <SearchInput
-        value={search}
-        onChange={onSearchChange}
-        placeholder={strings.searchPlaceholder}
-        className="assigned-tests-search-input"
-        width={300}
-      />
-      <SearchableSelect
-        ariaLabel="Test type filter"
-        options={typeOptions}
-        value={typeFilter}
-        onChange={(val) => onTypeFilterChange(String(val))}
-        placeholder="Filter by type"
-        searchable={false}
-        className="assigned-tests-type-select"
-      />
-      <SearchableSelect
-        ariaLabel="Attempt status filter"
-        options={statusOptions}
-        value={statusFilter}
-        onChange={(val) => onStatusFilterChange(String(val))}
-        placeholder="Filter by status"
-        searchable={false}
-        className="assigned-tests-status-select"
-      />
-    </FilterBar>
+    <div className="assigned-tests-filter-bar">
+      <div className="assigned-tests-filter-left">
+        <SearchInput
+          value={search}
+          onChange={onSearchChange}
+          placeholder={strings.searchPlaceholder}
+          className="assigned-tests-search-input"
+          width={280}
+        />
+        <SearchableSelect
+          ariaLabel="Test type filter"
+          options={typeOptions}
+          value={typeFilter}
+          onChange={(val) => onTypeFilterChange(String(val))}
+          placeholder="Filter by type"
+          searchable={false}
+          className="assigned-tests-type-select"
+        />
+        <SearchableSelect
+          ariaLabel="Attempt status filter"
+          options={statusOptions}
+          value={statusFilter}
+          onChange={(val) => onStatusFilterChange(String(val))}
+          placeholder="Filter by status"
+          searchable={false}
+          className="assigned-tests-status-select"
+        />
+      </div>
+
+      {rightContent && <div className="assigned-tests-filter-right">{rightContent}</div>}
+    </div>
   );
 }
