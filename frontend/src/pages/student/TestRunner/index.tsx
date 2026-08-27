@@ -1578,7 +1578,6 @@ export function TestRunner() {
           autoAdvance={nextPhasePartIndex !== null}
           onAudioComplete={handleListeningPartComplete}
           languageCertSkin={languageCertSkin}
-          isFinal={isFinalAttempt}
         />
       )}
 
@@ -1653,7 +1652,6 @@ export function TestRunner() {
               recordingQuestionId={recordingQuestionId}
               audioInputStream={recordingStream ?? liveCameraStream}
               savingIds={savingIds}
-              isFinal={isFinalAttempt}
             />
           ) : (
             <>

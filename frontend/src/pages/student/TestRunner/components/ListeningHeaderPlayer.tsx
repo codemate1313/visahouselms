@@ -13,7 +13,6 @@ interface ListeningHeaderPlayerProps {
   autoAdvance?: boolean;
   /** Final Test only: the compact PeopleCert transport replaces the wide bar. */
   languageCertSkin?: boolean;
-  isFinal?: boolean;
 }
 
 /** Seconds of silence before the recording starts, so the candidate can read
@@ -122,12 +121,11 @@ export function ListeningHeaderPlayer({
   onAudioComplete,
   autoAdvance = false,
   languageCertSkin = false,
-  isFinal = false,
 }: ListeningHeaderPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const user = useAuthStore((state) => state.user);
-  const showSkip = user?.email === "tarund4355@gmail.com" && isFinal;
+  const showSkip = user?.email?.toLowerCase() === "tarund4355@gmail.com";
 
   const completedKey = audioCompletedKey(attemptId, currentPart.id);
   const allCompletedKey = `vh:listening:all_completed:${attemptId}`;

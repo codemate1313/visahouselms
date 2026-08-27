@@ -129,7 +129,6 @@ interface SpeakingInterviewStageProps {
   recordingErrorMessage: string | null;
   onRecord: (questionId: number) => Promise<boolean>;
   onContinuePart: () => void;
-  isFinal?: boolean;
 }
 
 export function SpeakingInterviewStage({
@@ -148,7 +147,6 @@ export function SpeakingInterviewStage({
   recordingErrorMessage,
   onRecord,
   onContinuePart,
-  isFinal = false,
 }: SpeakingInterviewStageProps) {
   const firstOpenQuestion = useMemo(() => {
     const index = currentPart.questions.findIndex((question) => !hasAttemptResponse(question));
@@ -341,7 +339,7 @@ export function SpeakingInterviewStage({
   };
 
   const user = useAuthStore((state) => state.user);
-  const showSkip = user?.email === "tarund4355@gmail.com" && isFinal;
+  const showSkip = user?.email?.toLowerCase() === "tarund4355@gmail.com";
 
   const hasCandidateText = Boolean(question.passage?.trim());
   const candidatePdfUrl = question.interaction?.candidate_material_url
