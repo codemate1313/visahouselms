@@ -1102,6 +1102,11 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
     try:
         candidate_text = data["candidates"][0]["content"]["parts"][0]["text"]
         parsed = json.loads(candidate_text)
+        # Carried out-of-band so the quota screen can report real token spend
+        # rather than counting requests and hoping. Stripped before scoring.
+        usage = (data.get("usageMetadata") or {}).get("totalTokenCount")
+        if isinstance(parsed, dict) and usage is not None:
+            parsed["_usage_tokens"] = usage
         return parsed
     except (KeyError, IndexError, json.JSONDecodeError) as exc:
         logger.error("Failed to parse Gemini response: %s | Raw: %s", exc, data)
@@ -1528,6 +1533,7 @@ def request_suggestion(
             provider=config["provider"],
             model=config.get("model"),
             status="running",
+            key_label=(config.get("key_label") or "")[:80] or None,
             request_summary=_request_summary(payload, config),
         )
         db.add(record)
@@ -1549,6 +1555,8 @@ def request_suggestion(
                 time.sleep(TRANSIENT_RETRY_SECONDS)
                 raw = call(config, payload)
             record.duration_ms = int((time.monotonic() - started) * 1000)
+            if isinstance(raw, dict):
+                record.tokens_used = raw.pop("_usage_tokens", None)
             record.response_raw = _readable_response(raw)
             suggestion = _normalize(raw, part)
             record.status = "completed"

@@ -4657,3 +4657,222 @@ button.danger-text:hover,
     transition: none;
   }
 }
+
+/* ==========================================================================
+   AI marking quota card
+   --------------------------------------------------------------------------
+   Usage is measured, ceilings are declared, so the bars only appear once a
+   limit has been entered - a bar against an unknown maximum would be a
+   decoration pretending to be information.
+   ========================================================================== */
+
+.ai-quota-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.ai-quota-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.ai-quota-head h3 {
+  margin: 2px 0 0;
+  font-size: 16px;
+}
+
+.ai-quota-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-quota-figures div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ai-quota-figures b {
+  font-size: 22px;
+  font-weight: 750;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.ai-quota-figures span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ai-quota-spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 54px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ai-quota-spark-col {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 2px;
+  height: 100%;
+}
+
+.ai-quota-spark-ok {
+  display: block;
+  border-radius: 2px 2px 0 0;
+  background: var(--primary);
+  min-height: 1px;
+}
+
+.ai-quota-spark-failed {
+  display: block;
+  border-radius: 2px 2px 0 0;
+  background: #d97706;
+}
+
+.ai-quota-keys {
+  display: grid;
+  gap: 10px;
+}
+
+.ai-quota-key-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  align-items: baseline;
+}
+
+.ai-quota-key-name {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.ai-quota-key-figure {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-quota-bar {
+  grid-column: 1 / -1;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.ai-quota-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #1f7a4d;
+}
+
+.ai-quota-bar.is-warning span { background: #d97706; }
+.ai-quota-bar.is-critical span { background: var(--primary); }
+.ai-quota-bar.is-unknown span { background: var(--border); }
+
+/* ---- detail dialog ---- */
+
+.ai-quota-detail {
+  display: grid;
+  gap: 14px;
+}
+
+.ai-quota-switch-row {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+
+.ai-quota-switch-row small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.ai-quota-note {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.ai-quota-key-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.ai-quota-key-card header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-quota-key-card h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.ai-quota-key-card header span {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.ai-quota-metric {
+  display: grid;
+  gap: 6px;
+}
+
+.ai-quota-metric-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-quota-metric-head code {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.ai-quota-limit-input {
+  height: 34px;
+  font-size: 12.5px;
+}
+
+[data-theme="dark"] .ai-quota-bar {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+[data-theme="dark"] .ai-quota-bar span { background: #6ee7b7; }
+[data-theme="dark"] .ai-quota-bar.is-warning span { background: #fbbf24; }
+[data-theme="dark"] .ai-quota-bar.is-critical span { background: #fca5a5; }
+[data-theme="dark"] .ai-quota-spark-failed { background: #fbbf24; }
+
+[data-theme="dark"] .ai-quota-switch-row,
+[data-theme="dark"] .ai-quota-key-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}

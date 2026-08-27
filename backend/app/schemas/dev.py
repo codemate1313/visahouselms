@@ -50,6 +50,16 @@ class AiEvaluationModelListIn(BaseModel):
     model: Optional[str] = None
 
 
+class AiQuotaLimitsIn(BaseModel):
+    """{"API Key 1": {"rpm": 10, "tpm": 250000, "rpd": 250}} - typed in from AI
+    Studio, since Google exposes no endpoint that reports them."""
+    limits: dict = {}
+
+
+class AiMarkingToggleIn(BaseModel):
+    enabled: bool
+
+
 class BackupSettingsIn(BaseModel):
     schedule: Optional[str] = None  # none | daily | weekly
     retention: Optional[str] = None

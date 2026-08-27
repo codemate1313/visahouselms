@@ -9,6 +9,8 @@ from app.models.user import User
 from app.schemas.dev import (
     AiEvaluationKeyTestIn,
     AiEvaluationModelListIn,
+    AiMarkingToggleIn,
+    AiQuotaLimitsIn,
     AiEvaluationSettingsIn,
     BackupSettingsIn,
     FcmSettingsIn,
@@ -20,7 +22,7 @@ from app.schemas.dev import (
     TestEmailIn,
     TestFcmIn,
 )
-from app.services import ai_evaluation_service, fcm_service, job_service, smtp_service
+from app.services import ai_evaluation_service, ai_quota_service, fcm_service, job_service, smtp_service
 from app.services.settings_service import get_settings_group, set_setting, set_settings_group
 from app.core.security import get_static_otp_code, is_static_otp_enabled
 
@@ -131,6 +133,35 @@ def put_ai_evaluation(
         job_service.recover_missing_ai_auto_grade_jobs(db)
     _audit(db, actor, "dev_settings.update_ai_evaluation", request)
     return ai_evaluation_service.config_status(db)
+
+
+@router.get("/ai-evaluation/quota")
+def get_ai_quota(db: Session = Depends(get_db)):
+    return ai_quota_service.usage_summary(db)
+
+
+@router.put("/ai-evaluation/quota-limits")
+def put_ai_quota_limits(
+    payload: AiQuotaLimitsIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    limits = ai_quota_service.save_declared_limits(db, payload.limits)
+    _audit(db, actor, "dev_settings.update_ai_quota_limits", request)
+    return {"limits": limits}
+
+
+@router.post("/ai-evaluation/toggle")
+def toggle_ai_marking(
+    payload: AiMarkingToggleIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    result = ai_quota_service.set_ai_marking_enabled(db, payload.enabled)
+    _audit(db, actor, "dev_settings.toggle_ai_marking", request)
+    return result
 
 
 @router.post("/ai-evaluation/models")

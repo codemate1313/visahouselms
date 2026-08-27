@@ -11,6 +11,7 @@ import { DashboardCharts } from "./components/DashboardCharts";
 import { MetricDetailModal } from "./components/MetricDetailModal";
 import { PendingSignupsAlert } from "./components/PendingSignupsAlert";
 import { NoLivePlanAlert } from "./components/NoLivePlanAlert";
+import { AiQuotaCard } from "./components/AiQuotaCard";
 
 export function Dashboard() {
   const user = useAuthStore((state) => state.user);
@@ -89,6 +90,7 @@ export function Dashboard() {
       {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
       <ExecutiveMetricGrid summary={summary} revenueTrend={revenueTrend} onOpen={openMetric} />
       {summary.permissions.can_view_monetary_analytics && summary.revenue && <DashboardCharts summary={summary} />}
+      <AiQuotaCard />
 
       {selectedMetric && (
         <MetricDetailModal

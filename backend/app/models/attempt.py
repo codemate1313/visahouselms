@@ -352,6 +352,10 @@ class AiEvaluation(Base):
     request_summary: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     response_raw: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # Tokens are what the per-minute quota is actually spent on, and which key
+    # spent them decides whose limit it counted against.
+    tokens_used: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    key_label: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     attempt: Mapped[TestAttempt] = relationship()
