@@ -6135,3 +6135,94 @@ html[data-theme="dark"] body .dashboard .test-runner-option:has(input:checked) {
 }
 
 
+
+/* Examiner criteria, grouped by part and collapsible. A four-skill paper puts
+   sixteen bars on this page; the student should be able to fold away the parts
+   they have already read. */
+.analysis-criteria-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.analysis-criteria-group {
+  border: 1px solid #e2e4e8;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.analysis-criteria-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  background: #fafafa;
+  color: #1b1c20;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.analysis-criteria-toggle:hover {
+  background: #f4f4f5;
+}
+
+.analysis-criteria-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.analysis-criteria-toggle strong {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.analysis-criteria-total {
+  color: #75777f;
+  font-size: 11.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-criteria-chevron {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translate(-1px, -1px);
+  transition: transform 0.15s ease;
+  color: var(--primary);
+}
+
+.analysis-criteria-group.is-collapsed .analysis-criteria-chevron {
+  transform: rotate(-45deg) translate(-1px, 1px);
+}
+
+.analysis-criteria-group .analysis-score-list {
+  padding: 14px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .analysis-criteria-chevron { transition: none; }
+}
+
+[data-theme="dark"] .analysis-criteria-group {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .analysis-criteria-toggle {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f7f7f8;
+}
+
+[data-theme="dark"] .analysis-criteria-toggle:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme="dark"] .analysis-criteria-total {
+  color: #b4b4bb;
+}

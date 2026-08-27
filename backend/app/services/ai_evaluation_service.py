@@ -928,7 +928,15 @@ def _apply_zero_grade(db: Session, attempt: TestAttempt, part: ExamModulePart, r
         for item in (part.rubric or [])
         if item.get("criterion")
     ]
-    grade = next((item for item in attempt.part_grades if item.part_id == part.id), None)
+    # Query rather than trust the loaded collection: submit creates the pending
+    # grade rows in the same transaction, and they are not necessarily in
+    # `attempt.part_grades` yet - inserting a second one hits the unique
+    # constraint on (attempt_id, part_id).
+    grade = (
+        db.query(AttemptPartGrade)
+        .filter(AttemptPartGrade.attempt_id == attempt.id, AttemptPartGrade.part_id == part.id)
+        .first()
+    ) or next((item for item in attempt.part_grades if item.part_id == part.id), None)
     if grade is None:
         grade = AttemptPartGrade(attempt_id=attempt.id, part_id=part.id)
         db.add(grade)
@@ -1012,6 +1020,9 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
             "Analyze the student's submission carefully against the provided rubric criteria. "
             "Return JSON ONLY matching the required schema. "
             "Score EVERY rubric criterion strictly between 0 and its max_marks. "
+            "If the response does not address the prompt, is inaudible, is in the wrong language, or is "
+            "otherwise off-topic, score it zero (or near zero) and say so in the rationale - do not refuse "
+            "to answer and do not return an error. A wrong answer is still an answer to be marked. "
             "Provide a brief, evidence-based rationale for each criterion, an overall examiner summary comment, "
             "and a confidence rating between 0 and 1. "
             "This is an advisory draft requiring human instructor review."
@@ -1695,6 +1706,47 @@ def _apply_ai_grade(db: Session, attempt: TestAttempt, part: ExamModulePart, sug
     grade.status = PART_GRADE_AI_GRADED
     grade.graded_at = _now()
     db.add(grade)
+
+
+def settle_unanswered_parts(db: Session, attempt: TestAttempt) -> int:
+    """Score every empty or silent part zero, straight away.
+
+    Called from the submit request so a student who skipped a Speaking part
+    sees the zero with the rest of their result, instead of that part sitting
+    on "awaiting examiner marking" until a background job gets to it and finds
+    nothing to send. Parts that hold a real answer are left alone for the AI.
+    """
+    settled = 0
+    db.flush()  # so grade rows created earlier in this request are visible
+    grades_by_part = {
+        grade.part_id: grade
+        for grade in db.query(AttemptPartGrade).filter(AttemptPartGrade.attempt_id == attempt.id).all()
+    }
+    for part in attempt.module.parts:
+        if part.auto_marked:
+            continue
+        grade = grades_by_part.get(part.id)
+        if grade is not None and grade.status != PART_GRADE_PENDING:
+            continue
+        reason = _unanswered_reason(attempt, part)
+        if not reason:
+            continue
+        _apply_zero_grade(db, attempt, part, reason)
+        db.add(AiEvaluation(
+            attempt_id=attempt.id,
+            part_id=part.id,
+            requested_by_id=attempt.user_id,
+            provider="system",
+            model=None,
+            status="auto_zero",
+            error=reason,
+            duration_ms=0,
+            request_summary={"skill": part.section_type, "part_title": part.title, "criteria": part.rubric or []},
+        ))
+        settled += 1
+    if settled:
+        db.commit()
+    return settled
 
 
 def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:

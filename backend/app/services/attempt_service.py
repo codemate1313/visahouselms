@@ -1231,7 +1231,26 @@ def submit_attempt(
         # It runs as a background job rather than inline here because a
         # provider call can take tens of seconds per part, which is too slow
         # to hold this request open for.
-        ai_evaluation_pending = bool(ai_eligible_parts) and ai_evaluation_service.config_status(db)["configured"]
+        # Empty and silent answers are settled here, in the submit request, not
+        # in the background job: there is nothing to send anywhere, so making
+        # the student wait on a queue for a zero only delays their result.
+        settled_now = ai_evaluation_service.settle_unanswered_parts(db, attempt)
+        if settled_now:
+            db.flush()
+            db.refresh(attempt)
+            # Every subjective part may now be settled, in which case the
+            # attempt is finished and must not sit in the grading queue.
+            _finalize_if_all_graded(db, attempt)
+            db.flush()
+        remaining_ai_parts = [
+            part
+            for part in ai_eligible_parts
+            if not any(
+                grade.part_id == part.id and grade.status != PART_GRADE_PENDING
+                for grade in attempt.part_grades
+            )
+        ]
+        ai_evaluation_pending = bool(remaining_ai_parts) and ai_evaluation_service.config_status(db)["configured"]
     completed_now = attempt.status == ATTEMPT_GRADED
     attempt_id = attempt.id
     user_id = attempt.user_id

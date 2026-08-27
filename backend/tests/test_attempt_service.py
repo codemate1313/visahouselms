@@ -741,8 +741,15 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.commit()
 
         result = attempt_service.submit_attempt(self.db, attempt)
-        self.assertEqual(result["status"], ATTEMPT_GRADING)
-        self.assertEqual(self.db.query(GradingQueueEntry).filter_by(attempt_id=attempt.id).count(), 1)
+
+        # Submitting is still not blocked by the missing recordings - that is
+        # what this test exists to protect. What changed is the outcome: a part
+        # with nothing recorded is scored zero at submit instead of waiting on
+        # an examiner who has nothing to listen to.
+        self.assertEqual(result["status"], ATTEMPT_GRADED)
+        for grade in attempt.part_grades:
+            self.assertEqual(grade.status, PART_GRADE_AI_GRADED)
+            self.assertEqual(Decimal(grade.total_marks), Decimal("0"))
 
     def test_institute_student_submit_routes_to_active_institute_staff(self):
         module = self._build_writing_module()
@@ -792,6 +799,11 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         attempt_out = attempt_service.start_attempt(self.db, self.student, module)
         attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        # A real answer, so the attempt reaches the queue on its merits - an
+        # empty one is now scored zero at submit and never needs a marker.
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed academic response."})
 
         result = attempt_service.submit_attempt(self.db, attempt)
 
@@ -1087,6 +1099,34 @@ class AttemptServiceTestCase(unittest.TestCase):
         row = self.db.query(AiEvaluation).filter_by(part_id=parts[1].id).one()
         self.assertEqual(row.status, "auto_zero")
         self.assertEqual(row.provider, "system")
+
+    def test_submitting_an_empty_part_returns_the_zero_immediately(self):
+        """The zero lands in the submit response, not after the background job.
+
+        A skipped Speaking part used to show "awaiting examiner marking" until
+        a job ran and found nothing to send - so the student waited on a queue
+        for a mark that needed no thought.
+        """
+        self._enable_ai_evaluation()
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": ""})
+
+        result = attempt_service.submit_attempt(self.db, attempt)
+
+        # Nothing was left for the AI, so the whole attempt is finished already.
+        self.assertEqual(result["status"], ATTEMPT_GRADED)
+        self.assertEqual(result["ai_evaluation_status"], "completed")
+        for grade in attempt.part_grades:
+            self.assertEqual(grade.status, PART_GRADE_AI_GRADED)
+            self.assertEqual(Decimal(grade.total_marks), Decimal("0"))
+        # One grade row per part - the pending row is updated, not duplicated.
+        self.assertEqual(len(attempt.part_grades), len(attempt.module.parts))
 
     def test_short_recording_counts_as_no_answer(self):
         module = self._build_writing_module()

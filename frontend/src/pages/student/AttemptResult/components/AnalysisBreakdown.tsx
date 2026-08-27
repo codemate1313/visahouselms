@@ -5,6 +5,12 @@ import { attemptResultStrings as strings } from "../AttemptResult.strings";
 
 const t = strings.analysis;
 
+/** "6 / 8" as a pair, for the collapsed group's running total. */
+function marksFrom(marks: string): [number, number] {
+  const [awarded, maximum] = String(marks).split("/").map((part) => Number(part.trim()));
+  return [Number.isFinite(awarded) ? awarded : 0, Number.isFinite(maximum) ? maximum : 0];
+}
+
 function statusLabel(status: AnalysisBandStatus): string {
   return t.statusLabels[status] ?? t.statusLabels.pending;
 }
@@ -190,6 +196,15 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
   const pacing = analysis.pacing;
 
   const [selectedSkill, setSelectedSkill] = useState<any | null>(null);
+  const [collapsedParts, setCollapsedParts] = useState<string[]>([]);
+
+  // Preserve the order the service ranked the criteria in, grouped by part.
+  const criteriaByPart = criteria.reduce<[string, typeof criteria][]>((groups, row) => {
+    const existing = groups.find(([label]) => label === row.part_label);
+    if (existing) existing[1].push(row);
+    else groups.push([row.part_label, [row]]);
+    return groups;
+  }, []);
 
   useEffect(() => {
     if (!selectedSkill) return;
@@ -447,17 +462,50 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
             <h3>{t.criteria.heading}</h3>
             <p>{t.criteria.subheading}</p>
           </div>
-          <div className="analysis-score-list">
-            {criteria.map((row) => (
-              <ScoreRow
-                key={`${row.part_label}-${row.criterion}`}
-                label={`${row.criterion} · ${row.part_label}`}
-                marks={row.marks}
-                percentage={row.percentage}
-                status={row.status}
-                note={row.status === "priority" ? row.action : undefined}
-              />
-            ))}
+          {/* One group per part, each collapsible: a four-skill paper puts
+              sixteen bars on the page, which buries everything below it. */}
+          <div className="analysis-criteria-groups">
+            {criteriaByPart.map(([partLabel, rows]) => {
+              const collapsed = collapsedParts.includes(partLabel);
+              const awarded = rows.reduce((total, row) => total + marksFrom(row.marks)[0], 0);
+              const maximum = rows.reduce((total, row) => total + marksFrom(row.marks)[1], 0);
+              return (
+                <div key={partLabel} className={`analysis-criteria-group ${collapsed ? "is-collapsed" : ""}`}>
+                  <button
+                    type="button"
+                    className="analysis-criteria-toggle"
+                    aria-expanded={!collapsed}
+                    onClick={() =>
+                      setCollapsedParts((current) =>
+                        current.includes(partLabel)
+                          ? current.filter((item) => item !== partLabel)
+                          : [...current, partLabel],
+                      )
+                    }
+                  >
+                    <span className="analysis-criteria-chevron" aria-hidden="true" />
+                    <strong>{partLabel}</strong>
+                    <span className="analysis-criteria-total">
+                      {trim(String(awarded))} / {trim(String(maximum))}
+                    </span>
+                  </button>
+                  {!collapsed && (
+                    <div className="analysis-score-list">
+                      {rows.map((row) => (
+                        <ScoreRow
+                          key={`${row.part_label}-${row.criterion}`}
+                          label={row.criterion}
+                          marks={row.marks}
+                          percentage={row.percentage}
+                          status={row.status}
+                          note={row.status === "priority" ? row.action : undefined}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
