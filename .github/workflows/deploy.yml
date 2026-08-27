@@ -14,6 +14,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Validate Secrets
         env:
           DEPLOY_HOST: ${{ secrets.VPS_HOST || secrets.VPS_IP }}
@@ -31,6 +34,36 @@ jobs:
           fi
           echo "✅ All required secrets are configured"
 
+      - name: Setup SSH and test connectivity
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST || secrets.VPS_IP }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          TARGET_PORT="${VPS_PORT:-22}"
+          
+          echo "🔍 Attempting to resolve VPS host..."
+          if ! nslookup "$VPS_HOST" 8.8.8.8 > /dev/null 2>&1; then
+            echo "⚠️ DNS resolution check skipped or failed - proceeding anyway"
+          else
+            echo "✅ DNS resolution successful"
+          fi
+          
+          echo "🔍 Testing connectivity to $VPS_HOST:$TARGET_PORT..."
+          if nc -zv -w 10 "$VPS_HOST" "$TARGET_PORT" 2>&1 | tee /tmp/nc_test.log; then
+            echo "✅ Port $TARGET_PORT is reachable"
+          else
+            echo "⚠️ netcat test inconclusive, will proceed with SSH"
+          fi
+          
+          ssh-keyscan -p "$TARGET_PORT" -T 10 "$VPS_HOST" >> ~/.ssh/known_hosts 2>&1 || {
+            echo "⚠️ ssh-keyscan failed (may retry via SSH)"
+          }
+
       - name: Deploy to Hostinger VPS via SSH with Retry
         env:
           VPS_HOST: ${{ secrets.VPS_HOST || secrets.VPS_IP }}
@@ -40,127 +73,166 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p "$VPS_PORT" "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
 
           TARGET_PORT="${VPS_PORT:-22}"
+          RETRY_COUNT=0
+          MAX_RETRIES=5
+          RETRY_DELAY=15
 
-          for attempt in {1..10}; do
-            echo "🚀 SSH Connection Attempt $attempt/10 to VPS (Port $TARGET_PORT)..."
-            if ssh -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=~/.ssh/known_hosts -o ConnectTimeout=30 -o ConnectionAttempts=3 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -p "$TARGET_PORT" root@"$VPS_HOST" 'bash -s' << 'EOF'
-            set -Eeuo pipefail
-            trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."' ERR
-
-            echo "🚀 Starting automatic deployment on VPS..."
-
-            # 0. Ensure swap file exists to prevent OOM
-            if [ -f /swapfile ]; then
-              echo "✅ Swapfile already exists."
-            else
-              echo "⚠️ No swapfile found. Creating 2GB swapfile..."
-              fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
-              chmod 600 /swapfile
-              mkswap /swapfile
-              swapon /swapfile
-              echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
-              echo "✅ Swapfile created."
-            fi
-
-            cd /var/www/visahouse
-
-            # 1. Pull latest code
-            git config --global --add safe.directory /var/www/visahouse
-            git fetch --prune origin main
-            git checkout main
-            if ! git diff --quiet || ! git diff --cached --quiet; then
-              echo "⚠️ Local VPS checkout has tracked changes. Stashing..."
-              git stash push -m "pre-deploy-$(date -u +%Y%m%d%H%M%S)" || true
-            fi
-            git reset --hard origin/main
-            # Persistent uploads, GeoIP data, environment configuration, and
-            # database files must survive every checkout cleanup.
-            git clean -fd \
-              -e data/ \
-              -e storage/ \
-              -e backend/storage/ \
-              -e backend/.env \
-              -e '*.db'
-
-            # 2. Update backend virtual environment & migrations
-            cd backend
-            if [ ! -d ".venv" ]; then
-              python3 -m venv .venv
-            fi
-
-            # Reuse the production slug already stored on the VPS. Generate and
-            # persist a safe value on first deployment or when an old default is found.
-            developer_slug="$(grep -E '^DEVELOPER_ACCESS_SLUG=' .env 2>/dev/null | tail -n 1 | cut -d= -f2- || true)"
-            if [[ ! "$developer_slug" =~ ^[A-Za-z0-9_-]{8,80}$ ]] || [ "$developer_slug" = "vh-control-9f4c2a" ] || [ "$developer_slug" = "developer" ]; then
-              developer_slug="vh-prod-$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
-              if [ -f .env ] && grep -q '^DEVELOPER_ACCESS_SLUG=' .env; then
-                sed -i "s|^DEVELOPER_ACCESS_SLUG=.*$|DEVELOPER_ACCESS_SLUG=${developer_slug}|" .env
-              else
-                printf 'DEVELOPER_ACCESS_SLUG=%s\n' "$developer_slug" >> .env
-              fi
-              echo "✅ Generated and persisted a production developer access slug."
-            else
-              echo "✅ Reusing the existing production developer access slug."
-            fi
-
-            source .venv/bin/activate
-            python -m pip install --upgrade pip
-            python -m pip install -r requirements.txt
-
-            python -m alembic upgrade head
-            python scripts/seed_super_admin.py
-            cd ..
-
-            # 3. Frontend clean install & build
-            cd frontend
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo ""
+            echo "🚀 SSH Deployment Attempt $RETRY_COUNT/$MAX_RETRIES to $VPS_HOST:$TARGET_PORT..."
             
-            # Generate or update .env.production with the developer access slug
-            printf 'VITE_API_BASE_URL=/api\nVITE_DEVELOPER_ACCESS_SLUG=%s\n' "$developer_slug" > .env.production
-            
-            rm -rf node_modules
-            npm ci || (rm -rf node_modules && npm install)
-            npm run build
-            cd ..
+            if ssh \
+              -o StrictHostKeyChecking=accept-new \
+              -o UserKnownHostsFile=~/.ssh/known_hosts \
+              -o ConnectTimeout=15 \
+              -o ConnectionAttempts=1 \
+              -o BatchMode=yes \
+              -o PreferredAuthentications=publickey \
+              -o ServerAliveInterval=10 \
+              -o ServerAliveCountMax=3 \
+              -vvv \
+              -p "$TARGET_PORT" \
+              root@"$VPS_HOST" 'bash -s' << 'DEPLOYMENT_SCRIPT'
+          set -Eeuo pipefail
+          trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."" >&2' ERR
 
-            # 4. Service definition & permissions
-            cp deploy/visahouse-backend.service /etc/systemd/system/visahouse-backend.service
-            systemctl daemon-reload
-            mkdir -p /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
-            chown -R www-data:www-data /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
-            chmod -R g+rwX /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
+          echo "🚀 Starting automatic deployment on VPS..."
 
-            # 5. Restart backend & verify DB health
-            systemctl restart visahouse-backend
-            for a in $(seq 1 30); do
-              if curl -fsS -H "Host: thecodemate.tech" http://127.0.0.1:8000/health/db >/dev/null 2>&1; then
-                echo "✅ Backend and database are healthy."
-                break
-              fi
-              if [ "$a" = "30" ]; then
-                echo "❌ Backend health check failed. Service logs:"
-                journalctl -u visahouse-backend -n 120 --no-pager || true
-                exit 1
-              fi
-              echo "⏳ Health check attempt $a/30, retrying in 2s..."
-              sleep 2
-            done
+          # 0. Ensure swap file exists to prevent OOM
+          if [ -f /swapfile ]; then
+            echo "✅ Swapfile already exists."
+          else
+            echo "⚠️ No swapfile found. Creating 2GB swapfile..."
+            fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+            chmod 600 /swapfile
+            mkswap /swapfile
+            swapon /swapfile
+            echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+            echo "✅ Swapfile created."
+          fi
 
-            nginx -t
-            systemctl reload nginx
+          cd /var/www/visahouse
 
-            echo "✨ Deployment successful!"
-          EOF
-            then
-              echo "✅ SSH Deployment completed successfully."
-              exit 0
+          # 1. Pull latest code
+          git config --global --add safe.directory /var/www/visahouse
+          git fetch --prune origin main
+          git checkout main
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            echo "⚠️ Local VPS checkout has tracked changes. Stashing..."
+            git stash push -m "pre-deploy-$(date -u +%Y%m%d%H%M%S)" || true
+          fi
+          git reset --hard origin/main
+          # Persistent uploads, GeoIP data, environment configuration, and
+          # database files must survive every checkout cleanup.
+          git clean -fd \
+            -e data/ \
+            -e storage/ \
+            -e backend/storage/ \
+            -e backend/.env \
+            -e '*.db'
+
+          # 2. Update backend virtual environment & migrations
+          cd backend
+          if [ ! -d ".venv" ]; then
+            python3 -m venv .venv
+          fi
+
+          # Reuse the production slug already stored on the VPS. Generate and
+          # persist a safe value on first deployment or when an old default is found.
+          developer_slug="$(grep -E '^DEVELOPER_ACCESS_SLUG=' .env 2>/dev/null | tail -n 1 | cut -d= -f2- || true)"
+          if [[ ! "$developer_slug" =~ ^[A-Za-z0-9_-]{8,80}$ ]] || [ "$developer_slug" = "vh-control-9f4c2a" ] || [ "$developer_slug" = "developer" ]; then
+            developer_slug="vh-prod-$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
+            if [ -f .env ] && grep -q '^DEVELOPER_ACCESS_SLUG=' .env; then
+              sed -i "s|^DEVELOPER_ACCESS_SLUG=.*$|DEVELOPER_ACCESS_SLUG=${developer_slug}|" .env
+            else
+              printf 'DEVELOPER_ACCESS_SLUG=%s\n' "$developer_slug" >> .env
             fi
+            echo "✅ Generated and persisted a production developer access slug."
+          else
+            echo "✅ Reusing the existing production developer access slug."
+          fi
 
-            echo "⚠️ Connection attempt $attempt failed. Waiting 12 seconds before retry..."
-            sleep 12
+          source .venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+          python -m alembic upgrade head
+          python scripts/seed_super_admin.py
+          cd ..
+
+          # 3. Frontend clean install & build
+          cd frontend
+          
+          # Generate or update .env.production with the developer access slug
+          printf 'VITE_API_BASE_URL=/api\nVITE_DEVELOPER_ACCESS_SLUG=%s\n' "$developer_slug" > .env.production
+          
+          rm -rf node_modules
+          npm ci || (rm -rf node_modules && npm install)
+          npm run build
+          cd ..
+
+          # 4. Service definition & permissions
+          cp deploy/visahouse-backend.service /etc/systemd/system/visahouse-backend.service
+          systemctl daemon-reload
+          mkdir -p /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
+          chown -R www-data:www-data /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
+          chmod -R g+rwX /var/www/visahouse/storage /var/www/visahouse/data /var/www/visahouse/backend/storage
+
+          # 5. Restart backend & verify DB health
+          systemctl restart visahouse-backend
+          for a in $(seq 1 30); do
+            if curl -fsS -H "Host: thecodemate.tech" http://127.0.0.1:8000/health/db >/dev/null 2>&1; then
+              echo "✅ Backend and database are healthy."
+              break
+            fi
+            if [ "$a" = "30" ]; then
+              echo "❌ Backend health check failed. Service logs:"
+              journalctl -u visahouse-backend -n 120 --no-pager || true
+              exit 1
+            fi
+            echo "⏳ Health check attempt $a/30, retrying in 2s..."
+            sleep 2
           done
 
-          echo "❌ All 10 SSH connection attempts failed."
+          nginx -t
+          systemctl reload nginx
+
+          echo "✨ Deployment successful!"
+          DEPLOYMENT_SCRIPT
+            then
+              echo ""
+              echo "✅ SSH Deployment completed successfully on attempt $RETRY_COUNT."
+              exit 0
+            else
+              SSH_EXIT_CODE=$?
+              echo ""
+              echo "⚠️ Connection attempt $RETRY_COUNT failed with exit code $SSH_EXIT_CODE"
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⏳ Waiting $RETRY_DELAY seconds before retry..."
+                sleep $RETRY_DELAY
+              fi
+            fi
+          done
+
+          echo ""
+          echo "❌ All $MAX_RETRIES SSH deployment attempts failed."
+          echo "📋 Troubleshooting steps:"
+          echo "   1. Verify VPS is running in Hostinger dashboard"
+          echo "   2. Check SSH service: sudo systemctl status ssh"
+          echo "   3. Verify firewall allows port $TARGET_PORT"
+          echo "   4. Test connectivity: ssh -v root@$VPS_HOST -p $TARGET_PORT"
           exit 1
+
+      - name: Deployment Failed - Notification
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check the logs above for SSH connectivity issues."
+          echo "Common causes:"
+          echo "  - VPS is offline or unreachable"
+          echo "  - SSH service is not running on VPS"
+          echo "  - Firewall is blocking port access"
+          echo "  - Invalid SSH credentials"
