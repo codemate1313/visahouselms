@@ -1122,6 +1122,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(result["next_prompt"], "How did that experience change your view?")
         self.assertIn("Why was it important?", captured["prompt"])
         self.assertTrue(captured["audio_b64"])
+        self.assertEqual(captured["mime_type"], "audio/webm")
 
         with patch.object(ai_evaluation_service, "config_status", return_value={"configured": False}):
             fallback = ai_evaluation_service.generate_speaking_follow_up(

@@ -53,7 +53,7 @@ FAILURE_EXPLANATIONS = (
     (
         ("too large to send",),
         "The recordings for this part were too big to send to the AI.",
-        "Long video answers are the usual cause. An instructor can still mark it; shorter recordings will go through next time.",
+        "Long audio answers are the usual cause. An instructor can still mark it; shorter recordings will go through next time.",
     ),
     (
         ("no audio recording", "no textual response"),

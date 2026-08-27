@@ -45,8 +45,9 @@ RATE_LIMIT_KEY_SWITCH_SECONDS = 2.0
 # worker cannot wedge a part for ever.
 IN_FLIGHT_WINDOW_SECONDS = 300
 # Gemini accepts about 20 MB of inline data per request. Speaking answers are
-# recorded as video/webm, so a single long answer can be several MB and a part
-# with three of them can pass the limit - budget the whole part, not each file.
+# recorded as compressed audio, so a single long answer can still be several MB
+# and a part with three of them can pass the limit - budget the whole part, not
+# each file.
 MAX_INLINE_BYTES_PER_PART = 18 * 1024 * 1024
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
@@ -851,6 +852,25 @@ def get_student_ai_evaluation_history(db: Session, user: User) -> dict:
         }
 
 
+def _speaking_audio_mime_type(path: Path) -> str:
+    """Return an audio MIME for validated Speaking recordings."""
+    suffix = path.suffix.lower()
+    if suffix == ".webm":
+        return "audio/webm"
+    if suffix == ".ogg":
+        return "audio/ogg"
+    if suffix == ".m4a":
+        return "audio/mp4"
+    if suffix == ".mp3":
+        return "audio/mpeg"
+    if suffix == ".wav":
+        return "audio/wav"
+    mime_type, _ = mimetypes.guess_type(str(path))
+    if mime_type and mime_type.startswith("audio/"):
+        return mime_type
+    return "audio/webm"
+
+
 def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
     answers = {answer.question_id: answer for answer in attempt.answers}
     responses = []
@@ -869,17 +889,7 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
             full_path = settings.storage_path / audio_path
             if full_path.exists():
                 audio_bytes = full_path.read_bytes()
-                mime_type, _ = mimetypes.guess_type(str(full_path))
-                if not mime_type:
-                    ext = full_path.suffix.lower()
-                    if ext == ".webm":
-                        mime_type = "audio/webm"
-                    elif ext in (".mp3", ".mpeg"):
-                        mime_type = "audio/mp3"
-                    elif ext == ".wav":
-                        mime_type = "audio/wav"
-                    else:
-                        mime_type = "audio/webm"
+                mime_type = _speaking_audio_mime_type(full_path)
                 
                 if inline_bytes + len(audio_bytes) <= MAX_INLINE_BYTES_PER_PART:
                     inline_bytes += len(audio_bytes)
@@ -1335,7 +1345,7 @@ def generate_speaking_follow_up(
     if not audio_path.is_file() or not config_status(db)["configured"]:
         return fallback
 
-    mime_type = mimetypes.guess_type(audio_path.name)[0] or "audio/webm"
+    mime_type = _speaking_audio_mime_type(audio_path)
     audio_b64 = base64.b64encode(audio_path.read_bytes()).decode("ascii")
     prompt = _interlocutor_instruction(current_prompt, next_prompt, next_turn_type)
     for config in _candidate_configs(db):
