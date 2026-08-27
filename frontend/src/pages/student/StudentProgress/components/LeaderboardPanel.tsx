@@ -8,9 +8,15 @@ interface LeaderboardPanelProps {
   leaderboard: StudentLeaderboard;
   scope: "institute" | "global";
   onScopeChange: (scope: "institute" | "global") => void;
+  isInstituteStudent?: boolean;
 }
 
-export function LeaderboardPanel({ leaderboard, scope, onScopeChange }: LeaderboardPanelProps) {
+export function LeaderboardPanel({
+  leaderboard,
+  scope,
+  onScopeChange,
+  isInstituteStudent = true,
+}: LeaderboardPanelProps) {
   const t = strings.leaderboard;
 
   const top1 = leaderboard.entries.find((e) => e.rank === 1);
@@ -24,16 +30,18 @@ export function LeaderboardPanel({ leaderboard, scope, onScopeChange }: Leaderbo
       description={t.description}
       badge={<span className="count-chip">{leaderboard.entries.length}</span>}
     >
-      <SegmentedControl
-        ariaLabel="Leaderboard scope"
-        className="leaderboard-scope-tabs"
-        onChange={onScopeChange}
-        options={[
-          { label: "Institute Cohort", value: "institute" },
-          { label: "Global Standings", value: "global" },
-        ]}
-        value={scope}
-      />
+      {isInstituteStudent && (
+        <SegmentedControl
+          ariaLabel="Leaderboard scope"
+          className="leaderboard-scope-tabs"
+          onChange={onScopeChange}
+          options={[
+            { label: "Institute Cohort", value: "institute" },
+            { label: "Global Standings", value: "global" },
+          ]}
+          value={scope}
+        />
+      )}
 
       {leaderboard.message ? (
         <p className="empty-message">{leaderboard.message}</p>

@@ -6,12 +6,22 @@ import { studentProgressStrings as strings } from "./StudentProgress.strings";
 import { ProgressStatTiles } from "./components/ProgressStatTiles";
 import { BadgesPanel } from "./components/BadgesPanel";
 import { LeaderboardPanel } from "./components/LeaderboardPanel";
+import { useAuthStore } from "@/store/authStore";
 
 export function StudentProgress() {
+  const user = useAuthStore((state) => state.user);
+  const isInstituteStudent = user?.institute_id != null;
+
   const [badges, setBadges] = useState<StudentBadge[] | null>(null);
   const [leaderboard, setLeaderboard] = useState<StudentLeaderboard | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [scope, setScope] = useState<"institute" | "global">("institute");
+  const [scope, setScope] = useState<"institute" | "global">(
+    useAuthStore.getState().user?.institute_id != null ? "institute" : "global"
+  );
+
+  useEffect(() => {
+    setScope(isInstituteStudent ? "institute" : "global");
+  }, [isInstituteStudent]);
 
   useEffect(() => {
     async function load() {
@@ -42,6 +52,7 @@ export function StudentProgress() {
         leaderboard={leaderboard}
         scope={scope}
         onScopeChange={setScope}
+        isInstituteStudent={isInstituteStudent}
       />
       <ProgressStatTiles badges={badges} earnedCount={earned.length} leaderboard={leaderboard} />
       <BadgesPanel badges={badges} earnedCount={earned.length} />
