@@ -4743,82 +4743,46 @@
   50% { box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 15%, transparent); }
 }
 
-/* Assigned Tests Filter Bar using SegmentedControl & SearchInput */
+/* Assigned Tests Filter Bar using Global FilterBar & SearchableSelect */
 .assigned-tests-filter-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin: 4px 0 6px 0;
+  margin: 6px 0 16px 0;
+  width: 100%;
 }
 
-.assigned-tests-filter-bar .ui-segmented-control {
-  background: var(--surface, #ffffff) !important;
-  border: 1px solid var(--border, #e4e4e7) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  padding: 4px !important;
-  border-radius: 12px !important;
+.assigned-tests-filter-bar .assigned-tests-search-input {
+  min-width: 260px;
+  flex: 1 1 260px;
+  max-width: 380px;
 }
 
-[data-theme="dark"] .assigned-tests-filter-bar .ui-segmented-control {
-  background: #16161a !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+.assigned-tests-filter-bar .assigned-tests-type-select {
+  min-width: 200px;
+  width: 220px;
 }
 
-.assigned-tests-filter-bar .ui-segmented-slider {
-  border-radius: 8px !important;
-  background: var(--primary) !important;
-  border-color: var(--primary) !important;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent) !important;
+.assigned-tests-filter-bar .assigned-tests-status-select {
+  min-width: 180px;
+  width: 195px;
 }
 
-.assigned-tests-filter-bar .ui-segmented-option {
-  font-weight: 550 !important;
-  font-size: 13px !important;
-  min-height: 32px !important;
-  padding: 0 14px !important;
-  border-radius: 8px !important;
-  color: var(--text-muted, #6e6e73) !important;
-  letter-spacing: -0.01em;
-}
+@media (max-width: 768px) {
+  .assigned-tests-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
 
-.assigned-tests-filter-bar .ui-segmented-option.is-active {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-}
-
-.segmented-tab-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.segmented-tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 5px;
-  border-radius: 999px;
-  font-size: 10.5px;
-  font-weight: 800;
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  color: var(--primary);
-}
-
-.ui-segmented-option.is-active .segmented-tab-count {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff !important;
-}
-
-[data-theme="dark"] .segmented-tab-count {
-  background: rgba(255, 255, 255, 0.1);
-  color: #a1a1aa;
+  .assigned-tests-filter-bar .assigned-tests-search-input,
+  .assigned-tests-filter-bar .assigned-tests-type-select,
+  .assigned-tests-filter-bar .assigned-tests-status-select {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+  }
 }
 
 /* Premium Tests Grid & Cards */

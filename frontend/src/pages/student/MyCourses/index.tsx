@@ -28,6 +28,7 @@ export function MyCourses() {
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState<number | null>(null);
   const [typeFilter, setTypeFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
 
 
@@ -46,23 +47,51 @@ export function MyCourses() {
     [allModules],
   );
 
+  const statusCounts = useMemo(() => {
+    let unattempted = 0;
+    let completed = 0;
+    allModules.forEach((m) => {
+      if (m.is_exhausted && !m.retake_available) {
+        completed += 1;
+      } else {
+        unattempted += 1;
+      }
+    });
+    return {
+      all: allModules.length,
+      unattempted,
+      completed,
+    };
+  }, [allModules]);
+
   const visibleModules = useMemo(() => {
     const q = search.trim().toLowerCase();
     const filtered = allModules.filter((m) => {
+      // 1. Skill/Type filter
       if (typeFilter !== "ALL" && m.module_type !== typeFilter) return false;
+
+      // 2. Attempt Status filter
+      if (statusFilter === "UNATTEMPTED") {
+        if (m.is_exhausted && !m.retake_available) return false;
+      } else if (statusFilter === "COMPLETED") {
+        if (!m.is_exhausted || m.retake_available) return false;
+      }
+
+      // 3. Search query
       if (q && !m.title.toLowerCase().includes(q)) return false;
       return true;
     });
 
+    // 4. Sorting: Unattempted / Ready FIRST, Completed SECOND, Locked LAST
     return [...filtered].sort((a, b) => {
-      const aLocked = Boolean(a.is_locked);
-      const bLocked = Boolean(b.is_locked);
-      if (aLocked !== bLocked) {
-        return aLocked ? 1 : -1;
+      const aRank = a.is_locked ? 3 : (a.is_exhausted && !a.retake_available) ? 2 : 1;
+      const bRank = b.is_locked ? 3 : (b.is_exhausted && !b.retake_available) ? 2 : 1;
+      if (aRank !== bRank) {
+        return aRank - bRank;
       }
       return 0;
     });
-  }, [allModules, typeFilter, search]);
+  }, [allModules, typeFilter, statusFilter, search]);
 
   async function startModule(moduleId: number, moduleType: string, isLocked?: boolean) {
     if (isLocked) {
@@ -211,15 +240,18 @@ export function MyCourses() {
             </div>
           </div>
 
-          {/* Filter Bar: SegmentedControl + SearchInput */}
+          {/* Filter Bar: Global SearchableSelect Dropdowns + SearchInput */}
           {allModules.length > 0 && (
             <ModuleFilterBar
               availableTypes={availableTypes}
               typeFilter={typeFilter}
               onTypeFilterChange={setTypeFilter}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
               search={search}
               onSearchChange={setSearch}
               typeCounts={typeCounts}
+              statusCounts={statusCounts}
             />
           )}
 
