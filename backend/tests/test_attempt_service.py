@@ -12,6 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
+from app.core.cache import app_cache
 from app.core.security import hash_password
 from app.models import Base, ExamModuleAsset, ExamModuleQuestion, StudentNotification
 from app.models.attempt import (
@@ -25,6 +26,7 @@ from app.models.attempt import (
     Enrollment,
     GradingQueueEntry,
     PART_GRADE_AI_GRADED,
+    PART_GRADE_PENDING,
     ReevaluationRequest,
     AttemptFlag,
 )
@@ -377,6 +379,54 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(float(criteria[0]["percentage"]), min(float(row["percentage"]) for row in criteria))
         self.assertTrue(criteria[0]["action"])
         self.assertTrue(any("criterion" in item.lower() for item in analysis["improvements"]))
+
+    def test_analysis_cache_updates_when_ai_grades_land_during_grading(self):
+        app_cache.clear_all()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "My essay response."})
+        attempt_service.submit_attempt(self.db, attempt)
+
+        with patch.object(ai_evaluation_service, "config_status", return_value={"configured": True}), patch.object(
+            ai_evaluation_service,
+            "_remote_evaluator",
+            return_value={
+                "summary": "A configured analysis.",
+                "strengths": ["Clear task attempt."],
+                "improvements": ["Add more precise evidence."],
+                "next_steps": ["Revise one response."],
+            },
+        ) as evaluator:
+            pending = student_analysis_service.result_analysis(self.db, attempt)
+            self.assertEqual(pending["criteria_breakdown"], [])
+
+            part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+            suggestion = {
+                "criteria": [
+                    {
+                        "criterion": item["criterion"],
+                        "max_marks": str(item["max_marks"]),
+                        "marks_awarded": "6",
+                        "cefr_level": "C1",
+                        "rationale": "AI-scored evidence.",
+                    }
+                    for item in part.rubric
+                ],
+                "comment": "AI evaluation comment.",
+            }
+            ai_evaluation_service._apply_ai_grade(self.db, attempt, part, suggestion)
+            self.db.commit()
+            self.db.refresh(attempt)
+
+            updated = student_analysis_service.result_analysis(self.db, attempt)
+
+        self.assertGreaterEqual(evaluator.call_count, 2)
+        self.assertTrue(updated["criteria_breakdown"])
+        self.assertTrue(any(row["part_label"] == "Writing 1" for row in updated["criteria_breakdown"]))
 
     def test_mcq_multiple_requires_exact_set_match(self):
         module = self._build_reading_module()
@@ -751,6 +801,66 @@ class AttemptServiceTestCase(unittest.TestCase):
             self.assertEqual(grade.status, PART_GRADE_AI_GRADED)
             self.assertEqual(Decimal(grade.total_marks), Decimal("0"))
 
+    def test_speaking_auto_evaluation_batches_all_parts_into_one_provider_call(self):
+        self._enable_ai_evaluation()
+        self._subscribe_student_for_ai()
+        module = self._speaking_module_with_prompts()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        attempt_service.commence_attempt(self.db, self.student, attempt)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        parts = sorted(attempt.module.parts, key=lambda item: item.sort_order)
+        for part in parts:
+            for question in part.questions:
+                attempt_service.save_audio_answer(self.db, attempt, question.id, b"candidate-audio" * 900, ".webm")
+        attempt_service.submit_attempt(self.db, attempt)
+
+        captured = {}
+
+        def evaluator(_config, payload):
+            captured["payload"] = payload
+            return {
+                "parts": [
+                    {
+                        "part_id": part["part_id"],
+                        "criteria": [
+                            {
+                                "criterion": item["criterion"],
+                                "marks_awarded": 1,
+                                "rationale": f"Evidence for part {part['part_id']}.",
+                            }
+                            for item in part["rubric"]
+                        ],
+                        "comment": f"Marked part {part['part_id']}.",
+                        "confidence": 0.8,
+                    }
+                    for part in payload["parts"]
+                ],
+            }
+
+        with patch.object(ai_evaluation_service, "_remote_evaluator", side_effect=evaluator):
+            ai_evaluation_service.auto_evaluate_submission(self.db, attempt)
+
+        self.assertEqual(captured["payload"]["task"], "cefr_rubric_evaluation_batch")
+        self.assertEqual(len(captured["payload"]["parts"]), len(parts))
+        self.assertEqual(self.db.query(AiEvaluation).filter_by(status="completed").count(), 1)
+        self.assertEqual(self.db.query(AiEvaluationLimit).one().used_count, 1)
+        self.db.refresh(attempt)
+        grades = {grade.part_id: grade for grade in attempt.part_grades}
+        self.assertEqual(set(grades), {part.id for part in parts})
+        self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in grades.values()))
+
+    def test_pre_submit_speaking_evaluation_is_not_sent_per_part(self):
+        self._enable_ai_evaluation()
+        speaking_module = self._speaking_module_with_prompts()
+        speaking_part = sorted(speaking_module.parts, key=lambda item: item.sort_order)[0]
+        writing_module = self._build_writing_module()
+        writing_part = sorted(writing_module.parts, key=lambda item: item.sort_order)[0]
+
+        self.assertFalse(ai_evaluation_service._direct_part_evaluation_allowed(speaking_part))
+        self.assertTrue(ai_evaluation_service._direct_part_evaluation_allowed(writing_part))
+
     def test_institute_student_submit_routes_to_active_institute_staff(self):
         module = self._build_writing_module()
         self._course_with_module(module.id)
@@ -1035,6 +1145,156 @@ class AttemptServiceTestCase(unittest.TestCase):
         # The request half is still there even though nothing came back.
         self.assertTrue(detail["asked"]["criteria"])
         self.assertEqual(detail["answered"]["scores"], [])
+
+    def test_ai_evaluation_waits_before_exceeding_key_rpm(self):
+        self._enable_ai_evaluation()
+        settings_service.set_setting(self.db, "ai.model", "gemini-2.0-flash")
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed academic response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        for index in range(ai_evaluation_service.DEFAULT_GEMINI_FLASH_RPM):
+            self.db.add(
+                AiEvaluation(
+                    attempt_id=attempt.id,
+                    part_id=part.id,
+                    requested_by_id=self.student.id,
+                    provider="gemini",
+                    model="gemini-2.0-flash",
+                    status="completed",
+                    key_label="Primary API Key",
+                    created_at=now - timedelta(seconds=index),
+                )
+            )
+        self.db.commit()
+
+        def evaluator(_config, payload):
+            return {
+                "criteria": [
+                    {"criterion": item["criterion"], "marks_awarded": 6, "rationale": "Evidence in the response."}
+                    for item in payload["rubric"]
+                ],
+                "comment": "Solid draft.",
+                "confidence": 0.8,
+            }
+
+        with patch.object(ai_evaluation_service, "_remote_evaluator", side_effect=evaluator), patch.object(
+            ai_evaluation_service.time,
+            "sleep",
+        ) as sleep:
+            ai_evaluation_service.request_suggestion(self.db, self.instructor, attempt, part)
+
+        self.assertTrue(sleep.called)
+        self.assertGreaterEqual(sleep.call_args.args[0], 45)
+
+    def test_ai_evaluation_rpm_throttle_is_model_specific(self):
+        self._enable_ai_evaluation()
+        settings_service.set_setting(self.db, "ai.model", "gemini-2.5-flash")
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed academic response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        for index in range(ai_evaluation_service.DEFAULT_GEMINI_FLASH_RPM):
+            self.db.add(
+                AiEvaluation(
+                    attempt_id=attempt.id,
+                    part_id=part.id,
+                    requested_by_id=self.student.id,
+                    provider="gemini",
+                    model="gemini-3.5-flash",
+                    status="completed",
+                    key_label="Primary API Key",
+                    created_at=now - timedelta(seconds=index),
+                )
+            )
+        self.db.commit()
+
+        def evaluator(_config, payload):
+            return {
+                "criteria": [
+                    {"criterion": item["criterion"], "marks_awarded": 6, "rationale": "Evidence in the response."}
+                    for item in payload["rubric"]
+                ],
+                "comment": "Solid draft.",
+                "confidence": 0.8,
+            }
+
+        with patch.object(ai_evaluation_service, "_remote_evaluator", side_effect=evaluator), patch.object(
+            ai_evaluation_service.time,
+            "sleep",
+        ) as sleep:
+            ai_evaluation_service.request_suggestion(self.db, self.instructor, attempt, part)
+
+        sleep.assert_not_called()
+
+    def test_ai_quota_summary_separates_same_key_by_model(self):
+        from app.services import ai_quota_service
+
+        self._enable_ai_evaluation()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+        for model in ("gemini-2.5-flash", "gemini-3.5-flash"):
+            self.db.add(
+                AiEvaluation(
+                    attempt_id=attempt.id,
+                    part_id=part.id,
+                    requested_by_id=self.student.id,
+                    provider="gemini",
+                    model=model,
+                    status="completed",
+                    key_label="Primary API Key",
+                    created_at=now,
+                )
+            )
+        self.db.commit()
+
+        summary = ai_quota_service.usage_summary(self.db)
+        by_key = {row["key"]: row for row in summary["keys"]}
+
+        self.assertEqual(by_key["Primary API Key · gemini-2.5-flash"]["requests_today"], 1)
+        self.assertEqual(by_key["Primary API Key · gemini-3.5-flash"]["requests_today"], 1)
+
+    def test_ai_auto_evaluation_stops_current_pass_after_rate_limit(self):
+        self._enable_ai_evaluation()
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed academic response."})
+        attempt_service.submit_attempt(self.db, attempt)
+
+        def rate_limited(_config, _payload):
+            raise HTTPException(status_code=429, detail="Google Gemini API rate limit reached (15 RPM free tier limit).")
+
+        with patch.object(ai_evaluation_service, "_remote_evaluator", side_effect=rate_limited):
+            quota_exhausted = ai_evaluation_service.auto_evaluate_submission(self.db, attempt)
+
+        self.assertTrue(quota_exhausted)
+        self.assertEqual(self.db.query(AiEvaluation).filter_by(status="failed").count(), 1)
+        self.assertTrue(all(grade.status == PART_GRADE_PENDING for grade in attempt.part_grades))
 
     def test_failure_explanations_cover_the_common_provider_errors(self):
         from app.services import ai_log_service

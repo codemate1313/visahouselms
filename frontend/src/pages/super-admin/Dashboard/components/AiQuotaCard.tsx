@@ -56,10 +56,11 @@ function getPlaceholderLimit(model: string | null | undefined, field: "rpm" | "t
     if (field === "tpm") return "32000";
     if (field === "rpd") return "50";
   }
-  // Default to Flash limits (which are the standard default tier)
-  if (field === "rpm") return "15";
-  if (field === "tpm") return "40000";
-  if (field === "rpd") return "1500";
+  // Free-tier Flash models in AI Studio currently show the same RPM/TPM shape
+  // as the model table: count per model, not just per API key.
+  if (field === "rpm") return "5";
+  if (field === "tpm") return "250000";
+  if (field === "rpd") return "250";
   return "";
 }
 

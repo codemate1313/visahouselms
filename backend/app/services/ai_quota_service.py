@@ -51,11 +51,25 @@ def _percent(used: int, limit: Optional[int]) -> Optional[float]:
     return round(min(999.0, used * 100 / limit), 1)
 
 
-def _bucket_label(record: AiEvaluation) -> str:
+def _quota_limit_key(label: object, model: object) -> str:
+    key = str(label or UNASSIGNED_KEY).strip() or UNASSIGNED_KEY
+    model_name = str(model or "").strip()
+    return f"{key} · {model_name}" if model_name else key
+
+
+def _record_key_label(record: AiEvaluation) -> str:
     if record.key_label:
         return record.key_label
     summary = record.request_summary or {}
     return summary.get("key_label") or UNASSIGNED_KEY
+
+
+def _record_model(record: AiEvaluation) -> Optional[str]:
+    if record.model:
+        return record.model
+    summary = record.request_summary or {}
+    model = summary.get("model")
+    return str(model) if model else None
 
 
 def get_declared_limits(db: Session) -> dict:
@@ -111,9 +125,11 @@ def usage_summary(db: Session) -> dict:
     configured_keys = ai_evaluation_service._configured_keys(db, mask=True)
     buckets: dict[str, dict] = {}
 
-    def bucket(label: str) -> dict:
-        return buckets.setdefault(label, {
-            "key": label,
+    def bucket(label: str, model: Optional[str] = None) -> dict:
+        bucket_key = _quota_limit_key(label, model)
+        return buckets.setdefault(bucket_key, {
+            "key": bucket_key,
+            "key_label": label,
             "requests_last_minute": 0,
             "requests_last_hour": 0,
             "requests_today": 0,
@@ -126,7 +142,7 @@ def usage_summary(db: Session) -> dict:
         })
 
     for key in configured_keys:
-        entry = bucket(key.get("label") or UNASSIGNED_KEY)
+        entry = bucket(key.get("label") or UNASSIGNED_KEY, key.get("model"))
         entry["enabled"] = bool(key.get("enabled", True))
         entry["model"] = key.get("model")
         entry["provider"] = key.get("provider")
@@ -137,8 +153,12 @@ def usage_summary(db: Session) -> dict:
         created = record.created_at
         if created is None:
             continue
-        entry = bucket(_bucket_label(record))
+        entry = bucket(_record_key_label(record), _record_model(record))
         tokens = record.tokens_used or 0
+        if _record_model(record):
+            entry["model"] = _record_model(record)
+        if record.provider:
+            entry["provider"] = record.provider
 
         if record.status in NON_PROVIDER_STATUSES:
             # Counted, but never as quota - Google was not called.
@@ -167,7 +187,7 @@ def usage_summary(db: Session) -> dict:
 
     keys = []
     for label, entry in buckets.items():
-        declared = limits.get(label, {})
+        declared = limits.get(label, {}) or limits.get(entry.get("key_label"), {})
         keys.append({
             **entry,
             "limits": {

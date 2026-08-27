@@ -8,6 +8,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.crypto import SettingsDecryptionError
+from app.models.setting import Setting
 from app.services.settings_service import get_setting
 
 SMTP_TIMEOUT_SECONDS = 15
@@ -49,13 +50,21 @@ def send_email(db: Session, to_address: str, subject: str, body: str, html_body:
     host = _require(db, "smtp.host")
     port = int(_require(db, "smtp.port"))
     username = get_setting(db, "smtp.username")
-    try:
-        password = get_setting(db, "smtp.password")
-    except SettingsDecryptionError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Stored SMTP password cannot be decrypted. Re-enter and save the SMTP password.",
-        )
+    password = None
+    password_row = db.query(Setting).filter(Setting.key == "smtp.password", Setting.institute_id.is_(None)).first()
+    if password_row and password_row.value:
+        if password_row.is_encrypted:
+            try:
+                from app.core.crypto import decrypt_value
+                password = decrypt_value(password_row.value)
+            except SettingsDecryptionError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Stored SMTP password cannot be decrypted. Re-enter and save the SMTP password.",
+                )
+        else:
+            password = password_row.value
+
     encryption = (get_setting(db, "smtp.encryption") or "tls").lower()  # tls | ssl | none
     from_address = _require(db, "smtp.from_address")
 

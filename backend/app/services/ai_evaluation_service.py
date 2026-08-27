@@ -34,6 +34,10 @@ from app.models.institute import Institute
 logger = logging.getLogger(__name__)
 
 DEFAULT_MONTHLY_LIMIT = 100
+DEFAULT_GEMINI_FLASH_RPM = 5
+DEFAULT_GEMINI_PRO_RPM = 2
+PROVIDER_RATE_LIMIT_WINDOW_SECONDS = 60
+PROVIDER_RATE_LIMIT_BUFFER_SECONDS = 1
 # A 429 means "too many requests this minute", so moving straight to the next
 # key or the fallback model just spends another request into the same closed
 # window. These pauses are deliberately short: the caller is a background job,
@@ -1030,15 +1034,99 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
     }
 
 
+def _batch_payload(attempt: TestAttempt, parts: list[ExamModulePart]) -> dict:
+    answers = {answer.question_id: answer for answer in attempt.answers}
+    payload_parts = []
+    inline_bytes = 0
+
+    for part in sorted(parts, key=lambda item: item.sort_order):
+        responses = []
+        skipped: list[str] = []
+        for question in sorted(part.questions, key=lambda item: item.sort_order):
+            answer = answers.get(question.id)
+            if not answer:
+                continue
+            audio_path = answer.audio_path
+            text_resp = (answer.response or {}).get("text") if answer.response else None
+            if part.section_type == "speaking" and audio_path:
+                full_path = settings.storage_path / audio_path
+                if full_path.exists():
+                    audio_bytes = full_path.read_bytes()
+                    mime_type = _speaking_audio_mime_type(full_path)
+                    if inline_bytes + len(audio_bytes) <= MAX_INLINE_BYTES_PER_PART:
+                        inline_bytes += len(audio_bytes)
+                        responses.append({
+                            "prompt": question.prompt,
+                            "audio_b64": base64.b64encode(audio_bytes).decode("utf-8"),
+                            "mime_type": mime_type,
+                        })
+                    else:
+                        skipped.append(f"{len(audio_bytes) / 1024 / 1024:.1f} MB")
+            elif text_resp:
+                responses.append({
+                    "prompt": question.prompt,
+                    "text": str(text_resp)[:12000],
+                })
+        if skipped:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "The recordings for this Speaking section are too large to send in one AI marking request "
+                    f"({', '.join(skipped)}; the limit is {MAX_INLINE_BYTES_PER_PART // 1024 // 1024} MB per request)."
+                ),
+            )
+        if responses:
+            payload_parts.append({
+                "part_id": part.id,
+                "part_code": part.part_code,
+                "title": part.title,
+                "skill_focus": part.skill_focus,
+                "rubric": part.rubric or [],
+                "responses": responses,
+            })
+
+    if not payload_parts:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No answerable Speaking recordings were found for AI marking.",
+        )
+
+    return {
+        "task": "cefr_rubric_evaluation_batch",
+        "framework": cefr_service.FRAMEWORK_VERSION,
+        "policy_version": cefr_service.POLICY_VERSION,
+        "skill": "speaking",
+        "parts": payload_parts,
+        "instructions": (
+            "You are an expert Language CERT and CEFR speaking examiner. "
+            "Evaluate each Speaking part independently. Return JSON only. "
+            "For every part_id supplied, return exactly one result object with that same part_id. "
+            "Score every authored rubric criterion strictly between 0 and its max_marks. "
+            "If a response is inaudible, off-topic, in the wrong language, or does not answer the prompt, "
+            "score it zero or near zero and explain why in the rationale. Do not refuse the marking task."
+        ),
+    }
+
+
 def _request_summary(payload: dict, config: dict) -> dict:
     """A readable record of what was sent, for the AI evaluation log.
 
     Deliberately a description and not a copy: a Speaking request carries the
     recording as base64, and nobody needs megabytes of that in a log row."""
     submissions = []
-    for item in payload.get("responses", []):
+    response_items = []
+    if payload.get("task") == "cefr_rubric_evaluation_batch":
+        for part in payload.get("parts", []):
+            for item in part.get("responses", []):
+                response_items.append({**item, "part_title": part.get("title"), "part_id": part.get("part_id")})
+    else:
+        response_items = payload.get("responses", [])
+
+    for item in response_items:
         if "audio_b64" in item:
             submissions.append({
+                "part_id": item.get("part_id"),
+                "part_title": item.get("part_title"),
                 "prompt": str(item.get("prompt") or "")[:300],
                 "kind": "audio",
                 # base64 inflates by 4/3; report what the recording weighs.
@@ -1048,6 +1136,8 @@ def _request_summary(payload: dict, config: dict) -> dict:
         else:
             text = str(item.get("text") or "")
             submissions.append({
+                "part_id": item.get("part_id"),
+                "part_title": item.get("part_title"),
                 "prompt": str(item.get("prompt") or "")[:300],
                 "kind": "text",
                 "words": len(text.split()),
@@ -1058,14 +1148,108 @@ def _request_summary(payload: dict, config: dict) -> dict:
         "model": config.get("model"),
         "key_label": config.get("key_label"),
         "skill": payload.get("skill"),
-        "part_title": payload.get("part", {}).get("title"),
-        "skill_focus": payload.get("part", {}).get("skill_focus"),
+        "part_title": payload.get("part", {}).get("title") if payload.get("part") else "Speaking section",
+        "skill_focus": payload.get("part", {}).get("skill_focus") if payload.get("part") else None,
         "criteria": [
             {"criterion": item.get("criterion"), "max_marks": str(item.get("max_marks"))}
             for item in payload.get("rubric", [])
         ],
+        "parts": [
+            {
+                "part_id": part.get("part_id"),
+                "title": part.get("title"),
+                "criteria": [
+                    {"criterion": item.get("criterion"), "max_marks": str(item.get("max_marks"))}
+                    for item in part.get("rubric", [])
+                ],
+            }
+            for part in payload.get("parts", [])
+        ],
         "submissions": submissions,
     }
+
+
+def _declared_quota_limits(db: Session) -> dict:
+    raw = get_setting(db, "ai.quota_limits")
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, ValueError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _default_rpm_limit(config: dict) -> Optional[int]:
+    provider = str(config.get("provider") or "").lower()
+    if provider != "gemini":
+        return None
+    model = str(config.get("model") or "").lower()
+    return DEFAULT_GEMINI_PRO_RPM if "pro" in model else DEFAULT_GEMINI_FLASH_RPM
+
+
+def _quota_limit_key(label: object, model: object) -> str:
+    key = str(label or "Primary API Key").strip() or "Primary API Key"
+    model_name = str(model or "").strip()
+    return f"{key} · {model_name}" if model_name else key
+
+
+def _rpm_limit_for_config(db: Session, config: dict) -> Optional[int]:
+    label = config.get("key_label") or "Primary API Key"
+    limits = _declared_quota_limits(db)
+    declared = limits.get(_quota_limit_key(label, config.get("model"))) or limits.get(label) or {}
+    try:
+        rpm = int(declared.get("rpm") or 0)
+    except (TypeError, ValueError):
+        rpm = 0
+    return rpm if rpm > 0 else _default_rpm_limit(config)
+
+
+def _provider_quota_sleep_seconds(db: Session, config: dict, now: Optional[datetime] = None) -> float:
+    """How long to wait before sending the next provider call for this key.
+
+    Google does not expose live quota over an API, so this mirrors the quota
+    dashboard: use our own provider-call records and the declared/free-tier RPM.
+    """
+    limit = _rpm_limit_for_config(db, config)
+    if not limit:
+        return 0.0
+
+    now = now or _now()
+    window_start = now - timedelta(seconds=PROVIDER_RATE_LIMIT_WINDOW_SECONDS)
+    key_label = config.get("key_label") or "Primary API Key"
+    model = config.get("model")
+    rows = (
+        db.query(AiEvaluation.created_at)
+        .filter(
+            AiEvaluation.key_label == key_label,
+            AiEvaluation.model == model,
+            AiEvaluation.created_at >= window_start,
+            AiEvaluation.status.notin_(("auto_zero", "not_sent")),
+        )
+        .order_by(AiEvaluation.created_at)
+        .all()
+    )
+    if len(rows) < limit:
+        return 0.0
+    oldest = rows[0][0]
+    if oldest is None:
+        return 0.0
+    return max(
+        0.0,
+        (oldest + timedelta(seconds=PROVIDER_RATE_LIMIT_WINDOW_SECONDS + PROVIDER_RATE_LIMIT_BUFFER_SECONDS) - now).total_seconds(),
+    )
+
+
+def _throttle_provider_quota(db: Session, config: dict) -> None:
+    sleep_seconds = _provider_quota_sleep_seconds(db, config)
+    if sleep_seconds > 0:
+        logger.info(
+            "AI evaluator quota throttle: waiting %.1fs before using %s",
+            sleep_seconds,
+            config.get("key_label") or "Primary API Key",
+        )
+        time.sleep(sleep_seconds)
 
 
 def _gemini_response_schema(rubric: list) -> Optional[dict]:
@@ -1098,6 +1282,71 @@ def _gemini_response_schema(rubric: list) -> Optional[dict]:
     }
 
 
+def _gemini_batch_response_schema(parts: list[dict]) -> Optional[dict]:
+    part_ids = [part.get("part_id") for part in parts if part.get("part_id") is not None]
+    if not part_ids:
+        return None
+    return {
+        "type": "OBJECT",
+        "properties": {
+            "parts": {
+                "type": "ARRAY",
+                "items": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "part_id": {"type": "INTEGER", "enum": part_ids},
+                        "criteria": {
+                            "type": "ARRAY",
+                            "items": {
+                                "type": "OBJECT",
+                                "properties": {
+                                    "criterion": {"type": "STRING"},
+                                    "marks_awarded": {"type": "NUMBER"},
+                                    "rationale": {"type": "STRING"},
+                                },
+                                "required": ["criterion", "marks_awarded", "rationale"],
+                            },
+                        },
+                        "comment": {"type": "STRING"},
+                        "confidence": {"type": "NUMBER"},
+                    },
+                    "required": ["part_id", "criteria", "comment", "confidence"],
+                },
+            },
+        },
+        "required": ["parts"],
+    }
+
+
+def _batch_evaluation_prompt(payload: dict) -> str:
+    sections = []
+    for part in payload.get("parts", []):
+        sections.append(
+            f"Part ID: {part['part_id']}\n"
+            f"Part Title: {part['title']}\n"
+            f"Skill Focus: {part.get('skill_focus') or ''}\n"
+            "Rubric Criteria:\n"
+            + "\n".join(
+                f"- {item['criterion']}: Max Marks = {item['max_marks']}"
+                for item in part.get("rubric", [])
+            )
+        )
+    return (
+        f"Framework: {payload['framework']} ({payload['policy_version']})\n"
+        f"Skill: {payload['skill'].upper()}\n\n"
+        "Evaluate all supplied Speaking parts in this single request.\n\n"
+        + "\n\n".join(sections)
+        + "\n\nInstructions:\n"
+        + payload["instructions"]
+        + "\n\nREQUIRED JSON RESPONSE SCHEMA:\n"
+        "{\n"
+        '  "parts": [\n'
+        '    {"part_id": number, "criteria": [{"criterion": "string", "marks_awarded": number, "rationale": "string"}], "comment": "string", "confidence": number}\n'
+        "  ]\n"
+        "}\n\n"
+    )
+
+
 def _gemini_evaluator(config: dict, payload: dict) -> dict:
     api_key = config["api_key"]
     model = config.get("model") or DEFAULT_GEMINI_MODEL
@@ -1107,42 +1356,58 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
         model = model[len("models/"):]
     url = f"{GEMINI_API_ROOT}/models/{model}:generateContent"
 
-    # Build Gemini request prompt & contents
-    prompt_text = (
-        f"Framework: {payload['framework']} ({payload['policy_version']})\n"
-        f"Skill: {payload['skill'].upper()}\n"
-        f"Part Title: {payload['part']['title']}\n"
-        f"Skill Focus: {payload['part']['skill_focus']}\n\n"
-        f"Rubric Criteria:\n"
-        + "\n".join(
-            f"- {item['criterion']}: Max Marks = {item['max_marks']}"
-            for item in payload["rubric"]
-        )
-        + "\n\nInstructions:\n"
-        + payload["instructions"]
-        + "\n\nREQUIRED JSON RESPONSE SCHEMA:\n"
-        "{\n"
-        '  "criteria": [\n'
-        '    {"criterion": "string", "marks_awarded": number, "rationale": "string"}\n'
-        "  ],\n"
-        '  "comment": "string",\n'
-        '  "confidence": number\n'
-        "}\n\n"
-    )
-
     parts = []
-    for resp in payload["responses"]:
-        parts.append({"text": f"Question Prompt: {resp['prompt']}\n"})
-        if "audio_b64" in resp:
-            parts.append({
-                "inlineData": {
-                    "mimeType": resp["mime_type"],
-                    "data": resp["audio_b64"],
-                }
-            })
-            parts.append({"text": "Please evaluate the audio recording above.\n"})
-        elif "text" in resp:
-            parts.append({"text": f"Student Response:\n{resp['text']}\n"})
+    if payload.get("task") == "cefr_rubric_evaluation_batch":
+        prompt_text = _batch_evaluation_prompt(payload)
+        for part in payload.get("parts", []):
+            parts.append({"text": f"\nPart ID {part['part_id']} - {part['title']}\n"})
+            for resp in part.get("responses", []):
+                parts.append({"text": f"Question Prompt: {resp['prompt']}\n"})
+                if "audio_b64" in resp:
+                    parts.append({
+                        "inlineData": {
+                            "mimeType": resp["mime_type"],
+                            "data": resp["audio_b64"],
+                        }
+                    })
+                    parts.append({"text": f"Evaluate this audio recording for part_id {part['part_id']}.\n"})
+                elif "text" in resp:
+                    parts.append({"text": f"Student Response for part_id {part['part_id']}:\n{resp['text']}\n"})
+    else:
+        # Build Gemini request prompt & contents
+        prompt_text = (
+            f"Framework: {payload['framework']} ({payload['policy_version']})\n"
+            f"Skill: {payload['skill'].upper()}\n"
+            f"Part Title: {payload['part']['title']}\n"
+            f"Skill Focus: {payload['part']['skill_focus']}\n\n"
+            f"Rubric Criteria:\n"
+            + "\n".join(
+                f"- {item['criterion']}: Max Marks = {item['max_marks']}"
+                for item in payload["rubric"]
+            )
+            + "\n\nInstructions:\n"
+            + payload["instructions"]
+            + "\n\nREQUIRED JSON RESPONSE SCHEMA:\n"
+            "{\n"
+            '  "criteria": [\n'
+            '    {"criterion": "string", "marks_awarded": number, "rationale": "string"}\n'
+            "  ],\n"
+            '  "comment": "string",\n'
+            '  "confidence": number\n'
+            "}\n\n"
+        )
+        for resp in payload["responses"]:
+            parts.append({"text": f"Question Prompt: {resp['prompt']}\n"})
+            if "audio_b64" in resp:
+                parts.append({
+                    "inlineData": {
+                        "mimeType": resp["mime_type"],
+                        "data": resp["audio_b64"],
+                    }
+                })
+                parts.append({"text": "Please evaluate the audio recording above.\n"})
+            elif "text" in resp:
+                parts.append({"text": f"Student Response:\n{resp['text']}\n"})
 
     parts.insert(0, {"text": prompt_text})
 
@@ -1153,7 +1418,11 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
     # Pin the criterion names to the rubric's own spelling. Asking for JSON
     # without a schema left the model free to rename a criterion, and
     # `_normalize` then rejected an otherwise perfect evaluation.
-    schema = _gemini_response_schema(payload["rubric"])
+    schema = (
+        _gemini_batch_response_schema(payload.get("parts", []))
+        if payload.get("task") == "cefr_rubric_evaluation_batch"
+        else _gemini_response_schema(payload["rubric"])
+    )
     if schema:
         generation_config["responseSchema"] = schema
 
@@ -1206,6 +1475,8 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
 
 
 def _evaluation_prompt(payload: dict) -> str:
+    if payload.get("task") == "cefr_rubric_evaluation_batch":
+        return _batch_evaluation_prompt(payload)
     return (
         f"Framework: {payload['framework']} ({payload['policy_version']})\n"
         f"Skill: {payload['skill'].upper()}\n"
@@ -1260,42 +1531,92 @@ def _openai_evaluator(config: dict, payload: dict) -> dict:
     api_key = config["api_key"]
     model = _resolve_model_for_provider("openai", config.get("model"))
     content = [{"type": "input_text", "text": _evaluation_prompt(payload)}]
-    for resp in payload["responses"]:
-        content.append({"type": "input_text", "text": f"Question Prompt: {resp['prompt']}\n"})
-        if "text" in resp:
-            content.append({"type": "input_text", "text": f"Student Response:\n{resp['text']}\n"})
-        elif "audio_b64" in resp:
-            content.append({
-                "type": "input_audio",
-                "input_audio": {
-                    "data": resp["audio_b64"],
-                    "format": _audio_format(resp.get("mime_type")),
-                },
-            })
-            content.append({"type": "input_text", "text": "Evaluate the attached audio response.\n"})
-
-    schema = {
-        "type": "object",
-        "additionalProperties": False,
-        "properties": {
-            "criteria": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "properties": {
-                        "criterion": {"type": "string"},
-                        "marks_awarded": {"type": "number"},
-                        "rationale": {"type": "string"},
+    if payload.get("task") == "cefr_rubric_evaluation_batch":
+        for part in payload.get("parts", []):
+            content.append({"type": "input_text", "text": f"\nPart ID {part['part_id']} - {part['title']}\n"})
+            for resp in part.get("responses", []):
+                content.append({"type": "input_text", "text": f"Question Prompt: {resp['prompt']}\n"})
+                if "text" in resp:
+                    content.append({"type": "input_text", "text": f"Student Response for part_id {part['part_id']}:\n{resp['text']}\n"})
+                elif "audio_b64" in resp:
+                    content.append({
+                        "type": "input_audio",
+                        "input_audio": {
+                            "data": resp["audio_b64"],
+                            "format": _audio_format(resp.get("mime_type")),
+                        },
+                    })
+                    content.append({"type": "input_text", "text": f"Evaluate the attached audio response for part_id {part['part_id']}.\n"})
+        schema = {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "parts": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "part_id": {"type": "number"},
+                            "criteria": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "additionalProperties": False,
+                                    "properties": {
+                                        "criterion": {"type": "string"},
+                                        "marks_awarded": {"type": "number"},
+                                        "rationale": {"type": "string"},
+                                    },
+                                    "required": ["criterion", "marks_awarded", "rationale"],
+                                },
+                            },
+                            "comment": {"type": "string"},
+                            "confidence": {"type": "number"},
+                        },
+                        "required": ["part_id", "criteria", "comment", "confidence"],
                     },
-                    "required": ["criterion", "marks_awarded", "rationale"],
                 },
             },
-            "comment": {"type": "string"},
-            "confidence": {"type": "number"},
-        },
-        "required": ["criteria", "comment", "confidence"],
-    }
+            "required": ["parts"],
+        }
+    else:
+        for resp in payload["responses"]:
+            content.append({"type": "input_text", "text": f"Question Prompt: {resp['prompt']}\n"})
+            if "text" in resp:
+                content.append({"type": "input_text", "text": f"Student Response:\n{resp['text']}\n"})
+            elif "audio_b64" in resp:
+                content.append({
+                    "type": "input_audio",
+                    "input_audio": {
+                        "data": resp["audio_b64"],
+                        "format": _audio_format(resp.get("mime_type")),
+                    },
+                })
+                content.append({"type": "input_text", "text": "Evaluate the attached audio response.\n"})
+
+        schema = {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "criteria": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "criterion": {"type": "string"},
+                            "marks_awarded": {"type": "number"},
+                            "rationale": {"type": "string"},
+                        },
+                        "required": ["criterion", "marks_awarded", "rationale"],
+                    },
+                },
+                "comment": {"type": "string"},
+                "confidence": {"type": "number"},
+            },
+            "required": ["criteria", "comment", "confidence"],
+        }
     request = {
         "model": model,
         "input": [{"role": "user", "content": content}],
@@ -1528,6 +1849,26 @@ def _normalize(result: dict, part: ExamModulePart) -> dict:
     }
 
 
+def _normalize_batch(result: dict, parts: list[ExamModulePart]) -> dict[int, dict]:
+    if not isinstance(result, dict) or not isinstance(result.get("parts"), list):
+        raise ValueError("Evaluator batch response must contain a parts list")
+    parts_by_id = {part.id: part for part in parts}
+    normalized: dict[int, dict] = {}
+    for item in result["parts"]:
+        try:
+            part_id = int(item.get("part_id"))
+        except (TypeError, ValueError):
+            raise ValueError(f"Evaluator batch response contained an invalid part_id: {item.get('part_id')!r}") from None
+        part = parts_by_id.get(part_id)
+        if part is None or part_id in normalized:
+            raise ValueError(f"Evaluator batch response contained an unexpected or duplicate part_id: {part_id}")
+        normalized[part_id] = _normalize(item, part)
+    if set(normalized) != set(parts_by_id):
+        missing = sorted(set(parts_by_id) - set(normalized))
+        raise ValueError(f"Evaluator batch response did not score every requested part: {missing}")
+    return normalized
+
+
 TRANSIENT_RETRY_SECONDS = 3.0
 
 
@@ -1621,6 +1962,8 @@ def request_suggestion(
     failed_records: list[AiEvaluation] = []
 
     for index, config in enumerate(configs_to_try):
+        if evaluator is None:
+            _throttle_provider_quota(db, config)
         record = AiEvaluation(
             attempt_id=attempt.id,
             part_id=part.id,
@@ -1674,6 +2017,103 @@ def request_suggestion(
             if exc.status_code == 429 and index < len(configs_to_try) - 1:
                 # Separate keys can still share a project quota, so give the
                 # window a moment before spending the next one.
+                time.sleep(RATE_LIMIT_KEY_SWITCH_SECONDS)
+        except Exception as exc:
+            last_error = exc
+            record.status = "failed"
+            record.duration_ms = int((time.monotonic() - started) * 1000)
+            record.error = _redact_secrets(exc)[:4000]
+            db.add(record)
+            failed_records.append(record)
+
+    db.commit()
+    detail = _redact_secrets(getattr(last_error, "detail", last_error)) if last_error else "All AI evaluators failed"
+    raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"All configured AI evaluators failed: {detail[:500]}")
+
+
+def request_speaking_suggestions(
+    db: Session,
+    actor: User,
+    attempt: TestAttempt,
+    parts: list[ExamModulePart],
+    evaluator: Optional[Callable[[dict, dict], dict]] = None,
+) -> dict[int, dict]:
+    speaking_parts = [part for part in parts if part.section_type == "speaking"]
+    if not speaking_parts:
+        return {}
+    configs_to_try = _candidate_configs(db) if evaluator is None else [{
+        "provider": "test_evaluator",
+        "model": "test-model",
+        "monthly_limit": DEFAULT_MONTHLY_LIMIT,
+        "api_key": "test",
+        "key_label": "Primary API Key",
+    }]
+    if not configs_to_try:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI evaluation is not enabled or fully configured")
+
+    primary_part = sorted(speaking_parts, key=lambda item: item.sort_order)[0]
+    limits = _limit_rows(db, attempt, int(configs_to_try[0].get("monthly_limit") or DEFAULT_MONTHLY_LIMIT))
+    try:
+        payload = _batch_payload(attempt, speaking_parts)
+    except HTTPException as exc:
+        db.add(AiEvaluation(
+            attempt_id=attempt.id,
+            part_id=primary_part.id,
+            requested_by_id=actor.id,
+            provider=configs_to_try[0].get("provider") or "unknown",
+            model=configs_to_try[0].get("model"),
+            status="not_sent",
+            key_label=(configs_to_try[0].get("key_label") or "")[:80] or None,
+            error=_redact_secrets(exc.detail)[:4000],
+            duration_ms=0,
+        ))
+        db.commit()
+        raise
+
+    last_error: Optional[Exception] = None
+    failed_records: list[AiEvaluation] = []
+    for index, config in enumerate(configs_to_try):
+        if evaluator is None:
+            _throttle_provider_quota(db, config)
+        record = AiEvaluation(
+            attempt_id=attempt.id,
+            part_id=primary_part.id,
+            requested_by_id=actor.id,
+            provider=config["provider"],
+            model=config.get("model"),
+            status="running",
+            key_label=(config.get("key_label") or "")[:80] or None,
+            request_summary=_request_summary(payload, config),
+        )
+        db.add(record)
+        db.flush()
+        started = time.monotonic()
+        try:
+            call = evaluator or _remote_evaluator
+            raw = call(config, payload)
+            record.duration_ms = int((time.monotonic() - started) * 1000)
+            if isinstance(raw, dict):
+                record.tokens_used = raw.pop("_usage_tokens", None)
+            record.response_raw = _readable_response(raw)
+            suggestions = _normalize_batch(raw, speaking_parts)
+            record.status = "completed"
+            record.suggestions = {"parts": {str(part_id): suggestion for part_id, suggestion in suggestions.items()}}
+            for limit in limits:
+                limit.used_count += 1
+            db.add_all([record, *limits, *failed_records])
+            db.commit()
+            return suggestions
+        except HTTPException as exc:
+            last_error = exc
+            record.status = "failed"
+            record.duration_ms = int((time.monotonic() - started) * 1000)
+            record.error = _redact_secrets(exc.detail)[:4000]
+            db.add(record)
+            failed_records.append(record)
+            if exc.status_code == 429 and index == len(configs_to_try) - 1:
+                db.commit()
+                raise
+            if exc.status_code == 429 and index < len(configs_to_try) - 1:
                 time.sleep(RATE_LIMIT_KEY_SWITCH_SECONDS)
         except Exception as exc:
             last_error = exc
@@ -1765,7 +2205,8 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
         return False
 
     quota_exhausted = False
-    for part in attempt.module.parts:
+    pending_parts: list[ExamModulePart] = []
+    for part in sorted(attempt.module.parts, key=lambda item: item.sort_order):
         if part.auto_marked or not part.ai_evaluation_enabled:
             continue
         grade = next((g for g in attempt.part_grades if g.part_id == part.id), None)
@@ -1792,6 +2233,27 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
             db.commit()
             continue
 
+        pending_parts.append(part)
+
+    speaking_parts = [part for part in pending_parts if part.section_type == "speaking"]
+    if speaking_parts:
+        try:
+            suggestions = request_speaking_suggestions(db, attempt.user, attempt, speaking_parts)
+            for part in speaking_parts:
+                _apply_ai_grade(db, attempt, part, suggestions[part.id])
+            db.commit()
+        except HTTPException as exc:
+            if exc.status_code == 429:
+                quota_exhausted = True
+                pending_parts = [part for part in pending_parts if part.section_type != "speaking"]
+            else:
+                logger.exception("Automatic batch Speaking AI evaluation failed for attempt %s", attempt.id)
+        except Exception:
+            logger.exception("Automatic batch Speaking AI evaluation failed for attempt %s", attempt.id)
+
+    for part in pending_parts:
+        if part.section_type == "speaking":
+            continue
         try:
             suggestion = request_suggestion(db, attempt.user, attempt, part)
         except HTTPException as exc:
@@ -1800,7 +2262,7 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
                 # The next part would land in the same closed window. Speaking
                 # parts are large, so one rate-limited part used to take the
                 # rest of the paper down with it.
-                time.sleep(RATE_LIMIT_RETRY_SECONDS)
+                break
             continue
         except Exception:
             logger.exception(
@@ -1908,6 +2370,15 @@ def retry_attempt_evaluation(db: Session, attempt: TestAttempt) -> dict:
     }
 
 
+def _direct_part_evaluation_allowed(part: ExamModulePart) -> bool:
+    return bool(
+        part is not None
+        and not part.auto_marked
+        and part.ai_evaluation_enabled
+        and part.section_type != "speaking"
+    )
+
+
 def evaluate_attempt_part_directly(database_url: str, attempt_id: int, part_id: int) -> None:
     """Evaluate one specific subjective part (Writing/Speaking) of an attempt
     in the background immediately after the student finishes that part, rather
@@ -1931,7 +2402,10 @@ def evaluate_attempt_part_directly(database_url: str, attempt_id: int, part_id: 
             return
 
         part = db.query(ExamModulePart).filter(ExamModulePart.id == part_id).first()
-        if part is None or part.auto_marked or not part.ai_evaluation_enabled:
+        if not _direct_part_evaluation_allowed(part):
+            # Speaking is marked as a whole section after submission so a
+            # four-part interview is one provider request instead of one
+            # request per part, even if the frontend asks during the test.
             return
 
         # Check if it was already graded

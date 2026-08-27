@@ -1,3 +1,4 @@
+import json
 from collections.abc import Callable
 from decimal import Decimal
 from typing import Optional
@@ -741,6 +742,34 @@ def _normalize_ai_result(result: object, fallback: dict) -> dict:
     }
 
 
+def _analysis_cache_revision(attempt: TestAttempt) -> str:
+    """Part grades can land while the attempt stays `grading`.
+
+    The result page asks for analysis during that window, so the cache has to
+    vary with the rubric rows rather than only with the attempt's final score.
+    """
+    grade_rows = sorted(
+        attempt.part_grades,
+        key=lambda grade: (
+            grade.part_id,
+            grade.status,
+            grade.graded_at or attempt.started_at,
+        ),
+    )
+    if not grade_rows:
+        return "no-part-grades"
+    return "|".join(
+        ":".join((
+            str(grade.part_id),
+            str(grade.status),
+            (grade.graded_at or attempt.started_at).isoformat(),
+            str(grade.total_marks),
+            json.dumps(grade.criteria or [], sort_keys=True, default=str),
+        ))
+        for grade in grade_rows
+    )
+
+
 def result_analysis(
     db: Session,
     attempt: TestAttempt,
@@ -754,7 +783,8 @@ def result_analysis(
 
     cache_key = (
         f"student-result-analysis:{attempt.id}:{attempt.status}:{attempt.raw_score}:"
-        f"{attempt.graded_at.isoformat() if attempt.graded_at else 'pending'}"
+        f"{attempt.graded_at.isoformat() if attempt.graded_at else 'pending'}:"
+        f"{_analysis_cache_revision(attempt)}"
     )
     cached = app_cache.get(cache_key)
     if cached is not None and evaluator is None:

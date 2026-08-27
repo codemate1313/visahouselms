@@ -73,7 +73,7 @@ export function AttemptResult() {
         .get<Attempt>(`/student/attempts/${id}`, { headers: { "X-Skip-Loader": "1" } })
         .then(({ data }) => {
           if (!active) return;
-          if (data.status !== "grading") {
+          if (data.ai_evaluation_status !== "pending") {
             window.clearInterval(timer);
             apiClient
               .get<StudentResultAnalysis>(`/student/attempts/${id}/analysis`, { headers: { "X-Skip-Loader": "1" } })
