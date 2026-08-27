@@ -237,7 +237,17 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
           isPending = true;
         }
 
-        if (part.total > 0) {
+        const isSubjective = !part.auto_marked || skillKey === "writing" || skillKey === "speaking";
+
+        if (isSubjective && part.marks) {
+          const parsed = parseMarks(part.marks);
+          if (parsed.isPending) {
+            isPending = true;
+          } else {
+            totalAwarded += parsed.awarded;
+            totalMax += parsed.max;
+          }
+        } else if (part.total > 0) {
           totalAwarded += part.correct;
           totalMax += part.total;
         } else if (part.marks) {
