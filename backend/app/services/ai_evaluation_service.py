@@ -1431,6 +1431,24 @@ def _normalize(result: dict, part: ExamModulePart) -> dict:
     }
 
 
+TRANSIENT_RETRY_SECONDS = 3.0
+
+
+def _is_transient(exc: Exception) -> bool:
+    """A blip worth one more try on the same key, rather than a verdict on it.
+
+    Timeouts, dropped connections and 5xx are the provider having a moment; a
+    401 or a malformed rubric is not, and retrying those just wastes the
+    student's time before the instructor queue gets it anyway."""
+    if isinstance(exc, (httpx.TimeoutException, httpx.TransportError)):
+        return True
+    if isinstance(exc, httpx.HTTPStatusError):
+        return exc.response.status_code >= 500
+    if isinstance(exc, HTTPException):
+        return exc.status_code >= 500 and exc.status_code != 503
+    return False
+
+
 def _readable_response(raw: object) -> str:
     """The provider's own reply, kept for the log. Truncated: a rationale-heavy
     response is a few KB, but a misbehaving endpoint can return anything."""
@@ -1516,7 +1534,20 @@ def request_suggestion(
         db.flush()
         started = time.monotonic()
         try:
-            raw = (evaluator or _remote_evaluator)(config, payload)
+            call = evaluator or _remote_evaluator
+            try:
+                raw = call(config, payload)
+            except Exception as first_error:
+                if not _is_transient(first_error):
+                    raise
+                logger.info(
+                    "Transient AI evaluator error for attempt %s part %s, retrying once: %s",
+                    attempt.id,
+                    part.id,
+                    _redact_secrets(first_error)[:200],
+                )
+                time.sleep(TRANSIENT_RETRY_SECONDS)
+                raw = call(config, payload)
             record.duration_ms = int((time.monotonic() - started) * 1000)
             record.response_raw = _readable_response(raw)
             suggestion = _normalize(raw, part)

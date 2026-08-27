@@ -594,6 +594,57 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.commit()
         self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 0)
 
+    def test_recovery_retries_an_attempt_whose_ai_job_failed(self):
+        """A provider blip used to park an attempt in the instructor queue for good.
+
+        Recovery treated "a job exists" as "nothing to do" regardless of how it
+        ended, and only ran at startup - so a 502 mid-run meant the attempt was
+        never looked at again until someone restarted the backend.
+        """
+        from datetime import timezone as _tz
+
+        self._enable_ai_evaluation()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "My essay response."})
+        attempt_service.submit_attempt(self.db, attempt)
+
+        job = self.db.query(Job).filter_by(type="ai_auto_grade").one()
+        job.status = "failed"
+        job.finished_at = datetime.now(_tz.utc) - timedelta(seconds=30)
+        self.db.commit()
+
+        # Too soon after the failure: let the provider settle first.
+        self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 0)
+
+        job.finished_at = datetime.now(_tz.utc) - timedelta(
+            seconds=job_service.AI_RETRY_AFTER_SECONDS + 60
+        )
+        self.db.commit()
+        self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 1)
+
+        # And it gives up rather than looping on an attempt that keeps failing.
+        for row in self.db.query(Job).filter_by(type="ai_auto_grade").all():
+            row.status = "failed"
+            row.finished_at = datetime.now(_tz.utc) - timedelta(
+                seconds=job_service.AI_RETRY_AFTER_SECONDS + 60
+            )
+        for _ in range(job_service.AI_MAX_AUTOMATIC_ATTEMPTS):
+            self.db.add(AiEvaluation(
+                attempt_id=attempt.id,
+                part_id=attempt.module.parts[0].id,
+                requested_by_id=self.student.id,
+                provider="gemini",
+                status="failed",
+                error="boom",
+            ))
+        self.db.commit()
+        self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 0)
+
     def test_student_can_request_human_review_after_ai_grade(self):
         module = self._build_writing_module()
         self._course_with_module(module.id)

@@ -19,6 +19,13 @@ logger = logging.getLogger(__name__)
 
 POLL_INTERVAL_SECONDS = 3
 SCHEDULER_INTERVAL_SECONDS = 60
+# A provider blip - a 502, a dropped connection, a timeout - failed the job and
+# parked the attempt in the instructor queue for good, because recovery treated
+# "a job already exists" as "nothing to do" no matter how that job ended. These
+# two bound the second chance: wait for the blip to pass, and give up after a
+# few tries so a genuinely unmarkable part cannot loop.
+AI_RETRY_AFTER_SECONDS = 15 * 60
+AI_MAX_AUTOMATIC_ATTEMPTS = 3
 
 _worker_thread: Optional[threading.Thread] = None
 _scheduler_thread: Optional[threading.Thread] = None
@@ -77,9 +84,39 @@ def recover_missing_ai_auto_grade_jobs(db: Session) -> int:
         )
     ]
     queued = 0
+    now = datetime.now(timezone.utc)
+    # Read the job history once: this runs on every scheduler tick now, and the
+    # per-attempt lookup used to re-read the whole table each time round.
+    jobs_by_attempt: dict[int, list[Job]] = {}
+    for row in db.query(Job).filter(Job.type == "ai_auto_grade").all():
+        job_attempt_id = (row.payload or {}).get("attempt_id")
+        if job_attempt_id is not None:
+            jobs_by_attempt.setdefault(job_attempt_id, []).append(row)
+
     for attempt_id in attempt_ids:
-        if _ai_grade_job_exists(db, attempt_id):
-            continue
+        previous = jobs_by_attempt.get(attempt_id, [])
+        if any(row.status in (JOB_PENDING, JOB_RUNNING) for row in previous):
+            continue  # already queued or running
+
+        if previous:
+            # A completed run is a verdict: the AI looked at the attempt and
+            # what is left belongs to an instructor. Only a *failed* job means
+            # the run itself fell over - that is the one worth repeating.
+            latest = max(previous, key=lambda row: (row.finished_at or row.created_at))
+            if latest.status != JOB_FAILED:
+                continue
+
+            attempts_made = db.query(AiEvaluation).filter_by(attempt_id=attempt_id, status="failed").count()
+            if attempts_made >= AI_MAX_AUTOMATIC_ATTEMPTS:
+                continue  # stop trying; an instructor owns it now
+            finished = [row.finished_at for row in previous if row.finished_at]
+            if finished:
+                last = max(finished)
+                if last.tzinfo is None:
+                    last = last.replace(tzinfo=timezone.utc)
+                if (now - last).total_seconds() < AI_RETRY_AFTER_SECONDS:
+                    continue  # too soon - let the provider settle
+
         if enqueue_ai_auto_grade(db, attempt_id) is not None:
             queued += 1
     return queued
@@ -263,6 +300,11 @@ def _scheduler_tick() -> None:
     db = SessionLocal()
     try:
         now = datetime.now(timezone.utc)
+
+        # Retry AI marking that stalled on a transient provider failure. This
+        # used to run only at startup, so an attempt that tripped stayed
+        # stalled until someone restarted the backend.
+        recover_missing_ai_auto_grade_jobs(db)
 
         # scheduled backups
         schedule = (get_setting(db, "backup.schedule") or "none").lower()
