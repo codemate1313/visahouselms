@@ -102,6 +102,7 @@ fi
   printf "VITE_DEVELOPER_ACCESS_SLUG=%s\n" "$developer_slug"
 } > .env.production
 
+rm -rf node_modules
 npm install --include=dev
 npm run build
 cd ..
