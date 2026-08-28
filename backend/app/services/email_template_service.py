@@ -738,3 +738,86 @@ If you have any billing questions, please contact support@visahouse.com.
     )
     return subject, plain, html
 
+
+def render_account_status_email(
+    first_name: str,
+    email: str,
+    active: bool,
+) -> tuple[str, str, str]:
+    """Returns (subject, plain_text, html_content) for account deactivation or reactivation."""
+    if active:
+        subject = "Your Visa House Account Access Has Been Restored"
+        plain = f"""Hi {first_name},
+
+Great news! Your Visa House account ({email}) has been reactivated by an administrator.
+
+You can now log in to the portal to continue your preparation, take assessments, and view your progress.
+
+Warm regards,
+The Visa House Team
+"""
+        content_html = f"""
+        <p style="margin-top: 0; font-size: 15px; color: #334155; line-height: 1.6;">
+          Hi <strong style="color: #0f172a;">{first_name}</strong>,
+        </p>
+        <p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 16px 0;">
+          Great news! Your Visa House account (<strong style="color: #0f172a;">{email}</strong>) has been reactivated by an administrator.
+        </p>
+        <p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 16px 0;">
+          You can now log in to access your modules, practice exams, and learning dashboard.
+        </p>
+        """
+        html = render_base_email(
+            badge_label="ACCOUNT RESTORED",
+            title="Account Reactivated",
+            subtitle="Your account access has been successfully restored.",
+            content_html=content_html,
+            action_url=None,
+            action_text=None,
+            badge_color="#059669",
+        )
+    else:
+        subject = "Important: Your Visa House Account Has Been Deactivated"
+        plain = f"""Hi {first_name},
+
+This is an official notice to inform you that your Visa House account ({email}) has been deactivated by an administrator.
+
+All active sessions have been revoked and your portal access has been suspended.
+
+If you believe this was done in error or have questions regarding your account status, please contact your institute administrator or our support team.
+
+Warm regards,
+The Visa House Team
+"""
+        content_html = f"""
+        <p style="margin-top: 0; font-size: 15px; color: #334155; line-height: 1.6;">
+          Dear <strong style="color: #0f172a;">{first_name}</strong>,
+        </p>
+        <p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 16px 0;">
+          This is an official notice to inform you that your Visa House account (<strong style="color: #0f172a;">{email}</strong>) has been deactivated by an administrator.
+        </p>
+        <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; padding: 18px; margin: 16px 0 20px 0;">
+          <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #9f1239;">
+            Account status update:
+          </p>
+          <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #4c0519; line-height: 1.6;">
+            <li>All active login sessions have been immediately signed out.</li>
+            <li>Access to exams, practice tests, and student portals has been suspended.</li>
+          </ul>
+        </div>
+        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin: 0;">
+          If you believe this was done in error or have questions regarding your access, please contact your institute administrator or our support team.
+        </p>
+        """
+        html = render_base_email(
+            badge_label="ACCOUNT NOTICE",
+            title="Account Deactivated",
+            subtitle="Your account access has been disabled by an administrator.",
+            content_html=content_html,
+            action_url=None,
+            action_text=None,
+            badge_color="#b91c2b",
+        )
+    return subject, plain, html
+
+

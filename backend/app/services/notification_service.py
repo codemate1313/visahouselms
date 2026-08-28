@@ -89,17 +89,41 @@ def push_to_user(db: Session, user_id: int, title: str, body: str, link_url: Opt
         record_send_failure(db, f"Push notification failed for user {user_id}: {exc}", user_id=user_id)
 
 
-def send_notification_email(db: Session, to_address: str, subject: str, body: str, *, user_id: Optional[int] = None) -> None:
+def send_notification_email(
+    db: Session,
+    to_address: str,
+    subject: str,
+    body: str,
+    *,
+    html_body: Optional[str] = None,
+    user_id: Optional[int] = None,
+) -> None:
     """Best-effort email send shared by non-grading notification producers
-    (support tickets, etc.) - mirrors send_grade_released_email's failure handling."""
+    (support tickets, account notices, etc.) - mirrors send_grade_released_email's failure handling."""
     try:
-        smtp_service.send_email(db, to_address, subject, body)
+        smtp_service.send_email(db, to_address, subject, body, html_body=html_body)
     except Exception as exc:
         if smtp_service.is_configuration_error(exc):
             logger.info("Notification email skipped because SMTP is not configured")
             return
         logger.exception("Failed to send notification email to %s", to_address)
         record_send_failure(db, f"Notification email to {to_address} failed: {exc}", user_id=user_id)
+
+
+def send_account_status_email(db: Session, user: User, active: bool) -> None:
+    """Best-effort notification email sent to user when an administrator deactivates or reactivates their account."""
+    if not user.email:
+        return
+    try:
+        from app.services import email_template_service
+
+        first_name = user.first_name or "Member"
+        subject, plain, html = email_template_service.render_account_status_email(
+            first_name, user.email, active
+        )
+        send_notification_email(db, user.email, subject, plain, html_body=html, user_id=user.id)
+    except Exception as exc:
+        logger.exception("Failed to send account status email to %s", user.email)
 
 
 def create_notification(
@@ -304,42 +328,18 @@ def notify_ai_evaluation_failed(db: Session, attempt: TestAttempt) -> None:
 
 
 def notify_grading_claimed(db: Session, attempt: TestAttempt, actor: User) -> None:
-    create_notification(
-        db,
-        user_id=attempt.user_id,
-        kind=GRADING_CLAIMED,
-        title=f"Review started: {attempt.module.title}",
-        message=f"{actor.first_name} {actor.last_name} has started reviewing your submission.",
-        link_url=f"/student/attempts/{attempt.id}/result/details",
-        attempt_id=attempt.id,
-    )
+    # No-op: claiming a submission is an internal workflow state and should not generate student inbox noise
+    pass
 
 
 def notify_grading_released(db: Session, attempt: TestAttempt) -> None:
-    create_notification(
-        db,
-        user_id=attempt.user_id,
-        kind=GRADING_RELEASED,
-        title=f"Review returned to queue: {attempt.module.title}",
-        message="Your submission is waiting for another instructor to continue the review.",
-        link_url=f"/student/attempts/{attempt.id}/result/details",
-        attempt_id=attempt.id,
-    )
+    # No-op: unclaiming a submission is internal instructor workflow
+    pass
 
 
 def notify_reevaluation_requested(db: Session, attempt: TestAttempt) -> None:
     title = f"Human review requested: {attempt.module.title}"
     message = f"{_student_name(attempt)} requested instructor review after the result was released."
-    if STUDENT in NOTIFICATION_POLICY["reevaluation_requested"]["student"]:
-        create_notification(
-            db,
-            user_id=attempt.user_id,
-            kind=REEVALUATION_REQUESTED,
-            title="Human review request submitted",
-            message="Your request has been sent to the appropriate instructor queue.",
-            link_url=f"/student/attempts/{attempt.id}/result/details",
-            attempt_id=attempt.id,
-        )
     roles, institute_id = _attempt_audience("reevaluation_requested", attempt)
     for role_name in roles:
         notify_roles(
@@ -354,15 +354,8 @@ def notify_reevaluation_requested(db: Session, attempt: TestAttempt) -> None:
 
 
 def notify_reevaluation_claimed(db: Session, attempt: TestAttempt, actor: User) -> None:
-    create_notification(
-        db,
-        user_id=attempt.user_id,
-        kind=REEVALUATION_CLAIMED,
-        title=f"Human review in progress: {attempt.module.title}",
-        message=f"{actor.first_name} {actor.last_name} is reviewing your request.",
-        link_url=f"/student/attempts/{attempt.id}/result/details",
-        attempt_id=attempt.id,
-    )
+    # No-op: internal instructor claim state
+    pass
 
 
 def notify_reevaluation_resolved(db: Session, attempt: TestAttempt, resolution: str) -> None:
@@ -380,15 +373,6 @@ def notify_reevaluation_resolved(db: Session, attempt: TestAttempt, resolution: 
 def notify_retake_requested(db: Session, request: RetakeRequest) -> None:
     attempt = request.attempt
     student_name = f"{request.student.first_name} {request.student.last_name}".strip() or request.student.email
-    create_notification(
-        db,
-        user_id=request.student_id,
-        kind=RETAKE_REQUESTED,
-        title="Retake request submitted",
-        message="Your retake request has been sent to the Super Admin for review.",
-        link_url=f"/student/attempts/{attempt.id}/result/details",
-        attempt_id=attempt.id,
-    )
     notify_roles(
         db,
         {SUPER_ADMIN},

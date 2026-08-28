@@ -455,16 +455,6 @@ def create_member(
     account_service.send_account_credentials_email(
         db, user, temporary_password, role_label=role_name.replace("_", " ").title()
     )
-    if actor.role.name != DEVELOPER:
-        notification_service.notify_roles(
-            db,
-            {INSTITUTE_ADMIN},
-            kind="institute_member_created",
-            title=f"{role_name.replace('_', ' ').title()} created",
-            message=f"{actor.email} created {user.email}.",
-            link_url="/institute-portal/students" if role_name == STUDENT else "/institute-portal/staff",
-            institute_id=institute_id,
-        )
     result = serialize_member(get_member_or_404(db, actor, user.id, scoped_institute_id))
     result["temporary_password"] = temporary_password
     return result
@@ -495,16 +485,6 @@ def update_member(
     db.add(user)
     _audit(db, actor, "institute_member.update", user.id, ip, {"fields": sorted(fields_set)})
     db.commit()
-    if actor.role.name != DEVELOPER:
-        notification_service.notify_roles(
-            db,
-            {INSTITUTE_ADMIN},
-            kind="institute_member_updated",
-            title="Institute member updated",
-            message=f"{actor.email} updated {user.email}.",
-            link_url="/institute-portal/students" if user.role.name == STUDENT else "/institute-portal/staff",
-            institute_id=user.institute_id,
-        )
     return serialize_member(get_member_or_404(db, actor, user.id, scoped_institute_id))
 
 
@@ -557,25 +537,7 @@ def set_member_active(
         {"sessions_revoked": revoked},
     )
     db.commit()
-    if actor.role.name != DEVELOPER:
-        notification_service.notify_roles(
-            db,
-            {INSTITUTE_ADMIN},
-            kind="institute_member_status_changed",
-            title="Institute member reactivated" if active else "Institute member deactivated",
-            message=f"{actor.email} {'reactivated' if active else 'deactivated'} {user.email}.",
-            link_url="/institute-portal/students" if user.role.name == STUDENT else "/institute-portal/staff",
-            institute_id=user.institute_id,
-        )
-    if not active:
-        notification_service.create_notification(
-            db,
-            user_id=user.id,
-            kind="account_sessions_revoked",
-            title="Account deactivated",
-            message="Your account was deactivated and active sessions were revoked.",
-            link_url="/notifications",
-        )
+    notification_service.send_account_status_email(db, user, active)
     return serialize_member(get_member_or_404(db, actor, user.id, scoped_institute_id))
 
 
@@ -644,16 +606,6 @@ def release_seat(
         {"previous_state": previous_state, "sessions_revoked": revoked},
     )
     db.commit()
-    if actor.role.name != DEVELOPER:
-        notification_service.notify_roles(
-            db,
-            {INSTITUTE_ADMIN},
-            kind="institute_seat_released",
-            title="Student seat released",
-            message=f"{actor.email} released the seat held by {user.email}.",
-            link_url="/institute-portal/students",
-            institute_id=institute_id,
-        )
     return serialize_member(get_member_or_404(db, actor, user.id, scoped_institute_id))
 
 
@@ -722,16 +674,6 @@ def reactivate_seat(
         },
     )
     db.commit()
-    if actor.role.name != DEVELOPER:
-        notification_service.notify_roles(
-            db,
-            {INSTITUTE_ADMIN},
-            kind="institute_seat_reactivated",
-            title="Past student reactivated",
-            message=f"{actor.email} reactivated {user.email}.",
-            link_url="/institute-portal/students",
-            institute_id=institute_id,
-        )
     return serialize_member(get_member_or_404(db, actor, user.id, scoped_institute_id))
 
 
@@ -836,16 +778,6 @@ def reset_member_password(
         smtp_service.send_email(db, user.email, subject, plain, html)
     except Exception:
         pass
-    if actor.role.name != DEVELOPER:
-        notification_service.notify_roles(
-            db,
-            {INSTITUTE_ADMIN},
-            kind="institute_member_password_reset",
-            title="Institute member password reset",
-            message=f"{actor.email} reset the password for {user.email}.",
-            link_url="/institute-portal/students" if user.role.name == STUDENT else "/institute-portal/staff",
-            institute_id=user.institute_id,
-        )
     return temporary_password
 
 
@@ -873,16 +805,6 @@ def delete_member(
     # account's own copy is released.
     account_service.soft_delete_user(db, user)
     db.commit()
-    if actor.role.name != DEVELOPER:
-        notification_service.notify_roles(
-            db,
-            {INSTITUTE_ADMIN},
-            kind="institute_member_deleted",
-            title="Institute member deleted",
-            message=f"{actor.email} deleted {deleted_email}.",
-            link_url="/institute-portal/students" if deleted_role == STUDENT else "/institute-portal/staff",
-            institute_id=deleted_institute_id,
-        )
 
 
 def revoke_member_sessions(
@@ -1166,16 +1088,6 @@ def import_students(
     db.commit()
     for created_user, created_password in created_users:
         account_service.send_account_credentials_email(db, created_user, created_password, role_label="Student")
-    if created and actor.role.name != DEVELOPER:
-        notification_service.notify_roles(
-            db,
-            {INSTITUTE_ADMIN},
-            kind="institute_member_imported",
-            title="Students imported",
-            message=f"{actor.email} imported {len(created)} student account(s).",
-            link_url="/institute-portal/students",
-            institute_id=institute_id,
-        )
     invalid_emails = [
         {"row": item["row"], "email": item["email"], "reason": item["reason"]}
         for item in skipped

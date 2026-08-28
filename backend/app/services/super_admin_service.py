@@ -335,12 +335,6 @@ def update_super_admin(
     )
     db.commit()
     db.refresh(user)
-    notification_service.notify_security_event(
-        db,
-        "Super Admin account updated",
-        f"{actor.email} updated Super Admin {user.email}'s profile.",
-        link_url="/super-admin/users/super-admins",
-    )
     return user
 
 
@@ -916,14 +910,7 @@ def set_directory_user_active(
     )
     db.commit()
     db.refresh(user)
-    notification_service.create_notification(
-        db,
-        user_id=user.id,
-        kind="account_status_changed",
-        title="Account reactivated" if active else "Account suspended",
-        message="Your account access has been restored." if active else "Your account has been suspended.",
-        link_url="/student/notifications",
-    )
+    notification_service.send_account_status_email(db, user, active)
     return {"id": user.id, "email": user.email, "is_active": user.is_active}
 
 

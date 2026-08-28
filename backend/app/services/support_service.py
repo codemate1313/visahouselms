@@ -150,15 +150,6 @@ def _notify_ticket_created(db: Session, ticket: SupportTicket) -> None:
             f"{ticket.name} ({ticket.email}) submitted a new support ticket:\n\n{ticket.message}",
             user_id=staff.id,
         )
-    if ticket.requester_id is not None:
-        notification_service.create_notification(
-            db,
-            user_id=ticket.requester_id,
-            kind=SUPPORT_TICKET_CREATED,
-            title=f"Support ticket created: {ticket.subject}",
-            message="Your support query has been submitted successfully.",
-            link_url=_portal_link(ticket.queue, ticket.id),
-        )
     notification_service.send_notification_email(
         db,
         ticket.email,
