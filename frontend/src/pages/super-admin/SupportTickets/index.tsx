@@ -480,7 +480,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
   }
 
   return (
-    <div className="support-ticket-page">
+    <div className={`support-ticket-page${isInstituteInbox ? " support-ticket-page--institute" : ""}`}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", margin: "0 0 16px", flexWrap: "wrap" }}>
         {!isInstituteInbox ? (
           <SegmentedControl
@@ -741,6 +741,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
           }
           return true;
         }}
+        className={isInstituteInbox ? "support-ticket-chat-modal support-ticket-chat-modal--institute" : "support-ticket-chat-modal"}
         size="lg"
         title={
           selectedTicket ? (
@@ -810,7 +811,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                     <Icon name="download" style={{ width: "15px", height: "15px", transform: "rotate(180deg)" }} />
                     <span>Attach</span>
                     {attachedFiles.length > 0 && (
-                      <span style={{ fontSize: "0.725rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "var(--primary, #b91c2b)", color: "var(--white)" }}>
+                      <span style={{ fontSize: "0.725rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "var(--primary, #b91c2b)", color: "var(--institute-on-primary, var(--white))" }}>
                         {attachedFiles.length}
                       </span>
                     )}
@@ -893,14 +894,14 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                     width: "44px",
                     height: "44px",
                     borderRadius: "12px",
-                    background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
-                    color: "#ffffff",
+                    background: "linear-gradient(135deg, var(--primary, #3b82f6) 0%, color-mix(in srgb, var(--primary, #3b82f6) 78%, #000000) 100%)",
+                    color: "var(--institute-on-primary, #ffffff)",
                     display: "grid",
                     placeItems: "center",
                     fontWeight: 800,
                     fontSize: "1.15rem",
                     flexShrink: 0,
-                    boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
+                    boxShadow: "0 4px 12px color-mix(in srgb, var(--primary, #3b82f6) 28%, transparent)",
                   }}
                 >
                   {selectedTicket.name.charAt(0).toUpperCase()}
@@ -938,9 +939,9 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                   leftIcon={<Icon name="cross" />}
                   onClick={() => void closeChat()}
                   style={{
-                    background: "rgba(239, 68, 68, 0.08)",
-                    color: "#ef4444",
-                    borderColor: "rgba(239, 68, 68, 0.25)",
+                    background: "color-mix(in srgb, var(--primary, #ef4444) 9%, var(--surface))",
+                    color: "var(--primary, #ef4444)",
+                    borderColor: "color-mix(in srgb, var(--primary, #ef4444) 28%, var(--border))",
                     borderRadius: "10px",
                     fontWeight: 600,
                     padding: "6px 14px",
@@ -1000,7 +1001,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                       <div
                         style={{
                           background: isAdmin
-                            ? "linear-gradient(135deg, var(--primary, #b91c2b) 0%, #991b1b 100%)"
+                            ? "linear-gradient(135deg, var(--primary, #b91c2b) 0%, color-mix(in srgb, var(--primary, #b91c2b) 78%, #000000) 100%)"
                             : "var(--surface)",
                           color: isAdmin ? "#ffffff" : "var(--text)",
                           border: isAdmin ? "none" : "1px solid var(--border)",
@@ -1010,7 +1011,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                           lineHeight: 1.5,
                           whiteSpace: "pre-wrap",
                           boxShadow: isAdmin
-                            ? "0 4px 14px rgba(185, 28, 43, 0.2)"
+                            ? "0 4px 14px color-mix(in srgb, var(--primary, #b91c2b) 20%, transparent)"
                             : "0 2px 10px rgba(0, 0, 0, 0.04)",
                         }}
                       >

@@ -24,10 +24,17 @@ export function SubscriptionSummary({ subscription }: SubscriptionSummaryProps) 
       : null;
   return (
     <>
-      <div className="banner">
-        <strong>{subscription.subscription?.plan_name ?? strings.noActivePlan}</strong>{" "}
-        <Badge tone={STATE_CLASS[subscription.state] ?? "gray"}>{subscription.state}</Badge>
-        {subscription.subscription && ` ${strings.validUntil(formatDate(subscription.subscription.expires_at))}`}
+      <div className="subscription-summary-banner">
+        <div className="subscription-summary-copy">
+          <span>{strings.planLabel}</span>
+          <strong>{subscription.subscription?.plan_name ?? strings.noActivePlan}</strong>
+        </div>
+        <div className="subscription-summary-state">
+          <Badge tone={STATE_CLASS[subscription.state] ?? "gray"}>{subscription.state}</Badge>
+          {subscription.subscription && (
+            <span>{strings.validUntil(formatDate(subscription.subscription.expires_at))}</span>
+          )}
+        </div>
       </div>
 
       {/* More than one term running means a plan was bought while another was

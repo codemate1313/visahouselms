@@ -5,6 +5,68 @@
   gap: 18px;
 }
 
+.support-ticket-page--institute,
+.support-ticket-chat-modal--institute {
+  --primary: var(--institute-primary, #006b35);
+  --primary-hover: color-mix(in srgb, var(--institute-primary, #006b35) 84%, #000000);
+  --primary-soft: color-mix(in srgb, var(--institute-primary, #006b35) 16%, transparent);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--institute-primary, #006b35) 28%, transparent);
+  --background-overlay: color-mix(in srgb, var(--institute-primary, #006b35) 9%, transparent);
+}
+
+.support-ticket-chat-modal--institute .support-ticket-id {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border)) !important;
+  background: color-mix(in srgb, var(--primary) 9%, var(--surface)) !important;
+}
+
+.support-ticket-chat-modal--institute .badge-blue,
+.support-ticket-chat-modal--institute .badge-info,
+.support-ticket-chat-modal--institute .badge-amber,
+.support-ticket-chat-modal--institute .badge-warning {
+  background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 36%, transparent) !important;
+  color: color-mix(in srgb, var(--primary) 84%, var(--text)) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--primary) 84%, var(--text)) !important;
+}
+
+.support-ticket-chat-modal--institute .badge-blue::before,
+.support-ticket-chat-modal--institute .badge-info::before,
+.support-ticket-chat-modal--institute .badge-amber::before,
+.support-ticket-chat-modal--institute .badge-warning::before {
+  background: var(--primary) !important;
+}
+
+[data-theme="dark"] .support-ticket-chat-modal--institute .badge-blue,
+[data-theme="dark"] .support-ticket-chat-modal--institute .badge-info,
+[data-theme="dark"] .support-ticket-chat-modal--institute .badge-amber,
+[data-theme="dark"] .support-ticket-chat-modal--institute .badge-warning {
+  background: color-mix(in srgb, var(--primary) 18%, transparent) !important;
+  border-color: color-mix(in srgb, var(--primary) 42%, transparent) !important;
+  color: color-mix(in srgb, var(--primary) 54%, #ffffff) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--primary) 54%, #ffffff) !important;
+}
+
+.support-ticket-chat-modal--institute .ui-btn-primary,
+.support-ticket-chat-modal--institute button.ui-btn-primary {
+  border-color: var(--primary) !important;
+  background: var(--primary) !important;
+  color: var(--institute-on-primary, #ffffff) !important;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 22%, transparent) !important;
+}
+
+.support-ticket-chat-modal--institute .ui-btn-primary:hover:not(:disabled),
+.support-ticket-chat-modal--institute button.ui-btn-primary:hover:not(:disabled) {
+  border-color: var(--primary-hover) !important;
+  background: var(--primary-hover) !important;
+}
+
+.support-ticket-chat-modal--institute .ui-btn-secondary:hover:not(:disabled),
+.support-ticket-chat-modal--institute button.ui-btn-secondary:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 44%, var(--border)) !important;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 12%, transparent) !important;
+}
+
 .support-ticket-stat-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -3564,6 +3626,70 @@ body {
    Stacked subscription terms on institute billing, and the per-module
    validity pill on a student's test card.
    ------------------------------------------------------------------ */
+
+.subscription-summary-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 4px 0 28px;
+  padding: 18px 20px;
+  border: 1px solid var(--border-color, var(--border));
+  border-radius: var(--radius-lg, 14px);
+  background: var(--surface);
+}
+
+.subscription-summary-copy,
+.subscription-summary-state {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.subscription-summary-copy {
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.subscription-summary-copy span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.subscription-summary-copy strong {
+  color: var(--text);
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.subscription-summary-state {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .subscription-summary-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .subscription-summary-state {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    white-space: normal;
+  }
+}
 
 .term-stack {
   margin: 12px 0 4px;

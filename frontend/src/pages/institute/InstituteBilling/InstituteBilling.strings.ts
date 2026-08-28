@@ -12,7 +12,8 @@ export const instituteBillingStrings = {
   title: "Subscription & Payments",
   subtitle: "Review the access assigned by the Super Admin.",
   noActivePlan: "No active plan",
-  validUntil: (date: string) => `- valid until ${date}`,
+  planLabel: "Current agreement",
+  validUntil: (date: string) => `Valid until ${date}`,
   stats: {
     students: "Students",
     instructors: "Instructors",
