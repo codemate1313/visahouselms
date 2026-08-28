@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     # almost always caught by the reuse check instead.
     refresh_rotation_grace_seconds: int = 30
     login_otp_expire_minutes: int = 10
+    # How long a device stays trusted after a successful email OTP
+    # verification. A login from the same device within this window skips the
+    # OTP step entirely; once it lapses, the next login needs a fresh code.
+    otp_bypass_minutes: int = 60
     google_client_id: Optional[str] = None
     google_client_secret: Optional[str] = None
     google_redirect_uri: Optional[str] = None

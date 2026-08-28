@@ -200,5 +200,97 @@ class InstituteSessionPolicyTests(unittest.TestCase):
         self.assertEqual(current.id, self.admin.id)
 
 
+class OtpBypassWindowTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(self.engine)
+        self.Session = sessionmaker(bind=self.engine)
+        self.db = self.Session()
+        role = Role(name=STUDENT)
+        self.db.add(role)
+        self.db.flush()
+        self.student = User(
+            email="otp.student@example.com",
+            password_hash=hash_password("StudentPassword!1"),
+            role_id=role.id,
+            institute_id=None,
+            first_name="Otp",
+            last_name="Student",
+            is_active=True,
+        )
+        self.db.add(self.student)
+        self.db.commit()
+        self.db.refresh(self.student)
+
+    def tearDown(self) -> None:
+        self.db.close()
+        self.engine.dispose()
+
+    def test_verified_device_is_trusted_until_the_window_elapses(self):
+        device_id = "otp-device-identifier-0001"
+        self.assertFalse(auth_service.device_otp_bypass_active(self.db, self.student, device_id))
+
+        auth_service.issue_login_session(
+            self.db,
+            self.student,
+            "Test Browser",
+            "127.0.0.1",
+            device_id,
+            "Chrome on macOS",
+            otp_verified=True,
+        )
+        self.assertTrue(auth_service.device_otp_bypass_active(self.db, self.student, device_id))
+
+        device = self.db.query(UserDevice).filter(UserDevice.user_id == self.student.id).one()
+        device.otp_verified_until = datetime.now(timezone.utc) - timedelta(seconds=1)
+        self.db.commit()
+        self.assertFalse(auth_service.device_otp_bypass_active(self.db, self.student, device_id))
+
+    def test_bypass_does_not_extend_the_original_window(self):
+        device_id = "otp-device-identifier-0002"
+        auth_service.issue_login_session(
+            self.db,
+            self.student,
+            "Test Browser",
+            "127.0.0.1",
+            device_id,
+            "Chrome on macOS",
+            otp_verified=True,
+        )
+        device = self.db.query(UserDevice).filter(UserDevice.user_id == self.student.id).one()
+        original_expiry = device.otp_verified_until
+
+        # A later login that rides the bypass (otp_verified left at its default
+        # of False, matching a real login that skipped the OTP step) must not
+        # push the trust window back out.
+        auth_service.issue_login_session(
+            self.db,
+            self.student,
+            "Test Browser",
+            "127.0.0.1",
+            device_id,
+            "Chrome on macOS",
+        )
+        self.db.refresh(device)
+        self.assertEqual(device.otp_verified_until, original_expiry)
+
+    def test_a_different_device_is_never_trusted_by_another_devices_verification(self):
+        auth_service.issue_login_session(
+            self.db,
+            self.student,
+            "Test Browser",
+            "127.0.0.1",
+            "otp-device-identifier-0003",
+            "Chrome on macOS",
+            otp_verified=True,
+        )
+        self.assertFalse(
+            auth_service.device_otp_bypass_active(self.db, self.student, "otp-device-identifier-0004")
+        )
+
+    def test_no_device_identifier_is_never_trusted(self):
+        self.assertFalse(auth_service.device_otp_bypass_active(self.db, self.student, None))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -395,6 +395,12 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
             detail="Invalid email or password",
         )
     payload.device_id = device_identifier
+    if auth_service.device_otp_bypass_active(db, user, device_identifier):
+        # This device already cleared an email OTP challenge within the trust
+        # window (app.config.otp_bypass_minutes), so the password alone is
+        # enough this time. issue_login_session isn't told otp_verified=True
+        # here, so the window itself doesn't move - only a fresh challenge does.
+        return _issue_session_now(db, user, request, response, payload, "password")
     if _skips_login_otp(user):
         # Developer login: no emailed code. If the account has an authenticator
         # enrolled, that is the second factor - the password is verified, but a
@@ -468,6 +474,7 @@ def verify_otp(payload: VerifyOtpRequest, request: Request, response: Response, 
         challenge.get("device_identifier"),
         challenge.get("device_name"),
         challenge.get("auth_method", "password"),
+        otp_verified=True,
     )
     clear_rate_limit(challenge_key)
     set_refresh_cookie(response, refresh_token, persistent=bool(challenge.get("remember_me", True)))

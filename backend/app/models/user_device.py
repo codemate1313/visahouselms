@@ -24,6 +24,11 @@ class UserDevice(Base):
     login_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     first_seen_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
     last_seen_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+    # Set the moment this device completes an email OTP challenge, to
+    # `now + settings.otp_bypass_minutes`. A login from this device before that
+    # timestamp skips the OTP step; nothing here extends it, so the window is
+    # always anchored to the verification that started it, not to later logins.
+    otp_verified_until: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     user: Mapped["User"] = relationship()  # noqa: F821
 

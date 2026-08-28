@@ -345,6 +345,7 @@ def issue_login_session(
     device_identifier: Optional[str] = None,
     device_name: Optional[str] = None,
     auth_method: str = "password",
+    otp_verified: bool = False,
 ) -> Tuple[str, str]:
     device = _resolve_device(
         db,
@@ -355,7 +356,38 @@ def issue_login_session(
         ip_address,
         enforce_single_device=True,
     )
+    if otp_verified and device is not None:
+        # Anchors the bypass window to this verification. A later login that
+        # rides the bypass never calls with otp_verified=True, so it can only
+        # ever fall inside the window - never push it back out.
+        device.otp_verified_until = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.otp_bypass_minutes
+        )
+        db.add(device)
     return issue_token_pair(db, user, user_agent, ip_address, auth_method=auth_method, device=device)
+
+
+def device_otp_bypass_active(
+    db: Session, user: User, device_identifier: Optional[str]
+) -> bool:
+    """True when `device_identifier` completed an email OTP challenge for this
+    user recently enough that another login from it can skip the OTP step."""
+    if not device_identifier:
+        return False
+
+    identifier_hash = hashlib.sha256(device_identifier.strip().encode("utf-8")).hexdigest()
+    device = (
+        db.query(UserDevice)
+        .filter(UserDevice.user_id == user.id, UserDevice.identifier_hash == identifier_hash)
+        .first()
+    )
+    if device is None or device.otp_verified_until is None:
+        return False
+
+    expires_at = device.otp_verified_until
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    return expires_at > datetime.now(timezone.utc)
 
 
 def login(
