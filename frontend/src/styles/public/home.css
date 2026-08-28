@@ -1651,13 +1651,12 @@ a.vh-hero-cta-alt:hover {
 .vh-step-screenshot-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.35);
+  background: rgba(15, 23, 42, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: opacity 0.25s ease;
-  backdrop-filter: blur(1px);
 }
 
 .vh-step-screenshot-widget:hover .vh-step-screenshot-overlay,
