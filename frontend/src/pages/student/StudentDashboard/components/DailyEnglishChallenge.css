@@ -381,18 +381,21 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 66px;
-  height: 66px;
+  width: 78px;
+  height: 72px;
+  flex: 0 0 78px;
+  isolation: isolate;
 }
 
 .daily-fire-svg {
-  width: 62px;
-  height: 62px;
+  width: 58px;
+  height: 58px;
   overflow: visible;
   filter: drop-shadow(0 5px 12px rgba(220, 38, 38, 0.35));
   animation: daily-flame-flicker 1.6s ease-in-out infinite alternate;
   transform-origin: bottom center;
-  transform: scale(1.25, 1); /* Made 25% wider by default */
+  transform: scale(1.12, 1);
+  z-index: 1;
 }
 
 .flame-outer {
@@ -412,11 +415,12 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 
 .daily-fire-halo {
   position: absolute;
-  inset: -8px;
+  inset: 4px 1px 0;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(245, 158, 11, 0.28) 0%, rgba(220, 38, 38, 0.1) 55%, transparent 75%);
   animation: daily-fire-pulse 1.8s ease-in-out infinite;
   pointer-events: none;
+  z-index: 0;
 }
 
 .daily-fire-sparks i {
@@ -450,10 +454,10 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
 
 @keyframes daily-flame-flicker {
   0% {
-    transform: scale(1.25, 0.95);
+    transform: translateX(-2px) scale(1.1, 0.95);
   }
   100% {
-    transform: scale(1.28, 1.05);
+    transform: translateX(2px) scale(1.14, 1.05);
   }
 }
 
@@ -954,7 +958,17 @@ html[data-theme="dark"] body .dashboard button.daily-answer-option:disabled {
   --fire-scale: 0.42;
   width: 40px;
   height: 42px;
+  flex-basis: 40px;
   transform-origin: center bottom;
+}
+
+.daily-fire-button .daily-fire-svg {
+  width: 36px;
+  height: 36px;
+}
+
+.daily-fire-button .daily-fire-halo {
+  inset: 5px 2px 3px;
 }
 
 .daily-fire-button-streak {
