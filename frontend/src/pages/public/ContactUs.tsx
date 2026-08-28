@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import { apiClient, API_BASE_URL } from "@/api/client";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
+import { SegmentedControl } from "@/components/ui";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
@@ -18,6 +19,11 @@ interface FormStatus {
   message: string;
   tone: StatusTone;
 }
+
+const CONTACT_FORM_OPTIONS = [
+  { label: "Student Support", value: "query" },
+  { label: "Institute Partnerships", value: "partner" },
+] satisfies { label: string; value: FormType }[];
 
 const EMPTY_PARTNER_FORM = {
   instName: "",
@@ -433,26 +439,14 @@ export function ContactUs() {
                   </p>
                 </div>
                 
-                <div className="vh-form-horizontal-tabs" role="tablist" aria-label="Contact form options">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={formType === "query"}
-                    className={`vh-form-tab-btn ${formType === "query" ? "is-active" : ""}`}
-                    onClick={() => switchForm("query")}
-                  >
-                    Student Support
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={formType === "partner"}
-                    className={`vh-form-tab-btn ${formType === "partner" ? "is-active" : ""}`}
-                    onClick={() => switchForm("partner")}
-                  >
-                    Institute Partnerships
-                  </button>
-                </div>
+                <SegmentedControl<FormType>
+                  ariaLabel="Contact form options"
+                  className="vh-form-horizontal-tabs"
+                  neverCollapse
+                  onChange={switchForm}
+                  options={CONTACT_FORM_OPTIONS}
+                  value={formType}
+                />
               </div>
 
               {formType === "partner" ? (

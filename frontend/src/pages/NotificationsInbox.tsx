@@ -254,22 +254,28 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
             renderItem={(notification) => (
               <button
                 type="button"
-                className={`notifications-inbox-item${notification.read_at ? " is-read" : " is-unread"}`}
+                className={`notifications-inbox-item notification-card${notification.read_at ? " is-read" : " is-unread"}`}
                 onClick={() => openNotification(notification)}
               >
-                <span className="notifications-inbox-item-icon">
-                  <Icon name="notifications" />
-                </span>
-                <span className="notifications-inbox-item-content">
-                  <span className="visually-hidden">{notification.read_at ? "Read: " : "Unread: "}</span>
-                  <strong>{notification.title}</strong>
-                  <span className="notifications-inbox-item-message">
-                    {notification.message}
-                    {scoreLabel(notification) ? ` ${strings.scorePrefix} ${scoreLabel(notification)}.` : ""}
+                <span className="notification-card-icon">
+                  <span className="notifications-inbox-item-icon">
+                    <Icon name="notifications" />
                   </span>
-                  {notification.module_title && <span className="notifications-inbox-item-meta">{notification.module_title}</span>}
                 </span>
-                <span className="notifications-inbox-item-side">
+                <span className="notification-card-body">
+                  <span className="notification-card-title-row">
+                    <span className="visually-hidden">{notification.read_at ? "Read: " : "Unread: "}</span>
+                    <strong>{notification.title}</strong>
+                  </span>
+                  <span className="notification-card-message">
+                    <span className="notifications-inbox-item-message">
+                      {notification.message}
+                      {scoreLabel(notification) ? ` ${strings.scorePrefix} ${scoreLabel(notification)}.` : ""}
+                    </span>
+                    {notification.module_title && <span className="notifications-inbox-item-meta">{notification.module_title}</span>}
+                  </span>
+                </span>
+                <span className="notification-card-meta notifications-inbox-item-side">
                   {!notification.read_at && <span className="notifications-inbox-dot" aria-hidden="true" />}
                   <time dateTime={notification.created_at}>{notificationTime(notification.created_at)}</time>
                 </span>
