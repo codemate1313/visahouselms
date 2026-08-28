@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { apiClient } from "@/api/client";
@@ -34,69 +34,18 @@ interface PaymentDetail {
   paid_at: string | null;
 }
 
-function formatPdfAmountValue(amount: string | number | null | undefined, currency?: string | null): string {
+function formatPdfCurrency(amount: string | number | null | undefined, currency?: string | null): string {
   const numeric = Number(amount ?? 0);
+  const formattedNumber = Number.isFinite(numeric)
+    ? numeric.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : "0.00";
   const code = (currency || "INR").trim().toUpperCase();
-  const locale = code === "INR" ? "en-IN" : "en-US";
-  return Number.isFinite(numeric)
-    ? numeric.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : String(amount ?? 0);
-}
-
-function getPdfCurrencyMarkWidth(doc: jsPDF, currency?: string | null): number {
-  const code = (currency || "INR").trim().toUpperCase();
-  if (code === "INR") return 4.8;
-  if (code === "USD") return doc.getTextWidth("$");
-  return doc.getTextWidth(code);
-}
-
-function drawPdfCurrencyMark(doc: jsPDF, currency: string | null | undefined, x: number, y: number, fontSize = 10) {
-  const code = (currency || "INR").trim().toUpperCase();
-
-  if (code === "INR") {
-    const height = fontSize * 0.3528;
-    doc.setFont("helvetica", "bold");
-    doc.text("R", x, y);
-    doc.setLineWidth(0.28);
-    doc.line(x + 0.45, y - height * 0.62, x + 3.9, y - height * 0.62);
-    doc.line(x + 0.45, y - height * 0.43, x + 3.55, y - height * 0.43);
-    return;
-  }
-
-  doc.setFont("helvetica", "bold");
-  doc.text(code === "USD" ? "$" : code, x, y);
-}
-
-function drawPdfMoney(
-  doc: jsPDF,
-  amount: string | number | null | undefined,
-  currency: string | null | undefined,
-  x: number,
-  y: number,
-  options: { align?: "left" | "right"; fontSize?: number; color?: [number, number, number] } = {},
-) {
-  const fontSize = options.fontSize ?? 10;
-  const color = options.color ?? [15, 23, 42];
-  const amountText = formatPdfAmountValue(amount, currency);
-  const gap = 1.5;
-
-  doc.setFontSize(fontSize);
-  doc.setTextColor(...color);
-  doc.setFont("helvetica", "normal");
-
-  const amountWidth = doc.getTextWidth(amountText);
-  const markWidth = getPdfCurrencyMarkWidth(doc, currency);
-  const totalWidth = markWidth + gap + amountWidth;
-  const startX = options.align === "right" ? x - totalWidth : x;
-
-  drawPdfCurrencyMark(doc, currency, startX, y, fontSize);
-  doc.setFont("helvetica", "normal");
-  doc.text(amountText, startX + markWidth + gap, y);
+  const symbol = code === "INR" ? "Rs." : code === "USD" ? "$" : code;
+  return `${symbol} ${formattedNumber}`;
 }
 
 export function Invoice() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const showToast = useToastStore((s) => s.showSuccess);
@@ -123,11 +72,6 @@ export function Invoice() {
       .catch(() => setError(strings.errors.load));
   }, [id]);
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    showToast(strings.toasts.copied);
-  };
-
   const handleOpenEmailModal = () => {
     if (payment?.customer_email) {
       setEmailRecipient(payment.customer_email);
@@ -142,123 +86,275 @@ export function Invoice() {
   const handleDownloadPDF = () => {
     if (!payment) return;
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const invNum = payment.invoice_number || `INV-${payment.id}`;
+    const invNum = payment.invoice_number || `INV-${String(payment.id).padStart(6, "0")}`;
+    const currencyCode = payment.currency || "INR";
 
-    // Header Crimson Banner
+    // 1. Top Decorative Brand Accent Bar
+    doc.setFillColor(163, 28, 40); // Crimson brand color
+    doc.rect(0, 0, 210, 4, "F");
+
+    // 2. Company Brand & Document Header (y: 14 to 36)
+    // Left: Brand Logo Mark + Company Name
     doc.setFillColor(163, 28, 40);
-    doc.rect(0, 0, 210, 26, "F");
-
+    doc.roundedRect(15, 14, 12, 12, 2.5, 2.5, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text(strings.companyName, 14, 15);
-
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(`TAX INVOICE / RECEIPT`, 196, 15, { align: "right" });
-
-    // Meta Block
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Invoice: ${invNum}`, 14, 38);
-
     doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("VH", 21, 21.5, { align: "center" });
+
+    doc.setTextColor(15, 23, 42); // Slate 900
+    doc.setFontSize(15);
+    doc.setFont("helvetica", "bold");
+    doc.text("VISA HOUSE", 30, 20);
+
+    doc.setTextColor(100, 116, 139); // Slate 500
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text(`Issue Date: ${formatDate(payment.created_at)}`, 14, 45);
-    doc.text(`Status: ${payment.status.toUpperCase()}`, 196, 38, { align: "right" });
+    doc.text("Language CERT Assessment Platform • Official Tax Invoice & Payment Receipt", 30, 25);
+
+    // Right: TAX INVOICE & Invoice Number
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(15);
+    doc.setFont("helvetica", "bold");
+    doc.text("TAX INVOICE", 195, 19, { align: "right" });
+
+    doc.setTextColor(163, 28, 40);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(invNum, 195, 24.5, { align: "right" });
+
+    // Status Badge Pill
+    const isPaid = payment.status === "paid" || Number(payment.due_amount) === 0;
+    const isPartial = payment.status === "partial" || (Number(payment.amount_paid) > 0 && Number(payment.due_amount) > 0);
+    const statusLabel = isPaid ? "PAID" : isPartial ? "PARTIAL" : "UNPAID DUE";
+
+    if (isPaid) {
+      doc.setFillColor(220, 252, 231); // Light emerald
+      doc.setDrawColor(134, 239, 172);
+      doc.roundedRect(173, 27.5, 22, 5.5, 1.5, 1.5, "FD");
+      doc.setTextColor(22, 101, 52); // Dark green
+    } else if (isPartial) {
+      doc.setFillColor(254, 243, 199); // Light amber
+      doc.setDrawColor(252, 211, 77);
+      doc.roundedRect(171, 27.5, 24, 5.5, 1.5, 1.5, "FD");
+      doc.setTextColor(146, 64, 14);
+    } else {
+      doc.setFillColor(254, 226, 226); // Light red
+      doc.setDrawColor(252, 165, 165);
+      doc.roundedRect(168, 27.5, 27, 5.5, 1.5, 1.5, "FD");
+      doc.setTextColor(153, 27, 27);
+    }
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text(statusLabel, 195 - (isPaid ? 11 : isPartial ? 12 : 13.5), 31.5, { align: "center" });
+
+    // Header bottom border
+    doc.setDrawColor(226, 232, 240); // Slate 200
+    doc.setLineWidth(0.3);
+    doc.line(15, 36, 195, 36);
+
+    // 3. Metadata & Invoice Details (y: 40 to 72)
+    // Box 1: Billed To (x: 15, width: 87, height: 32)
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(15, 40, 87, 32, 2, 2, "F");
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(15, 40, 87, 32, 2, 2, "S");
+
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(100, 116, 139);
+    doc.text("BILLED TO", 20, 46);
+
+    doc.setFontSize(10.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    const billedName = payment.institute_name || strings.directCustomer;
+    doc.text(billedName, 20, 52.5);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Plan: ${payment.plan_name || "Assessment Access Plan"}`, 20, 58);
+    if (payment.customer_email) {
+      doc.text(`Email: ${payment.customer_email}`, 20, 63);
+    } else {
+      doc.text(`Channel: ${payment.source.toUpperCase()} Student`, 20, 63);
+    }
+    doc.text(`Issue Date: ${formatDate(payment.created_at)}`, 20, 68);
+
+    // Box 2: Payment Information (x: 108, width: 87, height: 32)
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(108, 40, 87, 32, 2, 2, "F");
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(108, 40, 87, 32, 2, 2, "S");
+
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(100, 116, 139);
+    doc.text("PAYMENT INFORMATION", 113, 46);
+
+    doc.setFontSize(10.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text(payment.payment_method_name || payment.gateway || "Card / Online", 113, 52.5);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Gateway: ${(payment.gateway || "Razorpay").toUpperCase()}`, 113, 58);
+    if (payment.gateway_reference) {
+      const cleanRef = payment.gateway_reference.length > 34
+        ? payment.gateway_reference.slice(0, 32) + "..."
+        : payment.gateway_reference;
+      doc.text(`Transaction Ref: ${cleanRef}`, 113, 63);
+    } else {
+      doc.text("Transaction Ref: N/A", 113, 63);
+    }
     if (payment.paid_at) {
-      doc.text(`Paid Date: ${formatDate(payment.paid_at)}`, 196, 45, { align: "right" });
+      doc.text(`Fully Paid On: ${formatDate(payment.paid_at)}`, 113, 68);
+    } else {
+      doc.text(`Status: Pending Settlement`, 113, 68);
     }
 
-    // Billed To Box
-    doc.setFillColor(248, 250, 252);
-    doc.rect(14, 52, 182, 24, "F");
-    doc.setDrawColor(226, 232, 240);
-    doc.rect(14, 52, 182, 24, "S");
+    // 4. Line Items Table (y starts at 77)
+    const tableHead = [["#", "ITEM & DESCRIPTION", "PLAN / AUDIENCE", "QTY", "RATE", "NET AMOUNT"]];
 
-    doc.setFontSize(9);
-    doc.setTextColor(100, 116, 139);
-    doc.text("BILLED TO", 20, 60);
-    doc.text("PAYMENT METHOD", 120, 60);
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(15, 23, 42);
-    doc.text(payment.institute_name || strings.directCustomer, 20, 68);
-    doc.text(payment.payment_method_name || payment.gateway || "Card", 120, 68);
-
-    // Line Items Table
-    const tableAmounts: Array<{ amount: string; isDiscount?: boolean }> = [
-      { amount: payment.amount },
-    ];
     const tableBody = [
       [
-        `${payment.plan_name || "Subscription Plan"} (${payment.source.toUpperCase()})`,
-        "",
+        "1",
+        `${payment.plan_name || "Assessment Access Plan"}\nOnline Test Engine & AI Rubric Scoring Access`,
+        payment.source.toUpperCase(),
+        "1",
+        formatPdfCurrency(payment.amount, currencyCode),
+        formatPdfCurrency(payment.amount, currencyCode),
       ],
     ];
+
     if (Number(payment.discount_amount) > 0) {
       tableBody.push([
-        `Discount Applied ${payment.coupon_code ? `(${payment.coupon_code})` : ""}`,
-        "",
+        "2",
+        `Promotional Discount ${payment.coupon_code ? `(Coupon: ${payment.coupon_code})` : ""}`,
+        "PROMO",
+        "1",
+        `-${formatPdfCurrency(payment.discount_amount, currencyCode)}`,
+        `-${formatPdfCurrency(payment.discount_amount, currencyCode)}`,
       ]);
-      tableAmounts.push({ amount: payment.discount_amount, isDiscount: true });
     }
 
     autoTable(doc, {
-      startY: 84,
-      head: [[strings.table.description, strings.table.amount]],
+      startY: 77,
+      margin: { left: 15, right: 15 },
+      head: tableHead,
       body: tableBody,
-      styles: { fontSize: 10, cellPadding: 6, textColor: [15, 23, 42] },
-      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: "bold" },
-      columnStyles: { 0: { cellWidth: 130 }, 1: { cellWidth: 52, halign: "right" } },
-      didDrawCell: (data) => {
-        if (data.section !== "body" || data.column.index !== 1) return;
-        const rowAmount = tableAmounts[data.row.index];
-        if (!rowAmount) return;
-        const amount = rowAmount.isDiscount ? `-${rowAmount.amount}` : rowAmount.amount;
-        drawPdfMoney(
-          doc,
-          amount,
-          payment.currency,
-          data.cell.x + data.cell.width - 6,
-          data.cell.y + data.cell.height / 2 + 1.6,
-          {
-            align: "right",
-            fontSize: 10,
-            color: rowAmount.isDiscount ? [22, 163, 74] : [15, 23, 42],
-          },
-        );
+      theme: "plain",
+      styles: {
+        font: "helvetica",
+        fontSize: 8.5,
+        cellPadding: 3.5,
+        textColor: [30, 41, 59],
+        lineColor: [226, 232, 240],
+        lineWidth: 0.2,
+      },
+      headStyles: {
+        fillColor: [15, 23, 42],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 8,
+        cellPadding: 4,
+      },
+      columnStyles: {
+        0: { cellWidth: 10, halign: "center" },
+        1: { cellWidth: 80 },
+        2: { cellWidth: 25, halign: "center" },
+        3: { cellWidth: 15, halign: "center" },
+        4: { cellWidth: 25, halign: "right" },
+        5: { cellWidth: 25, halign: "right", fontStyle: "bold" },
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252],
       },
     });
 
-    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10;
+    const tableFinalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 
-    // Summary Box
-    doc.setFontSize(10);
+    // 5. Summary Section (Below table)
+    const summaryBoxY = tableFinalY + 6;
+    const summaryBoxX = 115;
+    const summaryBoxW = 80;
+
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(summaryBoxX, summaryBoxY, summaryBoxW, 36, 2, 2, "F");
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(summaryBoxX, summaryBoxY, summaryBoxW, 36, 2, 2, "S");
+
+    // Summary lines
+    doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
-    doc.text(`${strings.table.total}:`, 130, finalY);
-    drawPdfMoney(doc, payment.final_amount, payment.currency, 196, finalY, { align: "right", fontSize: 10 });
-
-    doc.setFont("helvetica", "normal");
-    doc.text(`${strings.table.amountPaid}:`, 130, finalY + 7);
-    drawPdfMoney(doc, payment.amount_paid, payment.currency, 196, finalY + 7, { align: "right", fontSize: 10 });
-
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(220, 38, 38);
-    doc.text(`${strings.table.balanceDue}:`, 130, finalY + 14);
-    drawPdfMoney(doc, payment.due_amount, payment.currency, 196, finalY + 14, {
-      align: "right",
-      fontSize: 10,
-      color: [220, 38, 38],
-    });
-
-    // Footer
     doc.setTextColor(100, 116, 139);
+    doc.text("Total Invoice Amount:", summaryBoxX + 4, summaryBoxY + 7);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text(formatPdfCurrency(payment.final_amount, currencyCode), summaryBoxX + summaryBoxW - 4, summaryBoxY + 7, { align: "right" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139);
+    doc.text("Total Settled (Paid):", summaryBoxX + 4, summaryBoxY + 14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(22, 101, 52); // Green
+    doc.text(formatPdfCurrency(payment.amount_paid, currencyCode), summaryBoxX + summaryBoxW - 4, summaryBoxY + 14, { align: "right" });
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(summaryBoxX + 4, summaryBoxY + 18, summaryBoxX + summaryBoxW - 4, summaryBoxY + 18);
+
+    const dueAmt = Number(payment.due_amount) || 0;
+    doc.setFontSize(9.5);
+    doc.setFont("helvetica", "bold");
+    if (dueAmt > 0) {
+      doc.setTextColor(220, 38, 38); // Red
+      doc.text("Balance Outstanding:", summaryBoxX + 4, summaryBoxY + 26);
+      doc.text(formatPdfCurrency(payment.due_amount, currencyCode), summaryBoxX + summaryBoxW - 4, summaryBoxY + 26, { align: "right" });
+    } else {
+      doc.setTextColor(15, 23, 42);
+      doc.text("Balance Outstanding:", summaryBoxX + 4, summaryBoxY + 26);
+      doc.setTextColor(22, 101, 52);
+      doc.text(formatPdfCurrency("0.00", currencyCode), summaryBoxX + summaryBoxW - 4, summaryBoxY + 26, { align: "right" });
+    }
+
+    // Left Note Box beside Summary
+    const noteBoxY = summaryBoxY;
+    const noteBoxW = 90;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(15, noteBoxY, noteBoxW, 36, 2, 2, "F");
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(15, noteBoxY, noteBoxW, 36, 2, 2, "S");
+
     doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.text(strings.verifiedSeal, 105, 280, { align: "center" });
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text("TERMS & CONDITIONS", 20, noteBoxY + 7);
+
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139);
+    doc.text("• This payment grants authorized access to Language CERT module exams.", 20, noteBoxY + 13);
+    doc.text("• Digital subscriptions are non-transferable and subject to platform terms.", 20, noteBoxY + 18);
+    doc.text("• For invoice corrections or refunds, reach out to billing support.", 20, noteBoxY + 23);
+    doc.text("• Computer-generated authentic electronic tax receipt. No signature needed.", 20, noteBoxY + 28);
+
+    // 6. Security Seal & Corporate Footer
+    const footerY = 274;
+    doc.setDrawColor(226, 232, 240);
+    doc.line(15, footerY, 195, footerY);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(163, 28, 40);
+    doc.text("VERIFIED SECURE RECEIPT • VISA HOUSE LANGUAGE CERT", 105, footerY + 6, { align: "center" });
+
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 116, 139);
+    doc.text("Contact: support@visahouse.com • Website: www.visahouse.com • Automated System Generated Invoice", 105, footerY + 11, { align: "center" });
 
     doc.save(`Invoice_${invNum}.pdf`);
     showToast(strings.toasts.pdfGenerated);
@@ -312,11 +408,6 @@ export function Invoice() {
   if (error) {
     return (
       <div className="invoice-page-container">
-        <div className="invoice-top-bar">
-          <button className="invoice-back-btn" onClick={() => navigate("/super-admin/payments")}>
-            <Icon name="arrowLeft" /> {strings.backToPayments}
-          </button>
-        </div>
         <div className="error-text" style={{ padding: "40px", textAlign: "center" }}>{error}</div>
       </div>
     );
@@ -343,29 +434,12 @@ export function Invoice() {
     <div className="invoice-page-container">
       {/* Top Header & Actions */}
       <div className="invoice-top-bar no-print">
-        <div className="invoice-breadcrumb">
-          <button className="invoice-back-btn" onClick={() => navigate("/super-admin/payments")}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            {strings.backToPayments}
-          </button>
-          <div className="invoice-title-area">
-            <h1>{strings.titlePrefix} {payment.invoice_number}</h1>
-            <p>{strings.companySubtitle}</p>
-          </div>
+        <div className="invoice-title-area">
+          <h1>{strings.titlePrefix} {payment.invoice_number || `INV-${payment.id}`}</h1>
+          <p>{strings.companySubtitle}</p>
         </div>
 
         <div className="invoice-actions-group">
-          <button className="invoice-btn invoice-btn-secondary" onClick={handleCopyLink} title="Copy Link">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-            </svg>
-            {strings.shareLink}
-          </button>
-
           <button className="invoice-btn invoice-btn-secondary" onClick={handleOpenEmailModal} title="Email Receipt">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />

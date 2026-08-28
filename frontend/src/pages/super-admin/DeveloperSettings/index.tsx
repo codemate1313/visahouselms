@@ -4,21 +4,18 @@ import { SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { dangerousTabs, tabLabels, tabOrder } from "./DeveloperSettings.strings";
 import type { Tab } from "./types";
-import { TypographyTab } from "./components/TypographyTab";
 import { StaticOtpTab } from "./components/StaticOtpTab";
 import { HeroSliderTab } from "./components/HeroSliderTab";
 import { ContactSocialTab } from "./components/ContactSocialTab";
 import { SmtpTab } from "./components/SmtpTab";
-import { FcmTab } from "./components/FcmTab";
 import { AiEvaluationTab } from "./components/AiEvaluationTab";
 import { GoogleOAuthTab } from "./components/GoogleOAuthTab";
 import { PaymentGatewaysTab } from "./components/PaymentGatewaysTab";
 import { MaintenanceTab } from "./components/MaintenanceTab";
 import { BackupsTab } from "./components/BackupsTab";
-import { SeedTab } from "./components/SeedTab";
 
 function parseTab(value: string | null): Tab {
-  return tabOrder.includes(value as Tab) ? (value as Tab) : "typography";
+  return tabOrder.includes(value as Tab) ? (value as Tab) : "slider";
 }
 
 export function DeveloperSettings() {
@@ -27,7 +24,7 @@ export function DeveloperSettings() {
 
   function setTab(next: Tab) {
     setTabState(next);
-    setSearchParams(next === "typography" ? {} : { tab: next });
+    setSearchParams(next === "slider" ? {} : { tab: next });
   }
 
   return (
@@ -44,18 +41,15 @@ export function DeveloperSettings() {
         }))}
         value={tab}
       />
-      {tab === "typography" && <TypographyTab />}
-      {tab === "otp" && <StaticOtpTab />}
       {tab === "slider" && <HeroSliderTab />}
       {tab === "contact" && <ContactSocialTab />}
       {tab === "smtp" && <SmtpTab />}
-      {tab === "fcm" && <FcmTab />}
       {tab === "ai" && <AiEvaluationTab />}
       {tab === "google-oauth" && <GoogleOAuthTab />}
       {tab === "payment-gateways" && <PaymentGatewaysTab />}
-      {tab === "maintenance" && <MaintenanceTab />}
       {tab === "backups" && <BackupsTab />}
-      {tab === "seed" && <SeedTab />}
+      {tab === "otp" && <StaticOtpTab />}
+      {tab === "maintenance" && <MaintenanceTab />}
     </div>
   );
 }

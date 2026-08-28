@@ -7,21 +7,15 @@ export interface TypographyConfig {
   bodyWeight: string;
 }
 
-export const FONT_FAMILY_OPTIONS = [
-  { label: "Plus Jakarta Sans (Sleek SaaS)", value: "'Plus Jakarta Sans', sans-serif" },
-  { label: "Sora (Tech-forward)", value: "'Sora', sans-serif" },
-  { label: "Inter (Clean Enterprise)", value: "'Inter', sans-serif" },
-  { label: "Outfit (Futuristic)", value: "'Outfit', sans-serif" },
-];
-
 export const DEFAULT_TYPOGRAPHY: TypographyConfig = {
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
-  headingWeight: "600",
-  statWeight: "600",
+  fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  headingWeight: "700",
+  statWeight: "750",
   bodyWeight: "400",
 };
 
 function applyCssVars(config: TypographyConfig) {
+  if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.style.setProperty("--app-font-family", config.fontFamily);
   root.style.setProperty("--app-heading-weight", config.headingWeight);
@@ -29,36 +23,21 @@ function applyCssVars(config: TypographyConfig) {
   root.style.setProperty("--app-body-weight", config.bodyWeight);
 }
 
-// Load saved config or default
-function getSavedConfig(): TypographyConfig {
-  try {
-    const saved = localStorage.getItem("language_cert_typography");
-    return saved ? JSON.parse(saved) : DEFAULT_TYPOGRAPHY;
-  } catch {
-    return DEFAULT_TYPOGRAPHY;
+// Clear any stale local typography overrides
+try {
+  if (typeof localStorage !== "undefined") {
+    localStorage.removeItem("language_cert_typography");
   }
+} catch {
+  // Ignore storage errors
 }
 
-const initialConfig = getSavedConfig();
-applyCssVars(initialConfig);
+applyCssVars(DEFAULT_TYPOGRAPHY);
 
 interface FontStore {
   config: TypographyConfig;
-  updateConfig: (newConfig: Partial<TypographyConfig>) => void;
-  resetConfig: () => void;
 }
 
-export const useFontStore = create<FontStore>((set, get) => ({
-  config: initialConfig,
-  updateConfig: (newConfig) => {
-    const updated = { ...get().config, ...newConfig };
-    localStorage.setItem("language_cert_typography", JSON.stringify(updated));
-    applyCssVars(updated);
-    set({ config: updated });
-  },
-  resetConfig: () => {
-    localStorage.setItem("language_cert_typography", JSON.stringify(DEFAULT_TYPOGRAPHY));
-    applyCssVars(DEFAULT_TYPOGRAPHY);
-    set({ config: DEFAULT_TYPOGRAPHY });
-  },
+export const useFontStore = create<FontStore>(() => ({
+  config: DEFAULT_TYPOGRAPHY,
 }));

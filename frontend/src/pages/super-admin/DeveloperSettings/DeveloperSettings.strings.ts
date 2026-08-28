@@ -4,36 +4,30 @@ import type { Tab } from "./types";
 // database migrations, bulk seed writes) are grouped at the end and flagged
 // with a warning icon in DeveloperSettings/index.tsx - see `dangerousTabs`.
 export const tabOrder: Tab[] = [
-  "typography",
   "slider",
   "contact",
   "smtp",
-  "fcm",
   "ai",
   "google-oauth",
   "payment-gateways",
   "backups",
   "otp",
   "maintenance",
-  "seed",
 ];
 
 /** Tabs that can bypass auth, mutate the database in bulk, or run migrations. */
-export const dangerousTabs: Tab[] = ["otp", "maintenance", "seed"];
+export const dangerousTabs: Tab[] = ["otp", "maintenance"];
 
 export const tabLabels: Record<Tab, string> = {
-  typography: "Typography & Weights",
-  otp: "Static OTP (Testing)",
   slider: "Hero Sliders",
   contact: "Contact & Social",
   smtp: "SMTP",
-  fcm: "Firebase FCM",
   ai: "AI Evaluation",
   "google-oauth": "Google Sign-In (OAuth)",
   "payment-gateways": "Payment Gateways",
   maintenance: "Maintenance",
   backups: "Backups",
-  seed: "Seed Data",
+  otp: "Static OTP (Testing)",
 };
 
 
@@ -55,53 +49,6 @@ export const developerSettingsStrings = {
     dangerBannerBody: "When enabled, any account - Students, Instructors, Institute Admins, and Super Admins - can log in using a shared static testing code instead of a real one-time code. Do not enable this in production.",
     enableConfirmTitle: "Enable Global Testing Mode?",
     enableConfirmMessage: "This lets anyone log in to any account on the platform using a shared static code, bypassing real OTP verification. Only enable this on a testing or staging environment - never in production. Continue?",
-  },
-  typography: {
-    title: "App Typography & Tag Font Weights",
-    description: "Customize the global font family and tag-specific font weights across the platform in real time.",
-    fontFamilyLabel: "Global Font Family",
-    fontFamilySearchPlaceholder: "Search font family...",
-    resetLabel: "Reset to Sleek Defaults",
-    sliders: {
-      headings: { label: "Headings Weight", helper: "Applies to h1, h2, h3, and section titles." },
-      stat: { label: "Dashboard Metric Numbers", helper: "Applies to dashboard KPI and stat values." },
-      body: { label: "Body Text & Labels", helper: "Applies to body copy, labels, and compact supporting text." },
-    },
-    preview: {
-      eyebrow: "Live Typography Preview",
-      heading: "Good Evening, Super Admin",
-      subtitle: "Real-time overview of institutes, subscriptions, and revenue.",
-      revenue: "Revenue",
-      institutes: "Institutes",
-      due: "Due",
-    },
-  },
-  seed: {
-    title: "Populate Sample & Demo Seed Data",
-    description: "Generate sample Listening, Reading, Writing, Speaking, Full Mock, and Final Test courses for local testing and demos.",
-    seedError: "Failed to seed sample data.",
-    populateBusy: "Seeding Data...",
-    populateIdle: "Populate Seed Data",
-    testLoaderLabel: "⚡ Test Global Loader (3.5s)",
-    loaderInitMessage: "Initializing 3D glassmorphic loader...",
-    loaderTestingOutput: "⚡ Testing 3D Glassmorphic Loader & Dynamic Changing Text...",
-    loaderStep1: "Uploading profile assets to storage...",
-    loaderStep2: "Syncing database records...",
-    loaderDoneOutput: "✓ 3D Glassmorphic Loader test finished successfully!",
-    toastSectionTitle: "Floating Global Snackbars (Toast Notifications)",
-    toastSectionHint: "Trigger floating snackbars in the top-right corner for quick non-blocking feedback (Success, Failed, Warning, Info).",
-    toastButtons: {
-      success: "🟢 Success Snackbar",
-      error: "🔴 Failed Snackbar",
-      warning: "🟡 Warning Snackbar",
-      info: "🔵 Info Snackbar",
-    },
-    toastMessages: {
-      success: { message: "Password updated successfully!", title: "Success" },
-      error: { message: "Failed to update profile. Please try again.", title: "Action Failed" },
-      warning: { message: "Your trial subscription expires in 2 days.", title: "Warning" },
-      info: { message: "New platform version v2.4 is available.", title: "Notice" },
-    },
   },
   smtp: {
     title: "SMTP Delivery",
