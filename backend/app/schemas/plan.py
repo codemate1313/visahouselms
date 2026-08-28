@@ -30,6 +30,7 @@ class PlanCreate(BaseModel):
     # Per-student monthly AI evaluation ceiling for direct-student plans.
     # NULL/0 falls back to the platform-wide default limit.
     ai_evaluation_limit: Optional[int] = Field(default=None, ge=0, le=100000)
+    is_popular: bool = False
 
 
 class PlanUpdate(BaseModel):
@@ -50,6 +51,7 @@ class PlanUpdate(BaseModel):
     is_published: Optional[bool] = None
     features: Optional[list[str]] = Field(default=None, max_length=MAX_FEATURES)
     ai_evaluation_limit: Optional[int] = Field(default=None, ge=0, le=100000)
+    is_popular: Optional[bool] = None
 
 
 

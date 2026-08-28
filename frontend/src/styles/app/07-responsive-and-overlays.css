@@ -1723,8 +1723,15 @@ body {
 
 .sleek-users-table.responsive-data-table .row-action-menu-panel button:hover {
   transform: none;
-  background: var(--surface-muted);
+  background: var(--primary-soft, rgba(184, 15, 40, 0.08));
+  color: var(--primary, #b80f28) !important;
   box-shadow: none;
+}
+
+.sleek-users-table.responsive-data-table .row-action-menu-panel button:hover svg,
+.sleek-users-table.responsive-data-table .row-action-menu-panel button:hover * {
+  color: var(--primary, #b80f28) !important;
+  stroke: var(--primary, #b80f28) !important;
 }
 
 .sleek-users-table.responsive-data-table .row-action-menu-panel button.danger {
@@ -1733,7 +1740,13 @@ body {
 
 .sleek-users-table.responsive-data-table .row-action-menu-panel button.danger:hover {
   background: color-mix(in srgb, var(--danger) 10%, transparent);
-  color: var(--danger);
+  color: var(--danger) !important;
+}
+
+.sleek-users-table.responsive-data-table .row-action-menu-panel button.danger:hover svg,
+.sleek-users-table.responsive-data-table .row-action-menu-panel button.danger:hover * {
+  color: var(--danger) !important;
+  stroke: var(--danger) !important;
 }
 
 .users-row-action-menu-panel {
@@ -1787,22 +1800,42 @@ body {
   text-align: left;
   text-decoration: none;
   box-shadow: none;
+  transition: background 150ms ease, color 150ms ease;
 }
 
 .users-row-action-menu-panel button:hover,
 .users-row-action-menu-panel a:hover {
   transform: none;
-  background: var(--surface-muted);
+  background: var(--primary-soft, rgba(184, 15, 40, 0.08));
+  color: var(--primary, #b80f28) !important;
   box-shadow: none;
 }
 
-.users-row-action-menu-panel button.danger {
-  color: var(--danger);
+.users-row-action-menu-panel button:hover svg,
+.users-row-action-menu-panel button:hover *,
+.users-row-action-menu-panel a:hover svg,
+.users-row-action-menu-panel a:hover * {
+  color: var(--primary, #b80f28) !important;
+  stroke: var(--primary, #b80f28) !important;
 }
 
-.users-row-action-menu-panel button.danger:hover {
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
-  color: var(--danger);
+.users-row-action-menu-panel button.danger,
+.users-row-action-menu-panel a.danger {
+  color: var(--danger, #dc2626);
+}
+
+.users-row-action-menu-panel button.danger:hover,
+.users-row-action-menu-panel a.danger:hover {
+  background: color-mix(in srgb, var(--danger, #dc2626) 12%, transparent);
+  color: var(--danger, #dc2626) !important;
+}
+
+.users-row-action-menu-panel button.danger:hover svg,
+.users-row-action-menu-panel button.danger:hover *,
+.users-row-action-menu-panel a.danger:hover svg,
+.users-row-action-menu-panel a.danger:hover * {
+  color: var(--danger, #dc2626) !important;
+  stroke: var(--danger, #dc2626) !important;
 }
 
 .sleek-users-table.responsive-data-table .row-action-menu-panel button:disabled,
@@ -1829,11 +1862,24 @@ body {
   color: var(--text-muted, #a1a1aa) !important;
 }
 
-
 [data-theme="dark"] .users-row-action-menu-panel {
   background: #16161a;
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+}
+
+[data-theme="dark"] .users-row-action-menu-panel button:hover:not(:disabled),
+[data-theme="dark"] .users-row-action-menu-panel a:hover:not(:disabled) {
+  background: rgba(225, 29, 46, 0.15);
+  color: #ff5263 !important;
+}
+
+[data-theme="dark"] .users-row-action-menu-panel button:hover:not(:disabled) svg,
+[data-theme="dark"] .users-row-action-menu-panel button:hover:not(:disabled) *,
+[data-theme="dark"] .users-row-action-menu-panel a:hover:not(:disabled) svg,
+[data-theme="dark"] .users-row-action-menu-panel a:hover:not(:disabled) * {
+  color: #ff5263 !important;
+  stroke: #ff5263 !important;
 }
 
 [data-theme="dark"] .sleek-users-table.responsive-data-table .action-neutral,

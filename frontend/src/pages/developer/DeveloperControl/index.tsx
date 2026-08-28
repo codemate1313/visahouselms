@@ -5,6 +5,7 @@ import { Button, Input, PageHeader, Textarea } from "@/components/ui";
 import { confirmAction } from "@/components/confirmDialog";
 import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { useToastStore } from "@/store/toastStore";
+import { StaticOtpTab } from "@/pages/super-admin/DeveloperSettings/components/StaticOtpTab";
 import "./DeveloperControl.css";
 
 const developerSlug = DEVELOPER_ACCESS_SLUG;
@@ -304,6 +305,10 @@ export function DeveloperControl() {
             </div>
           </div>
         )}
+      </section>
+
+      <section style={{ marginTop: "24px" }}>
+        <StaticOtpTab />
       </section>
     </div>
   );

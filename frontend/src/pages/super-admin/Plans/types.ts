@@ -24,4 +24,5 @@ export interface PlanRow {
   /** Authored pricing-card bullets; empty means the public page derives them. */
   features: string[];
   subscription_count: number;
+  is_popular?: boolean;
 }

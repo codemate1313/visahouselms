@@ -727,3 +727,307 @@
 .status-indicator.inactive .status-dot {
   background-color: #f43f5e;
 }
+
+/* Filter Bar Horizontal Row Alignment */
+.vouchers-page-wrapper .ui-filter-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.vouchers-page-wrapper .voucher-filter-select,
+.vouchers-page-wrapper .searchable-select-container.voucher-filter-select {
+  width: 220px !important;
+  min-width: 200px !important;
+  max-width: 260px !important;
+  flex: 0 0 auto !important;
+}
+
+.vouchers-page-wrapper .voucher-filter-select .searchable-select-trigger {
+  height: 40px;
+}
+
+.vouchers-page-wrapper .search-input-wrapper {
+  flex: 0 0 auto;
+}
+
+/* Voucher Purchases Table Polished Styles */
+.voucher-purchases-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.voucher-purchases-table th {
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted, #71717a);
+  padding: 13px 14px;
+  background: var(--surface-muted, rgba(244, 244, 245, 0.75));
+  border-bottom: 1px solid var(--border, rgba(228, 228, 231, 0.8));
+  user-select: none;
+}
+
+.voucher-purchases-table td {
+  padding: 13px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-subtle, rgba(244, 244, 245, 0.8));
+}
+
+/* Eliminate awkward gap between Purchase Date and Actions */
+.voucher-purchases-table th:nth-child(5),
+.voucher-purchases-table td:nth-child(5) {
+  padding-left: 6px;
+  padding-right: 4px;
+  white-space: nowrap;
+}
+
+.voucher-purchases-table th:nth-child(6),
+.voucher-purchases-table td:nth-child(6) {
+  padding-left: 4px;
+  padding-right: 14px;
+  text-align: right;
+}
+
+.voucher-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5px;
+}
+
+
+.voucher-purchase-number {
+  display: inline-block;
+  white-space: nowrap;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text, #18181b);
+  letter-spacing: -0.01em;
+}
+
+[data-theme="dark"] .voucher-purchase-number {
+  color: #f4f4f5;
+}
+
+.voucher-buyer-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text, #18181b);
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .voucher-buyer-name {
+  color: #f4f4f5;
+}
+
+.voucher-buyer-email {
+  font-size: 12px;
+  color: var(--text-muted, #71717a);
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .voucher-buyer-email {
+  color: #a1a1aa;
+}
+
+.voucher-buyer-phone {
+  font-size: 11.5px;
+  color: var(--text-muted, #a1a1aa);
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+}
+
+.voucher-offering-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text, #3f3f46);
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+[data-theme="dark"] .voucher-offering-title {
+  color: #d4d4d8;
+}
+
+.voucher-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: rgba(2, 132, 199, 0.1);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.25);
+  line-height: 1.35;
+}
+
+[data-theme="dark"] .voucher-type-pill {
+  background: rgba(56, 189, 248, 0.14);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.voucher-code-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--surface-muted, #f4f4f5);
+  color: var(--text, #18181b);
+  border: 1px solid var(--border, #e4e4e7);
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .voucher-code-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f4f4f5;
+}
+
+.voucher-status-pill {
+  display: inline-flex !important;
+  white-space: nowrap !important;
+  min-width: max-content !important;
+}
+
+.voucher-status-pill .badge-label {
+  white-space: nowrap !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+}
+
+.voucher-gateway-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted, #a1a1aa);
+}
+
+.voucher-amount-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+
+/* Action Buttons in Voucher Tables */
+.voucher-table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.voucher-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--surface-muted, #f4f4f5);
+  color: var(--text-muted, #71717a);
+}
+
+.voucher-action-btn svg {
+  width: 17px !important;
+  height: 17px !important;
+  min-width: 17px !important;
+  min-height: 17px !important;
+  display: block !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.voucher-action-btn:hover {
+  transform: translateY(-1px);
+}
+
+.voucher-action-btn.btn-view {
+  background: var(--primary-soft, rgba(184, 15, 40, 0.08)) !important;
+  color: var(--primary, #b80f28) !important;
+  border-color: color-mix(in srgb, var(--primary, #b80f28) 25%, transparent) !important;
+}
+
+.voucher-action-btn.btn-view svg {
+  stroke: var(--primary, #b80f28) !important;
+  color: var(--primary, #b80f28) !important;
+}
+
+.voucher-action-btn.btn-view:hover {
+  background: color-mix(in srgb, var(--primary, #b80f28) 18%, transparent) !important;
+  color: var(--primary, #b80f28) !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary, #b80f28) 22%, transparent);
+}
+
+.voucher-action-btn.btn-invoice {
+  background: rgba(2, 132, 199, 0.1) !important;
+  color: #0284c7 !important;
+  border-color: rgba(2, 132, 199, 0.25) !important;
+}
+
+.voucher-action-btn.btn-invoice svg {
+  stroke: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.voucher-action-btn.btn-invoice:hover {
+  background: rgba(2, 132, 199, 0.18) !important;
+  color: #0284c7 !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.2);
+}
+
+[data-theme="dark"] .voucher-action-btn.btn-view {
+  background: rgba(225, 29, 46, 0.15) !important;
+  color: #ff5263 !important;
+  border-color: rgba(225, 29, 46, 0.3) !important;
+}
+
+[data-theme="dark"] .voucher-action-btn.btn-view svg {
+  stroke: #ff5263 !important;
+  color: #ff5263 !important;
+}
+
+[data-theme="dark"] .voucher-action-btn.btn-invoice {
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+[data-theme="dark"] .voucher-action-btn.btn-invoice svg {
+  stroke: #38bdf8 !important;
+  color: #38bdf8 !important;
+}
+
+
+

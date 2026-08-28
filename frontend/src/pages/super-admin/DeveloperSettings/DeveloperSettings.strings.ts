@@ -4,13 +4,11 @@ import type { Tab } from "./types";
 // database migrations, bulk seed writes) are grouped at the end and flagged
 // with a warning icon in DeveloperSettings/index.tsx - see `dangerousTabs`.
 export const tabOrder: Tab[] = [
-  "slider",
-  "contact",
+  "hero-socials",
   "smtp",
   "ai",
   "google-oauth",
   "payment-gateways",
-  "backups",
   "otp",
   "maintenance",
 ];
@@ -19,15 +17,13 @@ export const tabOrder: Tab[] = [
 export const dangerousTabs: Tab[] = ["otp", "maintenance"];
 
 export const tabLabels: Record<Tab, string> = {
-  slider: "Hero Sliders",
-  contact: "Contact & Social",
+  "hero-socials": "Hero & Socials",
   smtp: "SMTP",
   ai: "AI Evaluation",
   "google-oauth": "Google Sign-In (OAuth)",
   "payment-gateways": "Payment Gateways",
-  maintenance: "Maintenance",
-  backups: "Backups",
   otp: "Static OTP (Testing)",
+  maintenance: "Maintenance & Backups",
 };
 
 

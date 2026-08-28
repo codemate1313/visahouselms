@@ -13,11 +13,12 @@ interface PlansTableProps {
   basePath: string;
   emptyMessage: string;
   onToggleActive: (plan: PlanRow) => void;
+  onTogglePopular: (plan: PlanRow) => void;
   onView: (plan: PlanRow) => void;
   onRequestDelete: (plan: PlanRow) => void;
 }
 
-export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onView, onRequestDelete }: PlansTableProps) {
+export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onTogglePopular, onView, onRequestDelete }: PlansTableProps) {
   const t = strings.table;
   return (
     <DataTableCard>
@@ -44,9 +45,30 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
             <tr key={plan.id}>
               <td>
                 <div className="table-item-details">
-                  <span className="table-item-title" style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
-                    {plan.name}
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span className="table-item-title" style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>
+                      {plan.name}
+                    </span>
+                    {plan.is_popular && (
+                      <span
+                        style={{
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          padding: "2px 8px",
+                          borderRadius: 6,
+                          background: "linear-gradient(135deg, #a31c28 0%, #dc2626 100%)",
+                          color: "#ffffff",
+                          letterSpacing: "0.03em",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          boxShadow: "0 2px 6px rgba(163, 28, 40, 0.25)",
+                        }}
+                      >
+                        ★ POPULAR
+                      </span>
+                    )}
+                  </div>
                   <span className="table-item-subtitle" style={{ fontSize: 12, color: "var(--text-muted)" }}>
                     {t.target} {plan.audience.replace("_", " ")}
                   </span>
@@ -80,6 +102,10 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onVi
               <td className="table-actions institute-row-actions">
                 <RowActionMenu
                   items={[
+                    <button key="popular" type="button" onClick={() => onTogglePopular(plan)}>
+                      <Icon name={plan.is_popular ? "starFilled" : "star"} />
+                      <span>{plan.is_popular ? t.unmarkPopular : t.markPopular}</span>
+                    </button>,
                     <button key="status" type="button" onClick={() => onToggleActive(plan)}>
                       <Icon name={plan.is_active ? "toggleOff" : "toggleOn"} />
                       <span>{plan.is_active ? t.deactivate : t.reactivate}</span>

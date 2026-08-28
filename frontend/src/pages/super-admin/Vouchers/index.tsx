@@ -13,6 +13,7 @@ import "@/styles/voucher-ui.css";
 import "./Vouchers.css";
 import { formatDate } from "@/utils/date";
 import { formatCurrencyAmount } from "@/utils/currency";
+import { PurchaseDetailsModal } from "./components/PurchaseDetailsModal";
 
 interface VoucherType {
   id: number;
@@ -179,6 +180,9 @@ export function Vouchers() {
 
   // Invoice Modal State
   const [selectedInvoice, setSelectedInvoice] = useState<VoucherPurchase | null>(null);
+
+  // Purchase Details Modal State
+  const [selectedPurchaseDetails, setSelectedPurchaseDetails] = useState<VoucherPurchase | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -661,6 +665,7 @@ export function Vouchers() {
                 onChange={(val) => setPaymentStatusFilter(String(val))}
                 placeholder="All payment statuses"
                 searchable={false}
+                className="status-filter-select voucher-filter-select"
               />
             </>
           )}
@@ -670,7 +675,7 @@ export function Vouchers() {
                 placeholder="Search code, type, or filename"
                 value={unusedSearch}
                 onChange={setUnusedSearch}
-                width={360}
+                width={320}
               />
               <SearchableSelect
                 options={unusedTypeOptions}
@@ -678,6 +683,7 @@ export function Vouchers() {
                 onChange={(val) => setUnusedTypeFilter(String(val))}
                 placeholder="All voucher types"
                 searchable={false}
+                className="status-filter-select voucher-filter-select"
               />
               <Button
                 variant="danger"
@@ -719,23 +725,21 @@ export function Vouchers() {
           {loading ? (
             <p className="ui-loading-copy">Loading voucher purchases...</p>
           ) : (
-            <table className="data-table">
+            <table className="data-table voucher-purchases-table">
               <thead>
                 <tr>
-                  <th>{s.purchases.purchaseNo}</th>
-                  <th>{s.purchases.buyer}</th>
-                  <th>{s.purchases.voucherInfo}</th>
-                  <th>{s.purchases.code}</th>
-                  <th>{s.purchases.status}</th>
-                  <th>{s.purchases.amount}</th>
-                  <th>{s.purchases.date}</th>
-                  <th className="text-right">Actions</th>
+                  <th style={{ width: "18%" }}>{s.purchases.purchaseNo}</th>
+                  <th style={{ width: "25%" }}>{s.purchases.buyer}</th>
+                  <th style={{ width: "33%" }}>{s.purchases.voucherInfo}</th>
+                  <th style={{ width: "14%" }}>{s.purchases.paymentAndStatus}</th>
+                  <th style={{ width: "6%", whiteSpace: "nowrap" }}>{s.purchases.date}</th>
+                  <th className="text-right" style={{ width: "4%" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredPurchases.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="ui-empty-row">
+                    <td colSpan={6} className="ui-empty-row">
                       {purchases.length === 0 ? s.purchases.noPurchases : "No voucher purchases match the current filters."}
                     </td>
                   </tr>
@@ -743,52 +747,86 @@ export function Vouchers() {
                   pagedPurchases.map((p) => (
                     <tr key={p.id}>
                       <td>
-                        <strong className="font-mono text-sm">{p.purchase_number}</strong>
-                      </td>
-                      <td>
-                        <div className="font-bold text-slate-900 dark:text-white">{p.buyer_name}</div>
-                        <div className="text-xs text-slate-500">{p.buyer_email}</div>
-                        {p.buyer_phone && <div className="text-xs text-slate-500">{p.buyer_phone}</div>}
-                      </td>
-                      <td>
-                        <span className="voucher-type-badge" style={{ backgroundColor: "#0284c7" }}>
-                          {p.voucher_type_name}
+                        <span className="voucher-purchase-number">
+                          {p.purchase_number}
                         </span>
-                        <div className="text-xs text-slate-500 font-medium mt-1">{p.offering_title}</div>
                       </td>
                       <td>
-                        {p.status === "completed" ? (
-                          <code className="voucher-code-pill">{p.voucher_code || "N/A"}</code>
-                        ) : (
-                          <span className="text-xs text-slate-500">Not issued</span>
-                        )}
+                        <div className="voucher-cell-stack">
+                          <span className="voucher-buyer-name font-bold text-slate-900 dark:text-white">
+                            {p.buyer_name}
+                          </span>
+                          <span className="voucher-buyer-email text-xs text-slate-500">
+                            {p.buyer_email}
+                          </span>
+                          {p.buyer_phone && (
+                            <span className="voucher-buyer-phone text-xs text-slate-400 font-mono">
+                              {p.buyer_phone}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td>
-                        <Badge tone={purchaseStatusTone(p.status)}>{purchaseStatusLabel(p.status)}</Badge>
+                        <div className="voucher-cell-stack">
+                          <div>
+                            <span className="voucher-type-pill">
+                              {p.voucher_type_name}
+                            </span>
+                          </div>
+                          <span className="voucher-offering-title text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            {p.offering_title}
+                          </span>
+                        </div>
                       </td>
                       <td>
-                        {p.status === "completed" ? (
-                          <strong className="text-slate-900 dark:text-white">
-                            {formatCurrencyAmount(p.final_amount)}
-                          </strong>
-                        ) : (
-                          <span className="text-xs text-slate-500">Not paid</span>
-                        )}
-                        <div className="text-[10px] text-slate-400 uppercase font-bold">{p.gateway}</div>
+                        <div className="voucher-cell-stack">
+                          <div>
+                            <Badge tone={purchaseStatusTone(p.status)} className="voucher-status-pill">
+                              {purchaseStatusLabel(p.status)}
+                            </Badge>
+                          </div>
+                          <div className="voucher-amount-row flex items-center gap-1.5 mt-0.5">
+                            {p.status === "completed" ? (
+                              <strong className="text-xs font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                                {formatCurrencyAmount(p.final_amount)}
+                              </strong>
+                            ) : (
+                              <span className="text-xs font-semibold text-slate-400 dark:text-zinc-500 whitespace-nowrap">
+                                Not paid
+                              </span>
+                            )}
+                            <span className="voucher-gateway-tag">· {p.gateway}</span>
+                          </div>
+                        </div>
                       </td>
                       <td>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-500 whitespace-nowrap font-medium">
                           {formatDate(p.created_at)}
                         </span>
                       </td>
                       <td className="text-right">
-                        {p.status === "completed" ? (
-                          <Button variant="secondary" size="small" onClick={() => setSelectedInvoice(p)}>
-                            Invoice
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-slate-500">No invoice</span>
-                        )}
+                        <div className="voucher-table-actions">
+                          <button
+                            type="button"
+                            className="voucher-action-btn btn-view"
+                            title="View Full Purchase Details"
+                            aria-label="View Full Purchase Details"
+                            onClick={() => setSelectedPurchaseDetails(p)}
+                          >
+                            <Icon name="eye" style={{ width: 17, height: 17, stroke: "currentColor" }} />
+                          </button>
+                          {p.status === "completed" && (
+                            <button
+                              type="button"
+                              className="voucher-action-btn btn-invoice"
+                              title="View Tax Invoice"
+                              aria-label="View Tax Invoice"
+                              onClick={() => setSelectedInvoice(p)}
+                            >
+                              <Icon name="filePdf" style={{ width: 16, height: 16, stroke: "currentColor" }} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -863,7 +901,7 @@ export function Vouchers() {
                       <code className="voucher-code-pill">{uc.code}</code>
                     </td>
                     <td>
-                      <span className="voucher-type-badge" style={{ backgroundColor: uc.voucher_type_badge_color || "#0284c7" }}>
+                      <span className="voucher-type-pill">
                         {uc.voucher_type_name}
                       </span>
                     </td>
@@ -1561,6 +1599,15 @@ export function Vouchers() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Purchase Details Modal */}
+      {selectedPurchaseDetails && (
+        <PurchaseDetailsModal
+          purchase={selectedPurchaseDetails}
+          onClose={() => setSelectedPurchaseDetails(null)}
+          onViewInvoice={(p) => setSelectedInvoice(p)}
+        />
       )}
 
     </div>

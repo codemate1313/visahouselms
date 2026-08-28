@@ -67,6 +67,8 @@ export const planFormStrings = {
     remove: "Remove feature",
     removeGlyph: "x",
   },
+  popularLabel: "Mark as Most Popular Plan",
+  popularHint: "Highlights this plan with a featured badge on the website. At most 1 plan can be marked as popular per category (saving will automatically unmark any other).",
   saving: "Saving...",
   savePlan: "Save plan",
   cancel: "Cancel",

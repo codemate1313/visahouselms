@@ -59,6 +59,7 @@ class Plan(Base):
     # NULL/0 falls back to the platform-wide default monthly limit. Meaningless
     # on institute-audience plans, which meter through the institute instead.
     ai_evaluation_limit: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    is_popular: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
 

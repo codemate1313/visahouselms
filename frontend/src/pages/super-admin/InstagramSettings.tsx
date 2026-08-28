@@ -1,8 +1,10 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { apiClient } from "@/api/client";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { SearchableSelect } from "@/components/ui";
+import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useToastStore } from "@/store/toastStore";
 import { instagramSettingsStrings as strings } from "./InstagramSettings.strings";
 
@@ -40,11 +42,6 @@ const LIMIT_OPTIONS = [
   { value: 16, label: "16 items", sublabel: "Maximum" },
 ];
 
-const modalText = "var(--text)";
-const modalMutedText = "var(--text-muted)";
-const modalFieldText = "var(--text)";
-const modalOptionBg = "var(--surface-muted)";
-const modalRequired = "var(--danger)";
 
 export function InstagramSettings() {
   const [data, setData] = useState<InstagramSettingsData | null>(null);
@@ -74,6 +71,41 @@ export function InstagramSettings() {
   const [reelViews, setReelViews] = useState<number | "">(18500);
   const [reelMediaType, setReelMediaType] = useState<"REEL" | "POST">("REEL");
   const [addingByUrl, setAddingByUrl] = useState(false);
+  const [uploadingAddCover, setUploadingAddCover] = useState(false);
+  const [uploadingEditCover, setUploadingEditCover] = useState(false);
+  const addFileInputRef = useRef<HTMLInputElement | null>(null);
+  const editFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleCoverFileChange = async (e: ChangeEvent<HTMLInputElement>, isEdit: boolean) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (isEdit) {
+      setUploadingEditCover(true);
+    } else {
+      setUploadingAddCover(true);
+    }
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const { data: res } = await apiClient.post<{ url: string }>("/super-admin/instagram-settings/upload-cover", form);
+      if (isEdit) {
+        setEditThumbnail(res.url);
+      } else {
+        setReelThumbnail(res.url);
+      }
+      useToastStore.getState().showSuccess("Cover image uploaded successfully!");
+    } catch {
+      useToastStore.getState().showError("Failed to upload cover image. Please check image format.");
+    } finally {
+      if (isEdit) {
+        setUploadingEditCover(false);
+        if (editFileInputRef.current) editFileInputRef.current.value = "";
+      } else {
+        setUploadingAddCover(false);
+        if (addFileInputRef.current) addFileInputRef.current.value = "";
+      }
+    }
+  };
 
   const handleOpenAddUrlModal = () => {
     setReelUrl("");
@@ -387,81 +419,63 @@ export function InstagramSettings() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", paddingBottom: 60 }}>
-      {/* Page Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 24 }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 6px", color: "var(--text)" }}>
-            {strings.heading}
-          </h2>
-          <p className="hint" style={{ margin: 0, maxWidth: 650 }}>
-            {strings.subheading}
-          </p>
-        </div>
-
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <button
-            type="button"
-            className="button secondary"
-            onClick={handleSeedSamples}
-            disabled={seeding}
-            title="Populate test sample reels to preview the layout immediately"
-          >
-            <Icon name="plus" /> {seeding ? strings.samples.seedBusy : strings.samples.seedBtn}
-          </button>
-        </div>
-      </div>
-
       {/* Main Form Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }}>
         {/* Card 1: Visibility & Master Enable Switch */}
-        <div className="form-card wide" style={{ padding: "24px 28px" }}>
+        <div className="form-card wide" style={{ padding: "18px 24px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 2 }}>
                 <span
                   style={{
                     display: "inline-block",
-                    width: 10,
-                    height: 10,
+                    width: 9,
+                    height: 9,
                     borderRadius: "50%",
                     backgroundColor: isEnabled ? "#10b981" : "#94a3b8",
                   }}
                 />
-                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "var(--text)" }}>
+                <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, color: "var(--text)" }}>
                   {isEnabled ? strings.toggle.enabledLabel : strings.toggle.disabledLabel}
                 </h3>
               </div>
-              <p className="hint" style={{ margin: 0, fontSize: 13 }}>
+              <p className="hint" style={{ margin: 0, fontSize: 12.5 }}>
                 {isEnabled ? strings.toggle.enabledDesc : strings.toggle.disabledDesc}
               </p>
             </div>
 
-            <button
-              type="button"
-              disabled={toggling}
-              onClick={() => handleToggleEnable(!isEnabled)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 18px",
-                borderRadius: 999,
-                fontWeight: 700,
-                fontSize: 13,
-                cursor: toggling ? "wait" : "pointer",
-                border: "1px solid",
-                borderColor: isEnabled ? "#10b981" : "var(--border)",
-                backgroundColor: isEnabled ? "rgba(16, 185, 129, 0.12)" : "var(--chip)",
-                color: isEnabled ? "#059669" : "var(--text-muted)",
-                transition: "all 0.2s ease",
-              }}
-            >
-              {toggling
-                ? "Updating..."
-                : isEnabled
-                ? "Feed Active (Click to Disable)"
-                : "Feed Hidden (Click to Enable)"}
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                type="button"
+                onClick={handleSeedSamples}
+                disabled={seeding}
+                title="Populate test sample reels & posts"
+                style={{
+                  background: "#a31c28",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "6px 14px",
+                  fontWeight: 700,
+                  fontSize: 12,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  boxShadow: "0 2px 6px rgba(163, 28, 40, 0.28)",
+                  cursor: seeding ? "not-allowed" : "pointer",
+                  transition: "all 150ms ease",
+                }}
+              >
+                <Icon name="plus" /> {seeding ? strings.samples.seedBusy : "Populate Samples"}
+              </button>
+
+              <ToggleSwitch
+                checked={isEnabled}
+                onChange={() => handleToggleEnable(!isEnabled)}
+                disabled={toggling}
+                tooltip={isEnabled ? "Click to disable Instagram feed on homepage" : "Click to enable Instagram feed on homepage"}
+              />
+            </div>
           </div>
         </div>
 
@@ -587,31 +601,74 @@ export function InstagramSettings() {
           >
             <button
               type="button"
-              className="button primary"
               onClick={() => handleSave()}
               disabled={saving}
-              style={{ minWidth: 160 }}
+              style={{
+                background: "#a31c28",
+                color: "#ffffff",
+                border: "1px solid #a31c28",
+                borderRadius: 10,
+                padding: "10px 22px",
+                fontWeight: 700,
+                fontSize: 13.5,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                boxShadow: "0 2px 8px rgba(163, 28, 40, 0.3)",
+                cursor: saving ? "not-allowed" : "pointer",
+                minWidth: 170,
+                justifyContent: "center",
+                transition: "all 150ms ease",
+              }}
             >
-              {saving ? strings.saveBusy : strings.saveLabel}
+              <Icon name="check" /> {saving ? strings.saveBusy : strings.saveLabel}
             </button>
 
             <button
               type="button"
-              className="button secondary"
               onClick={handleTestConnection}
               disabled={testingConnection}
+              style={{
+                background: "#0d9488",
+                color: "#ffffff",
+                border: "1px solid #0d9488",
+                borderRadius: 10,
+                padding: "10px 20px",
+                fontWeight: 700,
+                fontSize: 13.5,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                boxShadow: "0 2px 8px rgba(13, 148, 136, 0.3)",
+                cursor: testingConnection ? "not-allowed" : "pointer",
+                transition: "all 150ms ease",
+              }}
             >
-              {testingConnection ? strings.credentials.testConnectionBusy : strings.credentials.testConnectionBtn}
+              <Icon name="play" /> {testingConnection ? strings.credentials.testConnectionBusy : strings.credentials.testConnectionBtn}
             </button>
 
             {data?.has_access_token && (
               <button
                 type="button"
-                className="button secondary"
                 onClick={handleRefreshLiveFeed}
                 disabled={refreshingFeed}
+                style={{
+                  background: "#2563eb",
+                  color: "#ffffff",
+                  border: "1px solid #2563eb",
+                  borderRadius: 10,
+                  padding: "10px 20px",
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  boxShadow: "0 2px 8px rgba(37, 99, 235, 0.3)",
+                  cursor: refreshingFeed ? "not-allowed" : "pointer",
+                  transition: "all 150ms ease",
+                }}
               >
-                {refreshingFeed ? strings.credentials.refreshFeedBusy : strings.credentials.refreshFeedBtn}
+                <Icon name="restore" /> {refreshingFeed ? strings.credentials.refreshFeedBusy : strings.credentials.refreshFeedBtn}
               </button>
             )}
 
@@ -672,10 +729,23 @@ export function InstagramSettings() {
 
               <button
                 type="button"
-                className="button secondary"
                 onClick={handleSeedSamples}
                 disabled={seeding}
-                style={{ fontSize: 12.5, padding: "6px 14px", display: "inline-flex", alignItems: "center", gap: 6 }}
+                style={{
+                  fontSize: 12.5,
+                  padding: "7px 15px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)",
+                  border: "none",
+                  borderRadius: 8,
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  boxShadow: "0 2px 8px rgba(79, 70, 229, 0.28)",
+                  cursor: seeding ? "not-allowed" : "pointer",
+                  transition: "all 150ms ease",
+                }}
                 title="Populate test sample reels"
               >
                 <Icon name="plus" /> {seeding ? strings.samples.seedBusy : "Add Samples"}
@@ -684,10 +754,23 @@ export function InstagramSettings() {
               {feedItems.length > 0 && (
                 <button
                   type="button"
-                  className="button secondary danger"
                   onClick={handleClearAllFeedItems}
                   disabled={clearingFeed}
-                  style={{ fontSize: 12.5, padding: "6px 14px", display: "inline-flex", alignItems: "center", gap: 6 }}
+                  style={{
+                    fontSize: 12.5,
+                    padding: "7px 15px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: "#dc2626",
+                    border: "none",
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    color: "#ffffff",
+                    boxShadow: "0 2px 8px rgba(220, 38, 38, 0.28)",
+                    cursor: clearingFeed ? "not-allowed" : "pointer",
+                    transition: "all 150ms ease",
+                  }}
                   title="Remove all items from feed"
                 >
                   <Icon name="trash" /> {clearingFeed ? strings.preview.clearBusy : strings.preview.clearBtn}
@@ -699,8 +782,26 @@ export function InstagramSettings() {
           {feedItems.length === 0 ? (
             <div style={{ textAlign: "center", padding: "48px 24px", backgroundColor: "var(--chip)", borderRadius: 12 }}>
               <p className="hint" style={{ margin: "0 0 16px" }}>{strings.preview.empty}</p>
-              <button type="button" className="button primary" onClick={handleSeedSamples} disabled={seeding}>
-                {seeding ? strings.samples.seedBusy : strings.samples.seedBtn}
+              <button
+                type="button"
+                onClick={handleSeedSamples}
+                disabled={seeding}
+                style={{
+                  background: "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "10px 24px",
+                  fontWeight: 700,
+                  fontSize: 13.5,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  boxShadow: "0 2px 10px rgba(79, 70, 229, 0.35)",
+                  cursor: seeding ? "not-allowed" : "pointer",
+                }}
+              >
+                <Icon name="plus" /> {seeding ? strings.samples.seedBusy : strings.samples.seedBtn}
               </button>
             </div>
           ) : (
@@ -919,15 +1020,15 @@ export function InstagramSettings() {
       </div>
 
       {/* Add Reel / Post by URL Modal */}
-      {showAddUrlModal && (
+      {showAddUrlModal && createPortal(
         <div
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.78)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            zIndex: 9999,
+            backgroundColor: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            zIndex: 999999,
             display: "grid",
             placeItems: "center",
             padding: "20px",
@@ -937,16 +1038,16 @@ export function InstagramSettings() {
           <div
             className="ig-add-url-modal-card"
             style={{
-              backgroundColor: "#182234",
-              background: "linear-gradient(180deg, #1e293b 0%, #111827 100%)",
+              backgroundColor: "var(--card, #ffffff)",
+              background: "var(--card, #ffffff)",
               borderRadius: 20,
-              border: "1px solid rgba(255, 255, 255, 0.14)",
-              boxShadow: "0 25px 60px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05)",
+              border: "1px solid var(--border)",
+              boxShadow: "0 25px 60px -10px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border)",
               width: "100%",
               maxWidth: 540,
               padding: "28px",
               position: "relative",
-              color: "#ffffff",
+              color: "var(--text)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -961,7 +1062,7 @@ export function InstagramSettings() {
                     background: "linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
                     display: "grid",
                     placeItems: "center",
-                    color: "var(--white)",
+                    color: "#ffffff",
                     boxShadow: "0 4px 14px rgba(220, 39, 67, 0.35)",
                     flexShrink: 0,
                   }}
@@ -973,8 +1074,8 @@ export function InstagramSettings() {
                   </svg>
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: modalText, letterSpacing: "-0.01em" }}>Add Reel / Post by URL</h3>
-                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: modalMutedText }}>Import any public Instagram Reel or Post directly</p>
+                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.01em" }}>Add Reel / Post by URL</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "var(--text-muted)" }}>Import any public Instagram Reel or Post directly</p>
                 </div>
               </div>
 
@@ -983,14 +1084,15 @@ export function InstagramSettings() {
                 onClick={() => setShowAddUrlModal(false)}
                 disabled={addingByUrl}
                 style={{
-                  background: "rgba(255, 255, 255, 0.08)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  background: "var(--chip, #f1f5f9)",
+                  backgroundColor: "var(--chip, #f1f5f9)",
+                  border: "1px solid var(--border)",
                   borderRadius: "50%",
                   width: 32,
                   height: 32,
                   fontSize: 14,
                   cursor: "pointer",
-                  color: "#cbd5e1",
+                  color: "var(--text)",
                   display: "grid",
                   placeItems: "center",
                   transition: "all 0.2s ease",
@@ -1003,9 +1105,9 @@ export function InstagramSettings() {
             <form onSubmit={handleAddReelByUrl}>
               {/* URL Input */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
-                  <span>Instagram URL <span style={{ color: modalRequired }}>*</span></span>
-                  <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 6, background: reelMediaType === "REEL" ? "rgba(225, 48, 108, 0.18)" : "rgba(59, 130, 246, 0.18)", color: reelMediaType === "REEL" ? "#ff6b8b" : "#60a5fa", border: `1px solid ${reelMediaType === "REEL" ? "rgba(225, 48, 108, 0.3)" : "rgba(59, 130, 246, 0.3)"}` }}>
+                <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
+                  <span>Instagram URL <span style={{ color: "var(--danger)" }}>*</span></span>
+                  <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 6, background: reelMediaType === "REEL" ? "rgba(225, 48, 108, 0.12)" : "rgba(59, 130, 246, 0.12)", color: reelMediaType === "REEL" ? "#E1306C" : "#2563eb", border: `1px solid ${reelMediaType === "REEL" ? "rgba(225, 48, 108, 0.28)" : "rgba(59, 130, 246, 0.28)"}` }}>
                     {reelMediaType === "REEL" ? "▶ REEL DETECTED" : "🖼 POST DETECTED"}
                   </span>
                 </label>
@@ -1020,50 +1122,127 @@ export function InstagramSettings() {
                     fontSize: 13.5,
                     padding: "11px 14px",
                     borderRadius: 10,
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: modalFieldText,
+                    background: "var(--input-bg, #ffffff)",
+                    backgroundColor: "var(--input-bg, #ffffff)",
+                    border: "1.5px solid var(--border)",
+                    color: "var(--text)",
                     outline: "none",
                     boxSizing: "border-box",
                   }}
                   autoFocus
                 />
-                <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: modalMutedText }}>
+                <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: "var(--text-muted)" }}>
                   Paste any Instagram Reel or Post link.
                 </p>
               </div>
 
-              {/* Thumbnail URL Input */}
+              {/* Thumbnail / Cover Image Input & Upload */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
-                  Thumbnail / Cover Image URL <span style={{ fontSize: 12, fontWeight: 500, color: modalMutedText }}>(Optional)</span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://... image URL (or leave blank for high-res cover)"
-                  value={reelThumbnail}
-                  onChange={(e) => setReelThumbnail(e.target.value)}
-                  style={{
-                    width: "100%",
-                    fontSize: 13.5,
-                    padding: "11px 14px",
-                    borderRadius: 10,
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: modalFieldText,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: modalMutedText }}>
-                  Leave blank to use our high-res education cover.
-                </p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <label style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
+                    Cover Image <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>(Upload or URL)</span>
+                  </label>
+                  {reelThumbnail && (
+                    <button
+                      type="button"
+                      onClick={() => setReelThumbnail("")}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--danger, #ef4444)",
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        padding: "2px 6px",
+                      }}
+                    >
+                      Clear Cover
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <input
+                    type="file"
+                    ref={addFileInputRef}
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => handleCoverFileChange(e, false)}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => addFileInputRef.current?.click()}
+                    disabled={uploadingAddCover}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      background: "var(--chip, #f1f5f9)",
+                      backgroundColor: "var(--chip, #f1f5f9)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
+                      cursor: uploadingAddCover ? "wait" : "pointer",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                    }}
+                    title="Upload cover image file from device"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    {uploadingAddCover ? "Uploading..." : "Upload File"}
+                  </button>
+
+                  <input
+                    type="url"
+                    placeholder="Or paste image URL (https://...)"
+                    value={reelThumbnail}
+                    onChange={(e) => setReelThumbnail(e.target.value)}
+                    style={{
+                      flex: 1,
+                      fontSize: 13.5,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      background: "var(--input-bg, #ffffff)",
+                      backgroundColor: "var(--input-bg, #ffffff)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                {reelThumbnail ? (
+                  <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 8, background: "var(--surface-muted, rgba(0,0,0,0.03))", border: "1px solid var(--border)" }}>
+                    <img
+                      src={reelThumbnail}
+                      alt="Cover preview"
+                      style={{ width: 42, height: 42, objectFit: "cover", borderRadius: 6, border: "1px solid var(--border)" }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 12, color: "var(--text-muted)", flex: 1 }}>
+                      {reelThumbnail}
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: "var(--text-muted)" }}>
+                    Upload an image or paste a direct image URL (or leave blank for high-res cover).
+                  </p>
+                )}
               </div>
 
               {/* Caption */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
-                  Caption / Description <span style={{ fontSize: 12, fontWeight: 500, color: modalMutedText }}>(Optional)</span>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
+                  Caption / Description <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>(Optional)</span>
                 </label>
                 <textarea
                   rows={3}
@@ -1075,9 +1254,10 @@ export function InstagramSettings() {
                     fontSize: 13.5,
                     padding: "11px 14px",
                     borderRadius: 10,
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: modalFieldText,
+                    background: "var(--input-bg, #ffffff)",
+                    backgroundColor: "var(--input-bg, #ffffff)",
+                    border: "1.5px solid var(--border)",
+                    color: "var(--text)",
                     outline: "none",
                     resize: "vertical",
                     boxSizing: "border-box",
@@ -1089,7 +1269,7 @@ export function InstagramSettings() {
               {/* Stats */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>Like Count</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>Like Count</label>
                   <input
                     type="number"
                     min="0"
@@ -1100,16 +1280,17 @@ export function InstagramSettings() {
                       fontSize: 13.5,
                       padding: "10px 14px",
                       borderRadius: 10,
-                      background: "rgba(255, 255, 255, 0.08)",
-                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: modalFieldText,
+                      background: "var(--input-bg, #ffffff)",
+                      backgroundColor: "var(--input-bg, #ffffff)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>View Count</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>View Count</label>
                   <input
                     type="number"
                     min="0"
@@ -1120,9 +1301,10 @@ export function InstagramSettings() {
                       fontSize: 13.5,
                       padding: "10px 14px",
                       borderRadius: 10,
-                      background: "rgba(255, 255, 255, 0.08)",
-                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: modalFieldText,
+                      background: "var(--input-bg, #ffffff)",
+                      backgroundColor: "var(--input-bg, #ffffff)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -1137,9 +1319,10 @@ export function InstagramSettings() {
                   onClick={() => setShowAddUrlModal(false)}
                   disabled={addingByUrl}
                   style={{
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.16)",
-                    color: modalText,
+                    background: "var(--chip, #f1f5f9)",
+                    backgroundColor: "var(--chip, #f1f5f9)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text)",
                     padding: "10px 20px",
                     borderRadius: 10,
                     fontWeight: 650,
@@ -1155,7 +1338,7 @@ export function InstagramSettings() {
                   style={{
                     background: "linear-gradient(135deg, #E1306C, #C13584, #833AB4)",
                     border: "none",
-                    color: "var(--white)",
+                    color: "#ffffff",
                     padding: "10px 24px",
                     borderRadius: 10,
                     fontWeight: 750,
@@ -1172,19 +1355,20 @@ export function InstagramSettings() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Reel / Post Modal */}
-      {showEditModal && (
+      {showEditModal && createPortal(
         <div
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.78)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            zIndex: 9999,
+            backgroundColor: "rgba(0, 0, 0, 0.65)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            zIndex: 999999,
             display: "grid",
             placeItems: "center",
             padding: "20px",
@@ -1194,16 +1378,16 @@ export function InstagramSettings() {
           <div
             className="ig-edit-url-modal-card"
             style={{
-              backgroundColor: "#182234",
-              background: "linear-gradient(180deg, #1e293b 0%, #111827 100%)",
+              backgroundColor: "var(--card, #ffffff)",
+              background: "var(--card, #ffffff)",
               borderRadius: 20,
-              border: "1px solid rgba(255, 255, 255, 0.14)",
-              boxShadow: "0 25px 60px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05)",
+              border: "1px solid var(--border)",
+              boxShadow: "0 25px 60px -10px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border)",
               width: "100%",
               maxWidth: 540,
               padding: "28px",
               position: "relative",
-              color: modalText,
+              color: "var(--text)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1218,7 +1402,7 @@ export function InstagramSettings() {
                     background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)",
                     display: "grid",
                     placeItems: "center",
-                    color: "var(--white)",
+                    color: "#ffffff",
                     boxShadow: "0 4px 14px rgba(99, 102, 241, 0.35)",
                     flexShrink: 0,
                   }}
@@ -1229,8 +1413,8 @@ export function InstagramSettings() {
                   </svg>
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: modalText, letterSpacing: "-0.01em" }}>Edit Reel / Post</h3>
-                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: modalMutedText }}>Modify thumbnail, caption, or engagement metrics</p>
+                  <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.01em" }}>Edit Reel / Post</h3>
+                  <p style={{ margin: "2px 0 0", fontSize: 12.5, color: "var(--text-muted)" }}>Modify thumbnail, caption, or engagement metrics</p>
                 </div>
               </div>
 
@@ -1239,14 +1423,15 @@ export function InstagramSettings() {
                 onClick={() => setShowEditModal(false)}
                 disabled={savingEdit}
                 style={{
-                  background: "rgba(255, 255, 255, 0.08)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  background: "var(--chip, #f1f5f9)",
+                  backgroundColor: "var(--chip, #f1f5f9)",
+                  border: "1px solid var(--border)",
                   borderRadius: "50%",
                   width: 32,
                   height: 32,
                   fontSize: 14,
                   cursor: "pointer",
-                  color: "#cbd5e1",
+                  color: "var(--text)",
                   display: "grid",
                   placeItems: "center",
                   transition: "all 0.2s ease",
@@ -1260,7 +1445,7 @@ export function InstagramSettings() {
               {/* Type Selection & Permalink */}
               <div style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: 12, marginBottom: 18 }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>Type</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>Type</label>
                   <select
                     value={editMediaType}
                     onChange={(e) => setEditMediaType(e.target.value as "REEL" | "POST")}
@@ -1269,20 +1454,21 @@ export function InstagramSettings() {
                       fontSize: 13.5,
                       padding: "11px 12px",
                       borderRadius: 10,
-                      background: "rgba(255, 255, 255, 0.08)",
-                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: modalFieldText,
+                      background: "var(--input-bg, #ffffff)",
+                      backgroundColor: "var(--input-bg, #ffffff)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
                   >
-                    <option value="REEL" style={{ background: modalOptionBg, color: modalFieldText }}>▶ Reel</option>
-                    <option value="POST" style={{ background: modalOptionBg, color: modalFieldText }}>🖼 Post</option>
+                    <option value="REEL">▶ Reel</option>
+                    <option value="POST">🖼 Post</option>
                   </select>
                 </div>
 
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>Instagram URL</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>Instagram URL</label>
                   <input
                     type="url"
                     required
@@ -1294,9 +1480,10 @@ export function InstagramSettings() {
                       fontSize: 13.5,
                       padding: "11px 14px",
                       borderRadius: 10,
-                      background: "rgba(255, 255, 255, 0.08)",
-                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: modalFieldText,
+                      background: "var(--input-bg, #ffffff)",
+                      backgroundColor: "var(--input-bg, #ffffff)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -1304,33 +1491,112 @@ export function InstagramSettings() {
                 </div>
               </div>
 
-              {/* Thumbnail URL Input */}
+              {/* Thumbnail / Cover Image Input & Upload */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
-                  Thumbnail / Cover Image URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://... image URL"
-                  value={editThumbnail}
-                  onChange={(e) => setEditThumbnail(e.target.value)}
-                  style={{
-                    width: "100%",
-                    fontSize: 13.5,
-                    padding: "11px 14px",
-                    borderRadius: 10,
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: modalFieldText,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <label style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
+                    Cover Image <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>(Upload or URL)</span>
+                  </label>
+                  {editThumbnail && (
+                    <button
+                      type="button"
+                      onClick={() => setEditThumbnail("")}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--danger, #ef4444)",
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        padding: "2px 6px",
+                      }}
+                    >
+                      Clear Cover
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <input
+                    type="file"
+                    ref={editFileInputRef}
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => handleCoverFileChange(e, true)}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => editFileInputRef.current?.click()}
+                    disabled={uploadingEditCover}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      background: "var(--chip, #f1f5f9)",
+                      backgroundColor: "var(--chip, #f1f5f9)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
+                      cursor: uploadingEditCover ? "wait" : "pointer",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                    }}
+                    title="Upload cover image file from device"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    {uploadingEditCover ? "Uploading..." : "Upload File"}
+                  </button>
+
+                  <input
+                    type="url"
+                    placeholder="Or paste image URL (https://...)"
+                    value={editThumbnail}
+                    onChange={(e) => setEditThumbnail(e.target.value)}
+                    style={{
+                      flex: 1,
+                      fontSize: 13.5,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      background: "var(--input-bg, #ffffff)",
+                      backgroundColor: "var(--input-bg, #ffffff)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                {editThumbnail ? (
+                  <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, padding: 8, borderRadius: 8, background: "var(--surface-muted, rgba(0,0,0,0.03))", border: "1px solid var(--border)" }}>
+                    <img
+                      src={editThumbnail}
+                      alt="Cover preview"
+                      style={{ width: 42, height: 42, objectFit: "cover", borderRadius: 6, border: "1px solid var(--border)" }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                    <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 12, color: "var(--text-muted)", flex: 1 }}>
+                      {editThumbnail}
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ marginTop: 6, marginBottom: 0, fontSize: 12, color: "var(--text-muted)" }}>
+                    Upload an image or paste a direct image URL.
+                  </p>
+                )}
               </div>
 
               {/* Caption */}
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>
                   Caption / Description
                 </label>
                 <textarea
@@ -1343,9 +1609,10 @@ export function InstagramSettings() {
                     fontSize: 13.5,
                     padding: "11px 14px",
                     borderRadius: 10,
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                    color: modalFieldText,
+                    background: "var(--input-bg, #ffffff)",
+                    backgroundColor: "var(--input-bg, #ffffff)",
+                    border: "1.5px solid var(--border)",
+                    color: "var(--text)",
                     outline: "none",
                     resize: "vertical",
                     boxSizing: "border-box",
@@ -1357,7 +1624,7 @@ export function InstagramSettings() {
               {/* Stats */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>Like Count</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>Like Count</label>
                   <input
                     type="number"
                     min="0"
@@ -1368,16 +1635,17 @@ export function InstagramSettings() {
                       fontSize: 13.5,
                       padding: "10px 14px",
                       borderRadius: 10,
-                      background: "rgba(255, 255, 255, 0.08)",
-                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: modalFieldText,
+                      background: "var(--input-bg, #ffffff)",
+                      backgroundColor: "var(--input-bg, #ffffff)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: modalText }}>View Count</label>
+                  <label style={{ display: "block", marginBottom: 8, fontSize: 13, fontWeight: 700, color: "var(--text)" }}>View Count</label>
                   <input
                     type="number"
                     min="0"
@@ -1388,9 +1656,10 @@ export function InstagramSettings() {
                       fontSize: 13.5,
                       padding: "10px 14px",
                       borderRadius: 10,
-                      background: "rgba(255, 255, 255, 0.08)",
-                      border: "1.5px solid rgba(255, 255, 255, 0.18)",
-                      color: modalFieldText,
+                      background: "var(--input-bg, #ffffff)",
+                      backgroundColor: "var(--input-bg, #ffffff)",
+                      border: "1.5px solid var(--border)",
+                      color: "var(--text)",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -1405,9 +1674,10 @@ export function InstagramSettings() {
                   onClick={() => setShowEditModal(false)}
                   disabled={savingEdit}
                   style={{
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.16)",
-                    color: modalText,
+                    background: "var(--chip, #f1f5f9)",
+                    backgroundColor: "var(--chip, #f1f5f9)",
+                    border: "1px solid var(--border)",
+                    color: "var(--text)",
                     padding: "10px 20px",
                     borderRadius: 10,
                     fontWeight: 650,
@@ -1423,7 +1693,7 @@ export function InstagramSettings() {
                   style={{
                     background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)",
                     border: "none",
-                    color: "var(--white)",
+                    color: "#ffffff",
                     padding: "10px 24px",
                     borderRadius: 10,
                     fontWeight: 750,
@@ -1440,7 +1710,8 @@ export function InstagramSettings() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

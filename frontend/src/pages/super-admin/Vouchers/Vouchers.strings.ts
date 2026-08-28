@@ -49,6 +49,7 @@ export const vouchersStrings = {
     code: "16-Digit Code",
     amount: "Amount Paid",
     status: "Status",
+    paymentAndStatus: "Payment & Status",
     date: "Purchase Date",
     validUntil: "Valid Until",
     viewInvoice: "View Invoice",

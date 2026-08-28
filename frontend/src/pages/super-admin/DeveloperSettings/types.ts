@@ -1,4 +1,4 @@
-export type Tab = "slider" | "contact" | "smtp" | "ai" | "google-oauth" | "payment-gateways" | "backups" | "otp" | "maintenance";
+export type Tab = "hero-socials" | "smtp" | "ai" | "google-oauth" | "payment-gateways" | "otp" | "maintenance";
 
 
 

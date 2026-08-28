@@ -10,7 +10,6 @@ import { confirmExport } from "@/utils/confirmExport";
 import { planAudienceTabs, planCatalogues, plansStrings as strings, type PlanAudience } from "./Plans.strings";
 import type { PlanRow, PlanVisibility } from "./types";
 import { exportPlansExcel, exportPlansPDF } from "./exportHelpers";
-import { PlanVisibilityBar } from "./components/PlanVisibilityBar";
 import { PlansFilterBar } from "./components/PlansFilterBar";
 import { PlansTable } from "./components/PlansTable";
 import { PlanDetailsModal } from "./components/PlanDetailsModal";
@@ -143,6 +142,29 @@ export function Plans() {
     }
   }
 
+  async function handleTogglePopular(plan: PlanRow) {
+    try {
+      const { data: updated } = await apiClient.post<PlanRow>(`/super-admin/plans/${plan.id}/toggle-popular`);
+      setPlans((prev) =>
+        prev.map((p) => {
+          if (p.id === updated.id) {
+            return { ...p, is_popular: updated.is_popular };
+          }
+          // If updated became popular, unmark all other plans in the same audience
+          if (updated.is_popular && p.audience === updated.audience) {
+            return { ...p, is_popular: false };
+          }
+          return p;
+        })
+      );
+      useToastStore.getState().showSuccess(
+        updated.is_popular ? strings.table.popularMarked : strings.table.popularUnmarked
+      );
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Failed to update popular status."));
+    }
+  }
+
   async function handleConfirmDelete() {
     if (!deletingPlan) return;
     setDeleteLoading(true);
@@ -190,14 +212,6 @@ export function Plans() {
         />
       </div>
 
-      <PlanVisibilityBar
-        catalogue={catalogue}
-        visible={Boolean(visibility?.[audience])}
-        loaded={visibility !== null}
-        onChange={changeVisibility}
-        saving={visibilitySaving}
-      />
-
       {audience === "institutes" && <p className="hint plan-audience-note">{strings.editingNote}</p>}
 
       <PlansFilterBar
@@ -210,13 +224,18 @@ export function Plans() {
         resultCount={filteredPlans.length}
         newPlanPath={`${catalogue.basePath}/new?audience=${audience}`}
         newPlanLabel={catalogue.newPlan}
+        visible={Boolean(visibility?.[audience])}
+        visibilityLoaded={visibility !== null}
+        visibilitySaving={visibilitySaving}
+        onVisibilityChange={changeVisibility}
+        visibilityHint={visibility !== null ? (visibility[audience] ? catalogue.visibilityHint : catalogue.hiddenHint) : undefined}
       />
 
       {loading ? (
         <p>{strings.loading}</p>
       ) : (
         <>
-          <PlansTable plans={pagedPlans} basePath={catalogue.basePath} emptyMessage={catalogue.empty} onToggleActive={toggleActive} onView={setViewingPlan} onRequestDelete={setDeletingPlan} />
+          <PlansTable plans={pagedPlans} basePath={catalogue.basePath} emptyMessage={catalogue.empty} onToggleActive={toggleActive} onTogglePopular={handleTogglePopular} onView={setViewingPlan} onRequestDelete={setDeletingPlan} />
           {totalPages > 1 && (
             <div className="pagination">
               <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>

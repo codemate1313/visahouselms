@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -18,7 +18,7 @@ from app.schemas.instagram_settings import (
     InstagramTestConnectionResponse,
     InstagramUpdateFeedItemRequest,
 )
-from app.services import instagram_service
+from app.services import account_service, instagram_service
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,14 @@ admin_router = APIRouter(
     tags=["admin-instagram-settings"],
     dependencies=[Depends(require_super_admin_or_verified_developer)],
 )
+
+
+@admin_router.post("/upload-cover")
+async def upload_instagram_cover(
+    file: UploadFile = File(...),
+):
+    """Upload custom thumbnail/cover image for an Instagram reel/post."""
+    return await account_service.save_temp_avatar(file)
 
 
 def _audit(

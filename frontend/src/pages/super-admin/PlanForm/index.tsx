@@ -22,7 +22,7 @@ const MAX_FEATURES = 12;
 // export it without breaking React Fast Refresh).
 const SUPPORTED_CURRENCIES = ["INR", "USD", "EUR", "GBP"] as const;
 
-const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", grace_days: "0", is_published: false, gst_rate_id: "", is_international_enabled: false, usd_price: "", ai_evaluation_limit: "" };
+const EMPTY = { name: "", description: "", price: "", currency: "INR", duration_days: "30", student_limit: "1", staff_limit: "0", grace_days: "0", is_published: false, is_popular: false, gst_rate_id: "", is_international_enabled: false, usd_price: "", ai_evaluation_limit: "" };
 
 interface GstOption {
   id: number;
@@ -91,6 +91,7 @@ export function PlanForm() {
             staff_limit: String(data.staff_limit),
             grace_days: String(data.grace_days),
             is_published: Boolean(data.is_published),
+            is_popular: Boolean(data.is_popular),
             gst_rate_id: data.gst_rate_id ? String(data.gst_rate_id) : "",
             is_international_enabled: Boolean(data.is_international_enabled),
             usd_price: data.usd_price ? String(Number(data.usd_price)) : "",
@@ -121,6 +122,7 @@ export function PlanForm() {
             ai_evaluation_limit: loadedForm.ai_evaluation_limit ? Number(loadedForm.ai_evaluation_limit) : null,
             audience: loadedAudience,
             is_published: loadedForm.is_published,
+            is_popular: loadedForm.is_popular,
             module_ids: [...loadedSelected],
             features: loadedFeatures.map((item: string) => item.trim()).filter(Boolean),
           };
@@ -181,6 +183,7 @@ export function PlanForm() {
       ai_evaluation_limit: form.ai_evaluation_limit ? Number(form.ai_evaluation_limit) : null,
       audience,
       is_published: form.is_published,
+      is_popular: form.is_popular,
       module_ids: [...selected],
       features: cleanedFeatures,
     };
@@ -377,6 +380,18 @@ export function PlanForm() {
           <span>
             <strong>{catalogue.publishLabel}</strong>
             <small>{catalogue.publishHint}</small>
+          </span>
+        </label>
+        <label className="toggle-row" style={{ marginTop: 12 }}>
+          <Checkbox
+            checked={form.is_popular}
+            onChange={(event) => setForm((current) => ({ ...current, is_popular: event.target.checked }))}
+          />
+          <span>
+            <strong style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <span style={{ color: "#eab308", fontSize: 15 }}>★</span> {strings.popularLabel}
+            </strong>
+            <small>{strings.popularHint}</small>
           </span>
         </label>
         {error && <p className="error-text">{error}</p>}

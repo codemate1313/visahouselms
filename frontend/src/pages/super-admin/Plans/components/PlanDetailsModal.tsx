@@ -22,8 +22,27 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
               <Icon name="plan" />
             </div>
             <div>
-              <div className="plan-dialog-title-row">
+              <div className="plan-dialog-title-row" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <h2 className="plan-dialog-title">{plan.name}</h2>
+                {plan.is_popular && (
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      padding: "2px 8px",
+                      borderRadius: 6,
+                      background: "linear-gradient(135deg, #a31c28 0%, #dc2626 100%)",
+                      color: "#ffffff",
+                      letterSpacing: "0.03em",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      boxShadow: "0 2px 6px rgba(163, 28, 40, 0.25)",
+                    }}
+                  >
+                    ★ POPULAR
+                  </span>
+                )}
                 <Badge tone={!plan.is_active ? "inactive" : plan.is_published ? "green" : "amber"}>
                   {!plan.is_active
                     ? CATALOGUE_STATUS_LABELS.inactive

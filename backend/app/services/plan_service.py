@@ -89,6 +89,7 @@ def _serialize(plan: Plan, subscription_count: Optional[int] = None) -> dict:
         "usd_price": str(plan.usd_price) if plan.usd_price is not None else None,
         "features": list(plan.features or []),
         "ai_evaluation_limit": plan.ai_evaluation_limit,
+        "is_popular": bool(plan.is_popular),
 
         "created_at": plan.created_at,
         "gst_rate_id": plan.gst_rate_id,
@@ -235,6 +236,15 @@ def build_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> Plan:
     modules = _resolve_modules(db, data.get("module_ids") or [])
     if data.get("is_published") and not modules:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Add at least one course before publishing the plan")
+    
+    audience = data.get("audience") or AUDIENCE_DIRECT
+    is_popular = bool(data.get("is_popular", False))
+    if is_popular:
+        # At most 1 plan can be marked as popular in this catalogue
+        db.query(Plan).filter(Plan.audience == audience, Plan.is_popular.is_(True)).update(
+            {"is_popular": False}, synchronize_session=False
+        )
+
     plan = Plan(
         name=data["name"],
         description=data.get("description"),
@@ -245,7 +255,7 @@ def build_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> Plan:
         staff_limit=data["staff_limit"],
         grace_days=data.get("grace_days", 7),
         is_active=True,
-        audience=data.get("audience") or AUDIENCE_DIRECT,
+        audience=audience,
         is_published=data.get("is_published", False),
         # Internal plans back one institute's agreement and stay out of every
         # catalogue listing (see the filter in `list_plans`).
@@ -255,6 +265,7 @@ def build_plan(db: Session, actor: User, data: dict, ip: Optional[str]) -> Plan:
         is_international_enabled=data.get("is_international_enabled", False),
         usd_price=Decimal(str(data["usd_price"])) if data.get("usd_price") is not None else None,
         ai_evaluation_limit=(data.get("ai_evaluation_limit") or None),
+        is_popular=is_popular,
         modules=modules,
     )
 
@@ -282,6 +293,16 @@ def apply_plan_terms(db: Session, actor: User, plan: Plan, data: dict, ip: Optio
         plan.price = Decimal(str(data["price"]))
     if data.get("usd_price") is not None:
         plan.usd_price = Decimal(str(data["usd_price"])) if data.get("usd_price") != "" else None
+    if data.get("is_popular") is not None:
+        if data["is_popular"]:
+            db.query(Plan).filter(
+                Plan.audience == plan.audience,
+                Plan.id != plan.id,
+                Plan.is_popular.is_(True),
+            ).update({"is_popular": False}, synchronize_session=False)
+            plan.is_popular = True
+        else:
+            plan.is_popular = False
     if data.get("features") is not None:
         plan.features = _clean_features(data["features"])
     if data.get("module_ids") is not None:
@@ -336,6 +357,18 @@ def update_plan(db: Session, actor: User, plan_id: int, data: dict, ip: Optional
         # values override it, mirroring Institute.ai_student_monthly_limit.
         plan.ai_evaluation_limit = data["ai_evaluation_limit"] or None
 
+    if "is_popular" in data and data["is_popular"] is not None:
+        if data["is_popular"]:
+            target_audience = data.get("audience") or plan.audience
+            db.query(Plan).filter(
+                Plan.audience == target_audience,
+                Plan.id != plan.id,
+                Plan.is_popular.is_(True),
+            ).update({"is_popular": False}, synchronize_session=False)
+            plan.is_popular = True
+        else:
+            plan.is_popular = False
+
     if "features" in data and data["features"] is not None:
         plan.features = _clean_features(data["features"])
     if "module_ids" in data and data["module_ids"] is not None:
@@ -345,6 +378,27 @@ def update_plan(db: Session, actor: User, plan_id: int, data: dict, ip: Optional
 
     db.add(plan)
     _audit(db, actor, "plan.update", plan.id, ip)
+    db.commit()
+    db.refresh(plan)
+    count = db.query(Subscription).filter(Subscription.plan_id == plan.id).count()
+    return _serialize(plan, count)
+
+
+def set_plan_popular(db: Session, actor: User, plan_id: int, is_popular: bool, ip: Optional[str]) -> dict:
+    plan = get_plan_or_404(db, plan_id)
+    if is_popular:
+        # Unmark any other popular plan in the same catalogue
+        db.query(Plan).filter(
+            Plan.audience == plan.audience,
+            Plan.id != plan.id,
+            Plan.is_popular.is_(True),
+        ).update({"is_popular": False}, synchronize_session=False)
+        plan.is_popular = True
+    else:
+        plan.is_popular = False
+
+    db.add(plan)
+    _audit(db, actor, "plan.set_popular", plan.id, ip, {"is_popular": plan.is_popular, "audience": plan.audience})
     db.commit()
     db.refresh(plan)
     count = db.query(Subscription).filter(Subscription.plan_id == plan.id).count()
@@ -509,13 +563,17 @@ def _landing_group(db: Session, audience: str, counts: dict) -> List[dict]:
             }
         )
 
-    # "Most popular" is earned by subscriber count; with no subscribers yet the
-    # middle card carries the badge so the layout still has a focal point.
-    if result:
+    # If the Super Admin explicitly set is_popular on a plan, honor it.
+    explicit_popular = next((p for p in plans if p.is_popular), None)
+    if explicit_popular:
+        for item in result:
+            item["is_popular"] = (item["id"] == explicit_popular.id)
+    elif result:
+        # Fall back to subscriber count or middle card if no plan was explicitly marked
         top = max(result, key=lambda item: item["subscription_count"])
         popular = top if top["subscription_count"] > 0 else result[len(result) // 2]
         for item in result:
-            item["is_popular"] = item is popular
+            item["is_popular"] = (item is popular)
 
     return result
 

@@ -44,6 +44,34 @@ function formatPdfCurrency(amount: string | number | null | undefined, currency?
   return `${symbol} ${formattedNumber}`;
 }
 
+async function loadLogoDataUrl(): Promise<string | null> {
+  const sources = [
+    "/brand/visa-house-round-logo.png",
+    "/brand/vh-mark.png",
+    "/brand/vh-badge.png",
+    "/brand/vh-mark-dark-96.png",
+  ];
+  for (const src of sources) {
+    try {
+      const res = await fetch(src);
+      if (!res.ok) continue;
+      const blob = await res.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === "string") resolve(reader.result);
+          else reject();
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      // try next fallback image
+    }
+  }
+  return null;
+}
+
 export function Invoice() {
   const { id } = useParams();
   const [payment, setPayment] = useState<PaymentDetail | null>(null);
@@ -83,45 +111,64 @@ export function Invoice() {
     window.print();
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!payment) return;
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const invNum = payment.invoice_number || `INV-${String(payment.id).padStart(6, "0")}`;
     const currencyCode = payment.currency || "INR";
+    const logoData = await loadLogoDataUrl();
 
-    // 1. Top Decorative Brand Accent Bar
-    doc.setFillColor(163, 28, 40); // Crimson brand color
-    doc.rect(0, 0, 210, 4, "F");
-
-    // 2. Company Brand & Document Header (y: 14 to 36)
-    // Left: Brand Logo Mark + Company Name
+    // 1. Top Subtle Brand Accent
     doc.setFillColor(163, 28, 40);
-    doc.roundedRect(15, 14, 12, 12, 2.5, 2.5, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("VH", 21, 21.5, { align: "center" });
+    doc.rect(0, 0, 210, 3, "F");
+
+    // 2. Company Brand & Document Header (y: 14 to 34)
+    // Left: Official Visa House Logo + Company Name
+    if (logoData) {
+      try {
+        doc.addImage(logoData, "PNG", 15, 12, 16, 16);
+      } catch {
+        // Fallback badge if image decode fails
+        doc.setFillColor(163, 28, 40);
+        doc.roundedRect(15, 12, 16, 16, 2, 2, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text("VH", 23, 22, { align: "center" });
+      }
+    } else {
+      doc.setFillColor(163, 28, 40);
+      doc.roundedRect(15, 12, 16, 16, 2, 2, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("VH", 23, 22, { align: "center" });
+    }
 
     doc.setTextColor(15, 23, 42); // Slate 900
-    doc.setFontSize(15);
+    doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("VISA HOUSE", 30, 20);
+    doc.text("VISA HOUSE", 35, 19);
 
     doc.setTextColor(100, 116, 139); // Slate 500
-    doc.setFontSize(8);
+    doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
-    doc.text("Language CERT Assessment Platform • Official Tax Invoice & Payment Receipt", 30, 25);
+    doc.text("Language CERT Assessment Platform", 35, 24);
+
+    doc.setFontSize(7.5);
+    doc.setTextColor(148, 163, 184); // Slate 400
+    doc.text("support@visahouse.com  •  www.visahouse.com", 35, 28.5);
 
     // Right: TAX INVOICE & Invoice Number
     doc.setTextColor(15, 23, 42);
-    doc.setFontSize(15);
+    doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("TAX INVOICE", 195, 19, { align: "right" });
+    doc.text("TAX INVOICE", 195, 18, { align: "right" });
 
     doc.setTextColor(163, 28, 40);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(invNum, 195, 24.5, { align: "right" });
+    doc.text(`INVOICE #: ${invNum}`, 195, 23.5, { align: "right" });
 
     // Status Badge Pill
     const isPaid = payment.status === "paid" || Number(payment.due_amount) === 0;
@@ -131,93 +178,109 @@ export function Invoice() {
     if (isPaid) {
       doc.setFillColor(220, 252, 231); // Light emerald
       doc.setDrawColor(134, 239, 172);
-      doc.roundedRect(173, 27.5, 22, 5.5, 1.5, 1.5, "FD");
+      doc.roundedRect(173, 26, 22, 5.5, 1.5, 1.5, "FD");
       doc.setTextColor(22, 101, 52); // Dark green
     } else if (isPartial) {
       doc.setFillColor(254, 243, 199); // Light amber
       doc.setDrawColor(252, 211, 77);
-      doc.roundedRect(171, 27.5, 24, 5.5, 1.5, 1.5, "FD");
+      doc.roundedRect(171, 26, 24, 5.5, 1.5, 1.5, "FD");
       doc.setTextColor(146, 64, 14);
     } else {
       doc.setFillColor(254, 226, 226); // Light red
       doc.setDrawColor(252, 165, 165);
-      doc.roundedRect(168, 27.5, 27, 5.5, 1.5, 1.5, "FD");
+      doc.roundedRect(168, 26, 27, 5.5, 1.5, 1.5, "FD");
       doc.setTextColor(153, 27, 27);
     }
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.text(statusLabel, 195 - (isPaid ? 11 : isPartial ? 12 : 13.5), 31.5, { align: "center" });
+    doc.text(statusLabel, 195 - (isPaid ? 11 : isPartial ? 12 : 13.5), 30, { align: "center" });
 
     // Header bottom border
     doc.setDrawColor(226, 232, 240); // Slate 200
     doc.setLineWidth(0.3);
-    doc.line(15, 36, 195, 36);
+    doc.line(15, 34, 195, 34);
 
-    // 3. Metadata & Invoice Details (y: 40 to 72)
-    // Box 1: Billed To (x: 15, width: 87, height: 32)
+    // 3. Metadata & Invoice Details (y: 37 to 69)
+    const cardY = 37;
+    const cardHeight = 31;
+
+    // Box 1: Billed To (x: 15, width: 88, height: 31)
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(15, 40, 87, 32, 2, 2, "F");
+    doc.roundedRect(15, cardY, 88, cardHeight, 2, 2, "F");
     doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(15, 40, 87, 32, 2, 2, "S");
+    doc.roundedRect(15, cardY, 88, cardHeight, 2, 2, "S");
 
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(100, 116, 139);
-    doc.text("BILLED TO", 20, 46);
+    doc.text("BILLED TO", 20, cardY + 6);
 
-    doc.setFontSize(10.5);
+    doc.setFontSize(9.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
     const billedName = payment.institute_name || strings.directCustomer;
-    doc.text(billedName, 20, 52.5);
+    doc.text(billedName, 20, cardY + 11.5);
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(71, 85, 105);
-    doc.text(`Plan: ${payment.plan_name || "Assessment Access Plan"}`, 20, 58);
+    doc.text(`Plan: ${payment.plan_name || "Assessment Access Plan"} (${payment.source.toUpperCase()})`, 20, cardY + 16.5);
     if (payment.customer_email) {
-      doc.text(`Email: ${payment.customer_email}`, 20, 63);
+      doc.text(`Email: ${payment.customer_email}`, 20, cardY + 21);
     } else {
-      doc.text(`Channel: ${payment.source.toUpperCase()} Student`, 20, 63);
+      doc.text(`Channel: Direct Student Portal`, 20, cardY + 21);
     }
-    doc.text(`Issue Date: ${formatDate(payment.created_at)}`, 20, 68);
+    doc.text(`Issue Date: ${formatDate(payment.created_at)}`, 20, cardY + 25.5);
 
-    // Box 2: Payment Information (x: 108, width: 87, height: 32)
+    // Box 2: Payment Information (x: 107, width: 88, height: 31)
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(108, 40, 87, 32, 2, 2, "F");
+    doc.roundedRect(107, cardY, 88, cardHeight, 2, 2, "F");
     doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(108, 40, 87, 32, 2, 2, "S");
+    doc.roundedRect(107, cardY, 88, cardHeight, 2, 2, "S");
 
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(100, 116, 139);
-    doc.text("PAYMENT INFORMATION", 113, 46);
+    doc.text("PAYMENT DETAILS", 112, cardY + 6);
 
-    doc.setFontSize(10.5);
+    doc.setFontSize(9.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
-    doc.text(payment.payment_method_name || payment.gateway || "Card / Online", 113, 52.5);
+    const methodDisplay = (payment.payment_method_name || payment.gateway || "Online Payment").toUpperCase();
+    doc.text(methodDisplay, 112, cardY + 11.5);
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(71, 85, 105);
-    doc.text(`Gateway: ${(payment.gateway || "Razorpay").toUpperCase()}`, 113, 58);
+    doc.text(`Gateway: ${(payment.gateway || "Razorpay").toUpperCase()}`, 112, cardY + 16.5);
+
+    // Format transaction / order references cleanly
     if (payment.gateway_reference) {
-      const cleanRef = payment.gateway_reference.length > 34
-        ? payment.gateway_reference.slice(0, 32) + "..."
-        : payment.gateway_reference;
-      doc.text(`Transaction Ref: ${cleanRef}`, 113, 63);
+      if (payment.gateway_reference.includes("|")) {
+        const parts = payment.gateway_reference.split("|").map((s) => s.trim());
+        const orderPart = parts[0] ? parts[0].replace(/^Order:\s*/i, "Order: ") : "";
+        const payPart = parts[1] ? parts[1].replace(/^Payment:\s*/i, "Pay ID: ") : "";
+        doc.text(orderPart, 112, cardY + 21, { maxWidth: 78 });
+        if (payPart) {
+          doc.text(payPart, 112, cardY + 25.5, { maxWidth: 78 });
+        } else if (payment.paid_at) {
+          doc.text(`Settled On: ${formatDate(payment.paid_at)}`, 112, cardY + 25.5);
+        }
+      } else {
+        doc.text(`Ref: ${payment.gateway_reference}`, 112, cardY + 21, { maxWidth: 78 });
+        if (payment.paid_at) {
+          doc.text(`Settled On: ${formatDate(payment.paid_at)}`, 112, cardY + 25.5);
+        }
+      }
+    } else if (payment.paid_at) {
+      doc.text(`Settled On: ${formatDate(payment.paid_at)}`, 112, cardY + 21);
+      doc.text(`Status: Completed & Verified`, 112, cardY + 25.5);
     } else {
-      doc.text("Transaction Ref: N/A", 113, 63);
-    }
-    if (payment.paid_at) {
-      doc.text(`Fully Paid On: ${formatDate(payment.paid_at)}`, 113, 68);
-    } else {
-      doc.text(`Status: Pending Settlement`, 113, 68);
+      doc.text(`Status: Pending Settlement`, 112, cardY + 21);
     }
 
-    // 4. Line Items Table (y starts at 77)
-    const tableHead = [["#", "ITEM & DESCRIPTION", "PLAN / AUDIENCE", "QTY", "RATE", "NET AMOUNT"]];
+    // 4. Line Items Table (y starts at 72)
+    const tableHead = [["#", "ITEM DESCRIPTION", "PLAN / CATEGORY", "QTY", "RATE", "NET AMOUNT"]];
 
     const tableBody = [
       [
@@ -242,7 +305,7 @@ export function Invoice() {
     }
 
     autoTable(doc, {
-      startY: 77,
+      startY: 72,
       margin: { left: 15, right: 15 },
       head: tableHead,
       body: tableBody,
@@ -277,84 +340,86 @@ export function Invoice() {
 
     const tableFinalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 
-    // 5. Summary Section (Below table)
-    const summaryBoxY = tableFinalY + 6;
-    const summaryBoxX = 115;
-    const summaryBoxW = 80;
+    // 5. Summary Section & Clear Terms & Conditions (Below table)
+    const bottomBoxY = tableFinalY + 6;
+    const bottomBoxHeight = 44;
+    const termsBoxX = 15;
+    const termsBoxW = 102;
+    const summaryBoxX = 122;
+    const summaryBoxW = 73;
 
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(summaryBoxX, summaryBoxY, summaryBoxW, 36, 2, 2, "F");
+    // Left Card: Clean Terms & Conditions Card with word-wrapped bullet points
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(termsBoxX, bottomBoxY, termsBoxW, bottomBoxHeight, 2, 2, "F");
     doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(summaryBoxX, summaryBoxY, summaryBoxW, 36, 2, 2, "S");
+    doc.roundedRect(termsBoxX, bottomBoxY, termsBoxW, bottomBoxHeight, 2, 2, "S");
 
-    // Summary lines
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text("TERMS & CONDITIONS", termsBoxX + 5, bottomBoxY + 7.5);
+
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text("• Access License: Grants access to Language CERT module test exams.", termsBoxX + 5, bottomBoxY + 14, { maxWidth: 92 });
+    doc.text("• Non-Transferable: Digital subscriptions and vouchers are strictly non-transferable.", termsBoxX + 5, bottomBoxY + 21, { maxWidth: 92 });
+    doc.text("• Billing Support: Reach out to support@visahouse.com for any billing inquiries.", termsBoxX + 5, bottomBoxY + 28, { maxWidth: 92 });
+    doc.text("• Authentic Document: System generated electronic tax invoice. No signature needed.", termsBoxX + 5, bottomBoxY + 35, { maxWidth: 92 });
+
+    // Right Card: Financial Summary
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(summaryBoxX, bottomBoxY, summaryBoxW, bottomBoxHeight, 2, 2, "F");
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(summaryBoxX, bottomBoxY, summaryBoxW, bottomBoxHeight, 2, 2, "S");
+
+    // Summary content
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 116, 139);
-    doc.text("Total Invoice Amount:", summaryBoxX + 4, summaryBoxY + 7);
+    doc.text("Total Invoice Amount:", summaryBoxX + 4, bottomBoxY + 9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
-    doc.text(formatPdfCurrency(payment.final_amount, currencyCode), summaryBoxX + summaryBoxW - 4, summaryBoxY + 7, { align: "right" });
+    doc.text(formatPdfCurrency(payment.final_amount, currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 9, { align: "right" });
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 116, 139);
-    doc.text("Total Settled (Paid):", summaryBoxX + 4, summaryBoxY + 14);
+    doc.text("Total Settled (Paid):", summaryBoxX + 4, bottomBoxY + 18);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(22, 101, 52); // Green
-    doc.text(formatPdfCurrency(payment.amount_paid, currencyCode), summaryBoxX + summaryBoxW - 4, summaryBoxY + 14, { align: "right" });
+    doc.text(formatPdfCurrency(payment.amount_paid, currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 18, { align: "right" });
 
     doc.setDrawColor(226, 232, 240);
-    doc.line(summaryBoxX + 4, summaryBoxY + 18, summaryBoxX + summaryBoxW - 4, summaryBoxY + 18);
+    doc.line(summaryBoxX + 4, bottomBoxY + 24, summaryBoxX + summaryBoxW - 4, bottomBoxY + 24);
 
     const dueAmt = Number(payment.due_amount) || 0;
     doc.setFontSize(9.5);
     doc.setFont("helvetica", "bold");
     if (dueAmt > 0) {
       doc.setTextColor(220, 38, 38); // Red
-      doc.text("Balance Outstanding:", summaryBoxX + 4, summaryBoxY + 26);
-      doc.text(formatPdfCurrency(payment.due_amount, currencyCode), summaryBoxX + summaryBoxW - 4, summaryBoxY + 26, { align: "right" });
+      doc.text("Balance Outstanding:", summaryBoxX + 4, bottomBoxY + 34);
+      doc.text(formatPdfCurrency(payment.due_amount, currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 34, { align: "right" });
     } else {
       doc.setTextColor(15, 23, 42);
-      doc.text("Balance Outstanding:", summaryBoxX + 4, summaryBoxY + 26);
+      doc.text("Balance Outstanding:", summaryBoxX + 4, bottomBoxY + 34);
       doc.setTextColor(22, 101, 52);
-      doc.text(formatPdfCurrency("0.00", currencyCode), summaryBoxX + summaryBoxW - 4, summaryBoxY + 26, { align: "right" });
+      doc.text(formatPdfCurrency("0.00", currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 34, { align: "right" });
     }
 
-    // Left Note Box beside Summary
-    const noteBoxY = summaryBoxY;
-    const noteBoxW = 90;
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(15, noteBoxY, noteBoxW, 36, 2, 2, "F");
-    doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(15, noteBoxY, noteBoxW, 36, 2, 2, "S");
-
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(15, 23, 42);
-    doc.text("TERMS & CONDITIONS", 20, noteBoxY + 7);
-
-    doc.setFontSize(7.5);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 116, 139);
-    doc.text("• This payment grants authorized access to Language CERT module exams.", 20, noteBoxY + 13);
-    doc.text("• Digital subscriptions are non-transferable and subject to platform terms.", 20, noteBoxY + 18);
-    doc.text("• For invoice corrections or refunds, reach out to billing support.", 20, noteBoxY + 23);
-    doc.text("• Computer-generated authentic electronic tax receipt. No signature needed.", 20, noteBoxY + 28);
-
     // 6. Security Seal & Corporate Footer
-    const footerY = 274;
+    const footerY = 276;
     doc.setDrawColor(226, 232, 240);
     doc.line(15, footerY, 195, footerY);
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(163, 28, 40);
-    doc.text("VERIFIED SECURE RECEIPT • VISA HOUSE LANGUAGE CERT", 105, footerY + 6, { align: "center" });
-
-    doc.setFontSize(7.5);
-    doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 116, 139);
-    doc.text("Contact: support@visahouse.com • Website: www.visahouse.com • Automated System Generated Invoice", 105, footerY + 11, { align: "center" });
+    doc.text("VISA HOUSE • LANGUAGE CERT ASSESSMENT PLATFORM", 105, footerY + 6, { align: "center" });
+
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(148, 163, 184);
+    doc.text("support@visahouse.com  •  www.visahouse.com  •  Computer Generated Tax Invoice", 105, footerY + 11, { align: "center" });
 
     doc.save(`Invoice_${invNum}.pdf`);
     showToast(strings.toasts.pdfGenerated);

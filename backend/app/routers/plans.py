@@ -128,6 +128,17 @@ def reactivate_plan(
     return plan_service.set_plan_active(db, actor, plan_id, True, _client_ip(request))
 
 
+@router.post("/{plan_id}/toggle-popular")
+def toggle_plan_popular(
+    plan_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    plan = plan_service.get_plan_or_404(db, plan_id)
+    return plan_service.set_plan_popular(db, actor, plan_id, not plan.is_popular, _client_ip(request))
+
+
 @router.delete("/{plan_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_plan(
     plan_id: int,

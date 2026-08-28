@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
-import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Button, Modal, RequiredMark, SegmentedControl } from "@/components/ui";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
@@ -23,8 +22,8 @@ import { isEqual } from "@/utils/isEqual";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
 
 const LOCATION_OPTIONS = [
-  { label: "Home Page Hero", value: "home" },
-  { label: "Login & Register Hero", value: "login" },
+  { label: "Home Page", value: "home" },
+  { label: "Login & Register", value: "login" },
 ];
 
 /** Fields the backend accepts on create/update, taken off an edited record. */
@@ -65,6 +64,9 @@ export function HeroSliderTab() {
   const [updatingSlideId, setUpdatingSlideId] = useState<number | null>(null);
   const slideFileInputRef = useRef<HTMLInputElement>(null);
   const targetSlideIdRef = useRef<number | null>(null);
+
+  // Slide expand/collapse state
+  const [editingSlideId, setEditingSlideId] = useState<number | null>(null);
 
   const applyServerSlides = useCallback((rows: HeroSlideRecord[]) => {
     savedRef.current = Object.fromEntries(rows.map((row) => [row.id, row]));
@@ -121,28 +123,168 @@ export function HeroSliderTab() {
     }
   }
 
-  async function handleSaveSlide(slide: HeroSlideRecord) {
-    if (await saveSlide(slide)) showSuccess("Slide saved and live for every visitor.", "Slide Saved");
+  async function handleRemove(slide: HeroSlideRecord) {
+    const confirmed = await confirmDelete(
+      `Remove slide "${slide.title}"? This cannot be undone.`,
+      "Delete Slide",
+    );
+    if (!confirmed) return;
+    setBusy(true);
+    try {
+      await deleteHeroSlide(slide.id);
+      delete savedRef.current[slide.id];
+      setSlides((prev) => prev.filter((s) => s.id !== slide.id));
+      showSuccess("Slide removed.", "Deleted");
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Failed to remove slide."), "Delete Failed");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  async function handleSaveAll() {
-    const dirty = slides.filter(isDirty);
-    if (dirty.length === 0) {
-      showSuccess("Everything is already saved.", "No Changes");
+  async function handleReset() {
+    const confirmed = await confirmAction(
+      `Reset ${isHome ? "Home" : "Login"} hero slides to the shipped defaults? Any custom slides will be replaced.`,
+      {
+        title: "Reset Slides to Defaults",
+        confirmText: t.resetLabel,
+        variant: "danger",
+      },
+    );
+    if (!confirmed) return;
+    setBusy(true);
+    try {
+      const rows = await resetHeroSlides(location);
+      applyServerSlides(rows);
+      showSuccess(t.resetToastMessage, t.resetToastTitle);
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Failed to reset slides."), "Reset Failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleOpenAddModal() {
+    setNewSlide(emptyHeroSlideDraft(location));
+    setSelectedFile(null);
+    if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
+    setFilePreviewUrl("");
+    setUploadError(null);
+    setImageMode("upload");
+    setIsAddModalOpen(true);
+  }
+
+  function handleFileSelected(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please select a valid image file (PNG, JPG, WebP, etc.)");
       return;
     }
-    setBusy(true);
-    let saved = 0;
-    for (const slide of dirty) {
-      if (await saveSlide(slide)) saved += 1;
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("Image file size should be less than 10MB");
+      return;
     }
-    setBusy(false);
-    if (saved > 0) showSuccess(`${saved} slide${saved === 1 ? "" : "s"} saved and live.`, "Slides Saved");
+    setUploadError(null);
+    setSelectedFile(file);
+    if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
+    setFilePreviewUrl(URL.createObjectURL(file));
   }
 
-  function handleRevert(slide: HeroSlideRecord) {
-    const saved = savedRef.current[slide.id];
-    if (saved) setSlides((prev) => prev.map((row) => (row.id === slide.id ? saved : row)));
+  function handleFileInputChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleFileSelected(file);
+  }
+
+  function handleDragOver(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave() {
+    setIsDragging(false);
+  }
+
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      handleFileSelected(files[0]);
+    }
+  }
+
+  async function handleUploadImage(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("category", "hero");
+    const res = await apiClient.post<{ url: string }>("/media/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data.url;
+  }
+
+  async function handleAddSlideSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!newSlide.title.trim()) {
+      setUploadError("Title/Heading is required.");
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    try {
+      let finalImageUrl = newSlide.image_url;
+      if (imageMode === "upload") {
+        if (!selectedFile) {
+          setUploadError("Please choose or drop an image file to upload.");
+          setUploading(false);
+          return;
+        }
+        finalImageUrl = await handleUploadImage(selectedFile);
+      } else if (!finalImageUrl.trim()) {
+        setUploadError("Please provide an image URL.");
+        setUploading(false);
+        return;
+      }
+      const draftToCreate: HeroSlideDraft = {
+        ...newSlide,
+        image_url: finalImageUrl,
+        location,
+      };
+      const created = await createHeroSlide(draftToCreate);
+      savedRef.current[created.id] = created;
+      setSlides((prev) => [...prev, created]);
+      setIsAddModalOpen(false);
+      showSuccess(t.addedToastMessage, t.addedToastTitle);
+    } catch (err: unknown) {
+      setUploadError(extractErrorMessage(err, "Failed to create slide."));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function triggerSlideImageUpload(slideId: number) {
+    targetSlideIdRef.current = slideId;
+    slideFileInputRef.current?.click();
+  }
+
+  async function handleSlideFileInputChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    const slideId = targetSlideIdRef.current;
+    if (!file || !slideId) return;
+    if (!file.type.startsWith("image/")) {
+      showError("Please select a valid image file.", "Invalid File");
+      return;
+    }
+    setUpdatingSlideId(slideId);
+    try {
+      const uploadedUrl = await handleUploadImage(file);
+      editSlide(slideId, { image_url: uploadedUrl });
+      showSuccess("Image uploaded. Remember to save changes.", "Image Ready");
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, "Failed to upload image file."), "Upload Failed");
+    } finally {
+      setUpdatingSlideId(null);
+      if (slideFileInputRef.current) slideFileInputRef.current.value = "";
+    }
   }
 
   async function handleMove(index: number, direction: -1 | 1) {
@@ -167,169 +309,28 @@ export function HeroSliderTab() {
     }
   }
 
-  async function handleRemove(slide: HeroSlideRecord) {
-    if (!(await confirmDelete(`Remove the slide "${slide.title}" from this carousel?`, "Remove Slide"))) return;
-    setBusy(true);
-    try {
-      await deleteHeroSlide(slide.id);
-      delete savedRef.current[slide.id];
-      setSlides((prev) => prev.filter((row) => row.id !== slide.id));
-      showSuccess("Slide removed.", "Removed");
-    } catch (err: unknown) {
-      showError(extractErrorMessage(err, "Failed to remove this slide."), "Remove Failed");
-    } finally {
-      setBusy(false);
-    }
+  function handleRevert(slide: HeroSlideRecord) {
+    const saved = savedRef.current[slide.id];
+    if (saved) setSlides((prev) => prev.map((row) => (row.id === slide.id ? saved : row)));
   }
 
-  async function handleReset() {
-    const label = isHome ? "home page" : "login & register";
-    const confirmed = await confirmAction(
-      `This replaces every ${label} slide with the shipped defaults. Any custom slides and images for this carousel are lost.`,
-      { title: "Reset to Default Slides", confirmText: "Reset Slides", variant: "warning" },
-    );
-    if (!confirmed) return;
-    setBusy(true);
-    try {
-      applyServerSlides(await resetHeroSlides(location));
-      showSuccess(t.resetToastMessage, t.resetToastTitle);
-    } catch (err: unknown) {
-      showError(extractErrorMessage(err, "Failed to reset slides."), "Reset Failed");
-    } finally {
-      setBusy(false);
-    }
+  function editStat(slide: HeroSlideRecord, statIndex: number, patch: { value?: string; label?: string }) {
+    const stats = [...(slide.stats ?? [])];
+    if (!stats[statIndex]) return;
+    stats[statIndex] = { ...stats[statIndex], ...patch };
+    editSlide(slide.id, { stats });
   }
 
-  async function uploadImage(file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append("file", file);
-    const { data } = await apiClient.post<{ url: string }>("/super-admin/upload-image", formData);
-    return data.url;
+  function addStat(slide: HeroSlideRecord) {
+    const stats = [...(slide.stats ?? []), { value: "New Stat", label: "Metric label" }];
+    editSlide(slide.id, { stats });
   }
 
-  // ---- Add dialog ----------------------------------------------------------
-
-  async function handleDialogFileSelect(file: File) {
-    if (!file.type.startsWith("image/")) {
-      setUploadError("Please select a valid image file (PNG, JPG, WebP, GIF).");
-      return;
-    }
-    setSelectedFile(file);
-    setFilePreviewUrl(URL.createObjectURL(file));
-    setUploadError(null);
-    setUploading(true);
-    try {
-      const url = await uploadImage(file);
-      setNewSlide((prev) => ({ ...prev, image_url: url }));
-    } catch (err: unknown) {
-      setUploadError(extractErrorMessage(err, "Failed to upload image. You can also provide a direct URL."));
-    } finally {
-      setUploading(false);
-    }
+  function removeStat(slide: HeroSlideRecord, statIndex: number) {
+    const stats = (slide.stats ?? []).filter((_, i) => i !== statIndex);
+    editSlide(slide.id, { stats });
   }
 
-  function handleFileInputChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) void handleDialogFileSelect(file);
-  }
-
-  function handleDragOver(e: DragEvent) {
-    e.preventDefault();
-    setIsDragging(true);
-  }
-
-  function handleDragLeave(e: DragEvent) {
-    e.preventDefault();
-    setIsDragging(false);
-  }
-
-  function handleDrop(e: DragEvent) {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) void handleDialogFileSelect(file);
-  }
-
-  function handleOpenAddModal() {
-    setNewSlide(emptyHeroSlideDraft(location));
-    setSelectedFile(null);
-    setFilePreviewUrl("");
-    setUploadError(null);
-    setUploading(false);
-    setImageMode("upload");
-    if (dialogFileInputRef.current) dialogFileInputRef.current.value = "";
-    setIsAddModalOpen(true);
-  }
-
-  async function handleAddSlideSubmit(e: FormEvent) {
-    e.preventDefault();
-    const imageUrl = newSlide.image_url.trim();
-    if (!imageUrl) {
-      showError("Please upload an image or enter an Image URL.", "Image Required");
-      return;
-    }
-    if (!newSlide.title.trim()) {
-      showError("Please enter a slide title.", "Title Required");
-      return;
-    }
-    setBusy(true);
-    try {
-      const created = await createHeroSlide({
-        ...newSlide,
-        location,
-        image_url: imageUrl,
-        title: newSlide.title.trim(),
-        subtitle: (newSlide.subtitle || "").trim() || t.defaultSubtitle,
-        badge: (newSlide.badge || "").trim() || t.defaultBadge,
-        display_order: slides.length,
-      });
-      savedRef.current[created.id] = created;
-      setSlides((prev) => [...prev, created]);
-      setIsAddModalOpen(false);
-      showSuccess(t.addedToastMessage, t.addedToastTitle);
-    } catch (err: unknown) {
-      showError(extractErrorMessage(err, "Failed to add the slide."), "Add Failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  // ---- Per-slide image replacement ----------------------------------------
-
-  function triggerSlideImageUpload(slideId: number) {
-    targetSlideIdRef.current = slideId;
-    slideFileInputRef.current?.click();
-  }
-
-  async function handleSlideFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    const slideId = targetSlideIdRef.current;
-    if (!file || slideId === null) return;
-    if (!file.type.startsWith("image/")) {
-      showError("Please select a valid image file.", "Invalid Format");
-      return;
-    }
-    setUpdatingSlideId(slideId);
-    try {
-      const url = await uploadImage(file);
-      const current = slides.find((row) => row.id === slideId);
-      if (current) {
-        const updated = await updateHeroSlide(slideId, { ...toDraft(current), image_url: url });
-        savedRef.current[updated.id] = updated;
-        setSlides((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
-      }
-      showSuccess("Slide image updated and live.", "Image Uploaded");
-    } catch (err: unknown) {
-      showError(extractErrorMessage(err, "Failed to upload slide image."), "Upload Failed");
-    } finally {
-      setUpdatingSlideId(null);
-      targetSlideIdRef.current = null;
-      if (slideFileInputRef.current) slideFileInputRef.current.value = "";
-    }
-  }
-
-  /** Switching carousels reloads from the server, so unsaved edits would be
-   * dropped without warning. */
   async function handleLocationChange(next: HeroLocation) {
     if (next === location) return;
     if (dirtyCount > 0) {
@@ -342,70 +343,40 @@ export function HeroSliderTab() {
     setLocation(next);
   }
 
-  // ---- Stat chips (home hero only) ----------------------------------------
-
-  function editStat(slide: HeroSlideRecord, index: number, patch: { value?: string; label?: string }) {
-    const stats = (slide.stats ?? []).map((stat, i) => (i === index ? { ...stat, ...patch } : stat));
-    editSlide(slide.id, { stats });
-  }
-
-  function addStat(slide: HeroSlideRecord) {
-    editSlide(slide.id, { stats: [...(slide.stats ?? []), { value: "", label: "" }] });
-  }
-
-  function removeStat(slide: HeroSlideRecord, index: number) {
-    editSlide(slide.id, { stats: (slide.stats ?? []).filter((_, i) => i !== index) });
-  }
-
   return (
-    <CollapsiblePanel
-      className="form-card wide developer-panel-card"
-      title={t.title}
-      description={t.description}
-    >
+    <div className="login-slider-tab-content">
+      {/* Hidden file input for slide image update */}
       <input
-        type="file"
         ref={slideFileInputRef}
-        onChange={handleSlideFileChange}
+        type="file"
         accept="image/*"
         style={{ display: "none" }}
+        onChange={(e) => void handleSlideFileInputChange(e)}
       />
-
-      <SegmentedControl
-        ariaLabel="Hero carousel"
-        className="hero-slider-location-tabs"
-        onChange={(val) => void handleLocationChange(val as HeroLocation)}
-        options={LOCATION_OPTIONS}
-        value={location}
-      />
-
-      <p className="hint" style={{ margin: "0 0 14px 0", fontSize: 12.5 }}>
-        {isHome ? t.homeHint : t.loginHint}
-      </p>
 
       <div className="login-slider-toolbar">
         <div className="login-slider-toolbar-left">
-          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+          <h3 className="section-title" style={{ margin: 0, display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 700 }}>
             {t.currentSlidesTitle}
             <span className="count-chip">{slides.length}</span>
           </h3>
-          <p className="hint" style={{ margin: 0, fontSize: 12 }}>
-            {t.currentSlidesDescription}
-          </p>
+
+          <SegmentedControl
+            ariaLabel="Hero slider placement"
+            className="hero-slider-location-tabs"
+            onChange={(val) => handleLocationChange(val as HeroLocation)}
+            options={LOCATION_OPTIONS}
+            size="sm"
+            value={location}
+          />
         </div>
 
         <div className="login-slider-toolbar-actions">
-          {dirtyCount > 0 && (
-            <Button type="button" variant="primary" onClick={() => void handleSaveAll()} disabled={busy}>
-              <Icon name="check" />
-              Save {dirtyCount} change{dirtyCount === 1 ? "" : "s"}
-            </Button>
-          )}
-          <Button type="button" variant="secondary" onClick={() => void handleReset()} disabled={busy}>
+          <Button type="button" variant="secondary" size="sm" onClick={() => void handleReset()} disabled={busy}>
             <Icon name="restore" />
             {t.resetLabel}
           </Button>
-          <Button type="button" variant="primary" onClick={handleOpenAddModal} disabled={busy}>
+          <Button type="button" variant="primary" size="sm" onClick={handleOpenAddModal} disabled={busy}>
             <Icon name="plus" />
             {t.addLabel}
           </Button>
@@ -421,239 +392,366 @@ export function HeroSliderTab() {
       <div className="login-slider-cards-list">
         {slides.map((slide, index) => {
           const dirty = isDirty(slide);
-          return (
-            <div key={slide.id} className={`slide-item-card${dirty ? " is-dirty" : ""}`}>
-              <div className="slide-image-col">
-                <div
-                  className="slide-image-thumb-wrap"
-                  onClick={() => triggerSlideImageUpload(slide.id)}
-                  title="Click to choose a new image file from your computer"
-                >
-                  <img src={slide.image_url} alt={slide.title} className="slide-image-thumb" />
-                  <div className="slide-image-thumb-overlay">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    <span>{updatingSlideId === slide.id ? "Uploading..." : "Change Image"}</span>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="slide-change-img-btn"
-                  onClick={() => triggerSlideImageUpload(slide.id)}
-                  disabled={updatingSlideId === slide.id}
-                >
-                  <Icon name="edit" />
-                  {updatingSlideId === slide.id ? "Uploading..." : "Upload Image"}
-                </Button>
+          const isEditing = editingSlideId === slide.id;
 
-                <div className="slide-visibility-row">
-                  <ToggleSwitch
-                    checked={slide.is_active}
-                    onChange={() => editSlide(slide.id, { is_active: !slide.is_active })}
-                    tooltip={slide.is_active ? "Visible to visitors" : "Hidden from visitors"}
-                  />
-                  <span>{slide.is_active ? "Visible" : "Hidden"}</span>
+          // 1. Collapsed Mode: Clean, well-formatted Overview Card
+          if (!isEditing) {
+            return (
+              <div key={slide.id} className={`slide-card-collapsed${dirty ? " is-dirty" : ""}`}>
+                {/* Thumbnail Preview with Visibility Badge */}
+                <div className="slide-collapsed-thumb-wrap">
+                  <img src={slide.image_url} alt={slide.title} className="slide-collapsed-thumb" />
+                  <span className={`slide-collapsed-status-pill ${slide.is_active ? "is-active" : "is-hidden"}`}>
+                    {slide.is_active ? "Visible" : "Hidden"}
+                  </span>
+                </div>
+
+                {/* Content Details */}
+                <div className="slide-collapsed-content">
+                  <div className="slide-collapsed-header">
+                    {slide.badge && <span className="slide-collapsed-badge">{slide.badge}</span>}
+                    <span className="slide-collapsed-index">Slide #{index + 1}</span>
+                  </div>
+
+                  <h4 className="slide-collapsed-title">
+                    {slide.title}
+                    {slide.highlight && <span className="slide-collapsed-highlight"> {slide.highlight}</span>}
+                  </h4>
+
+                  {slide.subtitle && (
+                    <p className="slide-collapsed-desc">{slide.subtitle}</p>
+                  )}
+
+                  {isHome && (slide.cta_text || (slide.stats && slide.stats.length > 0)) && (
+                    <div className="slide-collapsed-meta">
+                      {slide.cta_text && (
+                        <span className="slide-collapsed-chip">
+                          <Icon name="arrowRight" /> {slide.cta_text} → {slide.cta_link || "/"}
+                        </span>
+                      )}
+                      {slide.alt_text && (
+                        <span className="slide-collapsed-chip">
+                          {slide.alt_text} → {slide.alt_link || "/"}
+                        </span>
+                      )}
+                      {slide.stats && slide.stats.length > 0 && (
+                        <span className="slide-collapsed-chip">
+                          {slide.stats.length} Stat Chip{slide.stats.length === 1 ? "" : "s"}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions Area */}
+                <div className="slide-collapsed-actions">
+                  <div className="slide-order-buttons" style={{ width: "100%" }}>
+                    <button
+                      type="button"
+                      className="slide-order-btn"
+                      onClick={() => void handleMove(index, -1)}
+                      disabled={index === 0 || busy}
+                      title="Move earlier in carousel"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className="slide-order-btn"
+                      onClick={() => void handleMove(index, 1)}
+                      disabled={index === slides.length - 1 || busy}
+                      title="Move later in carousel"
+                    >
+                      ↓
+                    </button>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    className="slide-edit-btn"
+                    onClick={() => setEditingSlideId(slide.id)}
+                  >
+                    <Icon name="edit" />
+                    Edit Slide
+                  </Button>
+
+                  <div className="slide-visibility-row" style={{ alignSelf: "center", margin: "2px 0" }}>
+                    <ToggleSwitch
+                      checked={slide.is_active}
+                      onChange={() => editSlide(slide.id, { is_active: !slide.is_active })}
+                      tooltip={slide.is_active ? "Visible to visitors" : "Hidden from visitors"}
+                    />
+                    <span>{slide.is_active ? "Visible" : "Hidden"}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="slide-remove-btn"
+                    style={{ width: "100%" }}
+                    onClick={() => void handleRemove(slide)}
+                    title="Remove this slide"
+                    disabled={busy}
+                  >
+                    {t.removeLabel}
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          // 2. Expanded Mode: Full Detailed Editor Form
+          return (
+            <div key={slide.id} className={`slide-card-expanded${dirty ? " is-dirty" : ""}`}>
+              {/* Header */}
+              <div className="slide-expanded-header">
+                <div className="slide-expanded-title-area">
+                  <span className="slide-expanded-badge">EDITING SLIDE #{index + 1}</span>
+                  <h4>{slide.title || "Untitled Slide"}</h4>
+                </div>
+                <div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setEditingSlideId(null)}
+                  >
+                    <Icon name="cross" />
+                    Close Editor
+                  </Button>
                 </div>
               </div>
 
-              <div className="slide-card-fields">
-                <div className="slide-field-group">
-                  <label className="slide-field-label">{t.badgeLabel}</label>
-                  <input
-                    type="text"
-                    placeholder={t.badgePlaceholder}
-                    value={slide.badge ?? ""}
-                    onChange={(e) => editSlide(slide.id, { badge: e.target.value })}
-                    className="slide-badge-input"
-                  />
+              <div className="slide-expanded-body">
+                {/* Image & Visibility Column */}
+                <div className="slide-image-col">
+                  <div
+                    className="slide-image-thumb-wrap"
+                    onClick={() => triggerSlideImageUpload(slide.id)}
+                    title="Click to choose a new image file from your computer"
+                  >
+                    <img src={slide.image_url} alt={slide.title} className="slide-image-thumb" />
+                    <div className="slide-image-thumb-overlay">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      <span>{updatingSlideId === slide.id ? "Uploading..." : "Change Image"}</span>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="slide-change-img-btn"
+                    onClick={() => triggerSlideImageUpload(slide.id)}
+                    disabled={updatingSlideId === slide.id}
+                  >
+                    <Icon name="edit" />
+                    {updatingSlideId === slide.id ? "Uploading..." : "Upload Image"}
+                  </Button>
+
+                  <div className="slide-visibility-row">
+                    <ToggleSwitch
+                      checked={slide.is_active}
+                      onChange={() => editSlide(slide.id, { is_active: !slide.is_active })}
+                      tooltip={slide.is_active ? "Visible to visitors" : "Hidden from visitors"}
+                    />
+                    <span>{slide.is_active ? "Visible" : "Hidden"}</span>
+                  </div>
                 </div>
 
-                <div className="slide-field-group">
-                  <label className="slide-field-label">{isHome ? t.headingLabel : t.titleLabel}</label>
-                  <textarea
-                    placeholder={t.titlePlaceholder}
-                    value={slide.title}
-                    onChange={(e) => editSlide(slide.id, { title: e.target.value })}
-                    className="slide-title-input"
-                    rows={isHome ? 2 : 1}
-                  />
-                  {isHome && <span className="hint slide-field-hint">{t.headingHint}</span>}
-                </div>
-
-                {isHome && (
+                {/* Form Fields Column */}
+                <div className="slide-card-fields">
                   <div className="slide-field-group">
-                    <label className="slide-field-label">{t.highlightLabel}</label>
+                    <label className="slide-field-label">{t.badgeLabel}</label>
                     <input
                       type="text"
-                      placeholder={t.highlightPlaceholder}
-                      value={slide.highlight ?? ""}
-                      onChange={(e) => editSlide(slide.id, { highlight: e.target.value })}
-                      className="slide-title-input"
+                      placeholder={t.badgePlaceholder}
+                      value={slide.badge ?? ""}
+                      onChange={(e) => editSlide(slide.id, { badge: e.target.value })}
+                      className="slide-badge-input"
                     />
                   </div>
-                )}
 
-                <div className="slide-field-group">
-                  <label className="slide-field-label">{isHome ? t.descLabel : t.subtitleLabel}</label>
-                  <textarea
-                    placeholder={t.subtitlePlaceholder}
-                    value={slide.subtitle ?? ""}
-                    onChange={(e) => editSlide(slide.id, { subtitle: e.target.value })}
-                    className="slide-subtitle-input"
-                    rows={2}
-                  />
-                </div>
+                  <div className="slide-field-group">
+                    <label className="slide-field-label">{isHome ? t.headingLabel : t.titleLabel}</label>
+                    <textarea
+                      placeholder={t.titlePlaceholder}
+                      value={slide.title}
+                      onChange={(e) => editSlide(slide.id, { title: e.target.value })}
+                      className="slide-title-input"
+                      rows={isHome ? 2 : 1}
+                    />
+                    {isHome && <span className="hint slide-field-hint">{t.headingHint}</span>}
+                  </div>
 
-                {isHome && (
-                  <>
-                    <div className="slide-field-row">
-                      <div className="slide-field-group">
-                        <label className="slide-field-label">{t.ctaTextLabel}</label>
-                        <input
-                          type="text"
-                          placeholder="Start Practising Free"
-                          value={slide.cta_text ?? ""}
-                          onChange={(e) => editSlide(slide.id, { cta_text: e.target.value })}
-                          className="slide-subtitle-input"
-                        />
-                      </div>
-                      <div className="slide-field-group">
-                        <label className="slide-field-label">{t.ctaLinkLabel}</label>
-                        <input
-                          type="text"
-                          placeholder="/register"
-                          value={slide.cta_link ?? ""}
-                          onChange={(e) => editSlide(slide.id, { cta_link: e.target.value })}
-                          className="slide-url-input"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="slide-field-row">
-                      <div className="slide-field-group">
-                        <label className="slide-field-label">{t.altTextLabel}</label>
-                        <input
-                          type="text"
-                          placeholder="View Student Plans →"
-                          value={slide.alt_text ?? ""}
-                          onChange={(e) => editSlide(slide.id, { alt_text: e.target.value })}
-                          className="slide-subtitle-input"
-                        />
-                      </div>
-                      <div className="slide-field-group">
-                        <label className="slide-field-label">{t.altLinkLabel}</label>
-                        <input
-                          type="text"
-                          placeholder="/plans or #features"
-                          value={slide.alt_link ?? ""}
-                          onChange={(e) => editSlide(slide.id, { alt_link: e.target.value })}
-                          className="slide-url-input"
-                        />
-                      </div>
-                    </div>
-
+                  {isHome && (
                     <div className="slide-field-group">
-                      <label className="slide-field-label">{t.statsLabel}</label>
-                      <div className="slide-stats-editor">
-                        {(slide.stats ?? []).map((stat, statIndex) => (
-                          <div className="slide-stat-row" key={statIndex}>
-                            <input
-                              type="text"
-                              placeholder="4 Skills"
-                              value={stat.value}
-                              onChange={(e) => editStat(slide, statIndex, { value: e.target.value })}
-                              className="slide-title-input"
-                            />
-                            <input
-                              type="text"
-                              placeholder="All Exam Modules"
-                              value={stat.label}
-                              onChange={(e) => editStat(slide, statIndex, { label: e.target.value })}
-                              className="slide-subtitle-input"
-                            />
-                            <button
-                              type="button"
-                              className="slide-remove-btn"
-                              onClick={() => removeStat(slide, statIndex)}
-                              title="Remove this stat"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                        <Button type="button" variant="secondary" size="sm" onClick={() => addStat(slide)}>
-                          <Icon name="plus" />
-                          {t.addStatLabel}
-                        </Button>
-                      </div>
+                      <label className="slide-field-label">{t.highlightLabel}</label>
+                      <input
+                        type="text"
+                        placeholder={t.highlightPlaceholder}
+                        value={slide.highlight ?? ""}
+                        onChange={(e) => editSlide(slide.id, { highlight: e.target.value })}
+                        className="slide-title-input"
+                      />
                     </div>
-                  </>
-                )}
+                  )}
 
-                <div className="slide-field-group">
-                  <label className="slide-field-label">{t.imageUrlLabel}</label>
-                  <input
-                    type="text"
-                    placeholder={t.imageUrlPlaceholder}
-                    value={slide.image_url}
-                    onChange={(e) => editSlide(slide.id, { image_url: e.target.value })}
-                    className="slide-url-input"
-                  />
+                  <div className="slide-field-group">
+                    <label className="slide-field-label">{isHome ? t.descLabel : t.subtitleLabel}</label>
+                    <textarea
+                      placeholder={t.subtitlePlaceholder}
+                      value={slide.subtitle ?? ""}
+                      onChange={(e) => editSlide(slide.id, { subtitle: e.target.value })}
+                      className="slide-subtitle-input"
+                      rows={2}
+                    />
+                  </div>
+
+                  {isHome && (
+                    <>
+                      <div className="slide-field-row">
+                        <div className="slide-field-group">
+                          <label className="slide-field-label">{t.ctaTextLabel}</label>
+                          <input
+                            type="text"
+                            placeholder="Start Practising Free"
+                            value={slide.cta_text ?? ""}
+                            onChange={(e) => editSlide(slide.id, { cta_text: e.target.value })}
+                            className="slide-subtitle-input"
+                          />
+                        </div>
+                        <div className="slide-field-group">
+                          <label className="slide-field-label">{t.ctaLinkLabel}</label>
+                          <input
+                            type="text"
+                            placeholder="/register"
+                            value={slide.cta_link ?? ""}
+                            onChange={(e) => editSlide(slide.id, { cta_link: e.target.value })}
+                            className="slide-url-input"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="slide-field-row">
+                        <div className="slide-field-group">
+                          <label className="slide-field-label">{t.altTextLabel}</label>
+                          <input
+                            type="text"
+                            placeholder="View Student Plans →"
+                            value={slide.alt_text ?? ""}
+                            onChange={(e) => editSlide(slide.id, { alt_text: e.target.value })}
+                            className="slide-subtitle-input"
+                          />
+                        </div>
+                        <div className="slide-field-group">
+                          <label className="slide-field-label">{t.altLinkLabel}</label>
+                          <input
+                            type="text"
+                            placeholder="/plans or #features"
+                            value={slide.alt_link ?? ""}
+                            onChange={(e) => editSlide(slide.id, { alt_link: e.target.value })}
+                            className="slide-url-input"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="slide-field-group">
+                        <label className="slide-field-label">{t.statsLabel}</label>
+                        <div className="slide-stats-editor">
+                          {(slide.stats ?? []).map((stat, statIndex) => (
+                            <div className="slide-stat-row" key={statIndex}>
+                              <input
+                                type="text"
+                                placeholder="4 Skills"
+                                value={stat.value}
+                                onChange={(e) => editStat(slide, statIndex, { value: e.target.value })}
+                                className="slide-title-input"
+                              />
+                              <input
+                                type="text"
+                                placeholder="All Exam Modules"
+                                value={stat.label}
+                                onChange={(e) => editStat(slide, statIndex, { label: e.target.value })}
+                                className="slide-subtitle-input"
+                              />
+                              <button
+                                type="button"
+                                className="slide-remove-btn"
+                                onClick={() => removeStat(slide, statIndex)}
+                                title="Remove this stat"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                          <Button type="button" variant="secondary" size="sm" onClick={() => addStat(slide)}>
+                            <Icon name="plus" />
+                            {t.addStatLabel}
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="slide-field-group">
+                    <label className="slide-field-label">{t.imageUrlLabel}</label>
+                    <input
+                      type="text"
+                      placeholder={t.imageUrlPlaceholder}
+                      value={slide.image_url}
+                      onChange={(e) => editSlide(slide.id, { image_url: e.target.value })}
+                      className="slide-url-input"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="slide-card-actions">
-                <div className="slide-order-buttons">
-                  <button
+                {/* Actions Column */}
+                <div className="slide-card-actions">
+                  <Button
                     type="button"
-                    className="slide-order-btn"
-                    onClick={() => void handleMove(index, -1)}
-                    disabled={index === 0 || busy}
-                    title="Move earlier in the carousel"
+                    variant="primary"
+                    size="sm"
+                    onClick={async () => {
+                      if (await saveSlide(slide)) {
+                        showSuccess("Slide saved successfully.", "Saved");
+                        setEditingSlideId(null);
+                      }
+                    }}
+                    disabled={savingId === slide.id}
                   >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    className="slide-order-btn"
-                    onClick={() => void handleMove(index, 1)}
-                    disabled={index === slides.length - 1 || busy}
-                    title="Move later in the carousel"
-                  >
-                    ↓
-                  </button>
-                </div>
-
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  onClick={() => void handleSaveSlide(slide)}
-                  disabled={!dirty || savingId === slide.id}
-                >
-                  {savingId === slide.id ? "Saving..." : dirty ? "Save" : "Saved"}
-                </Button>
-
-                {dirty && (
-                  <Button type="button" variant="secondary" size="sm" onClick={() => handleRevert(slide)}>
-                    Revert
+                    {savingId === slide.id ? "Saving..." : "Save & Close"}
                   </Button>
-                )}
 
-                <button
-                  type="button"
-                  className="slide-remove-btn"
-                  onClick={() => void handleRemove(slide)}
-                  title="Remove this slide"
-                  disabled={busy}
-                >
-                  {t.removeLabel}
-                </button>
+                  {dirty && (
+                    <Button type="button" variant="secondary" size="sm" onClick={() => handleRevert(slide)}>
+                      Revert
+                    </Button>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setEditingSlideId(null)}
+                  >
+                    Done
+                  </Button>
+
+                  <button
+                    type="button"
+                    className="slide-remove-btn"
+                    onClick={() => void handleRemove(slide)}
+                    title="Remove this slide"
+                    disabled={busy}
+                  >
+                    {t.removeLabel}
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -920,6 +1018,6 @@ export function HeroSliderTab() {
           )}
         </form>
       </Modal>
-    </CollapsiblePanel>
+    </div>
   );
 }
