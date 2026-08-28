@@ -37,7 +37,7 @@ export function PublishTimingSelector({ status, onStatusChange, scheduledAt, onS
       />
 
       {status === "scheduled" && (
-        <div>
+        <div className="announcement-schedule-fields">
           <label htmlFor="scheduled-datetime-input">{t.scheduleLabel}<RequiredMark /></label>
           <input
             id="scheduled-datetime-input"

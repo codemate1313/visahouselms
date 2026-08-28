@@ -160,10 +160,11 @@ export function InstituteAnnouncements() {
       <Modal
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
+        className="institute-announcement-modal"
         title={strings.publisher.dialogTitle}
         size="lg"
         actions={
-          <Button type="submit" form={PUBLISH_FORM_ID} loading={busy}>
+          <Button type="submit" form={PUBLISH_FORM_ID} loading={busy} className="institute-announcement-submit-btn">
             {submitLabel}
           </Button>
         }

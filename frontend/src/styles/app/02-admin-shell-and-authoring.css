@@ -671,6 +671,69 @@
   --ui-segment-on-accent: var(--institute-on-primary, #ffffff);
 }
 
+.institute-announcement-modal {
+  --primary: var(--institute-primary, #0b2388);
+  --primary-hover: color-mix(in srgb, var(--institute-primary, #0b2388) 84%, #000000);
+  --ui-segment-accent: var(--institute-primary, #0b2388);
+  --ui-segment-on-accent: var(--institute-on-primary, #ffffff);
+}
+
+.institute-announcement-modal.ui-modal-card {
+  padding: 24px 28px 20px;
+}
+
+.institute-announcement-modal .ui-modal-header {
+  margin-bottom: 16px;
+}
+
+.institute-announcement-modal .ui-modal-body {
+  padding-right: 6px;
+}
+
+.institute-announcement-modal .ui-modal-actions {
+  margin-top: 18px;
+}
+
+.institute-announcement-modal .ui-modal-actions .ui-btn-primary,
+.institute-announcement-modal .institute-announcement-submit-btn {
+  min-height: 42px !important;
+  padding: 0 22px !important;
+  border-color: var(--institute-primary, var(--primary)) !important;
+  background: var(--institute-primary, var(--primary)) !important;
+  color: var(--institute-on-primary, #ffffff) !important;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--institute-primary, var(--primary)) 18%, transparent) !important;
+}
+
+.institute-announcement-modal .ui-modal-actions .ui-btn-primary:hover:not(:disabled),
+.institute-announcement-modal .institute-announcement-submit-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 84%, #000000) !important;
+  background: color-mix(in srgb, var(--institute-primary, var(--primary)) 84%, #000000) !important;
+}
+
+.institute-announcement-modal .announcement-publisher-panel.workspace-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.institute-announcement-modal .announcement-admin-page .collapsible-panel-header,
+.institute-announcement-modal .collapsible-panel-header {
+  display: none;
+}
+
+.institute-announcement-modal .announcement-publisher-panel form {
+  gap: 12px;
+}
+
+.institute-announcement-modal .announcement-publish-toolbar {
+  margin-bottom: 8px;
+  padding: 12px 14px;
+}
+
 .announcement-publisher-panel.workspace-panel,
 .announcement-history-panel.workspace-panel {
   padding: clamp(20px, 2.2vw, 34px);
@@ -749,13 +812,13 @@
 }
 
 .announcement-publisher-panel input {
-  min-height: 54px;
-  padding: 0 18px;
+  min-height: 48px;
+  padding: 0 16px;
 }
 
 .announcement-publisher-panel textarea {
-  min-height: 178px;
-  padding: 16px 18px;
+  min-height: 148px;
+  padding: 14px 16px;
   resize: vertical;
 }
 
@@ -768,12 +831,13 @@
 }
 
 .announcement-publisher-panel .audience-cards-grid {
-  gap: 16px;
-  margin: 4px 0 22px;
+  gap: 12px;
+  margin: 4px 0 16px;
 }
 
 .announcement-publisher-panel .audience-checkbox-card {
-  min-height: 106px;
+  min-height: 88px;
+  padding: 16px 18px !important;
   border-color: color-mix(in srgb, var(--institute-primary, var(--primary)) 26%, rgba(255, 255, 255, 0.16)) !important;
   background: color-mix(in srgb, var(--institute-primary, var(--primary)) 8%, #17181f) !important;
   box-shadow: none !important;
@@ -821,7 +885,7 @@
 }
 
 .announcement-publisher-panel .schedule-timing-group {
-  margin-top: 18px;
+  margin-top: 10px;
 }
 
 .announcement-publisher-panel .schedule-timing-group .ui-segmented-control {
@@ -836,7 +900,7 @@
 }
 
 .announcement-publisher-panel .schedule-timing-group .ui-segmented-option {
-  min-height: 58px;
+  min-height: 42px;
   margin-top: 0 !important;
   border-radius: 999px !important;
   color: var(--text-muted) !important;
@@ -844,6 +908,27 @@
 
 .announcement-publisher-panel .schedule-timing-group .ui-segmented-option.is-active {
   color: var(--institute-on-primary, #ffffff) !important;
+}
+
+.announcement-publisher-panel .announcement-schedule-fields {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.announcement-publisher-panel .announcement-schedule-fields label {
+  margin-top: 0;
+}
+
+.announcement-publisher-panel .announcement-schedule-fields .datetime-picker-input {
+  max-width: 420px;
+}
+
+.announcement-publisher-panel .announcement-schedule-fields .help-text {
+  display: block;
+  max-width: 520px;
+  color: var(--text-muted);
+  line-height: 1.45;
 }
 
 .announcement-history-list {

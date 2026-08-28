@@ -553,11 +553,11 @@ export function SupportCenter() {
                       style={{
                         cursor: "pointer",
                         background: isUnread
-                          ? "rgba(185, 28, 43, 0.06)"
+                          ? "color-mix(in srgb, var(--institute-primary, var(--primary, #006b35)) 8%, transparent)"
                           : selectedTicket?.id === ticket.id
                           ? "var(--surface-hover, rgba(255, 255, 255, 0.04))"
                           : undefined,
-                        borderLeft: isUnread ? "4px solid var(--primary, #b91c2b)" : "4px solid transparent",
+                        borderLeft: isUnread ? "4px solid var(--institute-primary, var(--primary, #006b35))" : "4px solid transparent",
                       }}
                     >
                       <td style={{ padding: "12px 10px 12px 16px" }}>
@@ -565,8 +565,8 @@ export function SupportCenter() {
                           <div
                             className="table-avatar-tile"
                             style={{
-                              background: isUnread ? "var(--primary, #b91c2b)" : undefined,
-                              color: isUnread ? "#ffffff" : undefined,
+                              background: isUnread ? "var(--institute-primary, var(--primary, #006b35))" : undefined,
+                              color: isUnread ? "var(--institute-on-primary, #ffffff)" : undefined,
                               position: "relative",
                               flexShrink: 0,
                             }}
@@ -590,9 +590,9 @@ export function SupportCenter() {
                                     gap: "4px",
                                     padding: "2px 8px",
                                     borderRadius: "12px",
-                                    background: "var(--primary, #b91c2b)",
-                                    color: "var(--white)",
-                                    boxShadow: "0 1px 4px rgba(185, 28, 43, 0.25)",
+                                    background: "var(--institute-primary, var(--primary, #006b35))",
+                                    color: "var(--institute-on-primary, var(--white))",
+                                    boxShadow: "0 1px 4px color-mix(in srgb, var(--institute-primary, var(--primary, #006b35)) 28%, transparent)",
                                   }}
                                 >
                                   <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "currentColor" }} />
@@ -722,7 +722,7 @@ export function SupportCenter() {
       <Modal
         open={isChatOpen && Boolean(selectedTicket)}
         onClose={() => setIsChatOpen(false)}
-        className="support-chat-modal"
+        className="support-chat-modal support-chat-modal--institute"
         size="lg"
         title={
           selectedTicket ? (
@@ -849,7 +849,7 @@ export function SupportCenter() {
                           style={{
                             fontSize: "0.75rem",
                             fontWeight: 700,
-                            color: isAdmin ? "var(--primary, #b91c2b)" : "var(--text)",
+                            color: isAdmin ? "var(--support-chat-primary, var(--primary, #006b35))" : "var(--text)",
                           }}
                         >
                           {msg.sender_name} {isAdmin ? "(Support Staff)" : "(You)"}
@@ -863,8 +863,8 @@ export function SupportCenter() {
                         style={{
                           background: isAdmin
                             ? "var(--surface)"
-                            : "linear-gradient(135deg, var(--primary, #b91c2b) 0%, #991b1b 100%)",
-                          color: isAdmin ? "var(--text)" : "#ffffff",
+                            : "linear-gradient(135deg, var(--support-chat-primary, var(--primary, #006b35)) 0%, var(--support-chat-primary-hover, color-mix(in srgb, var(--support-chat-primary, #006b35) 78%, #000000)) 100%)",
+                          color: isAdmin ? "var(--text)" : "var(--support-chat-on-primary, #ffffff)",
                           border: isAdmin ? "1px solid var(--border)" : "none",
                           padding: "12px 18px",
                           borderRadius: isAdmin ? "18px 18px 18px 4px" : "18px 18px 4px 18px",
@@ -873,7 +873,7 @@ export function SupportCenter() {
                           whiteSpace: "pre-wrap",
                           boxShadow: isAdmin
                             ? "0 2px 10px rgba(0, 0, 0, 0.04)"
-                            : "0 4px 14px rgba(185, 28, 43, 0.2)",
+                            : "0 4px 14px color-mix(in srgb, var(--support-chat-primary, var(--primary, #006b35)) 24%, transparent)",
                         }}
                       >
                         {!isAttachmentOnly && msg.message}
@@ -898,8 +898,8 @@ export function SupportCenter() {
                     <div
                       className="support-chat-bubble is-customer"
                       style={{
-                        background: "var(--primary, #b91c2b)",
-                        color: "#ffffff",
+                        background: "var(--support-chat-primary, var(--primary, #006b35))",
+                        color: "var(--support-chat-on-primary, #ffffff)",
                         padding: "11px 16px",
                         borderRadius: "16px 16px 2px 16px",
                         fontSize: "0.925rem",
@@ -914,7 +914,7 @@ export function SupportCenter() {
                   {selectedTicket.admin_note && (
                     <div style={{ alignSelf: "flex-start", maxWidth: "80%" }}>
                       <div className="support-chat-message-meta" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                        <span className="support-chat-sender is-support" style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--primary, #b91c2b)" }}>Support Response</span>
+                        <span className="support-chat-sender is-support" style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--support-chat-primary, var(--primary, #006b35))" }}>Support Response</span>
                       </div>
                       <div
                         className="support-chat-bubble is-admin"
@@ -943,9 +943,9 @@ export function SupportCenter() {
                 style={{
                   padding: "14px 16px",
                   borderRadius: "12px",
-                  background: "rgba(239, 68, 68, 0.12)",
-                  border: "1px solid rgba(239, 68, 68, 0.25)",
-                  color: "#ef4444",
+                  background: "color-mix(in srgb, var(--support-chat-primary, var(--primary, #006b35)) 10%, var(--surface))",
+                  border: "1px solid color-mix(in srgb, var(--support-chat-primary, var(--primary, #006b35)) 32%, var(--border))",
+                  color: "var(--support-chat-primary, var(--primary, #006b35))",
                   textAlign: "center",
                   fontSize: "0.875rem",
                   fontWeight: 600,
@@ -1063,7 +1063,7 @@ export function SupportCenter() {
                       <Icon name="download" style={{ width: "15px", height: "15px", transform: "rotate(180deg)" }} />
                       <span>Attach</span>
                       {attachedFiles.length > 0 && (
-                        <span className="support-chat-attachment-count" style={{ fontSize: "0.725rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "var(--primary, #b91c2b)", color: "#ffffff" }}>
+                        <span className="support-chat-attachment-count" style={{ fontSize: "0.725rem", fontWeight: 700, padding: "1px 6px", borderRadius: "10px", background: "var(--support-chat-primary, var(--primary, #006b35))", color: "var(--support-chat-on-primary, #ffffff)" }}>
                           {attachedFiles.length}
                         </span>
                       )}

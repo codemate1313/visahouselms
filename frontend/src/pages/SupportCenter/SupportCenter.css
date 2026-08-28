@@ -266,6 +266,16 @@
   --support-chat-on-primary: #ffffff;
 }
 
+.support-chat-modal--institute {
+  --primary: var(--institute-primary, #006b35);
+  --primary-hover: color-mix(in srgb, var(--institute-primary, #006b35) 84%, #000000);
+  --primary-soft: color-mix(in srgb, var(--institute-primary, #006b35) 16%, transparent);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--institute-primary, #006b35) 28%, transparent);
+  --support-chat-primary: var(--institute-primary, #006b35);
+  --support-chat-primary-hover: color-mix(in srgb, var(--institute-primary, #006b35) 84%, #000000);
+  --support-chat-on-primary: var(--institute-on-primary, #ffffff);
+}
+
 .support-chat-modal .ui-modal-header {
   align-items: center;
 }
@@ -281,6 +291,28 @@
 
 .support-chat-title {
   color: var(--text) !important;
+}
+
+.support-chat-modal--institute .support-ticket-id {
+  background: color-mix(in srgb, var(--support-chat-primary) 12%, var(--surface)) !important;
+  border-color: color-mix(in srgb, var(--support-chat-primary) 36%, var(--border)) !important;
+  color: color-mix(in srgb, var(--support-chat-primary) 88%, var(--text)) !important;
+}
+
+.support-chat-modal--institute .badge-info,
+.support-chat-modal--institute .badge-blue,
+.support-chat-modal--institute .badge-warning,
+.support-chat-modal--institute .badge-amber {
+  background: color-mix(in srgb, var(--support-chat-primary) 12%, var(--surface)) !important;
+  border-color: color-mix(in srgb, var(--support-chat-primary) 36%, var(--border)) !important;
+  color: color-mix(in srgb, var(--support-chat-primary) 88%, var(--text)) !important;
+}
+
+.support-chat-modal--institute .badge-info::before,
+.support-chat-modal--institute .badge-blue::before,
+.support-chat-modal--institute .badge-warning::before,
+.support-chat-modal--institute .badge-amber::before {
+  background: var(--support-chat-primary) !important;
 }
 
 .support-chat-routing-card,
@@ -374,6 +406,16 @@
 
 [data-theme="dark"] .support-chat-modal {
   --support-chat-primary-hover: color-mix(in srgb, var(--support-chat-primary) 74%, #ffffff);
+}
+
+[data-theme="dark"] .support-chat-modal--institute .support-ticket-id,
+[data-theme="dark"] .support-chat-modal--institute .badge-info,
+[data-theme="dark"] .support-chat-modal--institute .badge-blue,
+[data-theme="dark"] .support-chat-modal--institute .badge-warning,
+[data-theme="dark"] .support-chat-modal--institute .badge-amber {
+  background: color-mix(in srgb, var(--support-chat-primary) 18%, rgba(255, 255, 255, 0.06)) !important;
+  border-color: color-mix(in srgb, var(--support-chat-primary) 42%, rgba(255, 255, 255, 0.14)) !important;
+  color: color-mix(in srgb, var(--support-chat-primary) 22%, #ffffff) !important;
 }
 
 [data-theme="dark"] .support-chat-routing-card,
