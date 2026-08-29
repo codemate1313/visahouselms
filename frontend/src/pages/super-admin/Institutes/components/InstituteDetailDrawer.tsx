@@ -520,14 +520,16 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
               {/* Tab 4: Live Activity */}
               {activeTab === "activity" && (
                 <div className="drawer-tab-pane activity-pane">
-                  {/* Activity Line Chart */}
-                  <div className="neomorphic-card-widget chart-widget">
-                    <LineChart
-                      data={chartData}
-                      title="Actions per Hour (Last 24 Hours)"
-                      color="var(--primary)"
-                    />
-                  </div>
+                  {/* Activity Line Chart: Only show when there is recorded activity in the window */}
+                  {chartData.some((d) => d.value > 0) && (
+                    <div className="neomorphic-card-widget chart-widget">
+                      <LineChart
+                        data={chartData}
+                        title="Actions per Hour (Last 24 Hours)"
+                        color="var(--primary)"
+                      />
+                    </div>
+                  )}
 
                   {/* Filter & Search Controls */}
                   <div className="activity-filters-grid">
