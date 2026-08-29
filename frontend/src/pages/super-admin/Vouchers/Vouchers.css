@@ -758,10 +758,10 @@
 .vouchers-page-wrapper table.voucher-purchases-table,
 table.voucher-purchases-table {
   width: 100% !important;
-  min-width: 960px !important;
+  min-width: 980px !important;
   table-layout: fixed !important;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
 }
 
 .voucher-purchases-table th {
@@ -777,10 +777,12 @@ table.voucher-purchases-table {
   user-select: none;
 }
 
-.voucher-purchases-table td {
+.voucher-purchases-table td,
+.super-admin-portal table.voucher-purchases-table td {
+  display: table-cell !important;
+  vertical-align: middle !important;
   padding: 13px 16px;
-  vertical-align: middle;
-  border-bottom: 1px solid var(--border-subtle, rgba(244, 244, 245, 0.8));
+  border-bottom: 1px solid var(--border-subtle, rgba(244, 244, 245, 0.8)) !important;
 }
 
 /* Explicit, balanced column widths overriding the portal-level 'width: auto !important' */
@@ -801,9 +803,9 @@ table.voucher-purchases-table {
 .super-admin-portal table.voucher-purchases-table td.col-buyer,
 .vouchers-page-wrapper table.voucher-purchases-table th.col-buyer,
 .vouchers-page-wrapper table.voucher-purchases-table td.col-buyer {
-  width: 250px !important;
-  min-width: 230px !important;
-  max-width: 280px !important;
+  width: 240px !important;
+  min-width: 220px !important;
+  max-width: 260px !important;
 }
 
 /* 3. Voucher & Offering (Badge + package title: fluid expansion) */
@@ -825,14 +827,14 @@ table.voucher-purchases-table {
   max-width: 210px !important;
 }
 
-/* 5. Purchase Date */
+/* 5. Purchase Date (full title without truncation) */
 .super-admin-portal table.voucher-purchases-table th.col-purchase-date,
 .super-admin-portal table.voucher-purchases-table td.col-purchase-date,
 .vouchers-page-wrapper table.voucher-purchases-table th.col-purchase-date,
 .vouchers-page-wrapper table.voucher-purchases-table td.col-purchase-date {
-  width: 130px !important;
-  min-width: 120px !important;
-  max-width: 140px !important;
+  width: 155px !important;
+  min-width: 150px !important;
+  max-width: 165px !important;
   white-space: nowrap !important;
 }
 
@@ -841,6 +843,8 @@ table.voucher-purchases-table {
 .super-admin-portal table.voucher-purchases-table td.col-actions,
 .vouchers-page-wrapper table.voucher-purchases-table th.col-actions,
 .vouchers-page-wrapper table.voucher-purchases-table td.col-actions {
+  display: table-cell !important;
+  vertical-align: middle !important;
   width: 96px !important;
   min-width: 96px !important;
   max-width: 96px !important;
