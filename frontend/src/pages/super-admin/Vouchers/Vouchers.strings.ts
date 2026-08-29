@@ -54,6 +54,7 @@ export const vouchersStrings = {
     validUntil: "Valid Until",
     viewInvoice: "View Invoice",
     noPurchases: "No voucher purchases recorded yet.",
+    actions: "Actions",
   },
   invoiceModal: {
     title: "Voucher Purchase Tax Invoice",

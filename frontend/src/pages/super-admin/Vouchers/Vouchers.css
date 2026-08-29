@@ -754,11 +754,14 @@
 }
 
 /* Voucher Purchases Table Polished Styles */
-.voucher-purchases-table {
-  width: 100%;
+.super-admin-portal table.voucher-purchases-table,
+.vouchers-page-wrapper table.voucher-purchases-table,
+table.voucher-purchases-table {
+  width: 100% !important;
+  min-width: 960px !important;
+  table-layout: fixed !important;
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed;
 }
 
 .voucher-purchases-table th {
@@ -768,31 +771,82 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-muted, #71717a);
-  padding: 13px 14px;
+  padding: 13px 16px;
   background: var(--surface-muted, rgba(244, 244, 245, 0.75));
   border-bottom: 1px solid var(--border, rgba(228, 228, 231, 0.8));
   user-select: none;
 }
 
 .voucher-purchases-table td {
-  padding: 13px 14px;
+  padding: 13px 16px;
   vertical-align: middle;
   border-bottom: 1px solid var(--border-subtle, rgba(244, 244, 245, 0.8));
 }
 
-/* Eliminate awkward gap between Purchase Date and Actions */
-.voucher-purchases-table th:nth-child(5),
-.voucher-purchases-table td:nth-child(5) {
-  padding-left: 6px;
-  padding-right: 4px;
-  white-space: nowrap;
+/* Explicit, balanced column widths overriding the portal-level 'width: auto !important' */
+
+/* 1. Purchase Number (e.g. VCH-2026-00006) */
+.super-admin-portal table.voucher-purchases-table th.col-purchase-no,
+.super-admin-portal table.voucher-purchases-table td.col-purchase-no,
+.vouchers-page-wrapper table.voucher-purchases-table th.col-purchase-no,
+.vouchers-page-wrapper table.voucher-purchases-table td.col-purchase-no {
+  width: 180px !important;
+  min-width: 170px !important;
+  max-width: 190px !important;
+  white-space: nowrap !important;
 }
 
-.voucher-purchases-table th:nth-child(6),
-.voucher-purchases-table td:nth-child(6) {
-  padding-left: 4px;
-  padding-right: 14px;
-  text-align: right;
+/* 2. Buyer Details (Name, email, phone) */
+.super-admin-portal table.voucher-purchases-table th.col-buyer,
+.super-admin-portal table.voucher-purchases-table td.col-buyer,
+.vouchers-page-wrapper table.voucher-purchases-table th.col-buyer,
+.vouchers-page-wrapper table.voucher-purchases-table td.col-buyer {
+  width: 250px !important;
+  min-width: 230px !important;
+  max-width: 280px !important;
+}
+
+/* 3. Voucher & Offering (Badge + package title: fluid expansion) */
+.super-admin-portal table.voucher-purchases-table th.col-voucher-info,
+.super-admin-portal table.voucher-purchases-table td.col-voucher-info,
+.vouchers-page-wrapper table.voucher-purchases-table th.col-voucher-info,
+.vouchers-page-wrapper table.voucher-purchases-table td.col-voucher-info {
+  width: auto !important;
+  min-width: 220px !important;
+}
+
+/* 4. Payment & Status (Badge + price/gateway) */
+.super-admin-portal table.voucher-purchases-table th.col-payment-status,
+.super-admin-portal table.voucher-purchases-table td.col-payment-status,
+.vouchers-page-wrapper table.voucher-purchases-table th.col-payment-status,
+.vouchers-page-wrapper table.voucher-purchases-table td.col-payment-status {
+  width: 190px !important;
+  min-width: 180px !important;
+  max-width: 210px !important;
+}
+
+/* 5. Purchase Date */
+.super-admin-portal table.voucher-purchases-table th.col-purchase-date,
+.super-admin-portal table.voucher-purchases-table td.col-purchase-date,
+.vouchers-page-wrapper table.voucher-purchases-table th.col-purchase-date,
+.vouchers-page-wrapper table.voucher-purchases-table td.col-purchase-date {
+  width: 130px !important;
+  min-width: 120px !important;
+  max-width: 140px !important;
+  white-space: nowrap !important;
+}
+
+/* 6. Actions (View & Invoice buttons, compact & neat) */
+.super-admin-portal table.voucher-purchases-table th.col-actions,
+.super-admin-portal table.voucher-purchases-table td.col-actions,
+.vouchers-page-wrapper table.voucher-purchases-table th.col-actions,
+.vouchers-page-wrapper table.voucher-purchases-table td.col-actions {
+  width: 96px !important;
+  min-width: 96px !important;
+  max-width: 96px !important;
+  text-align: right !important;
+  padding-right: 18px !important;
+  padding-left: 6px !important;
 }
 
 .voucher-cell-stack {

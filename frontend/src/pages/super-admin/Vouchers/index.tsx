@@ -728,12 +728,12 @@ export function Vouchers() {
             <table className="data-table voucher-purchases-table">
               <thead>
                 <tr>
-                  <th style={{ width: "18%" }}>{s.purchases.purchaseNo}</th>
-                  <th style={{ width: "25%" }}>{s.purchases.buyer}</th>
-                  <th style={{ width: "33%" }}>{s.purchases.voucherInfo}</th>
-                  <th style={{ width: "14%" }}>{s.purchases.paymentAndStatus}</th>
-                  <th style={{ width: "6%", whiteSpace: "nowrap" }}>{s.purchases.date}</th>
-                  <th className="text-right" style={{ width: "4%" }}>Actions</th>
+                  <th className="col-purchase-no">{s.purchases.purchaseNo}</th>
+                  <th className="col-buyer">{s.purchases.buyer}</th>
+                  <th className="col-voucher-info">{s.purchases.voucherInfo}</th>
+                  <th className="col-payment-status">{s.purchases.paymentAndStatus}</th>
+                  <th className="col-purchase-date">{s.purchases.date}</th>
+                  <th className="table-actions-heading col-actions text-right">{s.purchases.actions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -746,12 +746,12 @@ export function Vouchers() {
                 ) : (
                   pagedPurchases.map((p) => (
                     <tr key={p.id}>
-                      <td>
+                      <td className="col-purchase-no">
                         <span className="voucher-purchase-number">
                           {p.purchase_number}
                         </span>
                       </td>
-                      <td>
+                      <td className="col-buyer">
                         <div className="voucher-cell-stack">
                           <span className="voucher-buyer-name font-bold text-slate-900 dark:text-white">
                             {p.buyer_name}
@@ -766,7 +766,7 @@ export function Vouchers() {
                           )}
                         </div>
                       </td>
-                      <td>
+                      <td className="col-voucher-info">
                         <div className="voucher-cell-stack">
                           <div>
                             <span className="voucher-type-pill">
@@ -778,7 +778,7 @@ export function Vouchers() {
                           </span>
                         </div>
                       </td>
-                      <td>
+                      <td className="col-payment-status">
                         <div className="voucher-cell-stack">
                           <div>
                             <Badge tone={purchaseStatusTone(p.status)} className="voucher-status-pill">
@@ -799,12 +799,12 @@ export function Vouchers() {
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td className="col-purchase-date">
                         <span className="text-xs text-slate-500 whitespace-nowrap font-medium">
                           {formatDate(p.created_at)}
                         </span>
                       </td>
-                      <td className="text-right">
+                      <td className="col-actions text-right">
                         <div className="voucher-table-actions">
                           <button
                             type="button"
