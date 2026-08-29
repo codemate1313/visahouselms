@@ -560,20 +560,9 @@ def _landing_group(db: Session, audience: str, counts: dict) -> List[dict]:
                 "modules": modules,
                 "features": _landing_features(plan, modules),
                 "subscription_count": counts.get(plan.id, 0),
+                "is_popular": bool(plan.is_popular),
             }
         )
-
-    # If the Super Admin explicitly set is_popular on a plan, honor it.
-    explicit_popular = next((p for p in plans if p.is_popular), None)
-    if explicit_popular:
-        for item in result:
-            item["is_popular"] = (item["id"] == explicit_popular.id)
-    elif result:
-        # Fall back to subscriber count or middle card if no plan was explicitly marked
-        top = max(result, key=lambda item: item["subscription_count"])
-        popular = top if top["subscription_count"] > 0 else result[len(result) // 2]
-        for item in result:
-            item["is_popular"] = (item is popular)
 
     return result
 

@@ -157,6 +157,11 @@ export function Plans() {
           return p;
         })
       );
+      setViewingPlan((current) =>
+        current && current.id === updated.id
+          ? { ...current, is_popular: updated.is_popular }
+          : current
+      );
       useToastStore.getState().showSuccess(
         updated.is_popular ? strings.table.popularMarked : strings.table.popularUnmarked
       );

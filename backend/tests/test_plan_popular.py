@@ -110,6 +110,31 @@ class TestPlanPopular(unittest.TestCase):
         self.assertFalse(p2.is_popular)
         self.assertTrue(inst1.is_popular)
 
+        # Unmark popular
+        plan_service.set_plan_popular(self.db, self.admin, p1.id, False, None)
+        self.db.refresh(p1)
+        self.assertFalse(p1.is_popular)
+
+        # Verify list_landing_plans dynamically reflects is_popular without fallback
+        p1.is_published = True
+        p2.is_published = True
+        self.db.commit()
+        landing = plan_service.list_landing_plans(self.db)
+        direct_landing = landing[AUDIENCE_DIRECT]
+        # Since p1 and p2 are both false, none should be marked popular
+        for item in direct_landing:
+            self.assertFalse(item["is_popular"])
+
+        # Mark p2 as popular and verify landing updates dynamically
+        plan_service.set_plan_popular(self.db, self.admin, p2.id, True, None)
+        self.db.refresh(p2)
+        landing = plan_service.list_landing_plans(self.db)
+        direct_landing = landing[AUDIENCE_DIRECT]
+        p2_item = next(item for item in direct_landing if item["id"] == p2.id)
+        p1_item = next(item for item in direct_landing if item["id"] == p1.id)
+        self.assertTrue(p2_item["is_popular"])
+        self.assertFalse(p1_item["is_popular"])
+
 
 if __name__ == "__main__":
     unittest.main()

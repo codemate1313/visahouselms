@@ -22,8 +22,8 @@ export function PlanGrid({
 }: PlanGridProps) {
   return (
     <div className="uui-pricing-grid">
-      {plans.map((plan, index) => {
-        const isFeatured = index === 0 || plans.length === 1;
+      {plans.map((plan) => {
+        const isFeatured = Boolean(plan.is_popular);
         const display = getCatalogDisplayPrice(plan, selectedCurrency, inrUsdRate);
 
         return (

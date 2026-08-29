@@ -119,24 +119,55 @@ function RollingPrice({ display, planId }: { display: DisplayPrice; planId: numb
   );
 }
 
-function PlanCard({ plan, featured, location, onSelect, onChoose }: { plan: LandingPlan; featured: boolean; location: PricingLocation | null; onSelect: () => void; onChoose: () => void }) {
+function PlanCard({
+  plan,
+  isPopular,
+  isSelected,
+  location,
+  onSelect,
+  onChoose,
+}: {
+  plan: LandingPlan;
+  isPopular: boolean;
+  isSelected: boolean;
+  location: PricingLocation | null;
+  onSelect: () => void;
+  onChoose: () => void;
+}) {
   const forInstitutes = plan.audience === "institutes";
   const display = getDisplayPrice(plan, location);
-  const cardBg = featured ? "linear-gradient(155deg, var(--ac), var(--ac2))" : "var(--card)";
-  const cardInk = featured ? "#fff" : "var(--ink)";
-  const cardBorder = featured ? "transparent" : "var(--line)";
-  const cardShadow = featured ? "0 30px 60px -24px var(--ac)" : "none";
-  const mutedInk = featured ? "rgba(255,255,255,0.86)" : "var(--ink2)";
-  const featureInk = featured ? "rgba(255,255,255,0.95)" : "var(--ink)";
-  const ctaBg = featured ? "#fff" : "transparent";
-  const ctaInk = featured ? "var(--ac)" : "var(--ink)";
-  const ctaBorder = featured ? "transparent" : "var(--line)";
-  const checkBg = featured ? "rgba(255,255,255,0.22)" : "var(--acWash)";
-  const checkInk = featured ? "#fff" : "var(--ac)";
+  const cardBg = isPopular
+    ? "linear-gradient(155deg, var(--ac), var(--ac2))"
+    : isSelected
+      ? "var(--card-hover, rgba(255, 255, 255, 0.05))"
+      : "var(--card)";
+  const cardInk = isPopular ? "#fff" : "var(--ink)";
+  const cardBorder = isPopular
+    ? "transparent"
+    : isSelected
+      ? "2px solid var(--ac)"
+      : "1px solid var(--line)";
+  const cardShadow = isPopular
+    ? "0 30px 60px -24px var(--ac)"
+    : isSelected
+      ? "0 12px 32px -12px var(--ac)"
+      : "none";
+  const mutedInk = isPopular ? "rgba(255,255,255,0.86)" : "var(--ink2)";
+  const featureInk = isPopular ? "rgba(255,255,255,0.95)" : "var(--ink)";
+  const ctaBg = isPopular ? "#fff" : "var(--ac)";
+  const ctaInk = isPopular ? "var(--ac)" : "#fff";
+  const ctaBorder = "transparent";
+  const ctaShadow = isPopular ? "0 8px 20px -6px rgba(0, 0, 0, 0.2)" : "0 10px 24px -10px var(--ac)";
+  const checkBg = isPopular ? "rgba(255,255,255,0.22)" : "var(--acWash)";
+  const checkInk = isPopular ? "#fff" : "var(--ac)";
 
   return (
-    <div className="vh-plan-card vh-reveal" style={{ background: cardBg, color: cardInk, borderColor: cardBorder, boxShadow: cardShadow }} onClick={onSelect}>
-      {featured && <div className="vh-plan-badge">Popular Choice</div>}
+    <div
+      className="vh-plan-card vh-reveal"
+      style={{ background: cardBg, color: cardInk, border: cardBorder, boxShadow: cardShadow }}
+      onClick={onSelect}
+    >
+      {isPopular && <div className="vh-plan-badge">Popular Choice</div>}
       <div className="vh-plan-name" style={{ color: mutedInk }}>
         {plan.name}
       </div>
@@ -157,7 +188,7 @@ function PlanCard({ plan, featured, location, onSelect, onChoose }: { plan: Land
       <button
         type="button"
         className="vh-plan-cta"
-        style={{ background: ctaBg, color: ctaInk, borderColor: ctaBorder }}
+        style={{ background: ctaBg, color: ctaInk, borderColor: ctaBorder, boxShadow: ctaShadow }}
         onClick={(e) => {
           e.stopPropagation();
           onChoose();
@@ -368,12 +399,14 @@ export function Plans() {
           {hasPlans && (
             <div className={planGridClass}>
               {visiblePlans.map((plan) => {
-                const featured = selectedPlanId !== null ? selectedPlanId === plan.id : Boolean(plan.is_popular);
+                const isPopular = Boolean(plan.is_popular);
+                const isSelected = selectedPlanId === plan.id;
                 return (
                   <PlanCard
                     key={plan.id}
                     plan={plan}
-                    featured={featured}
+                    isPopular={isPopular}
+                    isSelected={isSelected}
                     location={pricingLocation}
                     onSelect={() => setSelectedPlanId(plan.id)}
                     onChoose={() => (plan.audience === "institutes" ? applyForInstitute(plan.id) : handleAuth("register", plan.id))}

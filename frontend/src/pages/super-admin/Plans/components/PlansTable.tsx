@@ -103,7 +103,10 @@ export function PlansTable({ plans, basePath, emptyMessage, onToggleActive, onTo
                 <RowActionMenu
                   items={[
                     <button key="popular" type="button" onClick={() => onTogglePopular(plan)}>
-                      <Icon name={plan.is_popular ? "starFilled" : "star"} />
+                      <Icon
+                        name={plan.is_popular ? "starFilled" : "star"}
+                        style={plan.is_popular ? { color: "#eab308" } : undefined}
+                      />
                       <span>{plan.is_popular ? t.unmarkPopular : t.markPopular}</span>
                     </button>,
                     <button key="status" type="button" onClick={() => onToggleActive(plan)}>

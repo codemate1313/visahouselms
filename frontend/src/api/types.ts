@@ -524,6 +524,7 @@ export interface StudentPlanCatalogItem {
     percentage: number;
     tax_type: "exclusive" | "inclusive";
   } | null;
+  is_popular?: boolean;
 }
 
 
