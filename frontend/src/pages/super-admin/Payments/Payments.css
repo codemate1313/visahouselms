@@ -1,0 +1,131 @@
+/* Super Admin Payments - Reference Column & Table Polishing */
+
+.col-payment-ref {
+  min-width: 250px !important;
+  max-width: 320px !important;
+}
+
+.payment-ref-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 290px;
+}
+
+.payment-ref-gateway-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.payment-gateway-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  background: var(--surface-muted, #f1f5f9);
+  color: var(--text-muted, #64748b);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+}
+
+.payment-gateway-pill.gateway-razorpay {
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
+  border-color: rgba(2, 132, 199, 0.2);
+}
+
+.payment-gateway-pill.gateway-stripe {
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.payment-gateway-pill.gateway-manual {
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748b;
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+.payment-ref-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payment-ref-label {
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #71717a);
+  line-height: 1.1;
+}
+
+.payment-ref-val-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: var(--surface-muted, #f4f4f5);
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle, #e4e4e7);
+  max-width: 100%;
+}
+
+[data-theme="dark"] .payment-ref-val-wrapper {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.payment-ref-code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--text, #18181b);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .payment-ref-code {
+  color: #f4f4f5;
+}
+
+.payment-ref-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted, #a1a1aa);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.payment-ref-copy-btn:hover {
+  color: var(--primary, #b80f28);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .payment-ref-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.payment-ref-copy-btn.is-copied {
+  color: #10b981 !important;
+}
+
+.payment-ref-other {
+  color: var(--text-muted, #71717a);
+  word-break: break-all;
+}

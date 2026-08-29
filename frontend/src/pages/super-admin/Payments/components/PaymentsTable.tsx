@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { Badge, DataTableCard } from "@/components/ui";
@@ -6,6 +7,7 @@ import { paymentsStrings as strings } from "../Payments.strings";
 import type { PaymentRow } from "../types";
 import { formatDate } from "@/utils/date";
 import type { BadgeTone } from "@/components/ui";
+import "../Payments.css";
 
 const STATUS_BADGES: Record<string, BadgeTone> = {
   paid: "green",
@@ -20,8 +22,55 @@ interface PaymentsTableProps {
   onOpenDueForm: (row: PaymentRow) => void;
 }
 
+function parseGatewayReference(rawRef: string | null | undefined) {
+  if (!rawRef || !rawRef.trim() || rawRef.trim() === "—") {
+    return { orderId: null, paymentId: null, otherRef: null };
+  }
+
+  const str = rawRef.trim();
+
+  // 1. Standard pattern: "Order: <order_id> | Payment: <payment_id>"
+  const orderMatch = str.match(/Order:\s*([^\s|]+)/i);
+  const paymentMatch = str.match(/Payment:\s*([^\s|]+)/i);
+
+  let orderId = orderMatch ? orderMatch[1].trim() : null;
+  let paymentId = paymentMatch ? paymentMatch[1].trim() : null;
+
+  // 2. Direct match for order_ prefix if not matched by Order: prefix
+  if (!orderId) {
+    const directOrderMatch = str.match(/\b(order_[a-zA-Z0-9_-]+)\b/i);
+    if (directOrderMatch) {
+      orderId = directOrderMatch[1].trim();
+    }
+  }
+
+  // 3. Direct match for pay_ prefix if not matched by Payment: prefix
+  if (!paymentId) {
+    const directPayMatch = str.match(/\b(pay_[a-zA-Z0-9_-]+)\b/i);
+    if (directPayMatch) {
+      paymentId = directPayMatch[1].trim();
+    }
+  }
+
+  // 4. Custom/manual reference
+  let otherRef: string | null = null;
+  if (!orderId && !paymentId) {
+    otherRef = str;
+  }
+
+  return { orderId, paymentId, otherRef };
+}
+
 export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
   const t = strings.table;
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const handleCopy = (text: string, key: string) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 1800);
+  };
 
   const today: PaymentRow[] = [];
   const yesterday: PaymentRow[] = [];
@@ -46,6 +95,81 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
     }
   });
 
+  const renderReferenceCell = (row: PaymentRow) => {
+    const { orderId, paymentId, otherRef } = parseGatewayReference(row.gateway_reference);
+
+    if (!orderId && !paymentId && !otherRef) {
+      return <span style={{ color: "var(--text-muted)", fontSize: 12.5 }}>—</span>;
+    }
+
+    const gatewayName = (row.gateway || "razorpay").toLowerCase();
+
+    return (
+      <div className="payment-ref-cell">
+        <div className="payment-ref-gateway-row">
+          <span className={`payment-gateway-pill gateway-${gatewayName}`}>
+            {gatewayName.toUpperCase()}
+          </span>
+        </div>
+
+        {orderId && (
+          <div className="payment-ref-item">
+            <span className="payment-ref-label">Order ID</span>
+            <div className="payment-ref-val-wrapper">
+              <code className="payment-ref-code" title={orderId}>
+                {orderId}
+              </code>
+              <button
+                type="button"
+                className={`payment-ref-copy-btn ${copiedKey === `order-${row.id}` ? "is-copied" : ""}`}
+                title={copiedKey === `order-${row.id}` ? "Copied!" : "Copy Order ID"}
+                aria-label="Copy Order ID"
+                onClick={() => handleCopy(orderId, `order-${row.id}`)}
+              >
+                <Icon
+                  name={copiedKey === `order-${row.id}` ? "check" : "clipboard"}
+                  style={{ width: 12, height: 12 }}
+                />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {paymentId && (
+          <div className="payment-ref-item">
+            <span className="payment-ref-label">
+              {gatewayName === "razorpay" ? "Razorpay ID" : "Payment ID"}
+            </span>
+            <div className="payment-ref-val-wrapper">
+              <code className="payment-ref-code" title={paymentId}>
+                {paymentId}
+              </code>
+              <button
+                type="button"
+                className={`payment-ref-copy-btn ${copiedKey === `pay-${row.id}` ? "is-copied" : ""}`}
+                title={copiedKey === `pay-${row.id}` ? "Copied!" : "Copy Payment ID"}
+                aria-label="Copy Payment ID"
+                onClick={() => handleCopy(paymentId, `pay-${row.id}`)}
+              >
+                <Icon
+                  name={copiedKey === `pay-${row.id}` ? "check" : "clipboard"}
+                  style={{ width: 12, height: 12 }}
+                />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {otherRef && (
+          <div className="payment-ref-item">
+            <span className="payment-ref-label">Reference</span>
+            <span className="payment-ref-other text-xs font-mono">{otherRef}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderRow = (row: PaymentRow) => (
     <tr key={row.id}>
       <td>
@@ -66,17 +190,8 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
           )}
         </div>
       </td>
-      <td>
-        {row.gateway_reference ? (
-          <div style={{ wordBreak: "break-all", maxWidth: 180, fontSize: 12.5, color: "var(--slate-600)" }}>
-            <span style={{ fontSize: 10, textTransform: "uppercase", background: "var(--surface-muted)", padding: "1px 5px", borderRadius: 4, marginRight: 5, color: "var(--slate-600)", fontWeight: 600 }}>
-              {row.gateway || "manual"}
-            </span>
-            {row.gateway_reference}
-          </div>
-        ) : (
-          <span style={{ color: "var(--text-muted)", fontSize: 12.5 }}>—</span>
-        )}
+      <td className="col-payment-ref">
+        {renderReferenceCell(row)}
       </td>
       <td>
         <strong style={{ fontSize: 13.5 }}>
@@ -113,7 +228,7 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
             <th>{t.invoice}</th>
             <th>{t.source}</th>
             <th>{t.instituteOrPlan}</th>
-            <th>{t.reference}</th>
+            <th className="col-payment-ref">{t.reference}</th>
             <th>{t.paidOrDue}</th>
             <th>{t.status}</th>
             <th>{t.date}</th>
