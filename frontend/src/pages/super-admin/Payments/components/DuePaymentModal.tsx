@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { RequiredMark, SearchableSelect } from "@/components/ui";
+import { RequiredMark, SearchableSelect, Button } from "@/components/ui";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { MethodRow, PaymentRow } from "../types";
@@ -45,17 +45,22 @@ export function DuePaymentModal({
           <label htmlFor="due_amount">{t.amountLabel}<RequiredMark /></label>
           <input
             id="due_amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            max={dueFor.due_amount}
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
             value={dueAmount}
-            onChange={(e) => onDueAmountChange(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value.replace(/,/g, ".");
+              if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                onDueAmountChange(val);
+              }
+            }}
+            placeholder="0.00"
             required
           />
           <p className="hint" style={{ marginTop: 4 }}>
             {t.remainingAfterPrefix} {formatCurrencyAmount(
-              Math.max(0, Number(dueFor.due_amount) - (Number(dueAmount) || 0)),
+              Math.max(0, Number(String(dueFor.due_amount).replace(/,/g, ".")) - (Number(String(dueAmount).replace(/,/g, ".")) || 0)),
               dueFor.currency,
             )}
           </p>
@@ -78,12 +83,12 @@ export function DuePaymentModal({
           {dueError && <p className="error-text" style={{ marginTop: 12 }}>{dueError}</p>}
 
           <div className="form-actions" style={{ marginTop: 20 }}>
-            <button type="submit" className="primary-submit-btn" disabled={dueSaving}>
+            <Button type="submit" variant="primary" loading={dueSaving} disabled={dueSaving}>
               {dueSaving ? strings.recordForm.recording : strings.recordForm.submit}
-            </button>
-            <button type="button" className="secondary-done-btn" onClick={onClose}>
+            </Button>
+            <Button type="button" variant="secondary" onClick={onClose} disabled={dueSaving}>
               {strings.cancel}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

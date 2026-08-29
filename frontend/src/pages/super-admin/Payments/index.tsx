@@ -158,13 +158,14 @@ export function Payments() {
 
     setSaving(true);
     try {
+      const cleanAmountReceived = amountReceived ? Number(String(amountReceived).replace(/,/g, ".")) : null;
       const { data } = await apiClient.post("/super-admin/payments", {
         institute_id: Number(instituteId),
         plan_id: Number(planId),
         coupon_code: couponCode || null,
         gateway_reference: reference || null,
         payment_method_id: methodId ? Number(methodId) : null,
-        amount_received: amountReceived ? Number(amountReceived) : null,
+        amount_received: cleanAmountReceived,
       });
       setResult({ invoice_number: data.invoice_number, id: data.id });
       setInstituteId("");
@@ -185,10 +186,15 @@ export function Payments() {
 
   function openDueForm(row: PaymentRow) {
     setDueFor(row);
-    setDueAmount(row.due_amount);
+    const cleanDue = String(row.due_amount || "").replace(/,/g, ".");
+    setDueAmount(cleanDue);
     setDueMethodId("");
     setDueReference("");
     setDueError(null);
+    apiClient
+      .get<MethodRow[]>("/super-admin/payment-methods?active_only=true")
+      .then(({ data }) => setMethods(data))
+      .catch(() => {});
   }
 
   async function submitDuePayment(event: FormEvent) {
@@ -197,8 +203,14 @@ export function Payments() {
     setDueError(null);
     setDueSaving(true);
     try {
+      const cleanAmount = Number(String(dueAmount).replace(/,/g, "."));
+      if (isNaN(cleanAmount) || cleanAmount <= 0) {
+        setDueError("Please enter a valid payment amount.");
+        setDueSaving(false);
+        return;
+      }
       await apiClient.post(`/super-admin/payments/${dueFor.id}/add-payment`, {
-        amount: Number(dueAmount),
+        amount: cleanAmount,
         payment_method_id: dueMethodId ? Number(dueMethodId) : null,
         reference: dueReference || null,
       });

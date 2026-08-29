@@ -195,7 +195,7 @@ export function SearchableSelect({
         left: placement.left,
         width: placement.width,
         maxHeight: placement.maxHeight,
-        zIndex: 99999,
+        zIndex: 10000000,
       }
     : {};
 

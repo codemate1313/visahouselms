@@ -172,15 +172,15 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
 
   const renderRow = (row: PaymentRow) => (
     <tr key={row.id}>
-      <td>
+      <td className="col-invoice">
         <strong style={{ fontSize: 13.5, color: "var(--text)" }}>{row.invoice_number ?? "—"}</strong>
       </td>
-      <td>
+      <td className="col-source">
         <Badge tone="gray" style={{ fontSize: 11 }}>
           {row.source.toUpperCase()}
         </Badge>
       </td>
-      <td>
+      <td className="col-plan">
         <div className="table-item-details">
           <span className="table-item-title">{row.institute_name ?? t.directStudent}</span>
           {row.plan_name && (
@@ -193,7 +193,7 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
       <td className="col-payment-ref">
         {renderReferenceCell(row)}
       </td>
-      <td>
+      <td className="col-paid-due">
         <strong style={{ fontSize: 13.5 }}>
           {formatCurrencyAmount(row.amount_paid, row.currency)}
         </strong>
@@ -203,38 +203,49 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
           </div>
         )}
       </td>
-      <td>
+      <td className="col-status">
         <Badge tone={STATUS_BADGES[row.status] ?? "gray"}>{row.status}</Badge>
       </td>
-      <td>{formatDate(row.created_at)}</td>
-      <td className="table-actions institute-row-actions" style={{ justifyContent: "center" }}>
-        <Link className="action-btn-icon action-edit" to={`/super-admin/payments/${row.id}/invoice`} data-tooltip={t.viewInvoiceTooltip}>
-          <Icon name="billings" />
-        </Link>
-        {Number(row.due_amount) > 0 && (row.status === "partial" || row.status === "pending") && (
-          <button type="button" className="action-btn-icon action-toggle" onClick={() => onOpenDueForm(row)} data-tooltip={t.recordDuePaymentTooltip}>
-            <Icon name="overview" />
-          </button>
-        )}
+      <td className="col-date">{formatDate(row.created_at)}</td>
+      <td className="col-actions text-center">
+        <div className="payment-table-actions">
+          <Link
+            className="payment-action-btn btn-invoice"
+            to={`/super-admin/payments/${row.id}/invoice`}
+            data-tooltip={t.viewInvoiceTooltip}
+            aria-label={t.viewInvoiceTooltip}
+          >
+            <Icon name="billings" />
+          </Link>
+          {Number(row.due_amount) > 0 && (row.status === "partial" || row.status === "pending") && (
+            <button
+              type="button"
+              className="payment-action-btn btn-due"
+              onClick={() => onOpenDueForm(row)}
+              data-tooltip={t.recordDuePaymentTooltip}
+              aria-label={t.recordDuePaymentTooltip}
+            >
+              <Icon name="overview" />
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   );
 
   return (
     <DataTableCard>
-      <table className="data-table sleek-institutes-table">
+      <table className="data-table payments-table">
         <thead>
           <tr>
-            <th>{t.invoice}</th>
-            <th>{t.source}</th>
-            <th>{t.instituteOrPlan}</th>
+            <th className="col-invoice">{t.invoice}</th>
+            <th className="col-source">{t.source}</th>
+            <th className="col-plan">{t.instituteOrPlan}</th>
             <th className="col-payment-ref">{t.reference}</th>
-            <th>{t.paidOrDue}</th>
-            <th>{t.status}</th>
-            <th>{t.date}</th>
-            <th className="table-actions-heading" style={{ textAlign: "center", width: 100, minWidth: 100 }}>
-              {t.actions}
-            </th>
+            <th className="col-paid-due">{t.paidOrDue}</th>
+            <th className="col-status">{t.status}</th>
+            <th className="col-date">{t.date}</th>
+            <th className="col-actions table-actions-heading">{t.actions}</th>
           </tr>
         </thead>
         <tbody>

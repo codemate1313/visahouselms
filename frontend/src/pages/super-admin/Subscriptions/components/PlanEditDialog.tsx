@@ -157,7 +157,7 @@ export function PlanEditDialog({
     const values: InstitutePlanEditValues = {
       agreement_reference: form.agreement_reference.trim(),
       agreement_notes: form.agreement_notes.trim(),
-      agreed_amount: form.agreed_amount,
+      agreed_amount: String(form.agreed_amount).replace(/,/g, "."),
       currency: form.currency.trim().toUpperCase(),
       student_limit: Number(form.student_limit),
       staff_limit: Number(form.staff_limit),
@@ -232,11 +232,17 @@ export function PlanEditDialog({
             <label>
               <span>{t.amount}<RequiredMark /></span>
               <input
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
                 value={form.agreed_amount}
-                onChange={(event) => setField("agreed_amount", event.target.value)}
+                onChange={(event) => {
+                  const val = event.target.value.replace(/,/g, ".");
+                  if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                    setField("agreed_amount", val);
+                  }
+                }}
+                placeholder="0.00"
                 required
               />
             </label>

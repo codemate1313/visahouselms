@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class CouponCreate(BaseModel):
@@ -32,11 +32,27 @@ class RecordPaymentRequest(BaseModel):
     payment_method_id: Optional[int] = None
     amount_received: Optional[float] = Field(default=None, gt=0)
 
+    @field_validator("amount_received", mode="before")
+    @classmethod
+    def normalize_amount_received(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            v = v.replace(",", ".").strip()
+            return float(v) if v else None
+        return v
+
 
 class AddInstallmentRequest(BaseModel):
     amount: float = Field(gt=0)
     payment_method_id: Optional[int] = None
     reference: Optional[str] = None
+
+    @field_validator("amount", mode="before")
+    @classmethod
+    def normalize_amount(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            v = v.replace(",", ".").strip()
+            return float(v) if v else v
+        return v
 
 
 class PaymentMethodCreate(BaseModel):

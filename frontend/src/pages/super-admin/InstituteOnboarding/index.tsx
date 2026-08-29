@@ -93,8 +93,8 @@ export function InstituteOnboarding() {
       const { data } = await apiClient.post<Onboarding & { admin_email: string; admin_temp_password: string }>("/super-admin/onboarding", {
         ...form,
         contact_email: form.contact_email || null,
-        agreed_amount: Number(form.agreed_amount),
-        amount_received: Number(form.amount_received),
+        agreed_amount: Number(String(form.agreed_amount).replace(/,/g, ".")),
+        amount_received: Number(String(form.amount_received).replace(/,/g, ".")),
         payment_method_id: form.payment_method_id ? Number(form.payment_method_id) : null,
         student_limit: Number(form.student_limit),
         staff_limit: Number(form.staff_limit),

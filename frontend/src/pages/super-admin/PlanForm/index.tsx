@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
-import { Checkbox, PageHeader, RequiredMark, SearchableSelect } from "@/components/ui";
+import { Button, Checkbox, PageHeader, RequiredMark, SearchableSelect } from "@/components/ui";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -145,6 +145,16 @@ export function PlanForm() {
   function toggleAll() {
     setSelected((current) => (current.size === modules.length ? new Set() : new Set(modules.map((module) => module.id))));
   }
+  function selectBatch(moduleIds: number[], shouldSelect: boolean) {
+    setSelected((current) => {
+      const next = new Set(current);
+      moduleIds.forEach((id) => {
+        if (shouldSelect) next.add(id);
+        else next.delete(id);
+      });
+      return next;
+    });
+  }
   function setFeature(index: number, value: string) {
     setFeatures((current) => current.map((item, i) => (i === index ? value : item)));
   }
@@ -171,7 +181,7 @@ export function PlanForm() {
     const payload = {
       name: form.name,
       description: form.description || null,
-      price: Number(form.price),
+      price: Number(String(form.price).replace(/,/g, ".")),
       currency: form.currency,
       duration_days: Number(form.duration_days),
       student_limit: Number(form.student_limit),
@@ -179,7 +189,7 @@ export function PlanForm() {
       grace_days: Number(form.grace_days),
       gst_rate_id: form.gst_rate_id ? Number(form.gst_rate_id) : null,
       is_international_enabled: form.is_international_enabled,
-      usd_price: form.is_international_enabled && form.usd_price ? Number(form.usd_price) : null,
+      usd_price: form.is_international_enabled && form.usd_price ? Number(String(form.usd_price).replace(/,/g, ".")) : null,
       ai_evaluation_limit: form.ai_evaluation_limit ? Number(form.ai_evaluation_limit) : null,
       audience,
       is_published: form.is_published,
@@ -245,7 +255,20 @@ export function PlanForm() {
         <div className="form-grid">
           <div>
             <label>{f.price}<RequiredMark /></label>
-            <input type="number" min="0" step="0.01" value={form.price} onChange={set("price")} required />
+            <input
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              value={form.price}
+              onChange={(e) => {
+                const val = e.target.value.replace(/,/g, ".");
+                if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                  set("price")({ target: { value: val } });
+                }
+              }}
+              placeholder="0.00"
+              required
+            />
           </div>
           <div>
             <label>{f.currency}<RequiredMark /></label>
@@ -346,12 +369,17 @@ export function PlanForm() {
                   International Price (USD $)<RequiredMark />
                 </label>
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
                   placeholder="e.g. 59.00"
                   value={form.usd_price}
-                  onChange={set("usd_price")}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/,/g, ".");
+                    if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                      set("usd_price")({ target: { value: val } });
+                    }
+                  }}
                   required={form.is_international_enabled}
                   style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid var(--border)" }}
                 />
@@ -364,7 +392,13 @@ export function PlanForm() {
         </div>
 
 
-        <PlanCoursePicker modules={modules} selected={selected} onToggle={toggle} onToggleAll={toggleAll} />
+        <PlanCoursePicker
+          modules={modules}
+          selected={selected}
+          onToggle={toggle}
+          onToggleAll={toggleAll}
+          onSelectBatch={selectBatch}
+        />
         <PlanFeatureEditor
           features={features}
           maxFeatures={MAX_FEATURES}
@@ -396,10 +430,21 @@ export function PlanForm() {
         </label>
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">
-          <button disabled={saving || (form.is_published && !selected.size)}>{saving ? strings.saving : strings.savePlan}</button>
-          <button type="button" onClick={() => navigate(catalogue.basePath)}>
+          <Button
+            type="submit"
+            variant="primary"
+            className="plan-save-btn"
+            disabled={saving || (form.is_published && !selected.size)}
+          >
+            {saving ? strings.saving : strings.savePlan}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(catalogue.basePath)}
+          >
             {strings.cancel}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

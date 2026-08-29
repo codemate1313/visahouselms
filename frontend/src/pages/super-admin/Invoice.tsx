@@ -94,7 +94,7 @@ export function Invoice() {
       .get(`/super-admin/payments/${id}`)
       .then(({ data }) => {
         setPayment(data);
-        setPayAmount(data.due_amount || "0");
+        setPayAmount(String(data.due_amount || "0").replace(/,/g, "."));
         setEmailRecipient(data.customer_email || "");
       })
       .catch(() => setError(strings.errors.load));
@@ -107,15 +107,10 @@ export function Invoice() {
     setShowEmailModal(true);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDownloadPDF = async () => {
-    if (!payment) return;
+  const generateInvoicePdfDoc = async (paymentData: PaymentDetail): Promise<{ doc: jsPDF; invNum: string }> => {
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const invNum = payment.invoice_number || `INV-${String(payment.id).padStart(6, "0")}`;
-    const currencyCode = payment.currency || "INR";
+    const invNum = paymentData.invoice_number || `INV-${String(paymentData.id).padStart(6, "0")}`;
+    const currencyCode = paymentData.currency || "INR";
     const logoData = await loadLogoDataUrl();
 
     // 1. Top Subtle Brand Accent
@@ -123,12 +118,10 @@ export function Invoice() {
     doc.rect(0, 0, 210, 3, "F");
 
     // 2. Company Brand & Document Header (y: 14 to 34)
-    // Left: Official Visa House Logo + Company Name
     if (logoData) {
       try {
         doc.addImage(logoData, "PNG", 15, 12, 16, 16);
       } catch {
-        // Fallback badge if image decode fails
         doc.setFillColor(163, 28, 40);
         doc.roundedRect(15, 12, 16, 16, 2, 2, "F");
         doc.setTextColor(255, 255, 255);
@@ -171,16 +164,16 @@ export function Invoice() {
     doc.text(`INVOICE #: ${invNum}`, 195, 23.5, { align: "right" });
 
     // Status Badge Pill
-    const isPaid = payment.status === "paid" || Number(payment.due_amount) === 0;
-    const isPartial = payment.status === "partial" || (Number(payment.amount_paid) > 0 && Number(payment.due_amount) > 0);
-    const statusLabel = isPaid ? "PAID" : isPartial ? "PARTIAL" : "UNPAID DUE";
+    const isPaidStatus = paymentData.status === "paid" || Number(paymentData.due_amount) === 0;
+    const isPartialStatus = paymentData.status === "partial" || (Number(paymentData.amount_paid) > 0 && Number(paymentData.due_amount) > 0);
+    const statusLabel = isPaidStatus ? "PAID" : isPartialStatus ? "PARTIAL" : "UNPAID DUE";
 
-    if (isPaid) {
+    if (isPaidStatus) {
       doc.setFillColor(220, 252, 231); // Light emerald
       doc.setDrawColor(134, 239, 172);
       doc.roundedRect(173, 26, 22, 5.5, 1.5, 1.5, "FD");
       doc.setTextColor(22, 101, 52); // Dark green
-    } else if (isPartial) {
+    } else if (isPartialStatus) {
       doc.setFillColor(254, 243, 199); // Light amber
       doc.setDrawColor(252, 211, 77);
       doc.roundedRect(171, 26, 24, 5.5, 1.5, 1.5, "FD");
@@ -193,7 +186,7 @@ export function Invoice() {
     }
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.text(statusLabel, 195 - (isPaid ? 11 : isPartial ? 12 : 13.5), 30, { align: "center" });
+    doc.text(statusLabel, 195 - (isPaidStatus ? 11 : isPartialStatus ? 12 : 13.5), 30, { align: "center" });
 
     // Header bottom border
     doc.setDrawColor(226, 232, 240); // Slate 200
@@ -218,19 +211,19 @@ export function Invoice() {
     doc.setFontSize(9.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
-    const billedName = payment.institute_name || strings.directCustomer;
+    const billedName = paymentData.institute_name || strings.directCustomer;
     doc.text(billedName, 20, cardY + 11.5);
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(71, 85, 105);
-    doc.text(`Plan: ${payment.plan_name || "Assessment Access Plan"} (${payment.source.toUpperCase()})`, 20, cardY + 16.5);
-    if (payment.customer_email) {
-      doc.text(`Email: ${payment.customer_email}`, 20, cardY + 21);
+    doc.text(`Plan: ${paymentData.plan_name || "Assessment Access Plan"} (${paymentData.source.toUpperCase()})`, 20, cardY + 16.5);
+    if (paymentData.customer_email) {
+      doc.text(`Email: ${paymentData.customer_email}`, 20, cardY + 21);
     } else {
       doc.text(`Channel: Direct Student Portal`, 20, cardY + 21);
     }
-    doc.text(`Issue Date: ${formatDate(payment.created_at)}`, 20, cardY + 25.5);
+    doc.text(`Issue Date: ${formatDate(paymentData.created_at)}`, 20, cardY + 25.5);
 
     // Box 2: Payment Information (x: 107, width: 88, height: 31)
     doc.setFillColor(248, 250, 252);
@@ -246,34 +239,33 @@ export function Invoice() {
     doc.setFontSize(9.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
-    const methodDisplay = (payment.payment_method_name || payment.gateway || "Online Payment").toUpperCase();
+    const methodDisplay = (paymentData.payment_method_name || paymentData.gateway || "Online Payment").toUpperCase();
     doc.text(methodDisplay, 112, cardY + 11.5);
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(71, 85, 105);
-    doc.text(`Gateway: ${(payment.gateway || "Razorpay").toUpperCase()}`, 112, cardY + 16.5);
+    doc.text(`Gateway: ${(paymentData.gateway || "Razorpay").toUpperCase()}`, 112, cardY + 16.5);
 
-    // Format transaction / order references cleanly
-    if (payment.gateway_reference) {
-      if (payment.gateway_reference.includes("|")) {
-        const parts = payment.gateway_reference.split("|").map((s) => s.trim());
-        const orderPart = parts[0] ? parts[0].replace(/^Order:\s*/i, "Order: ") : "";
-        const payPart = parts[1] ? parts[1].replace(/^Payment:\s*/i, "Pay ID: ") : "";
-        doc.text(orderPart, 112, cardY + 21, { maxWidth: 78 });
-        if (payPart) {
-          doc.text(payPart, 112, cardY + 25.5, { maxWidth: 78 });
-        } else if (payment.paid_at) {
-          doc.text(`Settled On: ${formatDate(payment.paid_at)}`, 112, cardY + 25.5);
+    if (paymentData.gateway_reference) {
+      if (paymentData.gateway_reference.includes("|")) {
+        const parts = paymentData.gateway_reference.split("|").map((s) => s.trim());
+        const orderP = parts[0] ? parts[0].replace(/^Order:\s*/i, "Order: ") : "";
+        const payP = parts[1] ? parts[1].replace(/^Payment:\s*/i, "Pay ID: ") : "";
+        doc.text(orderP, 112, cardY + 21, { maxWidth: 78 });
+        if (payP) {
+          doc.text(payP, 112, cardY + 25.5, { maxWidth: 78 });
+        } else if (paymentData.paid_at) {
+          doc.text(`Settled On: ${formatDate(paymentData.paid_at)}`, 112, cardY + 25.5);
         }
       } else {
-        doc.text(`Ref: ${payment.gateway_reference}`, 112, cardY + 21, { maxWidth: 78 });
-        if (payment.paid_at) {
-          doc.text(`Settled On: ${formatDate(payment.paid_at)}`, 112, cardY + 25.5);
+        doc.text(`Ref: ${paymentData.gateway_reference}`, 112, cardY + 21, { maxWidth: 78 });
+        if (paymentData.paid_at) {
+          doc.text(`Settled On: ${formatDate(paymentData.paid_at)}`, 112, cardY + 25.5);
         }
       }
-    } else if (payment.paid_at) {
-      doc.text(`Settled On: ${formatDate(payment.paid_at)}`, 112, cardY + 21);
+    } else if (paymentData.paid_at) {
+      doc.text(`Settled On: ${formatDate(paymentData.paid_at)}`, 112, cardY + 21);
       doc.text(`Status: Completed & Verified`, 112, cardY + 25.5);
     } else {
       doc.text(`Status: Pending Settlement`, 112, cardY + 21);
@@ -285,22 +277,22 @@ export function Invoice() {
     const tableBody = [
       [
         "1",
-        `${payment.plan_name || "Assessment Access Plan"}\nOnline Test Engine & AI Rubric Scoring Access`,
-        payment.source.toUpperCase(),
+        `${paymentData.plan_name || "Assessment Access Plan"}\nOnline Test Engine & AI Rubric Scoring Access`,
+        paymentData.source.toUpperCase(),
         "1",
-        formatPdfCurrency(payment.amount, currencyCode),
-        formatPdfCurrency(payment.amount, currencyCode),
+        formatPdfCurrency(paymentData.amount, currencyCode),
+        formatPdfCurrency(paymentData.amount, currencyCode),
       ],
     ];
 
-    if (Number(payment.discount_amount) > 0) {
+    if (Number(paymentData.discount_amount) > 0) {
       tableBody.push([
         "2",
-        `Promotional Discount ${payment.coupon_code ? `(Coupon: ${payment.coupon_code})` : ""}`,
+        `Promotional Discount ${paymentData.coupon_code ? `(Coupon: ${paymentData.coupon_code})` : ""}`,
         "PROMO",
         "1",
-        `-${formatPdfCurrency(payment.discount_amount, currencyCode)}`,
-        `-${formatPdfCurrency(payment.discount_amount, currencyCode)}`,
+        `-${formatPdfCurrency(paymentData.discount_amount, currencyCode)}`,
+        `-${formatPdfCurrency(paymentData.discount_amount, currencyCode)}`,
       ]);
     }
 
@@ -348,7 +340,6 @@ export function Invoice() {
     const summaryBoxX = 122;
     const summaryBoxW = 73;
 
-    // Left Card: Clean Terms & Conditions Card with word-wrapped bullet points
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(termsBoxX, bottomBoxY, termsBoxW, bottomBoxHeight, 2, 2, "F");
     doc.setDrawColor(226, 232, 240);
@@ -362,43 +353,52 @@ export function Invoice() {
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(71, 85, 105);
-    doc.text("• Access License: Grants access to Language CERT module test exams.", termsBoxX + 5, bottomBoxY + 14, { maxWidth: 92 });
-    doc.text("• Non-Transferable: Digital subscriptions and vouchers are strictly non-transferable.", termsBoxX + 5, bottomBoxY + 21, { maxWidth: 92 });
-    doc.text("• Billing Support: Reach out to support@visahouse.com for any billing inquiries.", termsBoxX + 5, bottomBoxY + 28, { maxWidth: 92 });
-    doc.text("• Authentic Document: System generated electronic tax invoice. No signature needed.", termsBoxX + 5, bottomBoxY + 35, { maxWidth: 92 });
 
-    // Right Card: Financial Summary
+    const bulletPoints = [
+      "• Access License: Grants access to Language CERT module test exams.",
+      "• Non-Transferable: Digital subscriptions and vouchers are strictly non-transferable.",
+      "• Billing Support: Reach out to support@visahouse.com for any billing inquiries.",
+      "• Authentic Document: System generated electronic tax invoice. No signature needed.",
+    ];
+
+    let currentBulletY = bottomBoxY + 14;
+    bulletPoints.forEach((point) => {
+      const lines = doc.splitTextToSize(point, termsBoxW - 10);
+      doc.text(lines, termsBoxX + 5, currentBulletY);
+      currentBulletY += lines.length * 4.2 + 1.2;
+    });
+
+    // Right Card: Totals Summary
     doc.setFillColor(248, 250, 252);
     doc.roundedRect(summaryBoxX, bottomBoxY, summaryBoxW, bottomBoxHeight, 2, 2, "F");
     doc.setDrawColor(226, 232, 240);
     doc.roundedRect(summaryBoxX, bottomBoxY, summaryBoxW, bottomBoxHeight, 2, 2, "S");
 
-    // Summary content
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 116, 139);
     doc.text("Total Invoice Amount:", summaryBoxX + 4, bottomBoxY + 9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
-    doc.text(formatPdfCurrency(payment.final_amount, currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 9, { align: "right" });
+    doc.text(formatPdfCurrency(paymentData.final_amount, currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 9, { align: "right" });
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 116, 139);
     doc.text("Total Settled (Paid):", summaryBoxX + 4, bottomBoxY + 18);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(22, 101, 52); // Green
-    doc.text(formatPdfCurrency(payment.amount_paid, currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 18, { align: "right" });
+    doc.text(formatPdfCurrency(paymentData.amount_paid, currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 18, { align: "right" });
 
     doc.setDrawColor(226, 232, 240);
     doc.line(summaryBoxX + 4, bottomBoxY + 24, summaryBoxX + summaryBoxW - 4, bottomBoxY + 24);
 
-    const dueAmt = Number(payment.due_amount) || 0;
+    const dueAmt = Number(paymentData.due_amount) || 0;
     doc.setFontSize(9.5);
     doc.setFont("helvetica", "bold");
     if (dueAmt > 0) {
       doc.setTextColor(220, 38, 38); // Red
       doc.text("Balance Outstanding:", summaryBoxX + 4, bottomBoxY + 34);
-      doc.text(formatPdfCurrency(payment.due_amount, currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 34, { align: "right" });
+      doc.text(formatPdfCurrency(paymentData.due_amount, currencyCode), summaryBoxX + summaryBoxW - 4, bottomBoxY + 34, { align: "right" });
     } else {
       doc.setTextColor(15, 23, 42);
       doc.text("Balance Outstanding:", summaryBoxX + 4, bottomBoxY + 34);
@@ -421,6 +421,12 @@ export function Invoice() {
     doc.setTextColor(148, 163, 184);
     doc.text("support@visahouse.com  •  www.visahouse.com  •  Computer Generated Tax Invoice", 105, footerY + 11, { align: "center" });
 
+    return { doc, invNum };
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!payment) return;
+    const { doc, invNum } = await generateInvoicePdfDoc(payment);
     doc.save(`Invoice_${invNum}.pdf`);
     showToast(strings.toasts.pdfGenerated);
   };
@@ -428,7 +434,7 @@ export function Invoice() {
   const handleRecordPaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!payment) return;
-    const addAmount = Number(payAmount);
+    const addAmount = Number(String(payAmount).replace(/,/g, "."));
     if (isNaN(addAmount) || addAmount <= 0) return;
 
     const currentPaid = Number(payment.amount_paid);
@@ -511,15 +517,6 @@ export function Invoice() {
               <polyline points="22,6 12,13 2,6" />
             </svg>
             {strings.emailReceipt}
-          </button>
-
-          <button className="invoice-btn invoice-btn-secondary" onClick={handlePrint} title="Print Invoice">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9" />
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-              <rect x="6" y="14" width="12" height="8" />
-            </svg>
-            {strings.print}
           </button>
 
           <button className="invoice-btn invoice-btn-primary" onClick={handleDownloadPDF} title="Download PDF Document">
@@ -748,11 +745,17 @@ export function Invoice() {
               <div className="invoice-field">
                 <label>{strings.modals.amountToPay}</label>
                 <input
-                  type="number"
-                  step="0.01"
-                  max={payment.due_amount}
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
                   value={payAmount}
-                  onChange={(e) => setPayAmount(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/,/g, ".");
+                    if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                      setPayAmount(val);
+                    }
+                  }}
+                  placeholder="0.00"
                   required
                 />
               </div>

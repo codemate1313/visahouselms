@@ -70,8 +70,8 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
   // Agreement & Financials
   const [agreementReference, setAgreementReference] = useState("");
   const [agreementNotes, setAgreementNotes] = useState("");
-  const [agreedAmount, setAgreedAmount] = useState<number | "">("");
-  const [amountReceived, setAmountReceived] = useState<number | "">("");
+  const [agreedAmount, setAgreedAmount] = useState<number | string>("");
+  const [amountReceived, setAmountReceived] = useState<number | string>("");
   const [currency, setCurrency] = useState("INR");
   const [paymentMethodId, setPaymentMethodId] = useState<string>("");
   const [paymentReference, setPaymentReference] = useState("");
@@ -266,7 +266,7 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
         setError("Amount Received is required.");
         return false;
       }
-      if (Number(amountReceived) > Number(agreedAmount)) {
+      if (Number(String(amountReceived).replace(/,/g, ".")) > Number(String(agreedAmount).replace(/,/g, "."))) {
         setError("Amount Received cannot exceed the Agreed Amount.");
         return false;
       }
@@ -373,8 +373,8 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
         module_ids: [...selectedModules].sort((a, b) => a - b),
         agreement_reference: agreementReference.trim(),
         agreement_notes: agreementNotes.trim() || null,
-        agreed_amount: Number(agreedAmount),
-        amount_received: Number(amountReceived),
+        agreed_amount: Number(String(agreedAmount).replace(/,/g, ".")),
+        amount_received: Number(String(amountReceived).replace(/,/g, ".")),
         currency: currency.trim(),
         payment_method_id: Number(paymentMethodId),
         payment_reference: paymentReference.trim() || null,
@@ -400,8 +400,8 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
     };
 
     payload.agreement_reference = agreementReference.trim();
-    payload.agreed_amount = Number(agreedAmount);
-    payload.amount_received = Number(amountReceived);
+    payload.agreed_amount = Number(String(agreedAmount).replace(/,/g, "."));
+    payload.amount_received = Number(String(amountReceived).replace(/,/g, "."));
     payload.currency = currency.trim();
     payload.payment_method_id = Number(paymentMethodId);
     if (contactEmail.trim()) payload.contact_email = contactEmail.trim();
@@ -802,10 +802,16 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
                 <label htmlFor="agreed_amount">Agreed Amount<RequiredMark /></label>
                 <input
                   id="agreed_amount"
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
                   value={agreedAmount}
-                  onChange={(e) => setAgreedAmount(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/,/g, ".");
+                    if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                      setAgreedAmount(val);
+                    }
+                  }}
                   placeholder="50000"
                   disabled={Boolean(selectedPlanId)}
                   style={selectedPlanId ? { background: "var(--surface-muted)", cursor: "not-allowed", opacity: 0.88 } : undefined}
@@ -814,7 +820,20 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
               </div>
               <div>
                 <label htmlFor="amount_received">Amount Received<RequiredMark /></label>
-                <input id="amount_received" type="number" min="0" value={amountReceived} onChange={(e) => setAmountReceived(e.target.value === "" ? "" : Number(e.target.value))} placeholder="50000" />
+                <input
+                  id="amount_received"
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={amountReceived}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/,/g, ".");
+                    if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                      setAmountReceived(val);
+                    }
+                  }}
+                  placeholder="50000"
+                />
               </div>
               <div>
                 <label htmlFor="currency">Currency<RequiredMark /></label>

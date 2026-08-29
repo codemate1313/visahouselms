@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { RequiredMark, SearchableSelect } from "@/components/ui";
+import { Button, RequiredMark, SearchableSelect } from "@/components/ui";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -87,7 +87,7 @@ export function CouponForm() {
     const payload = {
       code: form.code,
       discount_type: form.discount_type,
-      value: Number(form.value),
+      value: Number(String(form.value).replace(/,/g, ".")),
       scope: form.scope,
       scope_plan_id: form.scope === "plan" && form.scope_plan_id ? Number(form.scope_plan_id) : null,
       usage_limit: form.usage_limit ? Number(form.usage_limit) : null,
@@ -151,12 +151,17 @@ export function CouponForm() {
             <label htmlFor="value">{strings.valueLabel(form.discount_type === "percent")}<RequiredMark /></label>
             <input
               id="value"
-              type="number"
-              min="0"
-              max={form.discount_type === "percent" ? "100" : undefined}
-              step="0.01"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
               value={form.value}
-              onChange={set("value")}
+              onChange={(e) => {
+                const val = e.target.value.replace(/,/g, ".");
+                if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                  set("value")({ target: { value: val } });
+                }
+              }}
+              placeholder="0.00"
               required
             />
           </div>
@@ -205,8 +210,12 @@ export function CouponForm() {
         {error && <p className="error-text">{error}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? strings.saving : strings.saveCoupon}</button>
-          <button type="button" onClick={() => navigate("/super-admin/coupons")}>{strings.cancel}</button>
+          <Button type="submit" variant="primary" loading={saving} disabled={saving}>
+            {saving ? strings.saving : strings.saveCoupon}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => navigate("/super-admin/coupons")}>
+            {strings.cancel}
+          </Button>
         </div>
       </form>
     </div>

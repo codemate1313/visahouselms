@@ -25,13 +25,39 @@ export function AgreementPaymentPanel({ form, set, methods, onPaymentMethodChang
       <div className="form-grid">
         <div>
           <label>{t.agreedAmount}<RequiredMark /></label>
-          <input type="number" min="1" value={form.agreed_amount} onChange={set("agreed_amount")} required placeholder={t.amountPlaceholder} />
+          <input
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            value={form.agreed_amount}
+            onChange={(e) => {
+              const val = e.target.value.replace(/,/g, ".");
+              if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                set("agreed_amount")({ target: { value: val } });
+              }
+            }}
+            required
+            placeholder={t.amountPlaceholder}
+          />
         </div>
         <div>
           <label>{t.amountReceived}<RequiredMark /></label>
           {/* 0 is a legitimate value here - the agreement can be signed with
               nothing paid yet, recorded as a due balance on the Payments screen. */}
-          <input type="number" min="0" value={form.amount_received} onChange={set("amount_received")} required placeholder={t.amountPlaceholder} />
+          <input
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            value={form.amount_received}
+            onChange={(e) => {
+              const val = e.target.value.replace(/,/g, ".");
+              if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                set("amount_received")({ target: { value: val } });
+              }
+            }}
+            required
+            placeholder={t.amountPlaceholder}
+          />
         </div>
         <div>
           <label>{t.currency}<RequiredMark /></label>

@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Checkbox, RequiredMark } from "@/components/ui";
+import { Checkbox, RequiredMark, Button } from "@/components/ui";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -91,7 +91,9 @@ export function TrialConfig() {
         {error && <p className="error-text">{error}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? strings.saving : strings.save}</button>
+          <Button type="submit" variant="primary" loading={saving} disabled={saving}>
+            {saving ? strings.saving : strings.save}
+          </Button>
         </div>
       </form>
 

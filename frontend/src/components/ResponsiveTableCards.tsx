@@ -12,6 +12,14 @@ function labelForHeader(header: HTMLTableCellElement, index: number) {
 
 function applyResponsiveTableCards(root: ParentNode = document) {
   root.querySelectorAll<HTMLTableElement>("table").forEach((table) => {
+    if (
+      table.classList.contains("pdf-sheet-table") ||
+      table.closest(".invoice-pdf-replica-sheet") ||
+      table.getAttribute("data-no-responsive") === "true"
+    ) {
+      return;
+    }
+
     const headers = Array.from(table.querySelectorAll<HTMLTableCellElement>("thead th")).map(labelForHeader);
 
     if (headers.length === 0) {

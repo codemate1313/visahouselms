@@ -36,8 +36,14 @@ export function PlanFeatureEditor({ features, maxFeatures, onChange, onAdd, onRe
               aria-label={t.itemLabel(index + 1)}
               onChange={(event) => onChange(index, event.target.value)}
             />
-            <button type="button" className="plan-feature-remove" onClick={() => onRemove(index)} title={t.remove}>
-              {t.removeGlyph}
+            <button
+              type="button"
+              className="plan-feature-remove"
+              onClick={() => onRemove(index)}
+              title={t.remove}
+              aria-label={t.remove}
+            >
+              <Icon name="trash" style={{ width: 14, height: 14 }} />
             </button>
           </div>
         ))

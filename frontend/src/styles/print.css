@@ -25,6 +25,7 @@
 @media print {
   html,
   html[data-theme],
+  body,
   :root[data-theme][data-theme][data-theme] body {
     background: #ffffff !important;
     color: #111113 !important;
@@ -32,10 +33,28 @@
        "Background graphics" switched off. */
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
 
-  /* Page shells: transparent, so a document card sits on white paper instead
-     of on a full-height tinted (or in dark mode, near-black) panel. */
+  /* Page shells: transparent and block flow, so a document card sits on white paper
+     instead of on a flex-layout, zero-width, or clipped panel. */
+  #root,
+  .dashboard,
+  .dashboard-content,
+  .dashboard-overview,
+  .super-admin-portal,
+  .super-admin-portal main,
+  .institute-branded-portal,
+  .institute-branded-portal main,
+  .student-layout,
+  .student-layout main,
+  .portal-main,
+  .page-content,
+  .gsap-route-scope,
   :root[data-theme][data-theme][data-theme] body #root,
   :root[data-theme][data-theme][data-theme] body .dashboard,
   :root[data-theme][data-theme][data-theme] body .dashboard-content,
@@ -52,20 +71,33 @@
     background-image: none !important;
     color: #111113 !important;
     box-shadow: none !important;
+    display: block !important;
+    position: static !important;
+    float: none !important;
     min-height: 0 !important;
     height: auto !important;
+    max-height: none !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
     overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    contain: none !important;
+    transform: none !important;
+    filter: none !important;
     padding: 0 !important;
     margin: 0 !important;
   }
 
   /* Application chrome never prints. */
-  :root[data-theme][data-theme][data-theme] body :is(
+  :is(
     .no-print,
     .dashboard-sidebar,
     .portal-sidebar,
     .super-admin-sidebar,
     .sidebar-container,
+    .huge-sidebar,
     .portal-app-bar,
     .portal-top-bar,
     .dashboard-topbar,
@@ -75,13 +107,38 @@
     .toast-container,
     .snackbar-container,
     .global-loader,
-    .scroll-to-top
+    .scroll-to-top,
+    aside,
+    header,
+    nav
+  ),
+  :root[data-theme][data-theme][data-theme] body :is(
+    .no-print,
+    .dashboard-sidebar,
+    .portal-sidebar,
+    .super-admin-sidebar,
+    .sidebar-container,
+    .huge-sidebar,
+    .portal-app-bar,
+    .portal-top-bar,
+    .dashboard-topbar,
+    .impersonation-banner,
+    .maintenance-notice,
+    .connectivity-notice,
+    .toast-container,
+    .snackbar-container,
+    .global-loader,
+    .scroll-to-top,
+    aside,
+    header,
+    nav
   ) {
     display: none !important;
   }
 
   /* Links print as plain text - a portal URL under every label is noise on a
      receipt. */
+  a,
   :root[data-theme][data-theme][data-theme] body a {
     color: inherit !important;
     text-decoration: none !important;
@@ -90,6 +147,7 @@
   /* The dark theme paints portal text through `-webkit-text-fill-color`, which
      wins over `color` at paint time - white-on-white unless it is handed back
      to whatever colour each element resolves to. */
+  *,
   :root[data-theme][data-theme][data-theme] body * {
     -webkit-text-fill-color: currentColor !important;
   }

@@ -2,6 +2,7 @@ import { Icon } from "@/components/icons";
 import { Modal } from "@/components/ui";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { formatDate } from "@/utils/date";
+import "./OngoingPlanDialog.css";
 
 interface OngoingPlanDialogProps {
   busy: boolean;

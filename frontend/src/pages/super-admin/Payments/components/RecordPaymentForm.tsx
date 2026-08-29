@@ -86,11 +86,16 @@ export function RecordPaymentForm({
           <label htmlFor="amount_received">{t.amountReceivedLabel}</label>
           <input
             id="amount_received"
-            type="number"
-            min="0"
-            step="0.01"
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
             value={amountReceived}
-            onChange={(e) => onAmountReceivedChange(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value.replace(/,/g, ".");
+              if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) {
+                onAmountReceivedChange(val);
+              }
+            }}
             placeholder={t.fullPrice}
           />
         </div>

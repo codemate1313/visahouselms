@@ -1,22 +1,237 @@
 /* Super Admin Payments - Reference Column & Table Polishing */
 
-.col-payment-ref {
-  min-width: 250px !important;
-  max-width: 320px !important;
+.super-admin-portal table.payments-table,
+.payments-page-wrapper table.payments-table,
+table.payments-table {
+  width: 100% !important;
+  min-width: 1140px !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
 }
 
+/* Unified clean row borders across all columns */
+.super-admin-portal table.payments-table thead th,
+table.payments-table thead th {
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--border, rgba(228, 228, 231, 0.8)) !important;
+  padding: 13px 16px !important;
+  vertical-align: middle !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  color: var(--text-muted, #71717a) !important;
+  background: var(--surface-muted, rgba(244, 244, 245, 0.75)) !important;
+}
+
+.super-admin-portal table.payments-table tbody td,
+table.payments-table tbody td {
+  display: table-cell !important;
+  vertical-align: middle !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--border-subtle, rgba(244, 244, 245, 0.8)) !important;
+  padding: 13px 16px !important;
+}
+
+/* Explicit column widths */
+.super-admin-portal table.payments-table th.col-invoice,
+.super-admin-portal table.payments-table td.col-invoice {
+  width: 130px !important;
+  min-width: 120px !important;
+  max-width: 145px !important;
+}
+
+.super-admin-portal table.payments-table th.col-source,
+.super-admin-portal table.payments-table td.col-source {
+  width: 85px !important;
+  min-width: 75px !important;
+  max-width: 95px !important;
+}
+
+.super-admin-portal table.payments-table th.col-plan,
+.super-admin-portal table.payments-table td.col-plan {
+  width: 180px !important;
+  min-width: 160px !important;
+  max-width: 210px !important;
+}
+
+/* Reference column: generously sized so full Order ID and Razorpay ID never wrap */
+.super-admin-portal table.payments-table th.col-payment-ref,
+.super-admin-portal table.payments-table td.col-payment-ref,
+.col-payment-ref {
+  width: 320px !important;
+  min-width: 300px !important;
+  max-width: 360px !important;
+}
+
+.super-admin-portal table.payments-table th.col-paid-due,
+.super-admin-portal table.payments-table td.col-paid-due {
+  width: 125px !important;
+  min-width: 115px !important;
+  max-width: 140px !important;
+}
+
+.super-admin-portal table.payments-table th.col-status,
+.super-admin-portal table.payments-table td.col-status {
+  width: 110px !important;
+  min-width: 100px !important;
+  max-width: 120px !important;
+}
+
+.super-admin-portal table.payments-table th.col-date,
+.super-admin-portal table.payments-table td.col-date {
+  width: 125px !important;
+  min-width: 115px !important;
+  max-width: 135px !important;
+  white-space: nowrap !important;
+}
+
+.super-admin-portal table.payments-table th.col-actions,
+.super-admin-portal table.payments-table td.col-actions,
+table.payments-table th.col-actions,
+table.payments-table td.col-actions {
+  display: table-cell !important;
+  vertical-align: middle !important;
+  width: 105px !important;
+  min-width: 100px !important;
+  max-width: 115px !important;
+  text-align: center !important;
+  padding: 13px 10px !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--border-subtle, rgba(244, 244, 245, 0.8)) !important;
+}
+
+/* Action Buttons in Payments Table */
+.payment-table-actions {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.payment-action-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  position: relative;
+}
+
+.payment-action-btn svg {
+  width: 17px !important;
+  height: 17px !important;
+  min-width: 17px !important;
+  min-height: 17px !important;
+  display: block !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  transition: all 0.15s ease !important;
+}
+
+.payment-action-btn:hover {
+  transform: translateY(-1.5px) !important;
+}
+
+/* 1. View Invoice Button (Blue) */
+.payment-action-btn.btn-invoice {
+  background: rgba(37, 99, 235, 0.08) !important;
+  color: #2563eb !important;
+  border-color: rgba(37, 99, 235, 0.22) !important;
+}
+
+.payment-action-btn.btn-invoice:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28) !important;
+}
+
+.payment-action-btn.btn-invoice:hover svg {
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* 2. Record Due Payment Button (Amber) */
+.payment-action-btn.btn-due {
+  background: rgba(217, 119, 6, 0.09) !important;
+  color: #d97706 !important;
+  border-color: rgba(217, 119, 6, 0.24) !important;
+}
+
+.payment-action-btn.btn-due:hover {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.28) !important;
+}
+
+.payment-action-btn.btn-due:hover svg {
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* Dark Theme Overrides */
+[data-theme="dark"] .payment-action-btn.btn-invoice {
+  background: rgba(59, 130, 246, 0.14) !important;
+  color: #60a5fa !important;
+  border-color: rgba(96, 165, 250, 0.28) !important;
+}
+
+[data-theme="dark"] .payment-action-btn.btn-invoice:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+}
+
+[data-theme="dark"] .payment-action-btn.btn-due {
+  background: rgba(245, 158, 11, 0.14) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(251, 191, 36, 0.28) !important;
+}
+
+[data-theme="dark"] .payment-action-btn.btn-due:hover {
+  background: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35) !important;
+}
+
+/* Reference Column Content */
 .payment-ref-cell {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  max-width: 290px;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .payment-ref-gateway-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .payment-gateway-pill {
@@ -70,11 +285,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
   background: var(--surface-muted, #f4f4f5);
-  padding: 3px 7px;
+  padding: 3.5px 8px;
   border-radius: 6px;
   border: 1px solid var(--border-subtle, #e4e4e7);
+  width: fit-content;
   max-width: 100%;
 }
 
@@ -89,9 +305,10 @@
   font-weight: 650;
   color: var(--text, #18181b);
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  word-break: keep-all;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 [data-theme="dark"] .payment-ref-code {
@@ -102,7 +319,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px;
+  padding: 2.5px;
   background: transparent;
   border: none;
   border-radius: 4px;
@@ -128,4 +345,62 @@
 .payment-ref-other {
   color: var(--text-muted, #71717a);
   word-break: break-all;
+}
+
+/* Modal Form Actions in Payments */
+.modal-card .form-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-top: 22px !important;
+}
+
+.modal-card .form-actions .ui-btn-secondary,
+.modal-card .form-actions .ui-btn-ghost,
+.modal-card .form-actions button[type="button"] {
+  background: var(--surface, #ffffff) !important;
+  color: var(--text, #18181b) !important;
+  border: 1.5px solid var(--border, #d4d4d8) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.modal-card .form-actions .ui-btn-secondary:hover:not(:disabled),
+.modal-card .form-actions .ui-btn-ghost:hover:not(:disabled),
+.modal-card .form-actions button[type="button"]:hover:not(:disabled) {
+  background: var(--surface-muted, #f4f4f5) !important;
+  color: var(--text, #18181b) !important;
+  border-color: #a1a1aa !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+  transform: translateY(-0.5px);
+}
+
+.modal-card .form-actions .ui-btn-secondary:hover:not(:disabled) *,
+.modal-card .form-actions .ui-btn-ghost:hover:not(:disabled) *,
+.modal-card .form-actions button[type="button"]:hover:not(:disabled) * {
+  color: var(--text, #18181b) !important;
+}
+
+[data-theme="dark"] .modal-card .form-actions .ui-btn-secondary,
+[data-theme="dark"] .modal-card .form-actions .ui-btn-ghost,
+[data-theme="dark"] .modal-card .form-actions button[type="button"] {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #f4f4f5 !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .modal-card .form-actions .ui-btn-secondary:hover:not(:disabled),
+[data-theme="dark"] .modal-card .form-actions .ui-btn-ghost:hover:not(:disabled),
+[data-theme="dark"] .modal-card .form-actions button[type="button"]:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .modal-card .form-actions .ui-btn-secondary:hover:not(:disabled) *,
+[data-theme="dark"] .modal-card .form-actions .ui-btn-ghost:hover:not(:disabled) *,
+[data-theme="dark"] .modal-card .form-actions button[type="button"]:hover:not(:disabled) * {
+  color: #ffffff !important;
 }

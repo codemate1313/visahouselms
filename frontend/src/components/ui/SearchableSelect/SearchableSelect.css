@@ -151,7 +151,7 @@
   padding: 6px 0;
   overflow: hidden;
   /* Sit well above every overlay, modal, and sticky header. */
-  z-index: 99999 !important;
+  z-index: 10000000 !important;
   transform-origin: top center;
   will-change: opacity, transform;
   animation: selectDropdownFade 180ms cubic-bezier(0.16, 1, 0.3, 1);
