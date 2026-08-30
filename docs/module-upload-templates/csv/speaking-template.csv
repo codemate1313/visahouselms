@@ -1,0 +1,5 @@
+prompt,question_type,option_a,option_b,option_c,option_d,option_e,option_f,option_g,option_h,option_i,option_j,option_k,option_l,option_m,option_n,option_o,option_p,option_q,option_r,option_s,option_t,option_u,option_v,option_w,option_x,option_y,option_z,correct_answer,points,difficulty,instructions,passage,group_label,turn_type,preparation_seconds,response_seconds,adaptive_follow_up,part_code
+Please confirm your full name and where you are from.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,easy,,,,identity,0,30,,Speaking 1
+Tell me about a place in your city that you enjoy visiting.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,topic_question,0,45,,Speaking 1
+Read the short text aloud: The training centre opens early during exam week so learners can revise before class.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,read_aloud,20,90,,Speaking 3
+Give a short presentation about a skill you would like to improve and explain why it matters to you.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,presentation,60,120,,Speaking 4

@@ -253,16 +253,6 @@ export interface QuestionBank {
   questions?: Question[];
 }
 
-export interface QuestionImportPreview {
-  source_type: "pdf" | "csv";
-  source_filename: string;
-  source_text: string;
-  questions: QuestionDraft[];
-  question_count: number;
-  warning_count: number;
-  warnings: string[];
-}
-
 export interface ModuleImportPreviewPart {
   part_id: number;
   part_code: string;

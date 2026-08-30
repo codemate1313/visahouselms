@@ -1,0 +1,12 @@
+prompt,question_type,option_a,option_b,option_c,option_d,option_e,option_f,option_g,option_h,option_i,option_j,option_k,option_l,option_m,option_n,option_o,option_p,option_q,option_r,option_s,option_t,option_u,option_v,option_w,option_x,option_y,option_z,correct_answer,points,difficulty,instructions,passage,group_label,turn_type,preparation_seconds,response_seconds,adaptive_follow_up,part_code
+Please confirm your full name and where you are from.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,identity,0,30,,Speaking 1
+Tell me about a subject you enjoy studying.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,topic_question,0,30,,Speaking 1
+What do you usually do after classes?,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,topic_question,0,30,,Speaking 1
+You are at a hotel reception. Ask the receptionist to change your room because it is noisy.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,roleplay_initiate,0,60,,Speaking 2
+I am the receptionist. I will ask you about a booking problem. Respond politely and ask for a solution.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,roleplay_response,0,60,,Speaking 2
+Read this notice aloud: The college library will close at 5 pm on Friday because maintenance work is planned for the evening.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,read_aloud,20,90,,Speaking 3
+Why do public notices need to be clear?,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,follow_up,0,40,,Speaking 3
+Tell me about a time when instructions helped you complete a task.,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,follow_up,0,40,,Speaking 3
+"Give a short presentation about a useful skill you learned recently. Explain what the skill is, how you learned it, and why it is useful.",speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,presentation,60,120,,Speaking 4
+Would you prefer to learn practical skills online or in person?,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,follow_up,0,40,,Speaking 4
+How can schools encourage students to keep learning after graduation?,speaking_prompt,,,,,,,,,,,,,,,,,,,,,,,,,,,,1,medium,,,,follow_up,0,40,,Speaking 4

@@ -12,7 +12,6 @@ from app.models.user import User
 from app.schemas.assessment import QuestionCreate
 from app.schemas.exam_module import (
     ModuleCreate,
-    ModuleQuestionBatchCreate,
     ModuleWideQuestionBatchCreate,
     ModuleStatusUpdate,
     ModuleUpdate,
@@ -274,47 +273,6 @@ def delete_question(
 ):
     module_authoring_service.delete_question(
         db, actor, module_id, part_id, question_id, _ip(request)
-    )
-
-
-@router.post("/{module_id}/parts/{part_id}/import-preview")
-async def preview_import(
-    module_id: int,
-    part_id: int,
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    actor: User = Depends(get_current_user),
-):
-    _, part = module_authoring_service.get_editable_part(db, actor, module_id, part_id)
-    preview = await question_import_service.preview_upload(
-        file, default_target_part=part.part_code, default_section_type=part.section_type
-    )
-    if part.section_type in {"writing", "speaking"}:
-        preview["warnings"] = [w for w in preview.get("warnings", []) if "Correct answer was not detected" not in w]
-        preview["warning_count"] = len(preview["warnings"])
-        for q in preview.get("questions", []):
-            q["warnings"] = [w for w in q.get("warnings", []) if "Correct answer was not detected" not in w]
-    return preview
-
-
-@router.post("/{module_id}/parts/{part_id}/import", status_code=status.HTTP_201_CREATED)
-def commit_import(
-    module_id: int,
-    part_id: int,
-    payload: ModuleQuestionBatchCreate,
-    request: Request,
-    db: Session = Depends(get_db),
-    actor: User = Depends(get_current_user),
-):
-    return module_authoring_service.import_questions(
-        db,
-        actor,
-        module_id,
-        part_id,
-        [question.model_dump() for question in payload.questions],
-        payload.source_type,
-        payload.source_filename,
-        _ip(request),
     )
 
 

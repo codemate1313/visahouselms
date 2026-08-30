@@ -94,8 +94,8 @@ export function NewModuleForm({
       document.getElementById("new-module-title")?.focus();
       return;
     }
-    if (isComposite && !allSourcesSelected) {
-      setValidationError("Please select all 4 required source modules before proceeding.");
+    if (isComposite && !moduleImportFile && !allSourcesSelected) {
+      setValidationError("Please select all 4 required source modules or upload one full module PDF/CSV before proceeding.");
       return;
     }
     setValidationError(null);
@@ -283,21 +283,19 @@ export function NewModuleForm({
                 )}
               </div>
 
-              {!isComposite && (
-                <div className="vh-form-group">
-                  <div className="vh-label-row">
-                    <label htmlFor="new-module-full-upload">{strings.moduleImport.fileLabel}</label>
-                  </div>
-                  <p className="field-hint">{strings.moduleImport.createHint(typeLabel)}</p>
-                  <input
-                    id="new-module-full-upload"
-                    type="file"
-                    accept=".pdf,.csv,application/pdf,text/csv"
-                    onChange={(event) => onModuleImportFileChange(event.target.files?.[0] ?? null)}
-                  />
-                  {moduleImportFile && <p className="field-hint">Selected: {moduleImportFile.name}</p>}
+              <div className="vh-form-group">
+                <div className="vh-label-row">
+                  <label htmlFor="new-module-full-upload">{strings.moduleImport.fileLabel}</label>
                 </div>
-              )}
+                <p className="field-hint">{strings.moduleImport.createHint(typeLabel)}</p>
+                <input
+                  id="new-module-full-upload"
+                  type="file"
+                  accept=".pdf,.csv,application/pdf,text/csv"
+                  onChange={(event) => onModuleImportFileChange(event.target.files?.[0] ?? null)}
+                />
+                {moduleImportFile && <p className="field-hint">Selected: {moduleImportFile.name}</p>}
+              </div>
             </div>
           ) : (
             <OnboardingInstructionsEditor
@@ -444,7 +442,7 @@ export function NewModuleForm({
                 type="submit"
                 variant="primary"
                 className="vh-btn-primary-brand"
-                disabled={busy || !details.title.trim() || (isComposite && !allSourcesSelected)}
+                disabled={busy || !details.title.trim() || (isComposite && !moduleImportFile && !allSourcesSelected)}
                 style={{ minWidth: 220, padding: "12px 28px" }}
               >
                 <span>{busy ? t.creating : `Create ${typeLabel}`}</span>

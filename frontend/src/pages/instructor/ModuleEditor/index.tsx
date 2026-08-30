@@ -17,11 +17,10 @@ import type {
   ExamModuleType,
   ExamSection,
   QuestionDraft,
-  QuestionImportPreview,
   ModuleImportPreview,
 } from "@/api/types";
 import { moduleEditorStrings as strings } from "./ModuleEditor.strings";
-import { ANSWER_FREE_TYPES, CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, MODULE_TYPE_META, SOURCE_SECTIONS, defaultSpeakingTurn, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload, speakingTurnTiming } from "./helpers";
+import { CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, MODULE_TYPE_META, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload } from "./helpers";
 import { NewModuleForm } from "./components/NewModuleForm";
 import { ModulePartNav } from "./components/ModulePartNav";
 import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
@@ -34,8 +33,6 @@ import { GapTaskComposer, type GapTaskDraft } from "./components/GapTaskComposer
 import { NotepadGapsComposer, type NotepadTaskDraft } from "./components/NotepadGapsComposer";
 import { SourceTextComposer, type SourceTextDraft } from "./components/SourceTextComposer";
 import { ManualQuestionForm } from "./components/ManualQuestionForm";
-import { BulkImportForm } from "./components/BulkImportForm";
-import { ImportReviewPanel } from "./components/ImportReviewPanel";
 import { ModuleImportReviewPanel } from "./components/ModuleImportReviewPanel";
 import { SavedQuestionsList } from "./components/SavedQuestionsList";
 import { Badge, Modal } from "@/components/ui";
@@ -65,9 +62,6 @@ export function ModuleEditor() {
   // form (safe to refresh) from one with unsaved edits (must be preserved).
   const serverDetailsRef = useRef<ModuleDetailsState | null>(null);
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<QuestionImportPreview | null>(null);
-  const [selectedImports, setSelectedImports] = useState<Set<number>>(new Set());
   const [moduleImportFile, setModuleImportFile] = useState<File | null>(null);
   const [modulePreview, setModulePreview] = useState<ModuleImportPreview | null>(null);
   const [uploadingModuleImportImage, setUploadingModuleImportImage] = useState<string | null>(null);
@@ -78,7 +72,6 @@ export function ModuleEditor() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingSpeakingPdf, setUploadingSpeakingPdf] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
-  const [questionEntryMode, setQuestionEntryMode] = useState<"manual" | "bulk">("manual");
   const examiner = SONIA_EXAMINER;
   const [loading, setLoading] = useState(!isNew);
   const [busy, setBusy] = useState(false);
@@ -239,9 +232,6 @@ export function ModuleEditor() {
         part.question_limit ? part.questions.length >= part.question_limit : part.questions.length > 0
       )
   );
-  const remainingSlots = selectedPart?.question_limit
-    ? Math.max(0, selectedPart.question_limit - selectedPart.questions.length)
-    : null;
   const [partTitle, setPartTitle] = useState("");
 
   /* Keyed on the part's id and its saved values rather than the object itself.
@@ -336,8 +326,6 @@ export function ModuleEditor() {
         setSearchParams({ part: "settings" }, { replace: true });
       }
       setEditingQuestionId(null);
-      setPreview(null);
-      setImportFile(null);
       setModulePreview(null);
       setModuleImportFile(null);
       setError(null);
@@ -354,8 +342,6 @@ export function ModuleEditor() {
     manualPartIdRef.current = part.id;
     setManual(emptyQuestion(part));
     setEditingQuestionId(null);
-    setPreview(null);
-    setImportFile(null);
     setModulePreview(null);
     setModuleImportFile(null);
     setError(null);
@@ -367,7 +353,7 @@ export function ModuleEditor() {
     if (!requestedType) return;
     const isComposite = COMPOSITE_TYPES.has(requestedType);
     const sourceModuleIds = SOURCE_SECTIONS.map((section) => Number(selectedSources[section])).filter(Boolean);
-    if (isComposite && sourceModuleIds.length !== SOURCE_SECTIONS.length) {
+    if (isComposite && !moduleImportFile && sourceModuleIds.length !== SOURCE_SECTIONS.length) {
       setError(strings.newModule.validation);
       return;
     }
@@ -381,9 +367,9 @@ export function ModuleEditor() {
         ...(DERIVED_DURATION_MODULE_TYPES.has(requestedType) ? {} : { duration_minutes: details.duration_minutes }),
         show_onboarding_instructions: details.show_onboarding_instructions ?? true,
         onboarding_instructions: details.onboarding_instructions || null,
-        source_module_ids: isComposite ? sourceModuleIds : [],
+        source_module_ids: isComposite && !moduleImportFile ? sourceModuleIds : [],
       });
-      if (moduleImportFile && !isComposite) {
+      if (moduleImportFile) {
         const form = new FormData();
         form.append("file", moduleImportFile);
         const { data: importPreview } = await apiClient.post<ModuleImportPreview>(
@@ -615,71 +601,6 @@ export function ModuleEditor() {
     if (!module || !selectedPart || !await confirmDelete(strings.manualQuestion.deleteConfirm, strings.manualQuestion.deleteConfirmTitle)) return;
     try { await apiClient.delete(`/instructor/modules/${module.id}/parts/${selectedPart.id}/questions/${question.id}`); await loadModule(selectedPart.id); }
     catch (err: unknown) { setError(extractErrorMessage(err, strings.manualQuestion.errors.delete)); }
-  }
-
-  async function previewImport(event: FormEvent) {
-    event.preventDefault(); if (!module || !selectedPart || !importFile) return;
-    setBusy(true); setError(null); setPreview(null);
-    try {
-      const form = new FormData(); form.append("file", importFile);
-      const { data } = await apiClient.post<QuestionImportPreview>(`/instructor/modules/${module.id}/parts/${selectedPart.id}/import-preview`, form);
-      const allowed = selectedPart.answer_constraints.allowed_question_types ?? [];
-      const groupSize = selectedPart.answer_constraints.questions_per_group ?? 1;
-      const normalized = data.questions.map((question, index) => {
-        const nextType = !allowed.length || allowed.includes(question.question_type) ? question.question_type : allowed[0];
-        const turnType = question.interaction?.turn_type
-          ?? defaultSpeakingTurn(selectedPart, index);
-        return {
-          ...question,
-          question_type: nextType,
-          prompt: selectedPart.answer_constraints.inline_marker_required && !question.prompt.includes("{{blank}}")
-            ? `${question.prompt} {{blank}}`
-            : question.prompt,
-          options: CHOICE_TYPES.has(nextType) ? question.options : [],
-          correct_answers: ANSWER_FREE_TYPES.has(nextType) ? [] : question.correct_answers,
-          interaction: {
-            ...question.interaction,
-            group_label: question.interaction?.group_label
-              ?? (selectedPart.answer_constraints.group_label_required ? `Conversation ${Math.floor(index / groupSize) + 1}` : null),
-            turn_type: turnType,
-            // Timing is per prompt. An import carrying its own times keeps them;
-            // otherwise the prompt starts from the default for its turn type,
-            // the same one the manual form pre-fills.
-            preparation_seconds: question.interaction?.preparation_seconds
-              ?? speakingTurnTiming(selectedPart, turnType).preparation_seconds,
-            response_seconds: question.interaction?.response_seconds
-              ?? speakingTurnTiming(selectedPart, turnType).response_seconds,
-            adaptive_follow_up: question.interaction?.adaptive_follow_up ?? turnType === "follow_up",
-          },
-        };
-      });
-      const requiredPoints = selectedPart.max_marks && selectedPart.question_limit ? Number(selectedPart.max_marks) / selectedPart.question_limit : null;
-      setPreview({ ...data, questions: normalized.map((question) => requiredPoints === null ? question : { ...question, points: requiredPoints }) });
-      setSelectedImports(new Set(normalized.map((_, index) => index)));
-    } catch (err: unknown) { setError(extractErrorMessage(err, strings.bulkImport.errors.preview)); }
-    finally { setBusy(false); }
-  }
-
-  function updatePreview(index: number, changes: Partial<QuestionDraft>) {
-    setPreview((current) => current ? { ...current, questions: current.questions.map((question, currentIndex) => currentIndex === index ? { ...question, ...changes } : question) } : current);
-  }
-
-  async function commitImport() {
-    if (!module || !selectedPart || !preview) return;
-    const questions = preview.questions.filter((_, index) => selectedImports.has(index)).map(questionPayload);
-    if (!questions.length) { showError(strings.bulkImport.errors.selectOne); return; }
-    // Catch an over-selection here so the author can deselect rows, rather than
-    // sending a batch the part-size cap will reject wholesale.
-    if (remainingSlots !== null && questions.length > remainingSlots) {
-      showError(strings.bulkImport.errors.tooMany(questions.length, remainingSlots, selectedPart.title));
-      return;
-    }
-    setBusy(true); setError(null);
-    try {
-      await apiClient.post(`/instructor/modules/${module.id}/parts/${selectedPart.id}/import`, { source_type: preview.source_type, source_filename: preview.source_filename, questions });
-      setPreview(null); setImportFile(null); await loadModule(selectedPart.id); showSuccess(strings.bulkImport.notices.imported(questions.length, selectedPart.title));
-    } catch (err: unknown) { showError(extractErrorMessage(err, strings.bulkImport.errors.commit)); }
-    finally { setBusy(false); }
   }
 
   async function previewModuleImport(event: FormEvent) {
@@ -1182,6 +1103,26 @@ export function ModuleEditor() {
               />
             )}
           </Modal>
+          {isEditable && !allPartsComplete && (
+            <section className="authoring-panel" style={{ marginBottom: 24 }}>
+              <div className="panel-title">
+                <div>
+                  <h2>{strings.moduleImport.heading}</h2>
+                  <p>{strings.moduleImport.editorHint}</p>
+                </div>
+              </div>
+              <form className="import-upload" onSubmit={previewModuleImport}>
+                <input
+                  type="file"
+                  accept=".pdf,.csv,application/pdf,text/csv"
+                  onChange={(event) => setModuleImportFile(event.target.files?.[0] ?? null)}
+                />
+                <Button type="submit" disabled={busy || !moduleImportFile}>
+                  {busy ? strings.moduleImport.extracting : strings.moduleImport.extract}
+                </Button>
+              </form>
+            </section>
+          )}
 
           {!selectedPart ? (
             <>
@@ -1194,22 +1135,6 @@ export function ModuleEditor() {
                 onSubmit={saveDetails}
                 onDelete={deleteModule}
               />
-              {isEditable && !allPartsComplete && (
-                <section className="authoring-panel" style={{ marginTop: 24 }}>
-                  <div className="panel-title">
-                    <div>
-                      <h2>{strings.moduleImport.heading}</h2>
-                      <p>{strings.moduleImport.editorHint}</p>
-                    </div>
-                  </div>
-                  <form className="import-upload" onSubmit={previewModuleImport}>
-                    <input type="file" accept=".pdf,.csv,application/pdf,text/csv" onChange={(event) => setModuleImportFile(event.target.files?.[0] ?? null)} />
-                    <Button type="submit" disabled={busy || !moduleImportFile}>
-                      {busy ? strings.moduleImport.extracting : strings.moduleImport.extract}
-                    </Button>
-                  </form>
-                </section>
-              )}
             </>
           ) : (
             <>
@@ -1226,10 +1151,6 @@ export function ModuleEditor() {
                 partTitle={partTitle}
                 onPartTitleChange={setPartTitle}
                 onSavePartTitle={savePartHeader}
-                {...(usesTaskComposer ? {} : {
-                  questionEntryMode,
-                  onEntryModeChange: setQuestionEntryMode,
-                })}
               />
 
             {selectedPart.section_type === "listening" && (
@@ -1302,51 +1223,33 @@ export function ModuleEditor() {
             {isEditable && manual && !usesTaskComposer && !partIsFull && (
               <div className="vh-entry-mode-wrapper">
                 <div className="module-entry-tabbed-content">
-                  {questionEntryMode === "manual" || selectedPart.section_type === "writing" || selectedPart.part_code.startsWith("writing_") ? (
-                    <ManualQuestionForm
-                      moduleId={module.id}
-                      examiner={examiner}
-                      part={selectedPart}
-                      manual={manual}
-                      editingQuestionId={editingQuestionId}
-                      busy={busy}
-                      uploadingImage={uploadingImage}
-                      uploadingSpeakingPdf={uploadingSpeakingPdf}
-                      uploadingAudio={uploadingAudio}
-                      isListeningPerQuestion={audioMode === "per_question"}
-                      onAddOption={addOption}
-                      onRemoveOption={removeOption}
-                      onUpdateOption={updateOption}
-                      onToggleCorrect={toggleCorrect}
-                      onManualChange={setManual}
-                      onUploadImage={uploadQuestionImage}
-                      onRemoveImage={removeQuestionImage}
-                      onUploadSpeakingPdf={uploadSpeakingMaterialPdf}
-                      onRemoveSpeakingPdf={removeSpeakingMaterialPdf}
-                      onUploadAudio={uploadQuestionAudio}
-                      onRemoveAudio={removeQuestionAudio}
-                      onSubmit={saveQuestion}
-                      onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
-                    />
-                  ) : (
-                    <BulkImportForm module={module} part={selectedPart} importFile={importFile} onImportFileChange={setImportFile} busy={busy} onSubmit={previewImport} />
-                  )}
+                  <ManualQuestionForm
+                    moduleId={module.id}
+                    examiner={examiner}
+                    part={selectedPart}
+                    manual={manual}
+                    editingQuestionId={editingQuestionId}
+                    busy={busy}
+                    uploadingImage={uploadingImage}
+                    uploadingSpeakingPdf={uploadingSpeakingPdf}
+                    uploadingAudio={uploadingAudio}
+                    isListeningPerQuestion={audioMode === "per_question"}
+                    onAddOption={addOption}
+                    onRemoveOption={removeOption}
+                    onUpdateOption={updateOption}
+                    onToggleCorrect={toggleCorrect}
+                    onManualChange={setManual}
+                    onUploadImage={uploadQuestionImage}
+                    onRemoveImage={removeQuestionImage}
+                    onUploadSpeakingPdf={uploadSpeakingMaterialPdf}
+                    onRemoveSpeakingPdf={removeSpeakingMaterialPdf}
+                    onUploadAudio={uploadQuestionAudio}
+                    onRemoveAudio={removeQuestionAudio}
+                    onSubmit={saveQuestion}
+                    onCancelEdit={() => { setEditingQuestionId(null); setManual(emptyQuestion(selectedPart)); }}
+                  />
                 </div>
               </div>
-            )}
-
-            {preview && (
-              <ImportReviewPanel
-                module={module}
-                part={selectedPart}
-                preview={preview}
-                selectedImports={selectedImports}
-                onSelectedImportsChange={setSelectedImports}
-                onUpdatePreview={updatePreview}
-                onDiscard={() => setPreview(null)}
-                onCommit={commitImport}
-                busy={busy}
-              />
             )}
 
               {/* A composed task already shows every row it generated, with its

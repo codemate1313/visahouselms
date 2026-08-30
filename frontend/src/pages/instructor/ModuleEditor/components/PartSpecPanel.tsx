@@ -15,8 +15,6 @@ interface PartSpecPanelProps {
   partTitle: string;
   onPartTitleChange: (title: string) => void;
   onSavePartTitle: () => void;
-  questionEntryMode?: "manual" | "bulk";
-  onEntryModeChange?: (mode: "manual" | "bulk") => void;
 }
 
 const DEFAULT_INSTRUCTIONS: Record<string, string> = {
@@ -49,8 +47,6 @@ export function PartSpecPanel({
   partTitle,
   onPartTitleChange,
   onSavePartTitle,
-  questionEntryMode,
-  onEntryModeChange,
 }: PartSpecPanelProps) {
   const t = strings.partSpec;
   const canUseAiEvaluation = !part.auto_marked && ["writing", "speaking"].includes(part.section_type);
@@ -162,25 +158,6 @@ export function PartSpecPanel({
           </div>
         )}
       </div>
-
-      {isEditable && onEntryModeChange && questionEntryMode && part.section_type !== "writing" && !part.part_code.startsWith("writing_") && (
-        <div className="vh-method-tabs">
-          <button
-            type="button"
-            className={`vh-method-tab ${questionEntryMode === "manual" ? "is-active" : ""}`}
-            onClick={() => onEntryModeChange("manual")}
-          >
-            Single Question Entry
-          </button>
-          <button
-            type="button"
-            className={`vh-method-tab ${questionEntryMode === "bulk" ? "is-active" : ""}`}
-            onClick={() => onEntryModeChange("bulk")}
-          >
-            Bulk Import (PDF / CSV)
-          </button>
-        </div>
-      )}
 
       {canEditPartInstructions && (
         <div className="vh-part-instructions-row">

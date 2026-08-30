@@ -599,12 +599,12 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
     module_type = payload["module_type"]
     blueprint = get_blueprint(module_type)
     composite = module_type in {"full_mock", "final_test"}
-    sources = _composite_sources(db, actor, source_module_ids) if composite else {}
+    sources = _composite_sources(db, actor, source_module_ids) if composite and source_module_ids else {}
     if not composite and source_module_ids:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source modules are only valid for composite tests")
     calculated_duration = (
         sum(source.duration_minutes for source in sources.values())
-        if composite
+        if composite and sources
         else (req_duration if req_duration is not None else blueprint["duration_minutes"])
     )
     module = ExamModule(
@@ -640,7 +640,7 @@ def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> di
         db.add_all(parts)
         db.flush()
 
-        if composite:
+        if composite and sources:
             randomizer = secrets.SystemRandom()
             for target_part in parts:
                 source = sources[target_part.section_type]
@@ -1025,60 +1025,6 @@ def add_question(
     db.commit()
     db.refresh(question)
     return _question_out(question)
-
-
-def import_questions(
-    db: Session,
-    actor: User,
-    module_id: int,
-    part_id: int,
-    questions: list[dict],
-    source_type: str,
-    source_filename: Optional[str],
-    ip: Optional[str],
-) -> list[dict]:
-    module = get_module_or_404(db, module_id)
-    _require_owner(module, actor)
-    _require_draft(db, module)
-    part = _part_or_404(module, part_id)
-    # Reject the whole batch up front so a part-full import fails with one clear
-    # message instead of committing the rows that happened to fit.
-    ceiling = part.question_limit or (part.answer_constraints or {}).get("maximum_questions")
-    if ceiling is not None and len(part.questions) + len(questions) > ceiling:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"{part.title} takes at most {ceiling} "
-                f"question{'s' if ceiling != 1 else ''} and already has {len(part.questions)}. "
-                f"Importing {len(questions)} more would exceed it - import at most "
-                f"{ceiling - len(part.questions)}."
-            ),
-        )
-    for offset, question in enumerate(questions):
-        _validate_question_for_part(
-            part,
-            question,
-            len(part.questions) + offset,
-            pending_turn_types=tuple(
-                str((earlier.get('interaction') or {}).get('turn_type') or '')
-                for earlier in questions[:offset]
-            ),
-        )
-    records = [
-        _new_question(part, actor, question, source_type, source_filename, len(part.questions) + index)
-        for index, question in enumerate(questions)
-    ]
-    db.add_all(records)
-    db.flush()
-    db.refresh(part)
-    _resequence_questions(part)
-    db.flush()
-    _refresh_speaking_duration(db, module)
-    _audit(db, actor, "exam_module.question.import", module.id, ip, {"part_id": part.id, "count": len(records), "source_type": source_type, "source_filename": source_filename})
-    db.commit()
-    for record in records:
-        db.refresh(record)
-    return [_question_out(record) for record in records]
 
 
 def _part_key(value: object) -> str:

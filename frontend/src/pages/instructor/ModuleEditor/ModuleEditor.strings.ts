@@ -398,27 +398,8 @@ export const moduleEditorStrings = {
     deleteConfirm: "Are you sure you want to delete this question?",
     deleteConfirmTitle: "Delete Question",
   },
-  bulkImport: {
-    eyebrow: "Bulk import",
-    heading: (partTitle: string) => `PDF or CSV → ${partTitle}`,
-    hint: (moduleTitle: string, partTitle: string) =>
-      `This upload is permanently scoped to ${moduleTitle} / ${partTitle}. Extracted content is listed for review before saving.`,
-    extract: "Extract & review",
-    extracting: "Extracting...",
-    errors: {
-      preview: "Could not extract questions from this file.",
-      commit: "Review the extracted questions and try again.",
-      selectOne: "Select at least one extracted question.",
-      tooMany: (selected: number, remaining: number, partTitle: string) =>
-        `You selected ${selected} questions but ${partTitle} has room for ${remaining === 0 ? "no more" : `only ${remaining}`}. ` +
-        "Deselect the extras before importing.",
-    },
-    notices: {
-      imported: (count: number, partTitle: string) => `${count} questions imported into ${partTitle}.`,
-    },
-  },
   moduleImport: {
-    heading: "Full test upload",
+    heading: "Full module upload",
     createHint: (type: string) =>
       `Optional: upload one full ${type} PDF or CSV. After the draft is created, the system sorts the questions into parts for review before saving.`,
     editorHint: "Upload one full PDF or CSV for this module. The extracted questions are sorted into parts for review before saving.",
@@ -469,7 +450,7 @@ export const moduleEditorStrings = {
         : `${count} of ${limit} question${limit === 1 ? "" : "s"} added. Add ${limit - count} more to complete this part.`;
     },
     emptyTitle: "No content yet",
-    emptyDescription: "Add one item manually or upload a PDF/CSV specifically to this part.",
+    emptyDescription: "Add one item manually or use the full-module PDF/CSV upload from the module panel.",
     marksSuffix: (points: number) => `mark${points === 1 ? "" : "s"}`,
     edit: "Edit",
     delete: "Delete",

@@ -511,19 +511,6 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             )
         self.assertIn("takes exactly", str(overflow.exception.detail))
 
-        with self.assertRaises(HTTPException) as bulk:
-            module_authoring_service.import_questions(
-                self.db,
-                self.instructor,
-                created["id"],
-                part["id"],
-                [_question("mcq_single", "Imported **surplus** question", option_count=4)],
-                "csv",
-                "extra.csv",
-                None,
-            )
-        self.assertIn("would exceed it", str(bulk.exception.detail))
-
         # Editing one of the 6 stays allowed while the part is at capacity.
         saved = module_authoring_service.serialize_module(
             module_authoring_service.get_module_or_404(self.db, created["id"]), detailed=True
@@ -611,6 +598,25 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual(asset["tts_rate"], "+15%")
         self.assertEqual(stored.transcript, "Guide: Welcome to campus.\nStudent: Thank you.")
         self.assertFalse((settings.storage_path / stored.file_path).exists())
+
+    def test_composite_module_can_start_empty_for_full_file_import(self) -> None:
+        final_test = module_authoring_service.create_module(
+            self.db,
+            self.instructor,
+            {
+                "module_type": "final_test",
+                "title": "Full Upload Final Test",
+                "description": None,
+                "instructions": None,
+                "source_module_ids": [],
+            },
+            None,
+        )
+
+        self.assertEqual(final_test["source_module_ids"], [])
+        self.assertEqual(final_test["question_count"], 0)
+        self.assertFalse(final_test["ready_to_publish"])
+        self.assertEqual(len(final_test["parts"]), 15)
 
     def test_final_test_copies_selected_sources_in_order_and_can_be_deleted_when_published(self) -> None:
         sources = {

@@ -20,7 +20,7 @@ Small fixtures for manually testing module authoring uploads.
 | `full-mock/` | Index file showing which standalone section files to upload into a Full Mock. |
 | `final-test/` | Index file showing which standalone section files to upload into a Final Test. |
 | `media/` | Shared media fixtures for MP3, PDF, and image upload controls. |
-| `pdf/` | Full-module PDF fixtures for the bulk upload flow. |
+| `../module-upload-templates/pdf/` | Reusable PDF samples for the bulk upload flow. |
 
 These files are intentionally short and artificial. They are for upload/parser testing, not real exam content. The MP3 fixture is only for backend signature validation; use a real audio file if you need browser playback.
 
@@ -46,3 +46,6 @@ or `listening_full_combined.csv`) - it will route rows into Listening 3 and buil
 | `pdf/full-speaking-bulk-upload.pdf` | Upload to a Speaking module; prompts sort into Speaking 1-4 and timings are normalized during review/import. |
 | `pdf/full-reading-bulk-upload-review-only.pdf` | Upload to a Reading module to test extraction and sorting. Review shared passages and option banks before final import. |
 | `listening/listening_1.pdf` … `listening_4.pdf` | Single-part PDF equivalents of the per-part Listening CSVs, for parser testing. Listening 1/2/4 can be uploaded through that part's own import control; Listening 3 has no per-part control (see above) so use it via a whole-module upload instead. |
+| `../module-upload-templates/pdf/listening-sample-upload.pdf` | Upload to a Listening module; add Listening audio before publishing. |
+| `../module-upload-templates/pdf/reading-sample-upload.pdf` | Upload to a Reading module to test extraction and sorting. |
+| `../module-upload-templates/pdf/full-module-mcq-sample-upload.pdf` | Combined section PDF sample with `Part:` headers. |

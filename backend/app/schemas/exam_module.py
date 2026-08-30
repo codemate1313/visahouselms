@@ -122,20 +122,6 @@ class ModuleInstituteAssignment(BaseModel):
     institute_id: int = Field(gt=0)
 
 
-class ModuleQuestionBatchCreate(BaseModel):
-    source_type: str
-    source_filename: Optional[str] = Field(default=None, max_length=255)
-    questions: list[QuestionCreate] = Field(min_length=1, max_length=500)
-
-    @field_validator("source_type")
-    @classmethod
-    def valid_source(cls, value: str) -> str:
-        value = value.strip().lower()
-        if value not in {"pdf", "csv"}:
-            raise ValueError("source_type must be pdf or csv")
-        return value
-
-
 class ModulePartQuestionBatch(BaseModel):
     part_id: int = Field(gt=0)
     questions: list[QuestionCreate] = Field(default_factory=list, max_length=500)
