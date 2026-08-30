@@ -70,6 +70,7 @@ export function ModuleEditor() {
   const [selectedImports, setSelectedImports] = useState<Set<number>>(new Set());
   const [moduleImportFile, setModuleImportFile] = useState<File | null>(null);
   const [modulePreview, setModulePreview] = useState<ModuleImportPreview | null>(null);
+  const [uploadingModuleImportImage, setUploadingModuleImportImage] = useState<string | null>(null);
   const [selectedModuleImports, setSelectedModuleImports] = useState<Set<string>>(new Set());
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioTitle, setAudioTitle] = useState("Listening audio");
@@ -745,9 +746,27 @@ export function ModuleEditor() {
     }
   }
 
-  function openModulePreviewPart(partId: number) {
-    const part = module?.parts?.find((item) => item.id === partId) ?? null;
-    if (part) choosePart(part);
+  async function uploadModuleImportImage(partId: number, index: number, file: File) {
+    if (!module) return;
+    const key = `${partId}:${index}`;
+    setUploadingModuleImportImage(key);
+    setError(null);
+    try {
+      const form = new FormData(); form.append("file", file);
+      const { data } = await apiClient.post<{ image_path: string; image_url: string }>(
+        `/instructor/modules/${module.id}/parts/${partId}/question-image`,
+        form,
+      );
+      updateModulePreview(partId, index, { image_path: data.image_path, image_url: data.image_url });
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, strings.manualQuestion.errors.imageUpload));
+    } finally {
+      setUploadingModuleImportImage((current) => (current === key ? null : current));
+    }
+  }
+
+  function removeModuleImportImage(partId: number, index: number) {
+    updateModulePreview(partId, index, { image_path: null, image_url: null });
   }
 
   async function uploadAudio(event: FormEvent) {
@@ -1134,6 +1153,36 @@ export function ModuleEditor() {
           />
         </div>
         <main className={`module-part-editor ${selectedPart?.section_type === "speaking" ? "is-speaking-editor" : ""}`} id="module-part-editor">
+          {/* Rendered at this level - not inside either branch below - so the
+              review modal pops up the moment extraction succeeds regardless of
+              whether a part happens to be selected yet. It used to live inside
+              the "a part is selected" branch only, so an upload made from the
+              module details screen (no part selected) set modulePreview but
+              nothing ever showed it. */}
+          <Modal
+            className="module-import-modal"
+            open={Boolean(modulePreview)}
+            onClose={() => { setModulePreview(null); setModuleImportFile(null); }}
+            title={strings.moduleImport.reviewHeading}
+            size="lg"
+          >
+            {modulePreview && (
+              <ModuleImportReviewPanel
+                preview={modulePreview}
+                moduleTitle={module.title}
+                selectedImports={selectedModuleImports}
+                onSelectedImportsChange={setSelectedModuleImports}
+                onUpdatePreview={updateModulePreview}
+                onDiscard={() => { setModulePreview(null); setModuleImportFile(null); }}
+                onCommit={commitModuleImport}
+                onUploadImage={uploadModuleImportImage}
+                onRemoveImage={removeModuleImportImage}
+                uploadingImageKey={uploadingModuleImportImage}
+                busy={busy}
+              />
+            )}
+          </Modal>
+
           {!selectedPart ? (
             <>
               <ModuleDetailsForm
@@ -1164,29 +1213,6 @@ export function ModuleEditor() {
             </>
           ) : (
             <>
-
-              <Modal
-                className="module-import-modal"
-                open={Boolean(modulePreview)}
-                onClose={() => { setModulePreview(null); setModuleImportFile(null); }}
-                title={strings.moduleImport.reviewHeading}
-                size="lg"
-              >
-                {modulePreview && (
-                  <ModuleImportReviewPanel
-                    preview={modulePreview}
-                    moduleTitle={module.title}
-                    selectedImports={selectedModuleImports}
-                    onSelectedImportsChange={setSelectedModuleImports}
-                    onUpdatePreview={updateModulePreview}
-                    onDiscard={() => { setModulePreview(null); setModuleImportFile(null); }}
-                    onCommit={commitModuleImport}
-                    onOpenPart={openModulePreviewPart}
-                    busy={busy}
-                  />
-                )}
-              </Modal>
-
               {/* The section heading is edited inline in this header. Candidate
                   instructions live here too - having them in two places meant
                   two fields writing the same column, where whichever you saved

@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "@/api/client";
+import { Icon } from "@/components/icons";
 import { Checkbox, SearchableSelect } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
 import type { ModuleImportPreview, QuestionDraft, QuestionType } from "@/api/types";
@@ -12,9 +14,17 @@ interface ModuleImportReviewPanelProps {
   onUpdatePreview: (partId: number, index: number, changes: Partial<QuestionDraft>) => void;
   onDiscard: () => void;
   onCommit: () => void;
-  onOpenPart: (partId: number) => void;
+  onUploadImage: (partId: number, index: number, file: File) => void;
+  onRemoveImage: (partId: number, index: number) => void;
+  uploadingImageKey: string | null;
   busy: boolean;
 }
+
+/* Image attachments only make sense for writing tasks (a chart/graph the
+   candidate describes) - reading, listening, and speaking parts source their
+   visuals elsewhere or not at all. Matches the same section_type check
+   ManualQuestionForm uses to decide whether to offer an image dropzone. */
+const IMAGE_ELIGIBLE_SECTIONS = new Set(["writing"]);
 
 const keyFor = (partId: number, index: number) => `${partId}:${index}`;
 
@@ -26,11 +36,14 @@ export function ModuleImportReviewPanel({
   onUpdatePreview,
   onDiscard,
   onCommit,
-  onOpenPart,
+  onUploadImage,
+  onRemoveImage,
+  uploadingImageKey,
   busy,
 }: ModuleImportReviewPanelProps) {
   const t = strings.moduleImport;
   const review = strings.importReview;
+  const manualStrings = strings.manualQuestion;
   const questionLabels = strings.questionLabels;
   const allKeys = preview.parts.flatMap((part) => part.questions.map((_, index) => keyFor(part.part_id, index)));
 
@@ -79,6 +92,7 @@ export function ModuleImportReviewPanel({
         {preview.parts.map((part) => {
           const allowedTypes = part.allowed_question_types ?? [];
           const passageRequired = part.section_type === "reading" && part.part_code !== "reading_1a";
+          const partNeedsImage = IMAGE_ELIGIBLE_SECTIONS.has(part.section_type);
           return (
             <section className="authoring-panel" key={part.part_id}>
               <div className="panel-title">
@@ -86,9 +100,6 @@ export function ModuleImportReviewPanel({
                   <h3>{part.part_title}</h3>
                   <p>{t.partSummary(part.questions.length, part.part_title)}</p>
                 </div>
-                <Button type="button" variant="primary" onClick={() => onOpenPart(part.part_id)}>
-                  {t.openPart(part.part_title)}
-                </Button>
               </div>
               {passageRequired && (
                 <div className="passage-editor-section" style={{ marginBottom: 18 }}>
@@ -142,6 +153,47 @@ export function ModuleImportReviewPanel({
                           }
                         />
                       </>
+                    )}
+                    {partNeedsImage && (
+                      <div className="vh-dropzone-pill-container" style={{ marginTop: 12 }}>
+                        {!question.image_url ? (
+                          <label className={`vh-dropzone-pill${uploadingImageKey === selectedKey ? " is-busy" : ""}`}>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              hidden
+                              disabled={uploadingImageKey === selectedKey}
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                if (file) onUploadImage(part.part_id, index, file);
+                                event.target.value = "";
+                              }}
+                            />
+                            <div className="vh-dropzone-icon-box">
+                              <Icon name="image" />
+                            </div>
+                            <div className="vh-dropzone-text">
+                              <span className="vh-dropzone-main">
+                                {uploadingImageKey === selectedKey ? manualStrings.uploadingImage : manualStrings.addImage}
+                              </span>
+                            </div>
+                            <span className="vh-dropzone-btn">Browse</span>
+                          </label>
+                        ) : (
+                          <div className="vh-image-preview-card">
+                            <div className="vh-preview-header">
+                              <span className="vh-preview-title">{manualStrings.addImage}</span>
+                              <Button type="button" variant="text" className="vh-remove-img-btn" onClick={() => onRemoveImage(part.part_id, index)}>
+                                <Icon name="x" />
+                                {manualStrings.removeImage}
+                              </Button>
+                            </div>
+                            <div className="vh-preview-image-wrapper">
+                              <img src={`${API_BASE_URL}${question.image_url}`} alt={manualStrings.imagePreviewAlt} className="vh-large-preview-img" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                     {question.options.length > 0 && (
                       <ol className="saved-options" type="A">
