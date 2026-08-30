@@ -134,6 +134,7 @@ export function ModuleDetailsForm({
                     <IconButton
                       icon={<Icon name="cross" />}
                       label="Clear title"
+                      showTooltip={false}
                       className="vh-clear-btn"
                       onClick={() => onDetailsChange({ ...details, title: "" })}
                     />

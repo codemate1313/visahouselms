@@ -207,6 +207,7 @@ export function NewModuleForm({
                       className="vh-clear-btn"
                       onClick={() => onDetailsChange({ ...details, title: "" })}
                       label="Clear title"
+                      showTooltip={false}
                       icon={<Icon name="cross" />}
                     />
                   )}
