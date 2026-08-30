@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
+import re
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -604,8 +605,10 @@ def build_pdf(path: Path, title: str, sections: list[dict[str, object]]) -> None
         for question in section["questions"]:
             number = int(question.get("number") or question_number)
             question_number = max(question_number + 1, number + 1)
-            prompt_text = str(question.get("prompt") or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            story.append(Paragraph(f"{number}. {prompt_text}", body_style))
+            raw_prompt = str(question.get("prompt") or "")
+            escaped_prompt = raw_prompt.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            formatted_prompt = re.sub(r"\*\*(.+?)\*\*", r"<b>**\1**</b>", escaped_prompt)
+            story.append(Paragraph(f"{number}. {formatted_prompt}", body_style))
             for key, text in question.get("options", []):
                 opt_text = str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                 story.append(Paragraph(f"{key}. {opt_text}", body_style))
