@@ -12,7 +12,7 @@ MAX_CSV_BYTES = 5 * 1024 * 1024
 MAX_EXTRACTED_TEXT = 250_000
 MAX_IMPORT_QUESTIONS = 500
 
-QUESTION_RE = re.compile(r"^(?:q(?:uestion)?\s*)?(\d{1,4})\s*[.)\-:]\s*(.+)$", re.IGNORECASE)
+QUESTION_RE = re.compile(r"^(?:q(?:uestion)?\s*)?(\d{1,4})\s*[.)\-:]\s*(.*)$", re.IGNORECASE)
 OPTION_RE = re.compile(r"^\(?([A-Z])\)?\s*[.)\-:]\s*(.+)$", re.IGNORECASE)
 ANSWER_RE = re.compile(r"^(?:correct\s+)?answer(?:s)?\s*[:\-]\s*(.+)$", re.IGNORECASE)
 EXPLANATION_RE = re.compile(r"^(?:explanation|rationale)\s*[:\-]\s*(.+)$", re.IGNORECASE)
