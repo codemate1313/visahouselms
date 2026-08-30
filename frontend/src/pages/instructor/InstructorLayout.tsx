@@ -4,12 +4,14 @@ import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
 import { PortalTopBar } from "../../components/PortalTopBar";
 import { Sidebar, type MenuSection } from "../../components/Sidebar";
+import { useThemeStore } from "@/store/themeStore";
 import { instructorLayoutStrings as strings } from "./InstructorLayout.strings";
 
 const COLLAPSE_STORAGE_KEY = "instructor-lms-sidebar-collapsed";
 const MODULE_WORKSPACE_PATH = "/super-admin/instructor/modules";
 
 export function InstructorLayout() {
+  const theme = useThemeStore((state) => state.theme);
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1"
   );
@@ -99,7 +101,7 @@ export function InstructorLayout() {
       <Sidebar
         brandTitle={strings.brandTitle}
         brandSubtitle={strings.brandSubtitle}
-        brandLogoUrl="/brand/vh-mark-96.png"
+        brandLogoUrl={theme === "dark" ? "/brand/vh-mark-dark-96.png" : "/brand/vh-mark-96.png"}
         sections={sections}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((prev) => !prev)}

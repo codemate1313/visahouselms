@@ -29,6 +29,7 @@ import {
   type SecurityMediaState,
 } from "./helpers";
 import { useExamLightTheme } from "./useExamLightTheme";
+import { useThemeStore } from "@/store/themeStore";
 import "@/styles/app/pre-exam-onboarding.css";
 import "@/styles/app/final-test-languagecert.css";
 import { PreExamOnboarding } from "./components/PreExamOnboarding";
@@ -87,6 +88,7 @@ export function TestRunner() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const user = useAuthStore((state) => state.user);
+  const theme = useThemeStore((state) => state.theme);
 
   const [isMobileDevice, setIsMobileDevice] = useState(() => {
     return window.innerWidth < 1024 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -1487,7 +1489,7 @@ export function TestRunner() {
     ? <img src={logoUrl} alt={`${branding?.institute_name ?? "Institute"} logo`} />
     : isInstituteStudent
       ? brandInitials
-      : <img src="/brand/vh-mark-96.png" alt="Visa House Logo" />;
+      : <img src={theme === "dark" ? "/brand/vh-mark-dark-96.png" : "/brand/vh-mark-96.png"} alt="Visa House Logo" />;
   const testContext = branding?.institute_name ?? (isInstituteStudent ? "Institute" : "Visa House LMS");
   const violationModal = violationNotice ? (
     <ViolationPolicyModal

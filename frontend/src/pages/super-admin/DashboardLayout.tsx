@@ -5,6 +5,7 @@ import { GsapRouteAnimator } from "@/components/GsapRouteAnimator";
 import { PortalTopBar } from "@/components/PortalTopBar";
 import { Sidebar, type MenuItem, type MenuSection } from "@/components/Sidebar";
 import { useAuthStore } from "@/store/authStore";
+import { useThemeStore } from "@/store/themeStore";
 import { dashboardLayoutStrings as strings } from "./DashboardLayout.strings";
 
 const COLLAPSE_STORAGE_KEY = "language-cert-sidebar-collapsed";
@@ -14,6 +15,7 @@ export function DashboardLayout() {
     () => localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1"
   );
   const user = useAuthStore((state) => state.user);
+  const theme = useThemeStore((state) => state.theme);
   const canViewMoney = Boolean(user?.is_owner || user?.can_view_monetary_analytics);
 
   useEffect(() => {
@@ -203,7 +205,7 @@ export function DashboardLayout() {
       <Sidebar
         brandTitle={strings.brandTitle}
         brandSubtitle={strings.brandSubtitle}
-        brandLogoUrl="/brand/vh-mark-96.png"
+        brandLogoUrl={theme === "dark" ? "/brand/vh-mark-dark-96.png" : "/brand/vh-mark-96.png"}
         sections={sections}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
