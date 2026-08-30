@@ -108,8 +108,19 @@ def _question_preview(
     kind = _infer_type(normalized_options, answers, question_type)
 
     warnings: list[str] = []
+    is_l1 = bool(
+        target_part
+        and (
+            "listening_1" in target_part.lower()
+            or "listening 1" in target_part.lower()
+            or (target_part.lower().endswith("_1") and "listen" in target_part.lower())
+        )
+    )
     if not _clean(prompt):
-        warnings.append("Question text is missing")
+        if is_l1:
+            prompt = "Question"
+        else:
+            warnings.append("Question text is missing")
     if kind in {"mcq_single", "mcq_multiple", "matching_unique", "matching_reusable"} and len(normalized_options) < 2:
         warnings.append("At least two choices are required")
     needs_answer = kind not in {"essay", "speaking_prompt"}
@@ -188,7 +199,24 @@ def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
     for row_number, raw_row in enumerate(reader, start=2):
         row = normalized_row(raw_row)
         prompt = row.get("prompt") or row.get("question") or row.get("question_text") or ""
-        if not prompt and not any(row.values()):
+        target_part = (
+            row.get("part_code")
+            or row.get("part")
+            or row.get("part_title")
+            or row.get("module_part")
+            or ""
+        )
+        is_l1 = bool(
+            target_part
+            and (
+                "listening_1" in target_part.lower()
+                or "listening 1" in target_part.lower()
+                or (target_part.lower().endswith("_1") and "listen" in target_part.lower())
+            )
+        )
+        if not prompt and is_l1:
+            prompt = f"Question {len(questions) + 1}"
+        elif not prompt and not any(row.values()):
             continue
         options = []
         for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":

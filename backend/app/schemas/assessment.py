@@ -157,7 +157,7 @@ class QuestionInteraction(BaseModel):
 
 class QuestionCreate(BaseModel):
     question_type: str
-    prompt: str = Field(min_length=1, max_length=20000)
+    prompt: str = Field(default="", max_length=20000)
     instructions: Optional[str] = Field(default=None, max_length=10000)
     passage: Optional[str] = Field(default=None, max_length=50000)
     image_path: Optional[str] = Field(default=None, max_length=500)

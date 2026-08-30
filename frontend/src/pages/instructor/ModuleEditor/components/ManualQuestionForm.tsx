@@ -67,7 +67,7 @@ export function ManualQuestionForm({
   const t = strings.manualQuestion;
   const isReading = part.section_type === "reading";
   const isListening = part.section_type === "listening";
-  const isListening1 = part.part_code === "listening_1";
+  const isListening1 = part.part_code === "listening_1" || part.part_code.endsWith("listening_1");
   const showQuestionAudio = isListeningPerQuestion || (isListening && Boolean(manual.interaction?.audio_path || manual.interaction?.audio_url));
   const isSpeaking = part.section_type === "speaking";
   /* Speaking 3 and 4 each pair a headline task with a bank of follow-up
@@ -354,13 +354,7 @@ export function ManualQuestionForm({
           </div>
         )}
         {/* 1. Question or task prompt */}
-        {isListening1 ? (
-          <div className="vh-listening-1-header" style={{ marginBottom: "20px" }}>
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "var(--text, #0f172a)" }}>
-              Question {questionIndex}
-            </span>
-          </div>
-        ) : isReading1b ? (
+        {isListening1 ? null : isReading1b ? (
           <div className="vh-reading-1b-gap-header" style={{ marginBottom: "16px", padding: "10px 14px", background: "rgba(185, 28, 43, 0.04)", borderRadius: "8px", border: "1px solid rgba(185, 28, 43, 0.15)" }}>
             <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--sa-sidebar-red, #b91c2b)" }}>
               Options for Gap {reading1bGapIndex}

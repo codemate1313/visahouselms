@@ -28,6 +28,7 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
   // A gap part is one task, not a list of questions - calling its rows
   // "questions" is what made six gaps read as six separate questions.
   const isGapTask = part.answer_constraints.layout === "inline_matching_blanks";
+  const isListening1 = part.part_code === "listening_1" || part.part_code.endsWith("listening_1");
   return (
     <CollapsiblePanel
       className="question-list-section"
@@ -69,9 +70,9 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
                   {question.interaction?.group_label && <span>{question.interaction.group_label}</span>}
                   {question.interaction?.turn_type && <span>{question.interaction.turn_type.replaceAll("_", " ")}</span>}
                 </div>
-                {!isSharedCloze && (
+                {!isSharedCloze && !isListening1 && (
                   <h3>
-                    {part.part_code === "listening_1" ? `Question ${index + 1}` : renderBoldText(question.prompt)}
+                    {renderBoldText(question.prompt)}
                   </h3>
                 )}
                 {!isSharedCloze && !usesSharedPassage && part.section_type !== "writing" && question.passage && <RichTextContent text={question.passage} />}

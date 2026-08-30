@@ -93,6 +93,7 @@ export function ModuleImportReviewPanel({
           const allowedTypes = part.allowed_question_types ?? [];
           const passageRequired = part.section_type === "reading" && part.part_code !== "reading_1a";
           const partNeedsImage = IMAGE_ELIGIBLE_SECTIONS.has(part.section_type);
+          const isListening1 = part.part_code === "listening_1" || part.part_code.endsWith("listening_1");
           return (
             <section className="authoring-panel" key={part.part_id}>
               <div className="panel-title">
@@ -139,8 +140,12 @@ export function ModuleImportReviewPanel({
                         />
                       </>
                     )}
-                    <label>{review.promptLabel}</label>
-                    <textarea rows={3} value={question.prompt} onChange={(event) => onUpdatePreview(part.part_id, index, { prompt: event.target.value })} />
+                    {!isListening1 && (
+                      <>
+                        <label>{review.promptLabel}</label>
+                        <textarea rows={3} value={question.prompt} onChange={(event) => onUpdatePreview(part.part_id, index, { prompt: event.target.value })} />
+                      </>
+                    )}
                     {!ANSWER_FREE_TYPES.has(question.question_type) && (
                       <>
                         <label>{review.answerKeysLabel}</label>

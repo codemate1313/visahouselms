@@ -30,6 +30,7 @@ export function ImportReviewPanel({
   const t = strings.importReview;
   const questionLabels = strings.questionLabels;
   const allowedTypes = part.answer_constraints.allowed_question_types ?? [];
+  const isListening1 = part.part_code === "listening_1" || part.part_code.endsWith("listening_1");
 
   function toggleImport(index: number) {
     const next = new Set(selectedImports);
@@ -115,8 +116,12 @@ export function ImportReviewPanel({
                 />
               </>
             )}
-            <label>{t.promptLabel}</label>
-            <textarea rows={3} value={question.prompt} onChange={(event) => onUpdatePreview(index, { prompt: event.target.value })} />
+            {!isListening1 && (
+              <>
+                <label>{t.promptLabel}</label>
+                <textarea rows={3} value={question.prompt} onChange={(event) => onUpdatePreview(index, { prompt: event.target.value })} />
+              </>
+            )}
             {!ANSWER_FREE_TYPES.has(question.question_type) && (
               <>
                 <label>{t.answerKeysLabel}</label>

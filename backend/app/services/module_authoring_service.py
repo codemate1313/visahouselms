@@ -899,6 +899,9 @@ def _validate_question_for_part(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"{part.title} accepts only: {', '.join(sorted(allowed))}",
         )
+    is_l1 = part.part_code == "listening_1" or part.part_code.endswith("listening_1")
+    if is_l1 and not str(data.get("prompt") or "").strip():
+        data["prompt"] = f"Question {current_count + 1}"
     constraints = dict(part.answer_constraints or {})
     if data["question_type"] in OPTION_BASED_QUESTION_TYPES and len(data.get("options", [])) < 2:
         raise HTTPException(
@@ -1138,6 +1141,10 @@ def _normalize_import_question_for_part(part: ExamModulePart, question: dict, in
 
     if part.max_marks is not None and part.question_limit:
         data["points"] = Decimal(part.max_marks) / Decimal(part.question_limit)
+
+    is_l1 = part.part_code == "listening_1" or part.part_code.endswith("listening_1")
+    if is_l1 and not str(data.get("prompt") or "").strip():
+        data["prompt"] = f"Question {index + 1}"
 
     interaction = dict(data.get("interaction") or {})
     if constraints.get("group_label_required") and not str(interaction.get("group_label") or "").strip():
