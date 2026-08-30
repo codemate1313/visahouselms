@@ -49,6 +49,20 @@ def _split_answers(value: object) -> list[str]:
     return list(dict.fromkeys(part.strip(" ().") for part in parts if part.strip(" ().")))
 
 
+def _normalize_cloze_passage(text: str) -> str:
+    if not text:
+        return text
+    # 1. (1) ______ or (1) ___ or (1) _
+    text = re.sub(r"\(\s*(\d+)\s*\)\s*_{1,}", r"{{blank:\1}}", text)
+    # 2. ___ (1) ___ or __(1)
+    text = re.sub(r"_{1,}\s*\(\s*(\d+)\s*\)\s*_{0,}", r"{{blank:\1}}", text)
+    # 3. [1] ___ or [1]
+    text = re.sub(r"\[\s*(\d+)\s*\]\s*_{0,}", r"{{blank:\1}}", text)
+    # 4. Standalone (1) if surrounded by spaces or punctuation: e.g. " ideas (1) . "
+    text = re.sub(r"(?<=\s)\(\s*(\d+)\s*\)(?=[\s,.:;!?])", r"{{blank:\1}}", text)
+    return text
+
+
 def _infer_type(
     options: list[dict],
     answers: list[str],
@@ -98,6 +112,19 @@ def _infer_type(
     return "short_answer"
 
 
+DEFAULT_PART_HEADINGS: dict[str, str] = {
+    "reading_1a": "Read each sentence. Choose the word that can best replace the bold word without changing the meaning.",
+    "reading_1b": "Read the text and choose the correct word for each gap.",
+    "reading_2": "Read the text. Six sentences have been removed. Choose the sentence that best fits each gap. One sentence is a distractor.",
+    "reading_3": "Read texts A–D. For questions 18–24, decide which text answers the question.",
+    "reading_4": "Read the text and choose the correct answer for each question.",
+    "listening_1": "You will hear some short conversations. You will hear each conversation twice. Choose the correct answer to complete each conversation.",
+    "listening_2": "You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.",
+    "listening_3": "You will hear a recording. You will hear the recording twice. Complete the notes with NO MORE THAN THREE WORDS for each gap.",
+    "listening_4": "You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.",
+}
+
+
 def _question_preview(
     *,
     prompt: str,
@@ -105,6 +132,7 @@ def _question_preview(
     correct_answers: list[str],
     question_type: str = "",
     instructions: str = "",
+    part_heading: str = "",
     passage: str = "",
     explanation: str = "",
     points: object = 1,
@@ -195,6 +223,7 @@ def _question_preview(
         "question_type": kind,
         "prompt": _clean(prompt),
         "instructions": _clean(instructions) or None,
+        "part_heading": _clean(part_heading) or None,
         "passage": str(passage or "").strip() or None,
         "options": normalized_options,
         "correct_answers": answers,
