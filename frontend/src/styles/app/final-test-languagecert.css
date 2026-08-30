@@ -1423,19 +1423,22 @@
 
 .lc-exam .test-runner-notepad-lines {
   padding-left: 18px;
-  gap: 11px;
+  gap: 14px;
   color: var(--lc-ink);
   font-size: var(--lc-text);
-  line-height: 1.5;
+  line-height: 2.6;
   list-style: disc;
 }
 
 .lc-exam .test-runner-notepad-lines li {
   padding-left: 2px;
+  line-height: 2.6;
 }
 
 .lc-exam .test-runner-notepad-blank {
   gap: 5px;
+  margin: 3px 5px;
+  vertical-align: middle;
 }
 
 .lc-exam .test-runner-notepad-number {

@@ -1870,17 +1870,21 @@ body.test-runner-route-active #root {
   padding-left: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   color: var(--text);
-  font-size: 14px;
-  line-height: 2.1;
+  font-size: 15px;
+  line-height: 2.8;
+}
+
+.test-runner-notepad-lines li {
+  line-height: 2.8;
 }
 
 .test-runner-notepad-blank {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 0 4px;
+  margin: 4px 6px;
   vertical-align: middle;
 }
 
@@ -1892,13 +1896,16 @@ body.test-runner-route-active #root {
 .test-runner-notepad-blank .test-runner-text-input {
   width: min(220px, 100%);
   min-width: 120px;
-  padding: 4px 8px;
+  height: 32px;
+  padding: 2px 10px;
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 6px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
   line-height: 1.4;
+  vertical-align: middle;
+  box-sizing: border-box;
 }
 
 .test-runner-notepad-blank .test-runner-text-input.is-error {
