@@ -1113,6 +1113,15 @@ def _normalize_import_question_for_part(part: ExamModulePart, question: dict, in
         data["correct_answers"] = []
         data["warnings"] = [w for w in data.get("warnings", []) if "Correct answer was not detected" not in w]
 
+    data["instructions"] = None
+    uses_passage = bool(
+        constraints.get("passage_required")
+        or constraints.get("shared_passage")
+        or constraints.get("layout") in {"shared_cloze", "notepad_gaps", "inline_matching_blanks", "source_text_matching"}
+    )
+    if not uses_passage:
+        data["passage"] = None
+
     if constraints.get("inline_marker_required") and "{{blank}}" not in data.get("prompt", ""):
         data["prompt"] = f"{data.get('prompt', '').strip()} {{{{blank}}}}".strip()
 

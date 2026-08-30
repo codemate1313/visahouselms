@@ -345,35 +345,46 @@ def parse_pdf(
     current_passage = []
     mode = "prompt"
 
+    current_heading_lines: list[str] = []
+    collecting_passage = False
+
     def finish() -> None:
         nonlocal current
         if not current:
             return
-        def _clean_passage_text(raw_lines: list[str]) -> str:
-            if not raw_lines:
-                return ""
-            raw = "\n".join(raw_lines).strip()
-            lines = [l.strip() for l in raw.splitlines() if l.strip()]
-            if (
-                len(lines) > 1
-                and len(lines[0]) <= 75
-                and not lines[0].endswith((".", ":", ";", "!", "?", ","))
-                and not lines[0].startswith("#")
-            ):
-                raw = lines[0] + "\n\n" + "\n".join(lines[1:])
-            chunks = re.split(r"\n\s*\n+", raw)
-            paragraphs = []
-            for chunk in chunks:
-                chunk_lines = [l.strip() for l in chunk.splitlines() if l.strip()]
-                if not chunk_lines:
-                    continue
-                if re.match(r"^([#>\-*]|\d+\.)", chunk_lines[0]):
-                    paragraphs.append(chunk.strip())
-                else:
-                    paragraphs.append(" ".join(chunk_lines))
-            return "\n\n".join(paragraphs).strip()
+        norm_cp = (current.get("target_part") or current_part).lower().replace("-", "_").replace(" ", "_")
+        part_head = current.get("part_heading") or (" ".join(current_heading_lines).strip()) or DEFAULT_PART_HEADINGS.get(norm_cp, "")
+        is_passage_part = any(p in norm_cp for p in ("reading_1b", "reading_2", "reading_3", "reading_4", "listening_3"))
+        if is_passage_part and current_passage:
+            def _clean_passage_text(raw_lines: list[str]) -> str:
+                if not raw_lines:
+                    return ""
+                raw = "\n".join(raw_lines).strip()
+                lines = [l.strip() for l in raw.splitlines() if l.strip()]
+                if (
+                    len(lines) > 1
+                    and len(lines[0]) <= 75
+                    and not lines[0].endswith((".", ":", ";", "!", "?", ","))
+                    and not lines[0].startswith("#")
+                ):
+                    raw = lines[0] + "\n\n" + "\n".join(lines[1:])
+                chunks = re.split(r"\n\s*\n+", raw)
+                paragraphs = []
+                for chunk in chunks:
+                    chunk_lines = [l.strip() for l in chunk.splitlines() if l.strip()]
+                    if not chunk_lines:
+                        continue
+                    if re.match(r"^([#>\-*]|\d+\.)", chunk_lines[0]):
+                        paragraphs.append(chunk.strip())
+                    else:
+                        paragraphs.append(" ".join(chunk_lines))
+                return "\n\n".join(paragraphs).strip()
 
-        passage_text = _clean_passage_text(current_passage)
+            passage_text = _clean_passage_text(current_passage)
+            if "reading_1b" in norm_cp or "reading_2" in norm_cp:
+                passage_text = _normalize_cloze_passage(passage_text)
+        else:
+            passage_text = None
         preview = _question_preview(
             prompt=" ".join(current["prompt"]),
             options=current["options"],
@@ -398,19 +409,34 @@ def parse_pdf(
         if part_match:
             finish()
             current_part = part_match.group(1)
+            norm_cp = current_part.lower().replace("-", "_").replace(" ", "_")
+            current_heading_lines = []
             current_passage = []
+            collecting_passage = False
             mode = "prompt"
         elif question_match:
             finish()
+            collecting_passage = False
+            norm_cp = current_part.lower().replace("-", "_").replace(" ", "_")
+            head_text = " ".join(current_heading_lines).strip()
             current = {
                 "number": int(question_match.group(1)),
                 "prompt": [question_match.group(2)],
                 "options": [],
                 "answers": [],
                 "explanation": [],
+                "part_heading": head_text or DEFAULT_PART_HEADINGS.get(norm_cp, ""),
                 "target_part": current_part or default_target_part or default_section_type or "",
             }
             mode = "prompt"
+        elif not current and current_part:
+            clean_line = line.strip()
+            if re.match(r"^(?:reading\s+)?passage(?:\s+\d+)?\s*:?$", clean_line, re.IGNORECASE):
+                collecting_passage = True
+            elif collecting_passage:
+                current_passage.append(line)
+            else:
+                current_heading_lines.append(line)
         elif current and answer_match:
             current["answers"] = _split_answers(answer_match.group(1))
             mode = "answer"
@@ -428,10 +454,6 @@ def parse_pdf(
             current["explanation"].append(line)
         elif current and mode != "answer":
             current["prompt"].append(line)
-        elif not current and current_part:
-            clean_line = line.strip()
-            if not re.match(r"^(?:reading\s+)?passage(?:\s+\d+)?\s*:?$", clean_line, re.IGNORECASE):
-                current_passage.append(line)
     finish()
 
     if not questions:

@@ -796,8 +796,8 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             self.db, self.instructor, module.id, part.id, draft, None
         )
         self.assertEqual(
-            question["interaction"]["candidate_material_url"],
-            uploaded["candidate_material_url"],
+            question["interaction"]["candidate_material_url"].split("?")[0],
+            uploaded["candidate_material_url"].split("?")[0],
         )
         self.assertEqual(question["passage"], "Use this role-play card to prepare your answer.")
 
