@@ -154,7 +154,7 @@ def _question_preview(
     is_speaking_three = "speaking_3" in part_lower.replace(" ", "_") or "speaking 3" in part_lower
     if is_speaking_three and kind == "speaking_prompt" and not str(passage or "").strip():
         read_aloud_match = re.match(
-            r"^\s*read\s+(?:the\s+)?(?:short\s+|given\s+)?text\s+aloud\s*:?\s*(.*)$",
+            r"^\s*read\s+(?:the\s+)?(?:short\s+|given\s+)?text\s+aloud[\s.:-]+\s*(.+)$",
             prompt,
             re.IGNORECASE | re.DOTALL,
         )
