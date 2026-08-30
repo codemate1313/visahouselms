@@ -912,6 +912,7 @@
   font-size: var(--lc-text);
   line-height: 1.72;
   white-space: pre-wrap;
+  text-align: justify;
 }
 
 /* Emphasised words and passage titles come through `RichTextContent` as
