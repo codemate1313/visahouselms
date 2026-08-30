@@ -583,6 +583,7 @@ export function PortalTopBar({
             <IconButton
               className="portal-back-button"
               onClick={handleBack}
+              showTooltip={false}
               label={commonActions.back}
               icon={<Icon name="arrowLeft" />}
             />

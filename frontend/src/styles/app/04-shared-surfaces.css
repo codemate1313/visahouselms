@@ -2445,17 +2445,28 @@
   display: none;
 }
 
-.huge-sidebar.is-collapsed .sidebar-section-header {
+.huge-sidebar.is-collapsed .sidebar-section-header.is-label-only {
   height: 1px;
   margin: 10px 12px 12px;
   border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.huge-sidebar.is-collapsed .sidebar-collapsible-header {
+  height: auto;
+  margin: 0;
+  border-top: 0;
+  text-align: left;
+}
+
+.huge-sidebar.is-collapsed .sidebar-section-content.is-collapsible-section {
+  display: none !important;
 }
 
 /* The first group needs no divider - there is nothing above it to separate.
    `:first-child` would not match: the sliding active-indicator div is rendered
    before the sections, so the adjacent-sibling selector is what actually picks
    out the first one. */
-.huge-sidebar.is-collapsed .apple-sidebar-active-indicator + .sidebar-section .sidebar-section-header {
+.huge-sidebar.is-collapsed .apple-sidebar-active-indicator + .sidebar-section .sidebar-section-header.is-label-only {
   border-top: 0;
   height: 0;
   margin: 0 0 4px;
@@ -3028,6 +3039,10 @@
 
 .super-admin-portal .huge-sidebar .sidebar-section-header {
   margin-bottom: 4px;
+}
+
+.super-admin-portal .huge-sidebar.is-collapsed .sidebar-section-header.sidebar-collapsible-header {
+  margin-bottom: 0;
 }
 
 .super-admin-portal .huge-sidebar .sidebar-section-header.is-label-only {

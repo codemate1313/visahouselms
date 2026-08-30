@@ -407,7 +407,7 @@ def notify_system_job_failed(db: Session, job_type: str, detail: str) -> None:
         {DEVELOPER, SUPER_ADMIN},
         kind=SYSTEM_JOB_FAILED,
         title=f"System job failed: {job_type}",
-        message=detail[:500],
+        message="",
         link_url="/super-admin/logs",
     )
 
@@ -522,6 +522,16 @@ def _backfill_grade_notifications(db: Session, user: User) -> None:
     db.commit()
 
 
+def _clean_notification_message(notification: StudentNotification) -> str:
+    message = notification.message or ""
+    if notification.kind == SYSTEM_JOB_FAILED:
+        return ""
+    lower = message.lower()
+    if "traceback (most recent call last)" in lower or 'file "' in lower:
+        return ""
+    return message
+
+
 def _notification_out(notification: StudentNotification) -> dict:
     attempt = notification.attempt
     return {
@@ -531,7 +541,7 @@ def _notification_out(notification: StudentNotification) -> dict:
         "announcement_id": notification.announcement_id,
         "link_url": notification.link_url,
         "title": notification.title,
-        "message": notification.message,
+        "message": _clean_notification_message(notification),
         "read_at": _utc_out(notification.read_at),
         "pinned_at": _utc_out(notification.pinned_at),
         "created_at": _utc_out(notification.created_at),

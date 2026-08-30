@@ -3,7 +3,6 @@ import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { superAdminTestimonialsStrings as strings } from "../SuperAdminTestimonials.strings";
 import type { DragReorderState, TestimonialAdminItem } from "../types";
-import { Button } from "@/components/ui/Button/Button";
 
 interface TestimonialTableViewProps {
   items: TestimonialAdminItem[];
@@ -34,12 +33,12 @@ export function TestimonialTableView({
       <table className="sat-table">
         <thead>
           <tr>
-            <th>{t.name}</th>
-            <th>{t.score}</th>
-            <th>{t.quote}</th>
-            <th>{t.status}</th>
-            <th>{t.order}</th>
-            <th>{t.actions}</th>
+            <th className="sat-col-name">{t.name}</th>
+            <th className="sat-col-score">{t.score}</th>
+            <th className="sat-col-quote">{t.quote}</th>
+            <th className="sat-col-status">{t.status}</th>
+            <th className="sat-col-order">{t.order}</th>
+            <th className="sat-col-actions">{t.actions}</th>
           </tr>
         </thead>
         <tbody>
@@ -53,7 +52,7 @@ export function TestimonialTableView({
               onDrop={(e) => onDrop(e, index)}
               className={`${!item.is_active ? "inactive-row" : ""} ${dragState.draggedIndex === index ? "is-dragging" : ""} ${dragState.dragOverIndex === index ? "is-drag-over" : ""}`}
             >
-              <td>
+              <td className="sat-col-name">
                 <div className="sat-table-student">
                   {item.avatar_url ? (
                     <img src={item.avatar_url} alt="" className="sat-avatar-img" />
@@ -66,38 +65,38 @@ export function TestimonialTableView({
                   </div>
                 </div>
               </td>
-              <td>
+              <td className="sat-col-score">
                 <span className="sat-table-score">{item.target_score || "-"}</span>
               </td>
-              <td>
+              <td className="sat-col-quote">
                 <div className="sat-table-quote" title={item.quote}>
                   "{item.quote.length > 60 ? item.quote.substring(0, 60) + "..." : item.quote}"
                 </div>
               </td>
-              <td>
+              <td className="sat-col-status">
                 <span className={`sat-status-badge ${item.is_active ? "active" : "inactive"}`}>
                   <span className="dot"></span> {item.is_active ? strings.activeLabel : strings.draftLabel}
                 </span>
               </td>
-              <td>
+              <td className="sat-col-order">
                 <span className="sat-order-badge">{item.display_order}</span>
               </td>
-              <td>
-                <div className="table-actions institute-row-actions">
+              <td className="sat-col-actions">
+                <div className="sat-row-actions">
                   <RowActionMenu
                     items={[
-                      <Button key="status" type="button" variant="text" onClick={() => onToggleActive(item)}>
+                      <button key="status" type="button" onClick={() => onToggleActive(item)}>
                         <Icon name={item.is_active ? "toggleOff" : "toggleOn"} />
                         <span>{item.is_active ? strings.deactivateTooltip : strings.activateTooltip}</span>
-                      </Button>,
-                      <Button key="edit" type="button" variant="text" onClick={() => onEdit(item)}>
+                      </button>,
+                      <button key="edit" type="button" onClick={() => onEdit(item)}>
                         <Icon name="edit" />
                         <span>{strings.editTooltip}</span>
-                      </Button>,
-                      <Button key="delete" type="button" variant="danger" className="danger" onClick={() => onDelete(item.id)}>
+                      </button>,
+                      <button key="delete" type="button" className="danger" onClick={() => onDelete(item.id)}>
                         <Icon name="trash" />
                         <span>{strings.deleteTooltip}</span>
-                      </Button>,
+                      </button>,
                     ]}
                   />
                 </div>

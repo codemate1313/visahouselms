@@ -105,15 +105,22 @@ export function SuperAdminTestimonials() {
     if (!editingItem?.student_name || !editingItem?.quote) return;
 
     const isEdit = Boolean(editingItem.id);
+    const itemToSave = {
+      ...editingItem,
+      display_order:
+        editingItem.display_order != null && !Number.isNaN(Number(editingItem.display_order))
+          ? Number(editingItem.display_order)
+          : items.length + 1,
+    };
 
-    if (isEdit && originalItemRef.current && isEqual(originalItemRef.current, editingItem)) {
+    if (isEdit && originalItemRef.current && isEqual(originalItemRef.current, itemToSave)) {
       showInfo(noChangesMessage);
       return;
     }
 
     setSaving(true);
     const url = isEdit ? `/super-admin/testimonials/${editingItem.id}` : "/super-admin/testimonials";
-    const promise = isEdit ? apiClient.put(url, editingItem) : apiClient.post(url, editingItem);
+    const promise = isEdit ? apiClient.put(url, itemToSave) : apiClient.post(url, itemToSave);
 
     promise
       .then(() => {

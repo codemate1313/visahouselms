@@ -535,9 +535,6 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
             onChange={(value) => setPriority(value as SupportTicketPriority | "")}
           />
         </div>
-        <Button variant="secondary" leftIcon={<Icon name="search" />} onClick={() => void load()} style={{ flexShrink: 0 }}>
-          Search
-        </Button>
       </div>
 
       {error && <p className="error-text notice-line">{error}</p>}

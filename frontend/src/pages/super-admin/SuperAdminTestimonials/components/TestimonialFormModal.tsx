@@ -180,10 +180,21 @@ export function TestimonialFormModal({ editingItem, onChange, saving, onClose, o
               <div className="sat-form-group">
                 <label>{t.displayOrderLabel}</label>
                 <input
-                  type="number"
-                  value={editingItem.display_order || 0}
-                  onChange={(e) => onChange({ ...editingItem, display_order: parseInt(e.target.value) || 0 })}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={editingItem.display_order !== undefined && editingItem.display_order !== null ? editingItem.display_order : ""}
+                  onChange={(e) => {
+                    const onlyNums = e.target.value.replace(/\D/g, "");
+                    onChange({
+                      ...editingItem,
+                      display_order: onlyNums === "" ? (undefined as unknown as number) : parseInt(onlyNums, 10),
+                    });
+                  }}
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
                   className="sat-input"
+                  placeholder="1"
+                  autoComplete="off"
                 />
               </div>
               <div className="sat-form-group full-width">

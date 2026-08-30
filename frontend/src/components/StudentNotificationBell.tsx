@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { apiClient } from "../api/client";
 import type { StudentNotification } from "../api/types";
-import { destinationFor, notificationTime, scoreLabel } from "../utils/notificationHelpers";
+import { cleanNotificationMessage, destinationFor, notificationTime, scoreLabel } from "../utils/notificationHelpers";
 
 import { Icon } from "./icons";
 import { PinList, type PinListItem } from "./PinList";
@@ -337,6 +337,7 @@ export function NotificationBell({
       <IconButton
         className={`student-notification-bell${unread.length ? " has-unread" : ""}`}
         onClick={togglePanel}
+        showTooltip={false}
         label={`Notifications${unread.length ? `, ${unread.length} unread` : ""}`}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -408,6 +409,7 @@ export function NotificationBell({
                 <IconButton
                   className="student-notification-close-btn"
                   onClick={closePanel}
+                  showTooltip={false}
                   label="Close notifications"
                   icon={
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -519,7 +521,9 @@ export function NotificationBell({
                         <div className="student-notification-item-content">
                           <div className="student-notification-headline">
                             <strong className="student-notification-title-highlight">“{notification.title}”</strong>
-                            <span className="student-notification-message-body">{notification.message}</span>
+                            {cleanNotificationMessage(notification) && (
+                              <span className="student-notification-message-body">{cleanNotificationMessage(notification)}</span>
+                            )}
                           </div>
 
                           {score && (

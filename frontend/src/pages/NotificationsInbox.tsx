@@ -6,7 +6,7 @@ import { Icon } from "@/components/icons";
 import { PinList, type PinListItem } from "@/components/PinList";
 import { PageHeader, SearchableSelect, SegmentedControl } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
-import { destinationFor, notificationTime, scoreLabel } from "@/utils/notificationHelpers";
+import { cleanNotificationMessage, destinationFor, notificationTime, scoreLabel } from "@/utils/notificationHelpers";
 import { notificationsInboxStrings as strings } from "./NotificationsInbox.strings";
 import "./NotificationsInbox.css";
 
@@ -269,10 +269,12 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
                     <strong>{notification.title}</strong>
                   </span>
                   <span className="notification-card-message">
-                    <span className="notifications-inbox-item-message">
-                      {notification.message}
-                      {scoreLabel(notification) ? ` ${strings.scorePrefix} ${scoreLabel(notification)}.` : ""}
-                    </span>
+                    {cleanNotificationMessage(notification) && (
+                      <span className="notifications-inbox-item-message">
+                        {cleanNotificationMessage(notification)}
+                        {scoreLabel(notification) ? ` ${strings.scorePrefix} ${scoreLabel(notification)}.` : ""}
+                      </span>
+                    )}
                     {notification.module_title && <span className="notifications-inbox-item-meta">{notification.module_title}</span>}
                   </span>
                 </span>

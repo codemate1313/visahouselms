@@ -26,3 +26,15 @@ export function scoreLabel(notification: StudentNotification) {
   if (notification.raw_score == null || notification.max_score == null) return null;
   return `${notification.raw_score} / ${notification.max_score}`;
 }
+
+export function isLogTracebackOrDetail(notification: StudentNotification): boolean {
+  if (notification.kind === "system_job_failed") return true;
+  const msg = notification.message?.toLowerCase() || "";
+  return msg.includes("traceback (most recent call last)") || msg.includes('file "');
+}
+
+export function cleanNotificationMessage(notification: StudentNotification): string | null {
+  if (isLogTracebackOrDetail(notification)) return null;
+  const trimmed = notification.message?.trim();
+  return trimmed || null;
+}

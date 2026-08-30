@@ -258,8 +258,17 @@ export function Sidebar({
     }));
   };
 
-  const toggleSection = (sectionKey: string) => {
-    if (isCollapsed) return;
+  const toggleSection = (sectionKey: string, section?: MenuSection) => {
+    if (isCollapsed) {
+      if (sectionKey !== activeSectionKey && section && section.items.length > 0) {
+        const firstItem = section.items[0];
+        const defaultTo = firstItem.to || (firstItem.children && firstItem.children[0]?.to);
+        if (defaultTo) {
+          navigate(defaultTo);
+        }
+      }
+      return;
+    }
     setExpandedSectionKeys((current) => ({
       [sectionKey]: !current[sectionKey],
     }));
@@ -314,8 +323,7 @@ export function Sidebar({
           <IconButton
             className="sidebar-collapse-btn"
             onClick={onToggleCollapse}
-            onMouseEnter={(e) => handleMouseEnterTooltip(e, isCollapsed ? "Expand Sidebar" : "Collapse Sidebar")}
-            onMouseLeave={handleMouseLeaveTooltip}
+            showTooltip={false}
             label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             icon={
               <Icon
@@ -341,11 +349,12 @@ export function Sidebar({
         />
         {sections.map((section, sIndex) => {
           const sectionKey = section.key ?? section.title ?? String(sIndex);
-          const isSectionOpen = !section.collapsible || isCollapsed || !!expandedSectionKeys[sectionKey];
+          const isSectionOpen = !section.collapsible || (!isCollapsed && !!expandedSectionKeys[sectionKey]);
           const hasActiveItem = section.items.some(
             (item) => item.key === activeKey || item.children?.some((child) => child.key === activeKey)
           );
           const sectionContentId = `sidebar-section-${sectionKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+          const sectionIcon = section.icon || section.items[0]?.icon;
 
           return (
           <div key={sectionKey} className={`sidebar-section ${hasActiveItem ? "has-active-item" : ""}`}>
@@ -356,16 +365,16 @@ export function Sidebar({
                   className={`sidebar-item-btn sidebar-section-toggle-btn ${
                     hasActiveItem && (isCollapsed || !isSectionOpen) ? "is-active" : ""
                   }`}
-                  onClick={() => toggleSection(sectionKey)}
+                  onClick={() => toggleSection(sectionKey, section)}
                   onMouseEnter={(e) => handleMouseEnterTooltip(e, section.title || "")}
                   onMouseLeave={handleMouseLeaveTooltip}
                   aria-expanded={isSectionOpen}
                   aria-controls={sectionContentId}
-                  tabIndex={isCollapsed ? -1 : 0}
+                  tabIndex={0}
                 >
-                  {section.icon && (
+                  {sectionIcon && (
                     <div className="sidebar-item-icon-wrap">
-                      <Icon name={section.icon} className="sidebar-icon" />
+                      <Icon name={sectionIcon} className="sidebar-icon" />
                     </div>
                   )}
                   <span className="sidebar-item-label">{section.title}</span>
@@ -391,7 +400,7 @@ export function Sidebar({
                 <ul className="sidebar-menu-list">
               {section.items.map((item) => {
                 const isAccordion = !!(item.children && item.children.length > 0);
-                const isExpanded = !!expandedKeys[item.key] || isCollapsed;
+                const isExpanded = !isCollapsed && !!expandedKeys[item.key];
 
                 // Check if any child of this accordion is currently active
                 const isParentActive =

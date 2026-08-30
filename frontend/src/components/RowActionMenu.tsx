@@ -14,11 +14,41 @@ interface RowActionMenuProps {
   label?: string;
 }
 
+interface TooltipPlacement {
+  top: number;
+  left: number;
+  openBelow: boolean;
+}
+
+/* Table wrappers commonly clip vertical overflow (rounded-corner tables need
+   `overflow` to hide square cell corners), which silently clips a CSS
+   ::before tooltip poking out above its trigger — no z-index can undo real
+   clipping. Portaling to <body> and positioning with the trigger's own
+   rect sidesteps every ancestor's overflow, the same way the panel below
+   already does. */
+function placeTooltip(trigger: HTMLElement, tooltipHeight: number, gap = 8, margin = 8): TooltipPlacement {
+  const rect = trigger.getBoundingClientRect();
+  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+  const spaceAbove = rect.top - margin;
+  const openBelow = spaceAbove < tooltipHeight + gap;
+  // The gap itself is applied by the CSS transform (see .row-action-tooltip),
+  // so the anchor point here is just the trigger's own top/bottom edge.
+  const top = openBelow ? rect.bottom : rect.top;
+  const left = Math.min(
+    Math.max(rect.left + rect.width / 2, margin),
+    viewportWidth - margin,
+  );
+  return { top, left, openBelow };
+}
+
 export function RowActionMenu({ items, label = "More actions" }: RowActionMenuProps) {
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState<AnchoredMenuPlacement | null>(null);
+  const [tooltipHovered, setTooltipHovered] = useState(false);
+  const [tooltipPlacement, setTooltipPlacement] = useState<TooltipPlacement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
 
   /* The panel is `width: max-content`, so it has to exist before it can be
      measured. This runs before paint, so the un-placed first render is never
@@ -44,8 +74,23 @@ export function RowActionMenu({ items, label = "More actions" }: RowActionMenuPr
     );
   }, [open, items.length]);
 
+  /* Same measure-then-place two-step as the panel above: render hidden to
+     get the tooltip's natural size, then place it against the trigger. */
+  useLayoutEffect(() => {
+    if (!tooltipHovered || open) {
+      setTooltipPlacement(null);
+      return;
+    }
+    const trigger = triggerRef.current;
+    const tooltip = tooltipRef.current;
+    if (!trigger || !tooltip) return;
+    const natural = tooltip.getBoundingClientRect();
+    setTooltipPlacement(placeTooltip(trigger, natural.height));
+  }, [tooltipHovered, open]);
+
   useEffect(() => {
     if (!open) return;
+    setTooltipHovered(false);
 
     function closeWhenOutside(event: PointerEvent) {
       const target = event.target as Node;
@@ -85,12 +130,30 @@ export function RowActionMenu({ items, label = "More actions" }: RowActionMenuPr
         aria-haspopup="menu"
         aria-label={label}
         className="action-btn-icon action-menu-trigger"
-        data-tooltip={label}
+        onBlur={() => setTooltipHovered(false)}
         onClick={() => setOpen((value) => !value)}
+        onFocus={() => setTooltipHovered(true)}
+        onMouseEnter={() => setTooltipHovered(true)}
+        onMouseLeave={() => setTooltipHovered(false)}
         type="button"
       >
         <Icon name="moreVertical" />
       </button>
+      {tooltipHovered && !open && createPortal(
+        <div
+          ref={tooltipRef}
+          className={`row-action-tooltip${tooltipPlacement?.openBelow ? " row-action-tooltip-below" : ""}`}
+          role="tooltip"
+          style={
+            tooltipPlacement
+              ? { top: tooltipPlacement.top, left: tooltipPlacement.left }
+              : { visibility: "hidden", top: 0, left: 0 }
+          }
+        >
+          {label}
+        </div>,
+        document.body,
+      )}
       {open && createPortal(
         <div
           ref={panelRef}
