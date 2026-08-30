@@ -46,7 +46,12 @@ def _split_answers(value: object) -> list[str]:
     return list(dict.fromkeys(part.strip(" ().") for part in parts if part.strip(" ().")))
 
 
-def _infer_type(options: list[dict], answers: list[str], supplied: str = "") -> str:
+def _infer_type(
+    options: list[dict],
+    answers: list[str],
+    supplied: str = "",
+    target_part: str = "",
+) -> str:
     aliases = {
         "mcq": "mcq_single",
         "multiple_choice": "mcq_single",
@@ -75,6 +80,11 @@ def _infer_type(options: list[dict], answers: list[str], supplied: str = "") -> 
     }
     if normalized in valid:
         return normalized
+    part_lower = _clean(target_part).lower()
+    if "writing" in part_lower:
+        return "essay"
+    if "speaking" in part_lower:
+        return "speaking_prompt"
     option_values = {_clean(option.get("text")).lower() for option in options}
     if {"true", "false"}.issubset(option_values):
         return "true_false_not_given"
@@ -114,7 +124,7 @@ def _question_preview(
     option_keys = {option["key"] for option in normalized_options}
     option_text_to_key = {option["text"].upper(): option["key"] for option in normalized_options}
     answers = [option_text_to_key.get(answer, answer) for answer in answers]
-    kind = _infer_type(normalized_options, answers, question_type)
+    kind = _infer_type(normalized_options, answers, question_type, target_part=target_part)
 
     warnings: list[str] = []
     is_l1 = bool(
@@ -132,7 +142,9 @@ def _question_preview(
             warnings.append("Question text is missing")
     if kind in {"mcq_single", "mcq_multiple", "matching_unique", "matching_reusable"} and len(normalized_options) < 2:
         warnings.append("At least two choices are required")
-    needs_answer = kind not in {"essay", "speaking_prompt"}
+    part_lower = _clean(target_part).lower()
+    is_subjective = kind in {"essay", "speaking_prompt"} or "writing" in part_lower or "speaking" in part_lower
+    needs_answer = not is_subjective
     if needs_answer and not answers:
         warnings.append("Correct answer was not detected")
     if normalized_options and any(answer not in option_keys for answer in answers):
@@ -180,7 +192,11 @@ def _question_preview(
     return result
 
 
-def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
+def parse_csv(
+    content: bytes,
+    default_target_part: str = "",
+    default_section_type: str = "",
+) -> tuple[str, list[dict], list[str]]:
     try:
         decoded = content.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
@@ -214,6 +230,8 @@ def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
             or row.get("part")
             or row.get("part_title")
             or row.get("module_part")
+            or default_target_part
+            or default_section_type
             or ""
         )
         is_l1 = bool(
@@ -254,13 +272,7 @@ def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
             preparation_seconds=row.get("preparation_seconds"),
             response_seconds=row.get("response_seconds"),
             adaptive_follow_up=row.get("adaptive_follow_up") or False,
-            target_part=(
-                row.get("part_code")
-                or row.get("part")
-                or row.get("part_title")
-                or row.get("module_part")
-                or ""
-            ),
+            target_part=target_part,
         )
         if preview["warnings"]:
             warnings.append(f"Row {row_number}: {'; '.join(preview['warnings'])}")
@@ -274,7 +286,11 @@ def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
     return decoded[:MAX_EXTRACTED_TEXT], questions, warnings
 
 
-def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
+def parse_pdf(
+    content: bytes,
+    default_target_part: str = "",
+    default_section_type: str = "",
+) -> tuple[str, list[dict], list[str]]:
     try:
         reader = PdfReader(io.BytesIO(content))
         pages = [(page.extract_text() or "").strip() for page in reader.pages]
@@ -302,7 +318,7 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
     questions: list[dict] = []
     warnings: list[str] = []
     current: Optional[dict] = None
-    current_part = ""
+    current_part = default_target_part or default_section_type or ""
     current_passage = []
     mode = "prompt"
 
@@ -317,7 +333,7 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
             correct_answers=current["answers"] or answer_map.get(current["number"], []),
             explanation=" ".join(current["explanation"]),
             passage=passage_text or None,
-            target_part=current.get("target_part", ""),
+            target_part=current.get("target_part", "") or default_target_part or default_section_type or "",
         )
         if preview["warnings"]:
             warnings.append(
@@ -345,7 +361,7 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
                 "options": [],
                 "answers": [],
                 "explanation": [],
-                "target_part": current_part,
+                "target_part": current_part or default_target_part or default_section_type or "",
             }
             mode = "prompt"
         elif current and answer_match:
@@ -382,7 +398,11 @@ def parse_pdf(content: bytes) -> tuple[str, list[dict], list[str]]:
     return text[:MAX_EXTRACTED_TEXT], questions, warnings
 
 
-async def preview_upload(upload: UploadFile) -> dict:
+async def preview_upload(
+    upload: UploadFile,
+    default_target_part: str = "",
+    default_section_type: str = "",
+) -> dict:
     filename = (upload.filename or "questions").strip()
     extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     if extension not in {"pdf", "csv"}:
@@ -398,7 +418,11 @@ async def preview_upload(upload: UploadFile) -> dict:
     if extension == "csv" and b"\x00" in content[:4096]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is not a valid text CSV")
 
-    source_text, questions, warnings = parse_pdf(content) if extension == "pdf" else parse_csv(content)
+    source_text, questions, warnings = (
+        parse_pdf(content, default_target_part=default_target_part, default_section_type=default_section_type)
+        if extension == "pdf"
+        else parse_csv(content, default_target_part=default_target_part, default_section_type=default_section_type)
+    )
     return {
         "source_type": extension,
         "source_filename": filename[:255],

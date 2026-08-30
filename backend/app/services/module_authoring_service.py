@@ -1129,8 +1129,9 @@ def _normalize_import_question_for_part(part: ExamModulePart, question: dict, in
     question_type = data.get("question_type")
     if question_type not in OPTION_BASED_QUESTION_TYPES:
         data["options"] = []
-    if question_type in {"essay", "speaking_prompt"}:
+    if question_type in {"essay", "speaking_prompt"} or part.section_type in {"writing", "speaking"}:
         data["correct_answers"] = []
+        data["warnings"] = [w for w in data.get("warnings", []) if "Correct answer was not detected" not in w]
 
     if constraints.get("inline_marker_required") and "{{blank}}" not in data.get("prompt", ""):
         data["prompt"] = f"{data.get('prompt', '').strip()} {{{{blank}}}}".strip()
@@ -1309,14 +1310,35 @@ def _assign_module_import_questions(module: ExamModule, questions: list[dict]) -
 def preview_module_import(db: Session, actor: User, module_id: int, preview: dict) -> dict:
     module = get_editable_module(db, actor, module_id)
     parts, warnings = _assign_module_import_questions(module, preview.get("questions", []))
+
+    subjective_prompts = set()
+    for part in parts:
+        if part.get("section_type") in {"writing", "speaking"}:
+            for q in part.get("questions", []):
+                subjective_prompts.add(str(q.get("prompt") or "").strip())
+
+    cleaned_preview_warnings = []
+    for w in preview.get("warnings", []):
+        if "Correct answer was not detected" in w:
+            if module.module_type in {"writing", "speaking"}:
+                continue
+            row_match = re.match(r"^Row\s+(\d+):", w, re.IGNORECASE)
+            if row_match:
+                row_idx = int(row_match.group(1)) - 2
+                if 0 <= row_idx < len(preview.get("questions", [])):
+                    q_prompt = str(preview["questions"][row_idx].get("prompt") or "").strip()
+                    if q_prompt in subjective_prompts:
+                        continue
+        cleaned_preview_warnings.append(w)
+
     return {
         "source_type": preview["source_type"],
         "source_filename": preview["source_filename"],
         "source_text": preview["source_text"],
         "parts": parts,
         "question_count": sum(part["question_count"] for part in parts),
-        "warning_count": len(preview.get("warnings", [])) + len(warnings),
-        "warnings": list(preview.get("warnings", [])) + warnings,
+        "warning_count": len(cleaned_preview_warnings) + len(warnings),
+        "warnings": cleaned_preview_warnings + warnings,
     }
 
 

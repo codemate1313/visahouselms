@@ -109,8 +109,9 @@ async def preview_module_import(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    module_authoring_service.get_editable_module(db, actor, module_id)
-    preview = await question_import_service.preview_upload(file)
+    module = module_authoring_service.get_editable_module(db, actor, module_id)
+    default_section = module.module_type if module.module_type in {"writing", "speaking", "listening", "reading"} else ""
+    preview = await question_import_service.preview_upload(file, default_section_type=default_section)
     return module_authoring_service.preview_module_import(db, actor, module_id, preview)
 
 
@@ -284,8 +285,16 @@ async def preview_import(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
-    module_authoring_service.get_editable_part(db, actor, module_id, part_id)
-    return await question_import_service.preview_upload(file)
+    _, part = module_authoring_service.get_editable_part(db, actor, module_id, part_id)
+    preview = await question_import_service.preview_upload(
+        file, default_target_part=part.part_code, default_section_type=part.section_type
+    )
+    if part.section_type in {"writing", "speaking"}:
+        preview["warnings"] = [w for w in preview.get("warnings", []) if "Correct answer was not detected" not in w]
+        preview["warning_count"] = len(preview["warnings"])
+        for q in preview.get("questions", []):
+            q["warnings"] = [w for w in q.get("warnings", []) if "Correct answer was not detected" not in w]
+    return preview
 
 
 @router.post("/{module_id}/parts/{part_id}/import", status_code=status.HTTP_201_CREATED)
