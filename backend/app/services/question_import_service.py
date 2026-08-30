@@ -148,6 +148,16 @@ def _question_preview(
         warnings.append("At least two choices are required")
     part_lower = _clean(target_part).lower()
     is_subjective = kind in {"essay", "speaking_prompt"} or "writing" in part_lower or "speaking" in part_lower
+    is_speaking_three = "speaking_3" in part_lower.replace(" ", "_") or "speaking 3" in part_lower
+    if is_speaking_three and kind == "speaking_prompt" and not str(passage or "").strip():
+        read_aloud_match = re.match(
+            r"^\s*read\s+(?:the\s+)?(?:short\s+)?text\s+aloud\s*:?\s*(.*)$",
+            prompt,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if read_aloud_match and read_aloud_match.group(1).strip():
+            prompt = "Read the short text aloud."
+            passage = read_aloud_match.group(1).strip()
     needs_answer = not is_subjective
     if needs_answer and not answers:
         warnings.append("Correct answer was not detected")

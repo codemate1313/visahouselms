@@ -198,6 +198,26 @@ export function ManualQuestionForm({
     });
   }
 
+  function handlePromptChange(nextPrompt: string) {
+    if (isSpeakingReadAloud) {
+      const match = nextPrompt.match(/^\s*read\s+(?:the\s+)?(?:short\s+)?text\s+aloud\s*:?\s*(.*)$/is);
+      const readAloudText = match?.[1]?.trim();
+      if (readAloudText) {
+        onManualChange({
+          ...manual,
+          prompt: "Read the short text aloud.",
+          passage: readAloudText,
+          interaction: {
+            ...manual.interaction,
+            candidate_material_type: candidateAttachmentType === "none" ? "text" : candidateAttachmentType,
+          },
+        });
+        return;
+      }
+    }
+    onManualChange({ ...manual, prompt: nextPrompt });
+  }
+
   function handleFormSubmit(event: FormEvent) {
     if (isReading1a && !/\*\*(.+?)\*\*/.test(manual.prompt)) {
       event.preventDefault();
@@ -397,7 +417,7 @@ export function ManualQuestionForm({
                 rows={4}
                 value={manual.prompt}
                 onChange={(event) => {
-                  onManualChange({ ...manual, prompt: event.target.value });
+                  handlePromptChange(event.target.value);
                   if (boldError && /\*\*(.+?)\*\*/.test(event.target.value)) {
                     setBoldError(false);
                   }

@@ -850,6 +850,29 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 400)
         self.assertIn("read-aloud", ctx.exception.detail)
 
+    def test_imported_read_aloud_splits_examiner_prompt_from_candidate_text(self) -> None:
+        created = self._create("speaking")
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+        part = next(item for item in module.parts if item.part_code == "speaking_3")
+        normalized = module_authoring_service._normalize_import_question_for_part(
+            part,
+            {
+                "question_type": "speaking_prompt",
+                "prompt": "Read the short text aloud: The training centre opens early during exam week.",
+                "passage": "",
+                "options": [],
+                "correct_answers": [],
+                "interaction": {"turn_type": "read_aloud"},
+                "points": 1,
+                "difficulty": "medium",
+            },
+            0,
+        )
+
+        self.assertEqual(normalized["prompt"], "Read the short text aloud.")
+        self.assertEqual(normalized["passage"], "The training centre opens early during exam week.")
+        self.assertEqual(normalized["interaction"]["turn_type"], "read_aloud")
+
     def _speaking_part(self, part_code: str):
         created = self._create("speaking")
         module = module_authoring_service.get_module_or_404(self.db, created["id"])

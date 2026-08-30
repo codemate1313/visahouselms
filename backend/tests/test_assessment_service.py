@@ -112,6 +112,22 @@ class QuestionImportTests(unittest.TestCase):
         self.assertEqual(preview["questions"][0]["correct_answers"], ["B"])
         self.assertEqual(preview["questions"][1]["correct_answers"], ["A"])
 
+    def test_pdf_preview_splits_speaking_three_read_aloud_text(self) -> None:
+        content = _simple_pdf([
+            "Part: Speaking 3",
+            "1. Read the short text aloud: The training centre opens early during exam week.",
+        ])
+        source, questions, warnings = question_import_service.parse_pdf(
+            content,
+            default_section_type="speaking",
+        )
+
+        self.assertIn("Part: Speaking 3", source)
+        self.assertEqual(warnings, [])
+        self.assertEqual(len(questions), 1)
+        self.assertEqual(questions[0]["prompt"], "Read the short text aloud.")
+        self.assertEqual(questions[0]["passage"], "The training centre opens early during exam week.")
+
 
 class AssessmentServiceTests(unittest.TestCase):
     def setUp(self) -> None:
