@@ -135,9 +135,13 @@ def _question_preview(
             or (target_part.lower().endswith("_1") and "listen" in target_part.lower())
         )
     )
+    part_clean_lower = _clean(target_part).lower().replace(" ", "_")
+    is_cloze_gap = "reading_1b" in part_clean_lower or "reading_2" in part_clean_lower
     if not _clean(prompt):
         if is_l1:
             prompt = "Question"
+        elif is_cloze_gap:
+            prompt = "Gap"
         else:
             warnings.append("Question text is missing")
     if kind in {"mcq_single", "mcq_multiple", "matching_unique", "matching_reusable"} and len(normalized_options) < 2:
@@ -242,8 +246,17 @@ def parse_csv(
                 or (target_part.lower().endswith("_1") and "listen" in target_part.lower())
             )
         )
+        part_norm = target_part.lower().replace(" ", "_")
+        is_r1b = "reading_1b" in part_norm
+        is_r2 = "reading_2" in part_norm
         if not prompt and is_l1:
             prompt = f"Question {len(questions) + 1}"
+        elif not prompt and is_r1b:
+            r1b_count = sum(1 for q in questions if "1b" in str(q.get("target_part", "")).lower())
+            prompt = f"Choose the best option for gap ({r1b_count + 1})."
+        elif not prompt and is_r2:
+            r2_count = sum(1 for q in questions if "reading_2" in str(q.get("target_part", "")).lower().replace(" ", "_"))
+            prompt = f"Choose the best option for gap {r2_count + 1}."
         elif not prompt and not any(row.values()):
             continue
         options = []

@@ -156,6 +156,8 @@ export function ModuleImportReviewPanel({
           const passageRequired = part.section_type === "reading" && part.part_code !== "reading_1a";
           const partNeedsImage = IMAGE_ELIGIBLE_SECTIONS.has(part.section_type);
           const isListening1 = part.part_code === "listening_1" || part.part_code.endsWith("listening_1");
+          const isReading1b = part.part_code === "reading_1b" || part.part_code.endsWith("reading_1b");
+          const isReading2 = part.part_code === "reading_2" || part.part_code.endsWith("reading_2");
           return (
             <section className="authoring-panel" key={part.part_id}>
               <div className="panel-title">
@@ -213,12 +215,22 @@ export function ModuleImportReviewPanel({
                         />
                       </>
                     )}
-                    {!isListening1 && (
+                    {isReading1b ? (
+                      <div style={{ marginBottom: 12, padding: "8px 12px", background: "rgba(185, 28, 43, 0.04)", borderRadius: "8px", border: "1px solid rgba(185, 28, 43, 0.15)", fontSize: "13px" }}>
+                        <span style={{ fontWeight: 700, color: "var(--sa-sidebar-red, #b91c2b)" }}>Gap ({index + 1})</span>
+                        <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>— Options for gap ({index + 1}) in the passage</span>
+                      </div>
+                    ) : isReading2 ? (
+                      <div style={{ marginBottom: 12, padding: "8px 12px", background: "rgba(185, 28, 43, 0.04)", borderRadius: "8px", border: "1px solid rgba(185, 28, 43, 0.15)", fontSize: "13px" }}>
+                        <span style={{ fontWeight: 700, color: "var(--sa-sidebar-red, #b91c2b)" }}>Blank {index + 1}</span>
+                        <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>— Inline blank {`{{blank:${index + 1}}}`} in the passage</span>
+                      </div>
+                    ) : !isListening1 ? (
                       <>
                         <label>{review.promptLabel}</label>
                         <textarea rows={3} value={question.prompt} onChange={(event) => onUpdatePreview(part.part_id, index, { prompt: event.target.value })} />
                       </>
-                    )}
+                    ) : null}
                     {!ANSWER_FREE_TYPES.has(question.question_type) && (
                       <>
                         <label>{review.answerKeysLabel}</label>

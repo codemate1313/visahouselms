@@ -1093,6 +1093,14 @@ def _normalize_import_question_for_part(part: ExamModulePart, question: dict, in
     if is_l1 and not str(data.get("prompt") or "").strip():
         data["prompt"] = f"Question {index + 1}"
 
+    is_r1b = part.part_code == "reading_1b" or part.part_code.endswith("reading_1b")
+    if is_r1b and (not str(data.get("prompt") or "").strip() or data.get("prompt") == "Gap"):
+        data["prompt"] = f"Choose the best option for gap ({index + 1})."
+
+    is_r2 = part.part_code == "reading_2" or part.part_code.endswith("reading_2")
+    if is_r2 and (not str(data.get("prompt") or "").strip() or data.get("prompt") == "Gap"):
+        data["prompt"] = f"Choose the best option for gap {index + 1}."
+
     interaction = dict(data.get("interaction") or {})
     if constraints.get("group_label_required") and not str(interaction.get("group_label") or "").strip():
         group_size = int(constraints.get("questions_per_group") or 1)
@@ -1274,6 +1282,15 @@ def preview_module_import(db: Session, actor: User, module_id: int, preview: dic
                 if 0 <= row_idx < len(preview.get("questions", [])):
                     q_prompt = str(preview["questions"][row_idx].get("prompt") or "").strip()
                     if q_prompt in subjective_prompts:
+                        continue
+        if "Question text is missing" in w:
+            row_match = re.match(r"^Row\s+(\d+):", w, re.IGNORECASE)
+            if row_match:
+                row_idx = int(row_match.group(1)) - 2
+                if 0 <= row_idx < len(preview.get("questions", [])):
+                    orig_q = preview["questions"][row_idx]
+                    part_str = str(orig_q.get("target_part") or "").lower().replace(" ", "_")
+                    if "reading_1b" in part_str or "reading_2" in part_str or "listening_1" in part_str:
                         continue
         cleaned_preview_warnings.append(w)
 
