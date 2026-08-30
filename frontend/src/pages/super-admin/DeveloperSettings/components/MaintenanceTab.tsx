@@ -6,6 +6,8 @@ import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Badge } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { formatDateTime } from "@/utils/date";
@@ -194,30 +196,30 @@ export function MaintenanceTab() {
       {/* 1. Maintenance Actions Panel */}
       <CollapsiblePanel className="form-card wide" title={tMaint.title} description={tMaint.description}>
         <div className="maintenance-actions">
-          <button
+          <Button
             type="button"
             className="maintenance-btn-migrate"
             disabled={busyAction !== null}
             onClick={() => void runMigration()}
           >
             {busyAction === "migrate" ? tMaint.migrate.busy : tMaint.migrate.idle}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="maintenance-btn-cache"
             disabled={busyAction !== null}
             onClick={() => run("clear-cache", tMaint.clearCache.label)}
           >
             {busyAction === "clear-cache" ? tMaint.clearCache.busy : tMaint.clearCache.idle}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className="maintenance-btn-storage"
             disabled={busyAction !== null}
             onClick={() => run("storage-link", tMaint.storageLink.label)}
           >
             {busyAction === "storage-link" ? tMaint.storageLink.busy : tMaint.storageLink.idle}
-          </button>
+          </Button>
         </div>
         {error && <pre className="console-output error">{error}</pre>}
         {output && <pre className="console-output">{output}</pre>}
@@ -244,8 +246,8 @@ export function MaintenanceTab() {
         {backupError && <p className="error-text">{backupError}</p>}
         {backupNotice && <p className="success-text">{backupNotice}</p>}
         <div className="form-actions">
-          <button disabled={backupBusy} onClick={saveSettings}>{tBackup.saveSettingsLabel}</button>
-          <button disabled={backupBusy} onClick={backupNow}>{tBackup.backupNowLabel}</button>
+          <Button type="button" disabled={backupBusy} onClick={saveSettings}>{tBackup.saveSettingsLabel}</Button>
+          <Button type="button" variant="secondary" disabled={backupBusy} onClick={backupNow}>{tBackup.backupNowLabel}</Button>
         </div>
       </CollapsiblePanel>
 
@@ -284,15 +286,9 @@ export function MaintenanceTab() {
                   </td>
                   <td>{formatDateTime(row.created_at)}</td>
                   <td className="table-actions">
-                    <button onClick={() => download(row)} aria-label="Download backup" data-tooltip="Download backup">
-                      <Icon name="download" />
-                    </button>
-                    <button onClick={() => restore(row)} aria-label="Restore backup" data-tooltip="Restore backup">
-                      <Icon name="restore" />
-                    </button>
-                    <button className="danger" onClick={() => remove(row)} aria-label="Delete backup" data-tooltip="Delete backup">
-                      <Icon name="trash" />
-                    </button>
+                    <IconButton onClick={() => download(row)} label="Download backup" icon={<Icon name="download" />} />
+                    <IconButton onClick={() => restore(row)} label="Restore backup" icon={<Icon name="restore" />} />
+                    <IconButton variant="danger" onClick={() => remove(row)} label="Delete backup" icon={<Icon name="trash" />} />
                   </td>
                 </tr>
               ))}

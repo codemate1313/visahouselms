@@ -10,6 +10,7 @@ import { OtpEntryFields } from "@/components/auth/OtpEntryFields";
 import { useOtpVerification } from "@/components/auth/useOtpVerification";
 import { PasswordInput } from "@/components/PasswordInput";
 import { RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { ALL_ROLE_OPTIONS, destinationFor, roleLabel } from "./helpers";
@@ -326,8 +327,9 @@ export function Login({
                 {otpError && <div className="concise-error-box otp-error-box">{otpError}</div>}
 
                 <div className="otp-inline-actions">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     className="otp-btn-back"
                     disabled={otpLoading}
                     onClick={handleBackToLogin}
@@ -336,8 +338,8 @@ export function Login({
                       <path d="m15 18-6-6 6-6" />
                     </svg>
                     {strings.otpBackToLogin}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
                     className={`concise-submit-btn otp-btn-submit ${otp.otpCode.length === 6 && !otp.isExpired ? "is-ready" : ""}`}
                     disabled={otpLoading || otp.otpCode.length < 6 || otp.isExpired}
@@ -353,7 +355,7 @@ export function Login({
                         </svg>
                       </>
                     )}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -434,11 +436,12 @@ export function Login({
 
                 {error && <div className="concise-error-box">{error}</div>}
 
-                <button type="submit" className="concise-submit-btn" disabled={loading}>
+                <Button type="submit" className="concise-submit-btn" disabled={loading}>
                   {loading ? strings.signInBusy : strings.signInLabel(roleLabel(selectedRole))}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="secondary"
                   className="google-login-btn"
                   disabled={loading || googleLoading}
                   onClick={handleGoogleLogin}
@@ -447,7 +450,7 @@ export function Login({
                     <GoogleIcon />
                   </span>
                   {googleLoading ? strings.googleLoginBusy : strings.googleLoginLabel}
-                </button>
+                </Button>
               </form>
 
               <div className="login-footer-links text-center">
@@ -463,24 +466,26 @@ export function Login({
                 ) : isSuperAdminPortal ? (
                   <p className="form-legal-note">
                     {strings.institutePortalPrompt}
-                    <button
+                    <Button
                       type="button"
+                      variant="text"
                       className="auth-inline-action"
                       onClick={() => handleSwitchPortalMode("INSTITUTE_ADMIN")}
                     >
                       {strings.institutePortalLink}
-                    </button>
+                    </Button>
                   </p>
                 ) : (
                   <p className="form-legal-note">
                     {strings.superAdminPrompt}
-                    <button
+                    <Button
                       type="button"
+                      variant="text"
                       className="auth-inline-action"
                       onClick={() => handleSwitchPortalMode("SUPER_ADMIN")}
                     >
                       {strings.superAdminLink}
-                    </button>
+                    </Button>
                   </p>
                 )}
               </div>

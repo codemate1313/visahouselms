@@ -16,6 +16,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload, PricingLocation } from "./Plans.types";
 import { SegmentedControl } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import NumberFlow from "@number-flow/react";
 import "@/styles/public/chrome.css";
@@ -185,17 +186,23 @@ function PlanCard({
           {plan.description}
         </p>
       )}
-      <button
+      <Button
         type="button"
         className="vh-plan-cta"
-        style={{ background: ctaBg, color: ctaInk, borderColor: ctaBorder, boxShadow: ctaShadow }}
+        data-force-color=""
+        style={{
+          background: ctaBg,
+          borderColor: ctaBorder,
+          boxShadow: ctaShadow,
+          ["--ui-btn-color" as string]: ctaInk,
+        }}
         onClick={(e) => {
           e.stopPropagation();
           onChoose();
         }}
       >
         {forInstitutes ? "Apply for this plan" : `Choose ${plan.name}`}
-      </button>
+      </Button>
       <div className="vh-plan-features">
         <AnimatePresence mode="popLayout">
           {(plan.features ?? []).map((feature, i) => (
@@ -420,9 +427,9 @@ export function Plans() {
             <div className="vh-plan-empty">
               <strong>No plans found for this combination</strong>
               <span>Try a different billing period, or reset the filter to see all available plans.</span>
-              <button type="button" className="vh-plan-empty-cta" onClick={resetBillingFilter}>
+              <Button type="button" variant="secondary" className="vh-plan-empty-cta" onClick={resetBillingFilter}>
                 Reset filter
-              </button>
+              </Button>
             </div>
           )}
 

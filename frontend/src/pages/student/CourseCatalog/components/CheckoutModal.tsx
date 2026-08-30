@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 interface CheckoutModalProps {
   plan: StudentPlanCatalogItem;
@@ -234,10 +235,9 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 </p>
               )}
             </div>
-            <button
-              type="button"
+            <IconButton
               onClick={onClose}
-              aria-label="Close"
+              label="Close"
               style={{
                 background: "rgba(255,255,255,0.15)",
                 border: "1px solid rgba(255,255,255,0.2)",
@@ -252,9 +252,8 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 flexShrink: 0,
                 transition: "background 0.15s",
               }}
-            >
-              <IconClose />
-            </button>
+              icon={<IconClose />}
+            />
           </div>
         </div>
 
@@ -543,43 +542,46 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                   }}
                 />
                 {appliedCoupon ? (
-                  <button
+                  <Button
                     type="button"
+                    variant="danger"
                     onClick={handleRemoveCoupon}
+                    data-force-color=""
                     style={{
                       padding: "8px 14px",
                       background: "color-mix(in srgb, var(--danger) 12%, transparent)",
                       border: "1px solid color-mix(in srgb, var(--danger) 26%, transparent)",
-                      color: "var(--danger)",
                       borderRadius: "9px",
                       fontSize: "11px",
                       fontWeight: 800,
                       cursor: "pointer",
                       whiteSpace: "nowrap",
+                      ["--ui-btn-color" as string]: "var(--danger)",
                     }}
                   >
                     Remove
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
                     type="button"
                     onClick={handleApplyCoupon}
                     disabled={!couponCode.trim() || validatingCoupon}
+                    data-force-color=""
                     style={{
                       padding: "8px 16px",
                       background: couponCode.trim() ? "#c8202e" : "var(--slate-200)",
                       border: "none",
-                      color: couponCode.trim() ? "var(--white)" : "var(--slate-400)",
                       borderRadius: "9px",
                       fontSize: "11px",
                       fontWeight: 800,
                       cursor: couponCode.trim() ? "pointer" : "not-allowed",
                       whiteSpace: "nowrap",
                       transition: "all 0.15s",
+                      ["--ui-btn-color" as string]: couponCode.trim() ? "var(--white)" : "var(--slate-400)",
                     }}
                   >
                     {validatingCoupon ? "Validating..." : "APPLY"}
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -617,8 +619,9 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
 
             {/* Actions */}
             <div style={{ display: "flex", gap: "8px" }}>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={onClose}
                 style={{
                   flex: "0 0 auto",
@@ -636,7 +639,7 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-muted)"; }}
               >
                 Cancel
-              </button>
+              </Button>
               <Button
                 type="submit"
                 variant="primary"

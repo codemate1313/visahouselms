@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { API_BASE_URL } from "@/api/client";
 import type { Attempt } from "@/api/types";
 import { useAuthStore } from "@/store/authStore";
+import { Button } from "@/components/ui/Button/Button";
 
 interface ListeningHeaderPlayerProps {
   attemptId: number;
@@ -404,26 +405,20 @@ export function ListeningHeaderPlayer({
         <p className="lc-audio-status" role="status">
           {statusText}
           {showSkip && (
-            <button
+            <Button
               type="button"
+              variant="danger"
               onClick={handleSkipAudio}
               style={{
                 marginLeft: "12px",
                 padding: "4px 8px",
-                background: "#ef4444",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "4px",
                 fontSize: "11px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
                 display: "inline-block",
                 verticalAlign: "middle",
               }}
             >
               Skip Audio (Test)
-            </button>
+            </Button>
           )}
         </p>
       </div>
@@ -474,25 +469,19 @@ export function ListeningHeaderPlayer({
             onChange={(event) => setVolume(Number(event.target.value))}
           />
           {showSkip && (
-            <button
+            <Button
               type="button"
+              variant="danger"
               onClick={handleSkipAudio}
               style={{
                 marginLeft: "12px",
                 padding: "6px 12px",
-                background: "#ef4444",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "6px",
                 fontSize: "12px",
-                fontWeight: "bold",
-                cursor: "pointer",
                 whiteSpace: "nowrap",
-                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
             >
               Skip Audio (Test)
-            </button>
+            </Button>
           )}
         </div>
       </div>

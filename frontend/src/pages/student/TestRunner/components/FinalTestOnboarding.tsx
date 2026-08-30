@@ -4,6 +4,7 @@ import type { AuthUser } from "@/store/authStore";
 import { buildExamUrn, formatExamBirthDate, mainTestDurationMinutes } from "../helpers";
 import { unlockSharedAudioContext } from "@/lib/talking-avatar.js";
 import { PeopleCertBrand } from "./PeopleCertBrand";
+import { Button } from "@/components/ui/Button/Button";
 
 interface FinalTestOnboardingProps {
   attempt: Attempt;
@@ -109,7 +110,7 @@ export function FinalTestOnboarding({
                 ))}
               </dl>
             </div>
-            <button
+            <Button
               type="button"
               className="lc-onb-button"
               onClick={async () => {
@@ -132,11 +133,11 @@ export function FinalTestOnboarding({
               }}
             >
               Next
-            </button>
+            </Button>
             {/* Not on the delivery platform, which is entered through an
                 invigilator. A candidate who opened the wrong paper here has no
                 other way out that does not burn the sitting. */}
-            <button type="button" className="lc-onb-exit" onClick={onCancel}>Return to my courses</button>
+            <Button type="button" variant="secondary" className="lc-onb-exit" onClick={onCancel}>Return to my courses</Button>
           </section>
         )}
 
@@ -149,7 +150,7 @@ export function FinalTestOnboarding({
                 <p className="lc-onb-line" key={index}>{line}</p>
               ))}
             </div>
-            <button type="button" className="lc-onb-button" onClick={() => goToStep(3)}>Next</button>
+            <Button type="button" className="lc-onb-button" onClick={() => goToStep(3)}>Next</Button>
           </section>
         )}
 
@@ -166,14 +167,14 @@ export function FinalTestOnboarding({
               <p className="lc-onb-error" role="alert">Close the other Final Test tab before continuing.</p>
             )}
             {securityError && <p className="lc-onb-error" role="alert">{securityError}</p>}
-            <button
+            <Button
               type="button"
               className="lc-onb-button"
               disabled={securityStarting || concurrentTab}
               onClick={onStartSecureSession}
             >
               {securityStarting ? "Starting…" : "Start Exam"}
-            </button>
+            </Button>
           </section>
         )}
       </div>

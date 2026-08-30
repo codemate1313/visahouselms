@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { Badge, DataTableCard } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { instituteOnboardingsStrings as strings } from "../InstituteOnboardings.strings";
 import type { OnboardingRow } from "../types";
@@ -95,14 +96,12 @@ export function OnboardingsTable({ rows, onRequestDelete }: OnboardingsTableProp
                     <Icon name={row.onboarding_status === "draft" ? "edit" : "overview"} />
                   </Link>
                   {row.onboarding_status === "draft" && (
-                    <button
-                      type="button"
+                    <IconButton
                       className="action-btn-icon action-delete"
                       onClick={() => onRequestDelete(row)}
-                      data-tooltip={t.deleteDraft}
-                    >
-                      <Icon name="trash" />
-                    </button>
+                      label={t.deleteDraft}
+                      icon={<Icon name="trash" />}
+                    />
                   )}
                 </td>
               </tr>

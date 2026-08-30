@@ -6,6 +6,7 @@ import type { IconName } from "@/components/icons";
 import { Icon } from "@/components/icons";
 import { TableAvatar } from "@/components/TableAvatar";
 import { Badge, Button, SegmentedControl, type BadgeTone } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { useToastStore } from "@/store/toastStore";
 import type { DirectoryRole, DirectoryUser, UserLinkedDetails } from "@/api/types";
 import { formatCurrencyAmount } from "@/utils/currency";
@@ -464,9 +465,12 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
               <p>{data ? `${data.user.email} · ${roleDescription(data.user.role_name)}` : "Loading account details..."}</p>
             </div>
           </div>
-          <button type="button" className="user-inspector-close" onClick={onClose} aria-label="Close user details">
-            <Icon name="x" />
-          </button>
+          <IconButton
+            className="user-inspector-close"
+            onClick={onClose}
+            label="Close user details"
+            icon={<Icon name="x" />}
+          />
         </header>
 
         <div className="user-inspector-tabs-container">
@@ -831,8 +835,9 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                     <div className="user-inspector-audit-list">
                       {data.audit_logs.map((log) => (
                         <article key={log.id} className={openAuditId === log.id ? "is-open" : ""}>
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
                             className="user-inspector-audit-row"
                             onClick={() => setOpenAuditId((current) => current === log.id ? null : log.id)}
                             aria-expanded={openAuditId === log.id}
@@ -845,7 +850,7 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
                               <time>{formatDateTime(log.created_at)}</time>
                               <Icon name={openAuditId === log.id ? "chevronDown" : "arrowRight"} />
                             </div>
-                          </button>
+                          </Button>
                           {openAuditId === log.id && (
                             <div className="user-inspector-audit-detail">
                               {(() => {

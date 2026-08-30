@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { OnboardingInstruction } from "@/api/types";
 import { Icon, type IconName } from "@/components/icons";
 import { Button, RichTextEditor, renderRichText } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 export const DEFAULT_PREFILLED_INSTRUCTIONS: OnboardingInstruction[] = [
   {
@@ -191,15 +192,13 @@ export function OnboardingInstructionsEditor({
                       >
                         Done
                       </Button>
-                      <button
-                        type="button"
+                      <IconButton
                         className="onboarding-tool-btn is-danger"
                         onClick={() => handleDeleteItem(idx)}
                         title="Delete guideline"
-                        aria-label={`Delete directive ${idx + 1}`}
-                      >
-                        <Icon name="trash" />
-                      </button>
+                        label={`Delete directive ${idx + 1}`}
+                        icon={<Icon name="trash" />}
+                      />
                     </div>
                   </div>
 
@@ -273,46 +272,40 @@ export function OnboardingInstructionsEditor({
 
                 {isEditable && (
                   <div className="vh-instruction-preview-actions">
-                    <button
-                      type="button"
+                    <Button
+                      variant="text"
                       className="vh-instruction-edit-btn"
                       onClick={() => setEditingIndex(idx)}
                       title="Edit this guideline"
                     >
                       <Icon name="edit" />
                       <span>Edit</span>
-                    </button>
+                    </Button>
 
                     <div className="onboarding-directive-tools">
-                      <button
-                        type="button"
+                      <IconButton
                         className="onboarding-tool-btn"
                         disabled={idx === 0}
                         onClick={() => handleMoveItem(idx, -1)}
                         title="Move up"
-                        aria-label={`Move directive ${idx + 1} up`}
-                      >
-                        <Icon name="chevronDown" style={{ transform: "rotate(180deg)" }} />
-                      </button>
-                      <button
-                        type="button"
+                        label={`Move directive ${idx + 1} up`}
+                        icon={<Icon name="chevronDown" style={{ transform: "rotate(180deg)" }} />}
+                      />
+                      <IconButton
                         className="onboarding-tool-btn"
                         disabled={idx === currentItems.length - 1}
                         onClick={() => handleMoveItem(idx, 1)}
                         title="Move down"
-                        aria-label={`Move directive ${idx + 1} down`}
-                      >
-                        <Icon name="chevronDown" />
-                      </button>
-                      <button
-                        type="button"
+                        label={`Move directive ${idx + 1} down`}
+                        icon={<Icon name="chevronDown" />}
+                      />
+                      <IconButton
                         className="onboarding-tool-btn is-danger"
                         onClick={() => handleDeleteItem(idx)}
                         title="Delete guideline"
-                        aria-label={`Delete directive ${idx + 1}`}
-                      >
-                        <Icon name="trash" />
-                      </button>
+                        label={`Delete directive ${idx + 1}`}
+                        icon={<Icon name="trash" />}
+                      />
                     </div>
                   </div>
                 )}

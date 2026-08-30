@@ -1,5 +1,6 @@
 import { moduleControlDetailStrings as strings } from "../ModuleControlDetail.strings";
 import type { ManagedModule } from "../types";
+import { Button } from "@/components/ui";
 
 interface ActionToolbarProps {
   module: ManagedModule;
@@ -13,7 +14,7 @@ export function ActionToolbar({ module, onToggleVisibility, onToggleDemo, onChan
   return (
     <div className="course-admin-actions-bar">
       <div className="action-buttons-group">
-        <button type="button" className="btn-action-outline" onClick={onToggleVisibility}>
+        <Button type="button" variant="secondary" className="btn-action-outline" onClick={onToggleVisibility}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             {module.is_visible ? (
               <>
@@ -28,13 +29,14 @@ export function ActionToolbar({ module, onToggleVisibility, onToggleDemo, onChan
             )}
           </svg>
           {module.is_visible ? strings.hideFromSite : strings.showOnSite}
-        </button>
+        </Button>
 
         {/* Only a published, visible module can be a free demo - the server
             enforces the same rule. */}
         {module.status === "published" && module.is_visible && (
-          <button
+          <Button
             type="button"
+            variant={module.is_demo ? "primary" : "secondary"}
             className={module.is_demo ? "btn-action-primary" : "btn-action-outline"}
             onClick={onToggleDemo}
           >
@@ -42,33 +44,33 @@ export function ActionToolbar({ module, onToggleVisibility, onToggleDemo, onChan
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
             {module.is_demo ? strings.unmarkAsDemo : strings.markAsDemo}
-          </button>
+          </Button>
         )}
 
         {module.status !== "published" && (
-          <button type="button" className="btn-action-primary" onClick={() => onChangeStatus("published")}>
+          <Button type="button" variant="primary" className="btn-action-primary" onClick={() => onChangeStatus("published")}>
             {strings.publishCourse}
-          </button>
+          </Button>
         )}
 
         {module.status === "published" && (
-          <button type="button" className="btn-action-outline" onClick={() => onChangeStatus("archived")}>
+          <Button type="button" variant="secondary" className="btn-action-outline" onClick={() => onChangeStatus("archived")}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="21 8 21 21 3 21 3 8" />
               <rect x="1" y="3" width="22" height="5" />
               <line x1="10" y1="12" x2="14" y2="12" />
             </svg>
             {strings.archive}
-          </button>
+          </Button>
         )}
 
-        <button type="button" className="btn-action-danger" onClick={onRemove}>
+        <Button type="button" variant="danger" className="btn-action-danger" onClick={onRemove}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3 6 5 6 21 6" />
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
           </svg>
           {strings.deleteCourse}
-        </button>
+        </Button>
       </div>
     </div>
   );

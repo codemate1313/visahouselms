@@ -2,6 +2,8 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import type { ExamModule, ExamModuleType, ExamSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -201,14 +203,12 @@ export function NewModuleForm({
                     autoFocus
                   />
                   {details.title && (
-                    <button
-                      type="button"
+                    <IconButton
                       className="vh-clear-btn"
                       onClick={() => onDetailsChange({ ...details, title: "" })}
-                      title="Clear title"
-                    >
-                      <Icon name="cross" />
-                    </button>
+                      label="Clear title"
+                      icon={<Icon name="cross" />}
+                    />
                   )}
                 </div>
 
@@ -230,9 +230,13 @@ export function NewModuleForm({
 
                 <div className="vh-duration-stepper-row">
                   <div className="vh-stepper-control">
-                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(-5)} disabled={durationIsCalculated} title="Subtract 5 minutes">
-                      <Icon name="minus" />
-                    </button>
+                    <IconButton
+                      className="vh-step-btn"
+                      onClick={() => adjustDuration(-5)}
+                      disabled={durationIsCalculated}
+                      label="Subtract 5 minutes"
+                      icon={<Icon name="minus" />}
+                    />
                     <div className="vh-duration-val-box">
                       <input
                         id="new-module-duration"
@@ -247,9 +251,13 @@ export function NewModuleForm({
                       />
                       <span className="vh-stepper-unit">mins</span>
                     </div>
-                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(5)} disabled={durationIsCalculated} title="Add 5 minutes">
-                      <Icon name="plus" />
-                    </button>
+                    <IconButton
+                      className="vh-step-btn"
+                      onClick={() => adjustDuration(5)}
+                      disabled={durationIsCalculated}
+                      label="Add 5 minutes"
+                      icon={<Icon name="plus" />}
+                    />
                   </div>
 
                   {!durationIsCalculated && (
@@ -310,8 +318,9 @@ export function NewModuleForm({
                     <p>{t.compositeDescription(typeLabel)}</p>
                   </div>
                   {onShuffle && (
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       className="vh-btn-shuffle"
                       onClick={() => {
                         const result = onShuffle();
@@ -327,7 +336,7 @@ export function NewModuleForm({
                         <line x1="15" y1="15" x2="21" y2="21" />
                       </svg>
                       {t.shuffle}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -404,19 +413,21 @@ export function NewModuleForm({
           {/* Single Clean Bottom Action Bar */}
           {activeTab === "config" ? (
             <div className="vh-main-col-actions" style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 className="vh-btn-primary-brand"
                 onClick={handleNextStep}
               >
                 <span>Next: Instructions & Notes</span>
                 <Icon name="arrowRight" />
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="vh-main-col-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, gap: 16, flexWrap: "wrap" }}>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="button secondary"
                 style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
                 onClick={() => {
@@ -426,17 +437,18 @@ export function NewModuleForm({
               >
                 <Icon name="arrowLeft" />
                 <span>Back to Step 1: Configuration</span>
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="submit"
+                variant="primary"
                 className="vh-btn-primary-brand"
                 disabled={busy || !details.title.trim() || (isComposite && !allSourcesSelected)}
                 style={{ minWidth: 220, padding: "12px 28px" }}
               >
                 <span>{busy ? t.creating : `Create ${typeLabel}`}</span>
                 <Icon name="arrowRight" />
-              </button>
+              </Button>
             </div>
           )}
         </div>

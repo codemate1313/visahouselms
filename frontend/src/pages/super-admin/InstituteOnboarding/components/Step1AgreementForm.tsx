@@ -6,6 +6,7 @@ import { InstituteAdminDetailsPanel } from "./InstituteAdminDetailsPanel";
 import { AgreementPaymentPanel } from "./AgreementPaymentPanel";
 import { IncludedCoursesPanel } from "./IncludedCoursesPanel";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui";
 
 interface Step1AgreementFormProps {
   form: typeof INITIAL;
@@ -47,9 +48,9 @@ export function Step1AgreementForm({
       </div>
 
       <div className="onboarding-form-submit-bar">
-        <button type="submit" disabled={busy || !selectedModules.size} className="primary-submit-btn">
+        <Button type="submit" disabled={busy || !selectedModules.size} loading={busy} className="primary-submit-btn">
           {busy ? t.creatingDraft : <>{t.createDraftAndContinue} <Icon name="arrowRight" /></>}
-        </button>
+        </Button>
       </div>
     </form>
   );

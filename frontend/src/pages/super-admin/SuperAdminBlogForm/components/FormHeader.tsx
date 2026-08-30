@@ -1,5 +1,6 @@
 import { Link, useNavigate, type NavigateFunction } from "react-router-dom";
 import { confirmAction } from "@/components/confirmDialog";
+import { Button } from "@/components/ui/Button/Button";
 import { superAdminBlogFormStrings as strings } from "../SuperAdminBlogForm.strings";
 
 interface FormHeaderProps {
@@ -46,9 +47,9 @@ export function FormHeader({ isEdit, loading, isDirty }: FormHeaderProps) {
         <Link to={ARTICLES_PATH} className="sat-btn sat-btn-secondary" onClick={(event) => void guardLeave(event, isDirty, navigate)}>
           {strings.cancel}
         </Link>
-        <button type="submit" form="blog-article-form" disabled={loading} className="sat-btn sat-btn-primary">
+        <Button type="submit" form="blog-article-form" disabled={loading} className="sat-btn sat-btn-primary">
           {loading ? strings.saveBusy : isEdit ? strings.updateLabel : strings.publishLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );

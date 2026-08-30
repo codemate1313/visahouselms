@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { attemptResultDetailsStrings as strings } from "../AttemptResultDetails.strings";
 
 interface ReevaluationFormProps {
@@ -31,7 +32,7 @@ export function ReevaluationForm({ reason, onReasonChange, requesting, onSubmit 
         onChange={(event) => onReasonChange(event.target.value)}
       />
       <div className="form-actions">
-        <button disabled={requesting || reason.trim().length === 0}>{requesting ? t.submitting : t.submit}</button>
+        <Button type="submit" disabled={requesting || reason.trim().length === 0}>{requesting ? t.submitting : t.submit}</Button>
       </div>
     </form>
   );

@@ -1,5 +1,6 @@
 import { useRef, type ReactNode } from "react";
 import { Icon } from "@/components/icons";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { pinListStrings as strings } from "./PinList.strings";
 import "./PinList.css";
 
@@ -65,17 +66,14 @@ export function PinList<T extends PinListItem>({
             {groupItems.map((item) => (
               <li key={item.id} data-pin-row={item.id} className="pin-list-row">
                 {renderItem(item)}
-                <button
-                  type="button"
+                <IconButton
                   className={`pin-list-pin${item.pinned ? " is-pinned" : ""}`}
                   onClick={() => handleToggle(item)}
                   disabled={isPinDisabled?.(item)}
                   aria-pressed={item.pinned}
-                  title={item.pinned ? strings.unpinAction : strings.pinAction}
-                >
-                  <Icon name="pin" />
-                  <span className="visually-hidden">{item.pinned ? strings.unpinAction : strings.pinAction}</span>
-                </button>
+                  label={item.pinned ? strings.unpinAction : strings.pinAction}
+                  icon={<Icon name="pin" />}
+                />
               </li>
             ))}
           </ul>

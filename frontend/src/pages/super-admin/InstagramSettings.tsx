@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import { apiClient } from "@/api/client";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
-import { SearchableSelect } from "@/components/ui";
+import { Button, SearchableSelect } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useToastStore } from "@/store/toastStore";
 import { instagramSettingsStrings as strings } from "./InstagramSettings.strings";
@@ -445,7 +446,7 @@ export function InstagramSettings() {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <button
+              <Button
                 type="button"
                 onClick={handleSeedSamples}
                 disabled={seeding}
@@ -467,7 +468,7 @@ export function InstagramSettings() {
                 }}
               >
                 <Icon name="plus" /> {seeding ? strings.samples.seedBusy : "Populate Samples"}
-              </button>
+              </Button>
 
               <ToggleSwitch
                 checked={isEnabled}
@@ -572,15 +573,16 @@ export function InstagramSettings() {
                   style={{ fontFamily: showToken ? "monospace" : "inherit", fontSize: 13 }}
                 />
               </div>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="button secondary"
                 onClick={() => setShowToken(!showToken)}
                 style={{ padding: "0 14px", flexShrink: 0 }}
                 title={showToken ? "Hide token" : "Show token"}
               >
                 {showToken ? "Hide" : "Reveal"}
-              </button>
+              </Button>
             </div>
             <span className="hint" style={{ display: "block", marginTop: 4, fontSize: 11.5 }}>
               {strings.credentials.tokenHint}
@@ -599,7 +601,7 @@ export function InstagramSettings() {
               borderTop: "1px solid var(--border)",
             }}
           >
-            <button
+            <Button
               type="button"
               onClick={() => handleSave()}
               disabled={saving}
@@ -622,9 +624,9 @@ export function InstagramSettings() {
               }}
             >
               <Icon name="check" /> {saving ? strings.saveBusy : strings.saveLabel}
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
               onClick={handleTestConnection}
               disabled={testingConnection}
@@ -645,10 +647,10 @@ export function InstagramSettings() {
               }}
             >
               <Icon name="play" /> {testingConnection ? strings.credentials.testConnectionBusy : strings.credentials.testConnectionBtn}
-            </button>
+            </Button>
 
             {data?.has_access_token && (
-              <button
+              <Button
                 type="button"
                 onClick={handleRefreshLiveFeed}
                 disabled={refreshingFeed}
@@ -669,7 +671,7 @@ export function InstagramSettings() {
                 }}
               >
                 <Icon name="restore" /> {refreshingFeed ? strings.credentials.refreshFeedBusy : strings.credentials.refreshFeedBtn}
-              </button>
+              </Button>
             )}
 
             {testResult && (
@@ -703,8 +705,9 @@ export function InstagramSettings() {
             </div>
 
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 className="button primary"
                 onClick={handleOpenAddUrlModal}
                 style={{
@@ -725,9 +728,9 @@ export function InstagramSettings() {
                   <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                 </svg>
                 Add Reel by URL
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
                 onClick={handleSeedSamples}
                 disabled={seeding}
@@ -749,11 +752,12 @@ export function InstagramSettings() {
                 title="Populate test sample reels"
               >
                 <Icon name="plus" /> {seeding ? strings.samples.seedBusy : "Add Samples"}
-              </button>
+              </Button>
 
               {feedItems.length > 0 && (
-                <button
+                <Button
                   type="button"
+                  variant="danger"
                   onClick={handleClearAllFeedItems}
                   disabled={clearingFeed}
                   style={{
@@ -774,7 +778,7 @@ export function InstagramSettings() {
                   title="Remove all items from feed"
                 >
                   <Icon name="trash" /> {clearingFeed ? strings.preview.clearBusy : strings.preview.clearBtn}
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -782,7 +786,7 @@ export function InstagramSettings() {
           {feedItems.length === 0 ? (
             <div style={{ textAlign: "center", padding: "48px 24px", backgroundColor: "var(--chip)", borderRadius: 12 }}>
               <p className="hint" style={{ margin: "0 0 16px" }}>{strings.preview.empty}</p>
-              <button
+              <Button
                 type="button"
                 onClick={handleSeedSamples}
                 disabled={seeding}
@@ -802,7 +806,7 @@ export function InstagramSettings() {
                 }}
               >
                 <Icon name="plus" /> {seeding ? strings.samples.seedBusy : strings.samples.seedBtn}
-              </button>
+              </Button>
             </div>
           ) : (
             <div
@@ -868,9 +872,8 @@ export function InstagramSettings() {
                         }}
                       >
                         {/* Edit Item Button */}
-                        <button
-                          type="button"
-                          title="Edit Reel / Post"
+                        <IconButton
+                          label="Edit Reel / Post"
                           onClick={() => handleOpenEditModal(item)}
                           style={{
                             width: 28,
@@ -894,17 +897,17 @@ export function InstagramSettings() {
                             e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.65)";
                             e.currentTarget.style.transform = "scale(1)";
                           }}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                        </button>
+                          icon={
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                          }
+                        />
 
                         {/* Delete Item Button */}
-                        <button
-                          type="button"
-                          title={strings.preview.deleteItem}
+                        <IconButton
+                          label={strings.preview.deleteItem}
                           onClick={() => handleDeleteSingleItem(item.id)}
                           disabled={deletingItemId === item.id}
                           style={{
@@ -929,18 +932,19 @@ export function InstagramSettings() {
                             e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.65)";
                             e.currentTarget.style.transform = "scale(1)";
                           }}
-                        >
-                          {deletingItemId === item.id ? (
-                            <span style={{ fontSize: 10 }}>...</span>
-                          ) : (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                              <line x1="10" y1="11" x2="10" y2="17" />
-                              <line x1="14" y1="11" x2="14" y2="17" />
-                            </svg>
-                          )}
-                        </button>
+                          icon={
+                            deletingItemId === item.id ? (
+                              <span style={{ fontSize: 10 }}>...</span>
+                            ) : (
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                <line x1="10" y1="11" x2="10" y2="17" />
+                                <line x1="14" y1="11" x2="14" y2="17" />
+                              </svg>
+                            )
+                          }
+                        />
                       </div>
 
                       {/* Engagement overlay stats */}
@@ -1143,13 +1147,15 @@ export function InstagramSettings() {
                     Cover Image <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>(Upload or URL)</span>
                   </label>
                   {reelThumbnail && (
-                    <button
+                    <Button
                       type="button"
+                      variant="text"
                       onClick={() => setReelThumbnail("")}
+                      data-force-color=""
                       style={{
                         background: "none",
                         border: "none",
-                        color: "var(--danger, #ef4444)",
+                        ["--ui-btn-color" as string]: "var(--danger, #ef4444)",
                         fontSize: 11.5,
                         fontWeight: 700,
                         cursor: "pointer",
@@ -1157,7 +1163,7 @@ export function InstagramSettings() {
                       }}
                     >
                       Clear Cover
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -1170,8 +1176,9 @@ export function InstagramSettings() {
                     onChange={(e) => handleCoverFileChange(e, false)}
                   />
 
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => addFileInputRef.current?.click()}
                     disabled={uploadingAddCover}
                     style={{
@@ -1198,7 +1205,7 @@ export function InstagramSettings() {
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
                     {uploadingAddCover ? "Uploading..." : "Upload File"}
-                  </button>
+                  </Button>
 
                   <input
                     type="url"
@@ -1314,8 +1321,9 @@ export function InstagramSettings() {
 
               {/* Modal Actions */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setShowAddUrlModal(false)}
                   disabled={addingByUrl}
                   style={{
@@ -1331,8 +1339,8 @@ export function InstagramSettings() {
                   }}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={addingByUrl}
                   style={{
@@ -1351,7 +1359,7 @@ export function InstagramSettings() {
                   }}
                 >
                   {addingByUrl ? "Adding..." : "Add to Showcase"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -1498,13 +1506,15 @@ export function InstagramSettings() {
                     Cover Image <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>(Upload or URL)</span>
                   </label>
                   {editThumbnail && (
-                    <button
+                    <Button
                       type="button"
+                      variant="text"
                       onClick={() => setEditThumbnail("")}
+                      data-force-color=""
                       style={{
                         background: "none",
                         border: "none",
-                        color: "var(--danger, #ef4444)",
+                        ["--ui-btn-color" as string]: "var(--danger, #ef4444)",
                         fontSize: 11.5,
                         fontWeight: 700,
                         cursor: "pointer",
@@ -1512,7 +1522,7 @@ export function InstagramSettings() {
                       }}
                     >
                       Clear Cover
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -1525,8 +1535,9 @@ export function InstagramSettings() {
                     onChange={(e) => handleCoverFileChange(e, true)}
                   />
 
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => editFileInputRef.current?.click()}
                     disabled={uploadingEditCover}
                     style={{
@@ -1553,7 +1564,7 @@ export function InstagramSettings() {
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
                     {uploadingEditCover ? "Uploading..." : "Upload File"}
-                  </button>
+                  </Button>
 
                   <input
                     type="url"
@@ -1669,8 +1680,9 @@ export function InstagramSettings() {
 
               {/* Modal Actions */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => setShowEditModal(false)}
                   disabled={savingEdit}
                   style={{
@@ -1686,8 +1698,8 @@ export function InstagramSettings() {
                   }}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={savingEdit}
                   style={{
@@ -1706,7 +1718,7 @@ export function InstagramSettings() {
                   }}
                 >
                   {savingEdit ? "Saving..." : "Save Changes"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

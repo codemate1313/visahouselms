@@ -1,5 +1,7 @@
 import { type FormEvent, useState } from "react";
 import { RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { Icon } from "@/components/icons";
 import type { ExamModule, OnboardingInstruction } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -129,14 +131,12 @@ export function ModuleDetailsForm({
                     readOnly={!isEditable}
                   />
                   {details.title && isEditable && (
-                    <button
-                      type="button"
+                    <IconButton
+                      icon={<Icon name="cross" />}
+                      label="Clear title"
                       className="vh-clear-btn"
                       onClick={() => onDetailsChange({ ...details, title: "" })}
-                      title="Clear title"
-                    >
-                      <Icon name="cross" />
-                    </button>
+                    />
                   )}
                 </div>
 
@@ -158,9 +158,13 @@ export function ModuleDetailsForm({
 
                 <div className="vh-duration-stepper-row">
                   <div className="vh-stepper-control">
-                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(-5)} disabled={!isEditable || durationIsCalculated} title="Subtract 5 minutes">
-                      <Icon name="minus" />
-                    </button>
+                    <IconButton
+                      icon={<Icon name="minus" />}
+                      label="Subtract 5 minutes"
+                      className="vh-step-btn"
+                      onClick={() => adjustDuration(-5)}
+                      disabled={!isEditable || durationIsCalculated}
+                    />
                     <div className="vh-duration-val-box">
                       <input
                         id="edit-module-duration"
@@ -175,9 +179,13 @@ export function ModuleDetailsForm({
                       />
                       <span className="vh-stepper-unit">mins</span>
                     </div>
-                    <button type="button" className="vh-step-btn" onClick={() => adjustDuration(5)} disabled={!isEditable || durationIsCalculated} title="Add 5 minutes">
-                      <Icon name="plus" />
-                    </button>
+                    <IconButton
+                      icon={<Icon name="plus" />}
+                      label="Add 5 minutes"
+                      className="vh-step-btn"
+                      onClick={() => adjustDuration(5)}
+                      disabled={!isEditable || durationIsCalculated}
+                    />
                   </div>
 
                   {!durationIsCalculated && <div className="vh-duration-preset-pills">
@@ -212,19 +220,20 @@ export function ModuleDetailsForm({
           {/* Bottom Action Bar inside Main Form Column */}
           {activeTab === "config" ? (
             <div className="vh-main-col-actions is-end">
-              <button
+              <Button
                 type="button"
                 className="vh-btn-primary-brand"
                 onClick={handleNextStep}
               >
                 <span>Next: Instructions & Notes</span>
                 <Icon name="arrowRight" />
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="vh-main-col-actions is-between">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="button secondary"
                 style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
                 onClick={() => {
@@ -234,17 +243,17 @@ export function ModuleDetailsForm({
               >
                 <Icon name="arrowLeft" />
                 <span>Back to Step 1: Configuration</span>
-              </button>
+              </Button>
 
               {isEditable && (
-                <button
+                <Button
                   type="submit"
                   className="vh-btn-primary-brand"
                   disabled={busy || !details.title.trim()}
                 >
                   <span>{busy ? "Saving..." : "Save Details"}</span>
                   <Icon name="arrowRight" />
-                </button>
+                </Button>
               )}
             </div>
           )}

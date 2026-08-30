@@ -2,6 +2,8 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "@/components/icons";
 import { Badge, type BadgeTone } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { formatDate } from "@/utils/date";
 
@@ -98,26 +100,20 @@ export function PurchaseDetailsModal({ purchase, onClose, onViewInvoice }: Purch
                 <h2 className="plan-dialog-title font-mono" style={{ fontSize: 18 }}>
                   {purchase.purchase_number}
                 </h2>
-                <button
-                  type="button"
+                <IconButton
                   onClick={() => handleCopy(purchase.purchase_number, "purchaseno")}
                   className="action-btn-icon"
-                  title="Copy purchase number"
+                  label="Copy purchase number"
                   style={{
                     width: 26,
                     height: 26,
                     borderRadius: 6,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
                     backgroundColor: "var(--surface-muted)",
                     color: copiedPurchaseNo ? "var(--emerald-600, #059669)" : "var(--text-muted)",
                     border: "1px solid var(--border)",
-                    cursor: "pointer",
                   }}
-                >
-                  <Icon name={copiedPurchaseNo ? "check" : "clipboard"} style={{ width: 13, height: 13 }} />
-                </button>
+                  icon={<Icon name={copiedPurchaseNo ? "check" : "clipboard"} style={{ width: 13, height: 13 }} />}
+                />
                 <Badge tone={purchaseStatusTone(purchase.status)} className="voucher-status-pill">
                   {purchaseStatusLabel(purchase.status)}
                 </Badge>
@@ -132,9 +128,7 @@ export function PurchaseDetailsModal({ purchase, onClose, onViewInvoice }: Purch
               </span>
             </div>
           </div>
-          <button type="button" className="plan-dialog-close" onClick={onClose} title="Close details">
-            <Icon name="x" />
-          </button>
+          <IconButton className="plan-dialog-close" onClick={onClose} label="Close details" icon={<Icon name="x" />} />
         </div>
 
         {/* Modal Body */}
@@ -215,29 +209,26 @@ export function PurchaseDetailsModal({ purchase, onClose, onViewInvoice }: Purch
               </div>
 
               {purchase.status === "completed" && (purchase.voucher_code || purchase.raw_code) && (
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={() => handleCopy(purchase.voucher_code || purchase.raw_code, "code")}
+                  data-force-color=""
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
                     padding: "6px 12px",
                     borderRadius: 8,
                     fontSize: 12,
-                    fontWeight: 700,
                     backgroundColor: copiedCode ? "var(--emerald-500, #10b981)" : "var(--primary-soft)",
-                    color: copiedCode ? "#ffffff" : "var(--primary)",
                     border: copiedCode
                       ? "1px solid var(--emerald-600, #059669)"
                       : "1px solid color-mix(in srgb, var(--primary) 25%, transparent)",
-                    cursor: "pointer",
                     transition: "all 0.2s ease",
+                    ["--ui-btn-color" as string]: copiedCode ? "#ffffff" : "var(--primary)",
                   }}
                 >
                   <Icon name={copiedCode ? "check" : "clipboard"} style={{ width: 14, height: 14 }} />
                   {copiedCode ? "Copied!" : "Copy Code"}
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -271,14 +262,12 @@ export function PurchaseDetailsModal({ purchase, onClose, onViewInvoice }: Purch
                   <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)" }}>Email Address</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>{purchase.buyer_email}</span>
-                    <button
-                      type="button"
+                    <IconButton
                       onClick={() => handleCopy(purchase.buyer_email, "email")}
-                      title="Copy email"
-                      style={{ background: "none", border: "none", cursor: "pointer", color: copiedEmail ? "#059669" : "var(--text-muted)", padding: 2 }}
-                    >
-                      <Icon name={copiedEmail ? "check" : "clipboard"} style={{ width: 13, height: 13 }} />
-                    </button>
+                      label="Copy email"
+                      style={{ background: "none", border: "none", color: copiedEmail ? "#059669" : "var(--text-muted)", padding: 2 }}
+                      icon={<Icon name={copiedEmail ? "check" : "clipboard"} style={{ width: 13, height: 13 }} />}
+                    />
                   </div>
                 </div>
 
@@ -287,14 +276,12 @@ export function PurchaseDetailsModal({ purchase, onClose, onViewInvoice }: Purch
                     <span style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)" }}>Phone Number</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 13, fontWeight: 500, fontFamily: "var(--font-mono, monospace)", color: "var(--text)" }}>{purchase.buyer_phone}</span>
-                      <button
-                        type="button"
+                      <IconButton
                         onClick={() => handleCopy(purchase.buyer_phone || "", "phone")}
-                        title="Copy phone"
-                        style={{ background: "none", border: "none", cursor: "pointer", color: copiedPhone ? "#059669" : "var(--text-muted)", padding: 2 }}
-                      >
-                        <Icon name={copiedPhone ? "check" : "clipboard"} style={{ width: 13, height: 13 }} />
-                      </button>
+                        label="Copy phone"
+                        style={{ background: "none", border: "none", color: copiedPhone ? "#059669" : "var(--text-muted)", padding: 2 }}
+                        icon={<Icon name={copiedPhone ? "check" : "clipboard"} style={{ width: 13, height: 13 }} />}
+                      />
                     </div>
                   </div>
                 )}
@@ -386,47 +373,43 @@ export function PurchaseDetailsModal({ purchase, onClose, onViewInvoice }: Purch
           }}
         >
           {purchase.status === "completed" && onViewInvoice && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => {
                 onClose();
                 onViewInvoice(purchase);
               }}
+              data-force-color=""
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
                 padding: "8px 16px",
                 borderRadius: 8,
                 fontSize: 13,
-                fontWeight: 700,
                 backgroundColor: "rgba(2, 132, 199, 0.1)",
-                color: "#0284c7",
                 border: "1px solid rgba(2, 132, 199, 0.25)",
-                cursor: "pointer",
+                ["--ui-btn-color" as string]: "#0284c7",
               }}
             >
               <Icon name="filePdf" style={{ width: 15, height: 15 }} />
               View Tax Invoice
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={onClose}
             style={{
               padding: "8px 18px",
               borderRadius: 8,
               fontSize: 13,
-              fontWeight: 600,
               backgroundColor: "var(--surface, #ffffff)",
               color: "var(--text, #0f172a)",
               border: "1px solid var(--border, #cbd5e1)",
-              cursor: "pointer",
             }}
           >
             Close
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

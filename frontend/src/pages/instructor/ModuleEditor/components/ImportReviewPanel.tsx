@@ -1,4 +1,5 @@
 import { Checkbox, SearchableSelect } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import type { ExamModule, ExamModulePart, QuestionDraft, QuestionImportPreview, QuestionType } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES } from "../helpers";
@@ -44,8 +45,9 @@ export function ImportReviewPanel({
           <p>{t.summary(preview.question_count, preview.source_filename, module.title, part.title)}</p>
         </div>
         <div className="review-actions">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             className="secondary-button"
             onClick={() =>
               onSelectedImportsChange(
@@ -54,13 +56,13 @@ export function ImportReviewPanel({
             }
           >
             {selectedImports.size === preview.questions.length ? t.deselectAll : t.selectAll}
-          </button>
-          <button className="secondary-button" onClick={onDiscard}>
+          </Button>
+          <Button variant="secondary" className="secondary-button" onClick={onDiscard}>
             {t.discard}
-          </button>
-          <button onClick={onCommit} disabled={busy || !selectedImports.size}>
+          </Button>
+          <Button onClick={onCommit} disabled={busy || !selectedImports.size}>
             {t.import(selectedImports.size)}
-          </button>
+          </Button>
         </div>
       </div>
       {preview.warnings.length > 0 && (

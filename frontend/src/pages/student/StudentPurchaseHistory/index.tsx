@@ -4,6 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { apiClient } from "@/api/client";
 import { IconButton, PageHeader, SearchableSelect, SearchInput } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { Icon } from "@/components/icons";
 import { useAuthStore } from "@/store/authStore";
 import { formatCurrencyAmount } from "@/utils/currency";
@@ -399,14 +400,15 @@ export function StudentPurchaseHistory() {
         <td>{formatDateShared(p.paid_at || p.created_at)}</td>
         <td>
           {isPaid ? (
-            <button
+            <Button
               type="button"
+              variant="secondary"
               className="btn-view-invoice"
               onClick={() => setSelectedInvoice(p)}
             >
               <Icon name="eye" style={{ fontSize: "13px" }} />
               {strings.table.viewInvoice}
-            </button>
+            </Button>
           ) : (
             <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>—</span>
           )}
@@ -480,8 +482,9 @@ export function StudentPurchaseHistory() {
         />
 
         {(search || statusFilter !== "all" || subStatusFilter !== "all") && (
-          <button
+          <Button
             type="button"
+            variant="secondary"
             className="btn-clear-filters"
             onClick={() => {
               setSearch("");
@@ -491,7 +494,7 @@ export function StudentPurchaseHistory() {
           >
             <Icon name="cross" style={{ fontSize: "12px" }} />
             {strings.empty.clearFilters}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -683,14 +686,15 @@ export function StudentPurchaseHistory() {
             </div>
 
             <div className="student-invoice-footer">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="btn-secondary"
                 onClick={() => handleDownloadPdf(selectedInvoice)}
               >
                 <Icon name="download" style={{ fontSize: "16px" }} />
                 {strings.invoiceModal.downloadPdf}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

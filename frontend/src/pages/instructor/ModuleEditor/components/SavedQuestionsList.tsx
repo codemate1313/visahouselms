@@ -2,6 +2,7 @@ import { API_BASE_URL } from "@/api/client";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import type { ExamModulePart, ExamModuleQuestion } from "@/api/types";
 import { renderRichText, RichTextContent } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { renderBoldText } from "@/utils/boldText";
 import { parseClozeMarkers } from "@/utils/clozeMarkers";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -89,12 +90,12 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
               </div>
               {isEditable && (
                 <div className="question-actions">
-                  <button className="secondary-button" onClick={() => onEdit(question)}>
+                  <Button variant="secondary" className="secondary-button" onClick={() => onEdit(question)}>
                     {t.edit}
-                  </button>
-                  <button className="danger-text" onClick={() => onDelete(question)}>
+                  </Button>
+                  <Button variant="danger" className="danger-text" onClick={() => onDelete(question)}>
                     {t.delete}
-                  </button>
+                  </Button>
                 </div>
               )}
             </article>

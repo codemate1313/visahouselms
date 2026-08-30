@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { StudentResultAnalysis } from "@/api/types";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 import { AnalysisBreakdown } from "./AnalysisBreakdown";
+import { Button } from "@/components/ui/Button/Button";
 
 interface AnalysisPanelProps {
   analysis: StudentResultAnalysis | null;
@@ -61,9 +62,9 @@ export function AnalysisPanel({
         <div className="banner warning" style={{ display: "flex", alignItems: "center", gap: "12px", maxWidth: "none", flexWrap: "wrap" }}>
           <span>{t.manualReview}</span>
           {onRetryAi && (
-            <button type="button" className="ui-btn ui-btn-secondary ui-btn-sm" onClick={onRetryAi} disabled={retryingAi}>
+            <Button type="button" variant="secondary" size="sm" onClick={onRetryAi} disabled={retryingAi}>
               {retryingAi ? strings.aiEvaluation.retrying : strings.aiEvaluation.retryAi}
-            </button>
+            </Button>
           )}
         </div>
       )}

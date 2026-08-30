@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { isRouteErrorResponse, useRouteError } from "react-router-dom";
+import { Button } from "@/components/ui/Button/Button";
 
 const CHUNK_RELOAD_PREFIX = "vh:chunk-reload:";
 
@@ -69,9 +70,9 @@ export function RouteErrorBoundary() {
             ? "The dashboard files changed while this browser tab was open. Refresh once to continue."
             : "The page could not be loaded. Please try again."}
         </p>
-        <button type="button" onClick={() => window.location.reload()}>
+        <Button type="button" onClick={() => window.location.reload()}>
           Refresh
-        </button>
+        </Button>
       </section>
     </main>
   );

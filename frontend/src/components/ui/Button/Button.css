@@ -226,3 +226,16 @@ button.ui-btn-outline:hover:not(:disabled) {
 [data-theme="dark"] .ui-btn-text {
   color: color-mix(in srgb, var(--primary) 55%, white);
 }
+
+/* Escape hatch for call sites that need a text color the variant doesn't
+   provide (a brand-color CTA on a white pill, an inline destructive-red
+   label, etc). Set the `data-force-color` attribute plus the
+   `--ui-btn-color` custom property via inline `style` — this beats every
+   variant's forced `color: ... !important` above by specificity. */
+.ui-btn[data-force-color] {
+  color: var(--ui-btn-color) !important;
+}
+
+.ui-btn[data-force-color]:hover:not(:disabled) {
+  color: var(--ui-btn-color-hover, var(--ui-btn-color)) !important;
+}

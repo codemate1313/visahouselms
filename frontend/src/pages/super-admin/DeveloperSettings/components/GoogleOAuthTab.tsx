@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Badge } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { Icon } from "@/components/icons";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
@@ -177,22 +178,24 @@ export function GoogleOAuthTab() {
               <strong>{t.callbackUrlBoxLabel}</strong> <code className="ui-code-info">{suggestedCallbackUrl}</code>
             </span>
             <div style={{ display: "flex", gap: "8px" }}>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="btn-secondary"
                 onClick={useSuggestedRedirectUri}
-                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface-muted)", border: "1px solid var(--border)" }}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
               >
                 {t.useSuggestedLabel}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 className="btn-secondary"
                 onClick={handleCopy}
                 style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
               >
                 {copied ? t.copiedLabel : t.copyLabel}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -201,10 +204,9 @@ export function GoogleOAuthTab() {
         {notice && <p className="success-text">{notice}</p>}
 
         <div className="form-actions" style={{ marginTop: "1.25rem" }}>
-          <button type="submit" disabled={busy} className="btn-primary">
-            <Icon name="check" style={{ fontSize: "16px" }} />
+          <Button type="submit" disabled={busy} className="btn-primary" leftIcon={<Icon name="check" style={{ fontSize: "16px" }} />}>
             {busy ? "Saving Settings..." : t.saveBtn}
-          </button>
+          </Button>
         </div>
       </CollapsiblePanel>
     </form>

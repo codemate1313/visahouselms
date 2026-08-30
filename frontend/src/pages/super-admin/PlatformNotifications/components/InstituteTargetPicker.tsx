@@ -1,5 +1,6 @@
 import { Icon } from "@/components/icons";
 import type { TargetInstituteOption } from "@/api/types";
+import { Button } from "@/components/ui/Button/Button";
 import { platformNotificationsStrings as strings } from "../PlatformNotifications.strings";
 
 interface InstituteTargetPickerProps {
@@ -31,14 +32,14 @@ export function InstituteTargetPicker({
         </div>
         <div style={{ display: "flex", gap: 12 }}>
           {institutes.length > 0 && (
-            <button type="button" className="pn-text-btn" onClick={onSelectAll}>
+            <Button type="button" variant="text" size="sm" className="pn-text-btn" onClick={onSelectAll}>
               {t.selectAll}
-            </button>
+            </Button>
           )}
           {selectedIds.length > 0 && (
-            <button type="button" className="pn-text-btn" onClick={onClearAll}>
+            <Button type="button" variant="text" size="sm" className="pn-text-btn" onClick={onClearAll}>
               {t.clearAll}
-            </button>
+            </Button>
           )}
         </div>
       </div>

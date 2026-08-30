@@ -609,20 +609,22 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
             <code>{passwordNotice.temporary_password}</code>
           </span>
           <div style={{ display: "flex", gap: 8 }}>
-            <button
+            <Button
               type="button"
+              variant="secondary"
               className="secondary-button"
               onClick={() => navigator.clipboard.writeText(passwordNotice.temporary_password)}
             >
               {strings.passwordNotice.copy}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               className="secondary-button"
               onClick={() => setPasswordNotice(null)}
             >
               {strings.passwordNotice.dismiss}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -652,17 +654,18 @@ export function Users({ basePath = "/super-admin" }: UsersProps) {
 
       {totalPages > 1 && (
         <div className="pagination">
-          <button type="button" disabled={page <= 1 || loading} onClick={() => setPage(page - 1)}>
+          <Button type="button" variant="secondary" disabled={page <= 1 || loading} onClick={() => setPage(page - 1)}>
             <Icon name="arrowLeft" /> {strings.pagination.prev}
-          </button>
+          </Button>
           <span>{strings.pagination.pageOf(page, totalPages, total)}</span>
-          <button
+          <Button
             type="button"
+            variant="secondary"
             disabled={page >= totalPages || loading}
             onClick={() => setPage(page + 1)}
           >
             {strings.pagination.next} <Icon name="arrowRight" />
-          </button>
+          </Button>
         </div>
       )}
 

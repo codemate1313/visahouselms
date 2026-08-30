@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
 import type { MemberCapacity } from "../types";
 
@@ -65,14 +66,14 @@ export function SeatPanel({ capacity, onShowReclaimable, onShowPastStudents }: S
 
       <div className="seat-panel-actions">
         {seats.reclaimable > 0 && (
-          <button type="button" className="link-button" onClick={onShowReclaimable}>
+          <Button type="button" variant="text" className="link-button" onClick={onShowReclaimable}>
             {t.reclaimableLink(seats.reclaimable)}
-          </button>
+          </Button>
         )}
         {seats.past_students > 0 && (
-          <button type="button" className="link-button" onClick={onShowPastStudents}>
+          <Button type="button" variant="text" className="link-button" onClick={onShowPastStudents}>
             {t.pastStudentsLink(seats.past_students)}
-          </button>
+          </Button>
         )}
       </div>
     </section>

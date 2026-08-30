@@ -4,7 +4,8 @@ import { apiClient } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { SegmentedControl } from "@/components/ui/SegmentedControl/SegmentedControl";
 import { SearchableSelect } from "@/components/ui/SearchableSelect/SearchableSelect";
-import { Badge, ExportButtons, SearchInput } from "@/components/ui";
+import { Badge, Button, ExportButtons, SearchInput } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { LineChart, type LineChartDatum } from "@/components/charts/LineChart";
 import "./InstituteDetailDrawer.css";
 import { formatDate } from "@/utils/date";
@@ -256,9 +257,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
               <span className="drawer-slug">slug: @{details?.slug}</span>
             </div>
           </div>
-          <button className="drawer-close-btn" onClick={onClose} aria-label="Close drawer">
-            <Icon name="cross" />
-          </button>
+          <IconButton className="drawer-close-btn" onClick={onClose} label="Close drawer" icon={<Icon name="cross" />} />
         </header>
 
         {/* Tab Navigator */}
@@ -282,8 +281,9 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
             <div className="drawer-error-container">
               <Icon name="help" className="error-icon" />
               <p>{error}</p>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="btn btn-secondary"
                 onClick={() => {
                   setError(null);
@@ -306,7 +306,7 @@ export function InstituteDetailDrawer({ instituteId, onClose }: InstituteDetailD
                 }}
               >
                 Retry
-              </button>
+              </Button>
             </div>
           ) : loading ? (
             <div className="drawer-spinner-container">

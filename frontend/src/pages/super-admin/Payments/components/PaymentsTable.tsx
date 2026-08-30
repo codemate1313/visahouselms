@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
 import { Badge, DataTableCard } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { PaymentRow } from "../types";
@@ -119,18 +120,18 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
               <code className="payment-ref-code" title={orderId}>
                 {orderId}
               </code>
-              <button
-                type="button"
+              <IconButton
                 className={`payment-ref-copy-btn ${copiedKey === `order-${row.id}` ? "is-copied" : ""}`}
                 title={copiedKey === `order-${row.id}` ? "Copied!" : "Copy Order ID"}
-                aria-label="Copy Order ID"
+                label="Copy Order ID"
                 onClick={() => handleCopy(orderId, `order-${row.id}`)}
-              >
-                <Icon
-                  name={copiedKey === `order-${row.id}` ? "check" : "clipboard"}
-                  style={{ width: 12, height: 12 }}
-                />
-              </button>
+                icon={
+                  <Icon
+                    name={copiedKey === `order-${row.id}` ? "check" : "clipboard"}
+                    style={{ width: 12, height: 12 }}
+                  />
+                }
+              />
             </div>
           </div>
         )}
@@ -144,18 +145,18 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
               <code className="payment-ref-code" title={paymentId}>
                 {paymentId}
               </code>
-              <button
-                type="button"
+              <IconButton
                 className={`payment-ref-copy-btn ${copiedKey === `pay-${row.id}` ? "is-copied" : ""}`}
                 title={copiedKey === `pay-${row.id}` ? "Copied!" : "Copy Payment ID"}
-                aria-label="Copy Payment ID"
+                label="Copy Payment ID"
                 onClick={() => handleCopy(paymentId, `pay-${row.id}`)}
-              >
-                <Icon
-                  name={copiedKey === `pay-${row.id}` ? "check" : "clipboard"}
-                  style={{ width: 12, height: 12 }}
-                />
-              </button>
+                icon={
+                  <Icon
+                    name={copiedKey === `pay-${row.id}` ? "check" : "clipboard"}
+                    style={{ width: 12, height: 12 }}
+                  />
+                }
+              />
             </div>
           </div>
         )}
@@ -218,15 +219,13 @@ export function PaymentsTable({ rows, onOpenDueForm }: PaymentsTableProps) {
             <Icon name="billings" />
           </Link>
           {Number(row.due_amount) > 0 && (row.status === "partial" || row.status === "pending") && (
-            <button
-              type="button"
+            <IconButton
               className="payment-action-btn btn-due"
               onClick={() => onOpenDueForm(row)}
               data-tooltip={t.recordDuePaymentTooltip}
-              aria-label={t.recordDuePaymentTooltip}
-            >
-              <Icon name="overview" />
-            </button>
+              label={t.recordDuePaymentTooltip}
+              icon={<Icon name="overview" />}
+            />
           )}
         </div>
       </td>

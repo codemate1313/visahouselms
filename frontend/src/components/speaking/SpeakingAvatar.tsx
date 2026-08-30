@@ -3,6 +3,7 @@ import { API_BASE_URL, apiClient } from "../../api/client";
 import { ExaminerAvatarSvg } from "./ExaminerAvatarSvg";
 import { PhotoExaminerAvatar } from "./PhotoExaminerAvatar";
 import { getExaminerPhotoSet } from "./examinerPhotoSets";
+import { Button } from "@/components/ui/Button/Button";
 
 import "./SpeakingAvatar.css";
 
@@ -456,7 +457,7 @@ export function SpeakingAvatar({
           {/* Avatar Audio Controls */}
           {audioFullUrl && (
             <div className="avatar-controls-row">
-              <button
+              <Button
                 type="button"
                 className={`avatar-btn ${isPlaying ? "avatar-btn-secondary" : "avatar-btn-primary"}`}
                 onClick={togglePlay}
@@ -478,7 +479,7 @@ export function SpeakingAvatar({
                     {hasPlayedPrompt ? "Audio Played" : "Listen to Examiner"}
                   </>
                 )}
-              </button>
+              </Button>
 
               <audio
                 ref={audioRef}

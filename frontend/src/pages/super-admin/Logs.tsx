@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
-import { Modal, SearchInput, SegmentedControl } from "@/components/ui";
+import { Button, Modal, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { AiEvaluationLog } from "./AiEvaluationLog";
@@ -246,14 +246,15 @@ export function Logs() {
             }}
             placeholder="Search message, path, IP, user..."
           />
-          <button
+          <Button
             type="button"
+            variant="secondary"
             className="button secondary logs-refresh-btn"
             onClick={() => void loadLogs()}
           >
             <Icon name="terminal" />
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -368,8 +369,10 @@ export function Logs() {
                           </div>
                         </td>
                         <td className="col-log-action">
-                          <button
+                          <Button
                             type="button"
+                            variant="secondary"
+                            size="sm"
                             className="log-view-btn"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -378,7 +381,7 @@ export function Logs() {
                             title="View log details"
                           >
                             View
-                          </button>
+                          </Button>
                         </td>
                       </>
                     )}
@@ -435,8 +438,10 @@ export function Logs() {
                           {formatLogTimestamp(row.created_at ?? row.timestamp)}
                         </td>
                         <td className="col-log-action">
-                          <button
+                          <Button
                             type="button"
+                            variant="secondary"
+                            size="sm"
                             className="log-view-btn"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -445,7 +450,7 @@ export function Logs() {
                             title="View request details"
                           >
                             View
-                          </button>
+                          </Button>
                         </td>
                       </>
                     )}
@@ -465,8 +470,10 @@ export function Logs() {
                           {renderCrashSummary(row.detail, row.kind)}
                         </td>
                         <td className="col-log-action">
-                          <button
+                          <Button
                             type="button"
+                            variant="secondary"
+                            size="sm"
                             className="log-view-btn"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -475,7 +482,7 @@ export function Logs() {
                             title="View crash details"
                           >
                             View
-                          </button>
+                          </Button>
                         </td>
                       </>
                     )}
@@ -590,13 +597,15 @@ export function Logs() {
                     <div className="log-section-header">
                       <h3>{humanizeKey(key)}</h3>
                       {isCodeBlock && formatted !== "—" && (
-                        <button
+                        <Button
                           type="button"
+                          variant="text"
+                          size="sm"
                           className="log-copy-btn"
                           onClick={() => copyToClipboard(formatted, key)}
                         >
                           {copiedKey === key ? "Copied!" : "Copy"}
-                        </button>
+                        </Button>
                       )}
                     </div>
                     {isCodeBlock ? (

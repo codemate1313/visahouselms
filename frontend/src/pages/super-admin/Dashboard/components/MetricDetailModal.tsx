@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { dashboardStrings as strings } from "../Dashboard.strings";
 import { formatDetailValue } from "../helpers";
 import { MetricBreakdownPanel } from "./MetricBreakdownPanel";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import type { MetricDetail, MetricKey } from "../types";
 
 interface MetricDetailModalProps {
@@ -44,12 +45,19 @@ export function MetricDetailModal({ selectedMetric, metricDetail, metricLoading,
             <h2 id="dashboard-detail-title">{metricDetail?.title ?? strings.metricTitles[selectedMetric]}</h2>
             {metricDetail && <p>{metricDetail.description}</p>}
           </div>
-          <button type="button" className="dashboard-detail-close" onClick={onClose} aria-label={t.closeLabel} title={t.closeTitle} autoFocus>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="dashboard-close-icon">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <IconButton
+            className="dashboard-detail-close"
+            onClick={onClose}
+            label={t.closeLabel}
+            title={t.closeTitle}
+            autoFocus
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="dashboard-close-icon">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            }
+          />
         </header>
 
         <div className="dashboard-detail-body">

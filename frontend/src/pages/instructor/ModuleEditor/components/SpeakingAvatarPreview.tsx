@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 import { ExaminerAvatarSvg } from "@/components/speaking/ExaminerAvatarSvg";
 import { PhotoExaminerAvatar } from "@/components/speaking/PhotoExaminerAvatar";
 import { getExaminerPhotoSet } from "@/components/speaking/examinerPhotoSets";
@@ -173,7 +174,7 @@ export function SpeakingAvatarPreview({ moduleId, partId, prompt, examiner, titl
           </p>
 
           <div className="vh-avatar-preview-actions">
-            <button
+            <Button
               type="button"
               className="vh-avatar-preview-button"
               onClick={canPlay ? togglePlay : generatePreview}
@@ -181,16 +182,17 @@ export function SpeakingAvatarPreview({ moduleId, partId, prompt, examiner, titl
             >
               <Icon name={isPlaying ? "x" : "play"} />
               {loading ? t.generating : isPlaying ? t.stop : canPlay ? t.replay : t.generate}
-            </button>
+            </Button>
             {canPlay && !isPlaying && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 className="vh-avatar-preview-button is-ghost"
                 onClick={generatePreview}
                 disabled={loading}
               >
                 {t.regenerate}
-              </button>
+              </Button>
             )}
           </div>
         </div>

@@ -9,7 +9,8 @@ import { invoiceStrings as strings } from "./Invoice.strings";
 import "./Invoice.css";
 import { commonActions } from "@/content/common.strings";
 import { Icon } from "@/components/icons";
-import { SearchableSelect } from "@/components/ui";
+import { Button, SearchableSelect } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { formatDate, formatDateTime } from "@/utils/date";
 
 interface PaymentDetail {
@@ -511,31 +512,31 @@ export function Invoice() {
         </div>
 
         <div className="invoice-actions-group">
-          <button className="invoice-btn invoice-btn-secondary" onClick={handleOpenEmailModal} title="Email Receipt">
+          <Button variant="secondary" className="invoice-btn invoice-btn-secondary" onClick={handleOpenEmailModal} title="Email Receipt">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
               <polyline points="22,6 12,13 2,6" />
             </svg>
             {strings.emailReceipt}
-          </button>
+          </Button>
 
-          <button className="invoice-btn invoice-btn-primary" onClick={handleDownloadPDF} title="Download PDF Document">
+          <Button variant="primary" className="invoice-btn invoice-btn-primary" onClick={handleDownloadPDF} title="Download PDF Document">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
             {strings.downloadPdf}
-          </button>
+          </Button>
 
           {dueAmtNum > 0 && (
-            <button className="invoice-btn invoice-btn-success" onClick={() => setShowPaymentModal(true)}>
+            <Button variant="primary" className="invoice-btn invoice-btn-success" onClick={() => setShowPaymentModal(true)}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="4" width="20" height="16" rx="2" />
                 <line x1="2" y1="10" x2="22" y2="10" />
               </svg>
               {strings.recordPayment}
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -733,9 +734,7 @@ export function Invoice() {
           <div className="invoice-modal-content">
             <div className="invoice-modal-header">
               <h3>{strings.modals.recordPaymentTitle}</h3>
-              <button className="invoice-modal-close" aria-label={commonActions.close} onClick={() => setShowPaymentModal(false)}>
-                <Icon name="cross" />
-              </button>
+              <IconButton className="invoice-modal-close" label={commonActions.close} onClick={() => setShowPaymentModal(false)} icon={<Icon name="cross" />} />
             </div>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: 0 }}>
               {strings.modals.recordPaymentDesc}
@@ -787,12 +786,12 @@ export function Invoice() {
               </div>
 
               <div className="invoice-modal-actions">
-                <button type="button" className="invoice-btn invoice-btn-secondary" onClick={() => setShowPaymentModal(false)}>
+                <Button type="button" variant="secondary" className="invoice-btn invoice-btn-secondary" onClick={() => setShowPaymentModal(false)}>
                   {strings.modals.cancel}
-                </button>
-                <button type="submit" className="invoice-btn invoice-btn-success">
+                </Button>
+                <Button type="submit" variant="primary" className="invoice-btn invoice-btn-success">
                   {strings.modals.confirmRecord}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -805,9 +804,7 @@ export function Invoice() {
           <div className="invoice-modal-content">
             <div className="invoice-modal-header">
               <h3>{strings.modals.emailReceiptTitle}</h3>
-              <button className="invoice-modal-close" aria-label={commonActions.close} onClick={() => setShowEmailModal(false)}>
-                <Icon name="cross" />
-              </button>
+              <IconButton className="invoice-modal-close" label={commonActions.close} onClick={() => setShowEmailModal(false)} icon={<Icon name="cross" />} />
             </div>
 
             <form onSubmit={handleSendEmailSubmit}>
@@ -833,12 +830,12 @@ export function Invoice() {
               </div>
 
               <div className="invoice-modal-actions">
-                <button type="button" className="invoice-btn invoice-btn-secondary" onClick={() => setShowEmailModal(false)}>
+                <Button type="button" variant="secondary" className="invoice-btn invoice-btn-secondary" onClick={() => setShowEmailModal(false)}>
                   {strings.modals.cancel}
-                </button>
-                <button type="submit" className="invoice-btn invoice-btn-primary" disabled={isSendingEmail}>
+                </Button>
+                <Button type="submit" variant="primary" className="invoice-btn invoice-btn-primary" disabled={isSendingEmail} loading={isSendingEmail}>
                   {isSendingEmail ? "Sending..." : strings.modals.sendEmail}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

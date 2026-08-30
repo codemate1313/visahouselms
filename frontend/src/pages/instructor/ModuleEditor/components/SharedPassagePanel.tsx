@@ -143,7 +143,7 @@ export function SharedPassagePanel({ part, isEditable, busy, onSave, onDelete }:
       {isClozePart && isEditable && isEditing && (
         <div className="vh-passage-blank-toolbar">
           <div className="vh-passage-blank-main-actions">
-            <button
+            <Button
               type="button"
               className="vh-insert-blank-btn"
               onClick={() => insertBlank(nextGapNumber)}
@@ -151,7 +151,7 @@ export function SharedPassagePanel({ part, isEditable, busy, onSave, onDelete }:
             >
               <Icon name="plus" className="vh-btn-icon" style={{ width: "15px", height: "15px", strokeWidth: 2.5 }} />
               <span>Insert Gap {nextGapNumber <= limit ? `(${nextGapNumber})` : ""}</span>
-            </button>
+            </Button>
             <span className="vh-passage-blank-hint">
               Position cursor in the text and click <strong>Insert Gap</strong> (or click a gap pill below)
             </span>

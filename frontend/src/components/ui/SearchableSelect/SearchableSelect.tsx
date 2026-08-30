@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom";
 import "./SearchableSelect.css";
 import { Icon } from "@/components/icons";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { commonActions } from "@/content/common.strings";
 import { placeAnchoredMenu, type AnchoredMenuPlacement } from "@/utils/anchoredMenu";
 
@@ -234,15 +235,13 @@ export function SearchableSelect({
             onClick={(e) => e.stopPropagation()}
           />
           {search && (
-            <button
-              type="button"
+            <IconButton
               className="select-search-clear"
               onClick={() => setSearch("")}
               title={commonActions.clearSearch}
-              aria-label={commonActions.clearSearch}
-            >
-              <Icon name="cross" />
-            </button>
+              label={commonActions.clearSearch}
+              icon={<Icon name="cross" />}
+            />
           )}
         </div>
       )}

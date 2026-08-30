@@ -294,15 +294,15 @@ export function Institutes({ basePath = "/super-admin" }: InstitutesProps) {
           />
           {totalPages > 1 && (
             <div className="pagination">
-              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 <Icon name="arrowLeft" /> Previous
-              </button>
+              </Button>
               <span>
                 Page {page} of {totalPages} ({filteredRows.length} total)
               </span>
-              <button type="button" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+              <Button type="button" variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
                 Next <Icon name="arrowRight" />
-              </button>
+              </Button>
             </div>
           )}
         </>

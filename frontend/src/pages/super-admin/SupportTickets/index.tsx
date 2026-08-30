@@ -706,8 +706,9 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                         </span>
                       </td>
                       <td className="table-actions institute-row-actions" style={{ textAlign: "center", padding: "12px 4px" }}>
-                        <button
+                        <Button
                           type="button"
+                          variant="secondary"
                           className="action-btn-icon"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -717,7 +718,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                         >
                           <Icon name="eye" />
                           <span>Chat</span>
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -788,22 +789,15 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                       Forward
                     </Button>
                   )}
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     title="Attach files (images, PDF, Word, Excel — max 5, 10MB each)"
                     onClick={() => fileInputRef.current?.click()}
                     style={{
-                      background: "var(--surface)",
-                      border: "1px solid var(--border)",
                       borderRadius: "10px",
                       padding: "7px 12px",
-                      cursor: "pointer",
                       fontSize: "0.875rem",
-                      fontWeight: 600,
-                      color: "var(--text)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
                       lineHeight: 1,
                       boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
                     }}
@@ -815,7 +809,7 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
                         {attachedFiles.length}
                       </span>
                     )}
-                  </button>
+                  </Button>
                   <Button
                     type="button"
                     variant="secondary"

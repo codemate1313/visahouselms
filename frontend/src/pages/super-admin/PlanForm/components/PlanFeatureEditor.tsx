@@ -1,6 +1,7 @@
 import { planFormStrings as strings } from "../PlanForm.strings";
 import { Icon } from "@/components/icons";
-import { RequiredMark } from "@/components/ui";
+import { Button, RequiredMark } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 interface PlanFeatureEditorProps {
   features: string[];
@@ -36,22 +37,20 @@ export function PlanFeatureEditor({ features, maxFeatures, onChange, onAdd, onRe
               aria-label={t.itemLabel(index + 1)}
               onChange={(event) => onChange(index, event.target.value)}
             />
-            <button
-              type="button"
+            <IconButton
               className="plan-feature-remove"
               onClick={() => onRemove(index)}
               title={t.remove}
-              aria-label={t.remove}
-            >
-              <Icon name="trash" style={{ width: 14, height: 14 }} />
-            </button>
+              label={t.remove}
+              icon={<Icon name="trash" style={{ width: 14, height: 14 }} />}
+            />
           </div>
         ))
       )}
 
-      <button type="button" className="plan-feature-add" onClick={onAdd} disabled={features.length >= maxFeatures}>
+      <Button type="button" variant="secondary" className="plan-feature-add" onClick={onAdd} disabled={features.length >= maxFeatures}>
         <Icon name="plus" /> {t.add}
-      </button>
+      </Button>
     </fieldset>
   );
 }

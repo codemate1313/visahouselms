@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { Badge, Checkbox, SearchableSelect } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -172,7 +173,7 @@ export function AiEvaluationTab() {
         {error && <p className="error-text">{error}</p>}
         {notice && <p className="success-text">{notice}</p>}
         <div className="form-actions">
-          <button disabled={busy}>{busy ? t.saveBusy : t.saveLabel}</button>
+          <Button type="submit" disabled={busy}>{busy ? t.saveBusy : t.saveLabel}</Button>
         </div>
       </CollapsiblePanel>
     </form>

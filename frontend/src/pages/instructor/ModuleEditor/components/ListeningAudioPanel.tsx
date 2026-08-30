@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, type FormEvent } from "react";
 import { RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { API_BASE_URL } from "@/api/client";
 import type { ExamModuleAsset, ExamModulePart } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -112,16 +113,25 @@ export function ListeningAudioPanel(props: ListeningAudioPanelProps) {
               {audioFile && (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "12px", color: "var(--ink2)", marginTop: "4px" }}>
                   <span>Selected: <strong>{audioFile.name}</strong> ({(audioFile.size / (1024 * 1024)).toFixed(2)} MB)</span>
-                  <button
+                  <Button
                     type="button"
-                    style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "12px", padding: 0 }}
+                    variant="text"
+                    data-force-color=""
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      padding: 0,
+                      ["--ui-btn-color" as string]: "#ef4444",
+                    }}
                     onClick={() => {
                       onAudioFileChange(null);
                       if (fileInputRef.current) fileInputRef.current.value = "";
                     }}
                   >
                     Clear
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -133,9 +143,9 @@ export function ListeningAudioPanel(props: ListeningAudioPanelProps) {
             )}
 
             <div className="vh-simple-form-submit">
-              <button type="submit" disabled={busy || !audioFile} className="vh-simple-submit-btn">
+              <Button type="submit" disabled={busy || !audioFile} className="vh-simple-submit-btn">
                 {busy ? t.working : "Attach MP3 to this part"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -170,9 +180,9 @@ export function ListeningAudioPanel(props: ListeningAudioPanelProps) {
                   </details>
                 )}
                 {isEditable && (
-                  <button className="danger-text" onClick={() => onDeleteAudio(asset.id)}>
+                  <Button variant="danger" className="danger-text" onClick={() => onDeleteAudio(asset.id)}>
                     {t.delete}
-                  </button>
+                  </Button>
                 )}
               </article>
             ))

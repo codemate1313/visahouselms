@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@/api/client";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
 import { Checkbox, RichTextEditor } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { renderBoldText } from "@/utils/boldText";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { CustomAudioPlayer } from "./CustomAudioPlayer";
@@ -157,9 +158,9 @@ export function QuestionInput({
 
       {question.question_type === "speaking_prompt" && (
         <div className="test-runner-speaking">
-          <button type="button" className={recording ? "danger" : ""} onClick={onRecord}>
+          <Button type="button" variant={recording ? "danger" : "primary"} onClick={onRecord}>
             {recording ? t.stopRecording : question.audio_path ? t.reRecordAnswer : t.recordAnswer}
-          </button>
+          </Button>
           {question.audio_path && !recording && <CustomAudioPlayer src={`${API_BASE_URL}${question.audio_path}`} />}
         </div>
       )}

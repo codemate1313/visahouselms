@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { type ToastItem, useToastStore } from "../store/toastStore";
 import { Icon } from "@/components/icons";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 function SnackbarCard({ toast }: { toast: ToastItem }) {
   const removeToast = useToastStore((s) => s.removeToast);
@@ -82,14 +83,12 @@ function SnackbarCard({ toast }: { toast: ToastItem }) {
         <div className="snackbar-message">{toast.message}</div>
       </div>
 
-      <button
-        type="button"
+      <IconButton
         className="snackbar-close-btn"
         onClick={() => removeToast(toast.id)}
-        aria-label="Close notification"
-      >
-        <Icon name="cross" />
-      </button>
+        label="Close notification"
+        icon={<Icon name="cross" />}
+      />
 
       <div
         className="snackbar-progress-bar"

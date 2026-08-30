@@ -491,15 +491,16 @@ export function GradingDetail() {
               <h2>{strings.submitFullTest.title}</h2>
               <p>{strings.submitFullTest.description}</p>
             </div>
-            <button
+            <Button
               type="button"
+              variant="secondary"
               className="parts-scored-chip"
               onClick={() => setMissingPartsOpen(true)}
               aria-label={strings.submitFullTest.openMissingDialog}
             >
               <span aria-hidden="true" />
               {strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}
-            </button>
+            </Button>
           </div>
           {canEdit && (
             <div className="form-actions">
@@ -523,13 +524,13 @@ export function GradingDetail() {
                       ? part.rubric.filter((criterion) => part.grade!.criteria.some((item) => item.criterion === criterion.criterion)).length
                       : 0;
                     return (
-                      <button type="button" key={part.id} onClick={() => goToPart(part.id)}>
+                      <Button type="button" variant="text" key={part.id} onClick={() => goToPart(part.id)}>
                         <div>
                           <strong>{part.title}</strong>
                           <span>{part.skill_focus}</span>
                         </div>
                         <small>{strings.submitFullTest.criteriaProgress(completed, part.rubric.length)}</small>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>

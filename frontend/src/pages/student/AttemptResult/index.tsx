@@ -13,6 +13,7 @@ import { RetakeRequestStatus } from "./components/RetakeRequestStatus";
 import { RetakeRequestModal } from "./components/RetakeRequestForm";
 import { Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 
 // AI auto-grading runs as a background job right after submission (a
 // provider call can take a while), so a freshly submitted human-graded
@@ -241,9 +242,9 @@ export function AttemptResult() {
             {awaitingAiGrading && pollTimedOut ? (
               <>
                 <span>{strings.aiEvaluation.stillRunning}</span>
-                <button type="button" className="ui-btn ui-btn-secondary ui-btn-sm" onClick={() => void recheckGrading()} disabled={rechecking}>
+                <Button type="button" variant="secondary" size="sm" onClick={() => void recheckGrading()} disabled={rechecking}>
                   {rechecking ? strings.aiEvaluation.checking : strings.aiEvaluation.checkAgain}
-                </button>
+                </Button>
               </>
             ) : awaitingAiGrading ? (
               <>
@@ -307,8 +308,9 @@ export function AttemptResult() {
           </div>
           <div className="result-support-strip-actions">
             {canRequestReview && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="result-support-btn"
                 onClick={() => {
                   setReviewError(null);
@@ -317,11 +319,12 @@ export function AttemptResult() {
               >
                 <Icon name="instructors" />
                 <span>{strings.supportStrip.reviewBtn}</span>
-              </button>
+              </Button>
             )}
             {canRequestRetake && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="result-support-btn"
                 onClick={() => {
                   setReviewError(null);
@@ -330,7 +333,7 @@ export function AttemptResult() {
               >
                 <Icon name="due" />
                 <span>{strings.supportStrip.retakeBtn}</span>
-              </button>
+              </Button>
             )}
           </div>
         </div>

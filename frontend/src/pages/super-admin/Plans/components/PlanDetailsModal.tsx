@@ -3,7 +3,8 @@ import { Icon } from "@/components/icons";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { plansStrings as strings } from "../Plans.strings";
 import type { PlanRow } from "../types";
-import { Badge, LinkButton } from "@/components/ui";
+import { Badge, Button, LinkButton } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { CATALOGUE_STATUS_LABELS } from "@/constants";
 
 interface PlanDetailsModalProps {
@@ -63,9 +64,7 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
 
             </div>
           </div>
-          <button type="button" className="plan-dialog-close" onClick={onClose} title={t.closeModalTitle}>
-            <Icon name="x" />
-          </button>
+          <IconButton className="plan-dialog-close" onClick={onClose} title={t.closeModalTitle} label={t.closeModalTitle} icon={<Icon name="x" />} />
         </div>
 
         <div className="plan-dialog-body">
@@ -151,9 +150,9 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
         </div>
 
         <div className="plan-dialog-footer">
-          <button type="button" className="secondary-button" onClick={onClose}>
+          <Button type="button" variant="secondary" className="secondary-button" onClick={onClose}>
             {t.close}
-          </button>
+          </Button>
           <LinkButton to={`/super-admin/plans/${plan.id}`} onClick={onClose}>
             {t.editPlan}
           </LinkButton>

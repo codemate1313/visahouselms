@@ -199,22 +199,22 @@ export function UsersTable({
       if (!managed && !link && !resetPath) return <span className="text-muted">—</span>;
       const overflowMenu = renderOverflowMenu([
         Boolean(managed) && (
-          <button key="status" type="button" onClick={() => onToggleActive(user)}>
+          <Button key="status" type="button" variant="text" onClick={() => onToggleActive(user)}>
             <Icon name={user.is_active ? "toggleOff" : "toggleOn"} />
             <span>{user.is_active ? a.deactivate : a.reactivate}</span>
-          </button>
+          </Button>
         ),
         Boolean(resetPath) && (
-          <button key="reset" type="button" onClick={() => onResetPassword(user)}>
+          <Button key="reset" type="button" variant="text" onClick={() => onResetPassword(user)}>
             <Icon name="lock" />
             <span>{a.resetPassword}</span>
-          </button>
+          </Button>
         ),
         canDeleteMember(user) && (
-          <button key="delete" type="button" className="danger" onClick={() => onRequestDelete(user)}>
+          <Button key="delete" type="button" variant="danger" className="danger" onClick={() => onRequestDelete(user)}>
             <Icon name="trash" />
             <span>{a.delete}</span>
-          </button>
+          </Button>
         ),
       ]);
 
@@ -244,26 +244,26 @@ export function UsersTable({
           <Icon name="edit" />
         </Link>
         {renderOverflowMenu([
-          <button key="status" type="button" onClick={() => onToggleActive(user)}>
+          <Button key="status" type="button" variant="text" onClick={() => onToggleActive(user)}>
             <Icon name={user.is_active ? "toggleOff" : "toggleOn"} />
             <span>{user.is_active ? a.deactivate : a.reactivate}</span>
-          </button>,
+          </Button>,
           actions.supportsForceReset && (
-            <button key="force-reset" type="button" onClick={() => onForceReset(user)}>
+            <Button key="force-reset" type="button" variant="text" onClick={() => onForceReset(user)}>
               <Icon name="lock" />
               <span>{user.force_password_reset ? a.clearPasswordReset : a.requirePasswordReset}</span>
-            </button>
+            </Button>
           ),
           actions.supportsPasswordReset && (
-            <button key="reset" type="button" onClick={() => onResetPassword(user)}>
+            <Button key="reset" type="button" variant="text" onClick={() => onResetPassword(user)}>
               <Icon name="lock" />
               <span>{a.resetPassword}</span>
-            </button>
+            </Button>
           ),
-          <button key="delete" type="button" className="danger" onClick={() => onRequestDelete(user)}>
+          <Button key="delete" type="button" variant="danger" className="danger" onClick={() => onRequestDelete(user)}>
             <Icon name="trash" />
             <span>{a.delete}</span>
-          </button>,
+          </Button>,
         ])}
       </div>
     );

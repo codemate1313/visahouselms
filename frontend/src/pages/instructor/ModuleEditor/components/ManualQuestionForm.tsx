@@ -3,6 +3,8 @@ import { useRef, useState, useEffect } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { RequiredMark, RichTextEditor } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import type { ExamModulePart, QuestionDraft } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { ANSWER_FREE_TYPES, CHOICE_TYPES } from "../helpers";
@@ -372,14 +374,15 @@ export function ManualQuestionForm({
             <div className="vh-prompt-label-row">
               <label htmlFor="module-question-prompt">{isSpeaking ? speakingPromptLabel : t.promptLabel}<RequiredMark /></label>
               {isReading1a && (
-                <button
+                <Button
                   type="button"
+                  variant="text"
                   className="vh-bold-toggle-button"
                   onClick={toggleBoldSelection}
                   title={t.boldSelectionHint}
                 >
                   <strong>B</strong> {t.boldSelectionLabel}
-                </button>
+                </Button>
               )}
             </div>
             {isReading1a && <p className="hint">{t.boldSelectionHint}</p>}
@@ -460,14 +463,14 @@ export function ManualQuestionForm({
               <div className="vh-speaking-compact-file">
                 <Icon name="image" />
                 <span>Image support is attached.</span>
-                <button type="button" className="vh-remove-img-btn" onClick={onRemoveImage}><Icon name="x" />Remove</button>
+                <Button type="button" variant="text" className="vh-remove-img-btn" onClick={onRemoveImage}><Icon name="x" />Remove</Button>
               </div>
             )}
             {manual.interaction?.candidate_material_url && (
               <div className="vh-speaking-compact-file">
                 <Icon name="filePdf" />
                 <span>{manual.interaction.candidate_material_name || "PDF support is attached."}</span>
-                <button type="button" className="vh-remove-img-btn" onClick={onRemoveSpeakingPdf}><Icon name="x" />Remove</button>
+                <Button type="button" variant="text" className="vh-remove-img-btn" onClick={onRemoveSpeakingPdf}><Icon name="x" />Remove</Button>
               </div>
             )}
           </section>
@@ -536,7 +539,7 @@ export function ManualQuestionForm({
                   <div className="vh-image-preview-card">
                     <div className="vh-preview-header">
                       <span className="vh-preview-title">Candidate image</span>
-                      <button type="button" className="vh-remove-img-btn" onClick={onRemoveImage}><Icon name="x" />Remove</button>
+                      <Button type="button" variant="text" className="vh-remove-img-btn" onClick={onRemoveImage}><Icon name="x" />Remove</Button>
                     </div>
                     <div className="vh-preview-image-wrapper">
                       <img src={`${API_BASE_URL}${manual.image_url}`} alt="Candidate speaking material" className="vh-large-preview-img" />
@@ -579,7 +582,7 @@ export function ManualQuestionForm({
                       <strong>{manual.interaction.candidate_material_name || "Candidate material.pdf"}</strong>
                       <span>Shown inside the candidate workspace</span>
                     </div>
-                    <button type="button" className="vh-remove-img-btn" onClick={onRemoveSpeakingPdf}><Icon name="x" />Remove</button>
+                    <Button type="button" variant="text" className="vh-remove-img-btn" onClick={onRemoveSpeakingPdf}><Icon name="x" />Remove</Button>
                   </div>
                 )}
               </div>
@@ -625,10 +628,10 @@ export function ManualQuestionForm({
               <div className="vh-image-preview-card">
                 <div className="vh-preview-header">
                   <span className="vh-preview-title">Question Image Attachment</span>
-                  <button type="button" className="vh-remove-img-btn" onClick={onRemoveImage}>
+                  <Button type="button" variant="text" className="vh-remove-img-btn" onClick={onRemoveImage}>
                     <Icon name="x" />
                     Remove
-                  </button>
+                  </Button>
                 </div>
                 <div className="vh-preview-image-wrapper">
                   <img src={`${API_BASE_URL}${manual.image_url}`} alt={t.imagePreviewAlt} className="vh-large-preview-img" />
@@ -671,10 +674,10 @@ export function ManualQuestionForm({
               <div className="vh-image-preview-card">
                 <div className="vh-preview-header">
                   <span className="vh-preview-title">Question Audio Clip</span>
-                  <button type="button" className="vh-remove-img-btn" onClick={onRemoveAudio}>
+                  <Button type="button" variant="text" className="vh-remove-img-btn" onClick={onRemoveAudio}>
                     <Icon name="x" />
                     Remove
-                  </button>
+                  </Button>
                 </div>
                 <div className="vh-preview-image-wrapper" style={{ padding: "12px 16px" }}>
                   <audio
@@ -696,10 +699,10 @@ export function ManualQuestionForm({
           <div className="option-editor" role="group" aria-labelledby="module-options-heading">
             <div className="option-editor-header">
               <h3 id="module-options-heading">{t.optionsLegend}</h3>
-              <button type="button" className="option-add-button" onClick={onAddOption}>
+              <Button type="button" variant="secondary" className="option-add-button" onClick={onAddOption}>
                 <Icon name="plus" />
                 {t.addOption}
-              </button>
+              </Button>
             </div>
             {manual.options.map((option, index) => (
               <div className="option-edit-row" key={option.key}>
@@ -712,16 +715,14 @@ export function ManualQuestionForm({
                   <span>{option.key}</span>
                 </label>
                 <input value={option.text} onChange={(event) => onUpdateOption(index, event.target.value)} required />
-                <button
-                  type="button"
+                <IconButton
+                  icon={<Icon name="x" />}
+                  label={t.removeOption(option.key)}
                   className="option-remove-button"
                   onClick={() => onRemoveOption(index)}
                   disabled={!canRemoveOption}
-                  aria-label={t.removeOption(option.key)}
                   title={canRemoveOption ? t.removeOption(option.key) : t.minimumOptions}
-                >
-                  <Icon name="x" />
-                </button>
+                />
               </div>
             ))}
           </div>
@@ -742,13 +743,13 @@ export function ManualQuestionForm({
         )}
 
         <div className="form-actions">
-          <button type="submit" disabled={busy}>
+          <Button type="submit" disabled={busy}>
             {editingQuestionId ? t.updateQuestion : t.addQuestion}
-          </button>
+          </Button>
           {editingQuestionId && (
-            <button type="button" className="secondary-button" onClick={onCancelEdit}>
+            <Button type="button" variant="secondary" className="secondary-button" onClick={onCancelEdit}>
               {t.cancel}
-            </button>
+            </Button>
           )}
         </div>
       </form>

@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from "react";
 import { Badge, RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { instituteMemberFormStrings as strings } from "../InstituteMemberForm.strings";
 
 export type MemberFormField =
@@ -99,14 +100,16 @@ export function MemberFormFields({
             <div className="window-quick-picks">
               <span className="muted-text">{f.quickPick}</span>
               {[1, 3, 6, 12].map((months) => (
-                <button
+                <Button
                   key={months}
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   className="chip-button"
                   onClick={() => onSetEndDate?.(clampIso(addMonths(startsOn || todayIso(), months), subscriptionEndsOn))}
                 >
                   {f.months(months)}
-                </button>
+                </Button>
               ))}
             </div>
             {subscriptionEndsOn && <p className="muted-text">{f.accessCeiling(formatDay(subscriptionEndsOn))}</p>}
@@ -120,8 +123,8 @@ export function MemberFormFields({
 
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">
-          <button type="submit" disabled={saving || blocked}>{saving ? strings.actions.saving : strings.actions.save(label)}</button>
-          <button type="button" onClick={onCancel}>{strings.actions.cancel}</button>
+          <Button type="submit" disabled={saving || blocked}>{saving ? strings.actions.saving : strings.actions.save(label)}</Button>
+          <Button type="button" variant="secondary" onClick={onCancel}>{strings.actions.cancel}</Button>
         </div>
       </form>
     </div>

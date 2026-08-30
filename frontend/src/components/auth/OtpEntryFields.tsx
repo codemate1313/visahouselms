@@ -1,4 +1,5 @@
 import type { UseOtpVerificationReturn } from "./useOtpVerification";
+import { Button } from "@/components/ui/Button/Button";
 
 export interface OtpEntryStrings {
   otpExpiresIn: (time: string) => string;
@@ -75,7 +76,7 @@ export function OtpEntryFields({ otp, strings, loading }: OtpEntryFieldsProps) {
 
         <div className="otp-resend-row">
           <span className="otp-resend-prompt">Didn't receive code?</span>
-          <button
+          <Button
             type="button"
             onClick={handleResendOtp}
             disabled={resendLoading || resendCooldown > 0}
@@ -99,7 +100,7 @@ export function OtpEntryFields({ otp, strings, loading }: OtpEntryFieldsProps) {
                 <span>{strings.otpResendLabel}</span>
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </>

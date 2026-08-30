@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
 import { Button, RequiredMark, RichTextEditor } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { Icon } from "@/components/icons";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -132,14 +133,14 @@ export function SourceTextComposer({ part, isEditable, busy, onSubmit }: SourceT
         ))}
       </div>
       {isEditable && texts.length < 26 && (
-        <button
+        <Button
           type="button"
           className="option-add-button"
           onClick={() => setTexts([...texts, { key: LETTERS[texts.length], text: "" }])}
         >
           <Icon name="plus" />
           {t.addText}
-        </button>
+        </Button>
       )}
 
       <h3 className="gap-task-subheading">{t.questionsHeading(questionCount)}<RequiredMark /></h3>
@@ -149,14 +150,12 @@ export function SourceTextComposer({ part, isEditable, busy, onSubmit }: SourceT
             <div className="source-text-question-head">
               <span className="gap-task-gap-label">{t.questionLabel(index + 1)}</span>
               {isEditable && questions.length > 1 && (
-                <button
-                  type="button"
+                <IconButton
                   className="option-remove-button"
-                  aria-label={t.removeQuestion(index + 1)}
+                  label={t.removeQuestion(index + 1)}
                   onClick={() => setQuestions(questions.filter((_, current) => current !== index))}
-                >
-                  <Icon name="cross" />
-                </button>
+                  icon={<Icon name="cross" />}
+                />
               )}
             </div>
             <input
@@ -189,14 +188,14 @@ export function SourceTextComposer({ part, isEditable, busy, onSubmit }: SourceT
         ))}
       </div>
       {isEditable && (
-        <button
+        <Button
           type="button"
           className="option-add-button"
           onClick={() => setQuestions([...questions, { prompt: "", answers: [] }])}
         >
           <Icon name="plus" />
           {t.addQuestion}
-        </button>
+        </Button>
       )}
 
       {problems.length > 0 && (

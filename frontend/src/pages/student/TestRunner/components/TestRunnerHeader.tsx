@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Attempt } from "@/api/types";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/Button/Button";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { formatTime, languageCertHeaderTitle } from "../helpers";
 import { LcClockIcon, PeopleCertBrand } from "./PeopleCertBrand";
@@ -66,19 +67,20 @@ export function TestRunnerHeader({
       {/* Testing aid: the lock exists so a candidate cannot skip a recording,
           so this deliberately overrides it - and only in development. */}
       {import.meta.env.DEV && onSkipPart && (
-        <button
+        <Button
           type="button"
+          variant="secondary"
           className="test-runner-dev-exit"
           onClick={onSkipPart}
           disabled={partIndex >= attempt.parts.length - 1}
         >
           {t.devSkipPart}
-        </button>
+        </Button>
       )}
       {import.meta.env.DEV && isImmersiveAttempt && fullscreenActive && (
-        <button type="button" className="test-runner-dev-exit" onClick={onExitDeveloperFullscreen}>
+        <Button type="button" variant="secondary" className="test-runner-dev-exit" onClick={onExitDeveloperFullscreen}>
           {t.devExitFullscreen}
-        </button>
+        </Button>
       )}
     </>
   );
@@ -143,8 +145,9 @@ export function TestRunnerHeader({
           </div>
         )}
         <div className="test-runner-header-navigation" aria-label={t.partNavigationAriaLabel}>
-          <button
+          <Button
             type="button"
+            variant="secondary"
             className="secondary-button"
             disabled={previousTarget === null || isNavigationLocked}
             onClick={() => {
@@ -153,8 +156,8 @@ export function TestRunnerHeader({
             title={isNavigationLocked ? t.navigationLocked : undefined}
           >
             {t.previous}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             disabled={isNavigationLocked || submitting}
             onClick={() => {
@@ -167,7 +170,7 @@ export function TestRunnerHeader({
             title={isNavigationLocked ? t.navigationLocked : undefined}
           >
             {submitting ? strings.footer.submitting : isFinalSegment ? strings.footer.submitTest : t.next}
-          </button>
+          </Button>
         </div>
         {developerTools}
       </div>

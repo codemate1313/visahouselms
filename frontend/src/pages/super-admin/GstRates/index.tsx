@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Button, DataTableCard, Modal, PageHeader, SearchableSelect } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 import { Icon } from "@/components/icons";
 import { gstRatesStrings as strings } from "./GstRates.strings";
@@ -186,15 +187,16 @@ export function GstRates() {
                       </span>
                     </td>
                     <td>
-                      <button
+                      <Button
                         type="button"
+                        variant="text"
                         onClick={() => handleToggleActive(rate)}
                         className="ui-text-action"
                       >
                         <span className={`ui-chip ${rate.is_active ? "ui-chip-success" : ""}`}>
                           {rate.is_active ? "● Active" : "○ Inactive"}
                         </span>
-                      </button>
+                      </Button>
                     </td>
                     <td>
                       {rate.is_default && (
@@ -203,24 +205,20 @@ export function GstRates() {
                     </td>
                     <td className="table-actions">
                       <div className="ui-consistency-actions">
-                        <button
-                          type="button"
+                        <IconButton
                           className="action-btn-icon action-edit"
                           onClick={() => openEditModal(rate)}
                           data-tooltip={strings.editBtn}
-                          aria-label={`${strings.editBtn} ${rate.name}`}
-                        >
-                          <Icon name="edit" />
-                        </button>
-                        <button
-                          type="button"
+                          label={`${strings.editBtn} ${rate.name}`}
+                          icon={<Icon name="edit" />}
+                        />
+                        <IconButton
                           className="action-btn-icon action-delete"
                           onClick={() => handleDelete(rate)}
                           data-tooltip={strings.deleteBtn}
-                          aria-label={`${strings.deleteBtn} ${rate.name}`}
-                        >
-                          <Icon name="trash" />
-                        </button>
+                          label={`${strings.deleteBtn} ${rate.name}`}
+                          icon={<Icon name="trash" />}
+                        />
                       </div>
                     </td>
                   </tr>

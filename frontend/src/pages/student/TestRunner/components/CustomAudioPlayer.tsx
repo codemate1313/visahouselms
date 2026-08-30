@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import "./CustomAudioPlayer.css";
 
 interface CustomAudioPlayerProps {
@@ -127,25 +128,25 @@ export function CustomAudioPlayer({
 
       <div className="custom-audio-player-controls">
         {/* Play/Pause Button */}
-        <button
-          type="button"
+        <IconButton
           className="custom-audio-play-btn"
           onClick={togglePlay}
-          aria-label={isPlaying ? "Pause audio" : "Play audio"}
-        >
-          {isPlaying ? (
-            // Pause Icon
-            <svg viewBox="0 0 24 24" className="custom-audio-icon-pause" fill="currentColor">
-              <rect x="6" y="5" width="4" height="14" rx="1" />
-              <rect x="14" y="5" width="4" height="14" rx="1" />
-            </svg>
-          ) : (
-            // Play Icon
-            <svg viewBox="0 0 24 24" className="custom-audio-icon-play" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          )}
-        </button>
+          label={isPlaying ? "Pause audio" : "Play audio"}
+          icon={
+            isPlaying ? (
+              // Pause Icon
+              <svg viewBox="0 0 24 24" className="custom-audio-icon-pause" fill="currentColor">
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+              </svg>
+            ) : (
+              // Play Icon
+              <svg viewBox="0 0 24 24" className="custom-audio-icon-play" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )
+          }
+        />
 
         {/* Volume Controls */}
         <div className="custom-audio-volume-section">

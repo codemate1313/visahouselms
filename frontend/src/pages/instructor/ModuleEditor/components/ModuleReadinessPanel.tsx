@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 import type { ExamModule, ExamModulePart } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
@@ -72,8 +73,9 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
   return (
     <div className="vh-readiness-popover-container" ref={containerRef}>
       {/* Header Pill Trigger Button */}
-      <button
+      <Button
         type="button"
+        variant="ghost"
         className={`vh-readiness-header-pill ${isReady ? "is-ready" : "needs-work"} ${isOpen ? "is-open" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
         title={isReady ? "Click to publish or view status" : "Click to view pending checklist"}
@@ -81,7 +83,7 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
         <span className="vh-status-dot" />
         <span className="vh-pill-label">{isReady ? t.ready : `${errors.length} Action Items`}</span>
         <Icon name="chevronDown" />
-      </button>
+      </Button>
 
       {/* Popover Dropdown Menu */}
       {isOpen && (
@@ -137,8 +139,9 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
           {/* Status Action Buttons */}
           <div className="vh-popover-actions">
             {module.status === "draft" && (
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 className={`vh-publish-btn ${isReady ? "is-active" : "is-disabled"}`}
                 onClick={() => {
                   if (isReady) {
@@ -150,13 +153,14 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
               >
                 <span>{t.publish}</span>
                 <Icon name="arrowRight" />
-              </button>
+              </Button>
             )}
 
             {module.status === "published" && (
               <div className="vh-actions-dual">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   className="vh-btn-secondary"
                   onClick={() => {
                     onChangeStatus("draft");
@@ -165,9 +169,10 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
                   disabled={busy}
                 >
                   {t.returnToDraft}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="danger"
                   className="vh-btn-danger"
                   onClick={() => {
                     onChangeStatus("archived");
@@ -176,13 +181,14 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
                   disabled={busy}
                 >
                   {t.archive}
-                </button>
+                </Button>
               </div>
             )}
 
             {module.status === "archived" && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="vh-btn-secondary"
                 onClick={() => {
                   onChangeStatus("draft");
@@ -191,7 +197,7 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
                 disabled={busy}
               >
                 {t.restoreAsDraft}
-              </button>
+              </Button>
             )}
           </div>
         </div>

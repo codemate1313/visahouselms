@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { Button } from "@/components/ui/Button/Button";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -130,12 +131,12 @@ export function SmtpTab() {
         {error && <p className="error-text">{error}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={busy}>{t.saveLabel}</button>
+          <Button type="submit" disabled={busy}>{t.saveLabel}</Button>
         </div>
 
         <div className="test-row">
           <input placeholder={t.testToPlaceholder} value={testTo} onChange={(e) => setTestTo(e.target.value)} />
-          <button type="button" disabled={busy || !testTo} onClick={sendTest}>{t.sendTestLabel}</button>
+          <Button type="button" variant="secondary" disabled={busy || !testTo} onClick={sendTest}>{t.sendTestLabel}</Button>
         </div>
       </CollapsiblePanel>
     </form>

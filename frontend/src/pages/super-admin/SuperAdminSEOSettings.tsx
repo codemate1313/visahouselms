@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { seoSettingsStrings as strings } from "./SuperAdminSEOSettings.strings";
 import { Icon } from "@/components/icons";
 
@@ -211,9 +212,9 @@ export function SuperAdminSEOSettings() {
 
         {/* Form Actions */}
         <div className="form-actions" style={{ justifyContent: "flex-end", marginTop: 24, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
-          <button type="submit" className="button primary" disabled={saving}>
+          <Button type="submit" className="button primary" disabled={saving}>
             {saving ? strings.saveBusy : strings.saveLabel}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

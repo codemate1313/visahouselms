@@ -637,8 +637,9 @@ export function SupportCenter() {
                         </span>
                       </td>
                       <td className="table-actions institute-row-actions" style={{ textAlign: "center", padding: "12px 4px" }}>
-                        <button
+                        <Button
                           type="button"
+                          variant="text"
                           className="action-btn-icon"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -648,7 +649,7 @@ export function SupportCenter() {
                         >
                           <Icon name="eye" />
                           <span>Chat</span>
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -1039,8 +1040,9 @@ export function SupportCenter() {
                         Close Ticket
                       </Button>
                     )}
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       className="support-chat-attach-btn"
                       title="Attach files (images, PDF, Word, Excel — max 5, 10MB each)"
                       onClick={() => fileInputRef.current?.click()}
@@ -1067,7 +1069,7 @@ export function SupportCenter() {
                           {attachedFiles.length}
                         </span>
                       )}
-                    </button>
+                    </Button>
                   </div>
                   <Button
                     type="submit"

@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { SearchableSelect } from "@/components/ui";
+import { Button, SearchableSelect } from "@/components/ui";
 import { allocationSummaryLine, type InstituteAllocation } from "@/pages/super-admin/InstituteForm/types";
 import { paymentsStrings as strings } from "../Payments.strings";
 import type { InstituteRow, MethodRow } from "../types";
@@ -119,9 +119,9 @@ export function RecordPaymentForm({
       {error && <p className="error-text" style={{ marginTop: 12 }}>{error}</p>}
 
       <div className="form-actions" style={{ marginTop: 20 }}>
-        <button type="submit" className="primary-submit-btn" disabled={saving || submitDisabled}>
+        <Button type="submit" className="primary-submit-btn" disabled={saving || submitDisabled} loading={saving}>
           {saving ? t.recording : t.submit}
-        </button>
+        </Button>
       </div>
     </form>
   );

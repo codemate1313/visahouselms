@@ -221,11 +221,12 @@ export function Register() {
 
             {error && <div className="concise-error-box">{error}</div>}
 
-            <button type="submit" className="concise-submit-btn" disabled={loading}>
+            <Button type="submit" className="concise-submit-btn" disabled={loading}>
               {loading ? strings.submitBusy : strings.submitLabel}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
               className="google-login-btn"
               disabled={loading || googleLoading}
               onClick={handleGoogleSignup}
@@ -234,7 +235,7 @@ export function Register() {
                 <GoogleIcon />
               </span>
               {googleLoading ? strings.googleSignupBusy : strings.googleSignupLabel}
-            </button>
+            </Button>
           </form>
 
           <div className="login-footer-links text-center">

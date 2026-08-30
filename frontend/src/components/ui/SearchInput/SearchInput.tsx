@@ -1,6 +1,7 @@
 import type { InputHTMLAttributes } from "react";
 import "./SearchInput.css";
 import { Icon } from "@/components/icons";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { commonActions } from "@/content/common.strings";
 
 export interface SearchInputProps
@@ -57,14 +58,12 @@ export function SearchInput({
         {...rest}
       />
       {value && (
-        <button
-          type="button"
+        <IconButton
           className="ui-search-input-clear"
           onClick={() => onChange("")}
-          aria-label={commonActions.clearSearch}
-        >
-          <Icon name="cross" />
-        </button>
+          label={commonActions.clearSearch}
+          icon={<Icon name="cross" />}
+        />
       )}
     </div>
   );

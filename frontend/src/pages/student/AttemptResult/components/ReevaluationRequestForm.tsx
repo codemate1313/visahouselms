@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { Modal, RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 
 interface ReevaluationRequestModalProps {
@@ -36,17 +37,17 @@ export function ReevaluationRequestModal({
       }
       actions={
         <div className="result-modal-actions-bar">
-          <button type="button" className="ui-btn ui-btn-secondary" onClick={onClose} disabled={requesting}>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={requesting}>
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="ui-btn ui-btn-primary"
+            variant="primary"
             onClick={onSubmit}
             disabled={requesting || reviewReason.trim().length === 0}
           >
             {requesting ? t.sending : t.submit}
-          </button>
+          </Button>
         </div>
       }
     >

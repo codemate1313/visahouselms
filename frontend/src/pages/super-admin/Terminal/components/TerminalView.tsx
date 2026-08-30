@@ -1,5 +1,6 @@
 import type { RefObject } from "react";
 import { confirmAction } from "@/components/confirmDialog";
+import { Button } from "@/components/ui/Button/Button";
 import { terminalStrings as strings } from "../Terminal.strings";
 import type { Preset } from "../types";
 
@@ -27,8 +28,9 @@ export function TerminalView({ presets, running, onRunPreset, containerRef }: Te
       <div className="terminal-layout">
         <div className="preset-palette">
           {presets.map((preset) => (
-            <button
+            <Button
               key={preset.name}
+              variant="secondary"
               className="preset-btn"
               disabled={running}
               onClick={() => void handleRunPreset(preset)}
@@ -36,7 +38,7 @@ export function TerminalView({ presets, running, onRunPreset, containerRef }: Te
             >
               <span className="preset-btn-label">{preset.label}</span>
               {preset.description && <span className="preset-btn-desc">{preset.description}</span>}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="terminal-frame" ref={containerRef} />

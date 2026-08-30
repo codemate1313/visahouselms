@@ -87,9 +87,9 @@ export function CreatedInstituteModal({ created, copied, onCopyPassword, onDone 
           <Button variant="secondary" size="sm" onClick={onCopyPassword}>
             {copied ? t.copied : t.copyPassword}
           </Button>
-          <button type="button" className="primary-submit-btn" onClick={onDone} style={{ padding: "8px 20px", fontSize: 13 }}>
+          <Button type="button" className="primary-submit-btn" onClick={onDone} style={{ padding: "8px 20px", fontSize: 13 }}>
             {t.done}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

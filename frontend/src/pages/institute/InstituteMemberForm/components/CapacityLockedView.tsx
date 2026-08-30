@@ -1,5 +1,6 @@
 import { instituteMemberFormStrings as strings } from "../InstituteMemberForm.strings";
 import { LinkButton } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 
 const SUPER_ADMIN_CONTACT_EMAIL = "support@languagecertpro.com";
 
@@ -43,7 +44,7 @@ export function CapacityLockedView({ label, isStudent, limitIsZero, error, onBac
             >
               {t.contactCta}
             </LinkButton>
-            <button type="button" className="secondary-action" onClick={onBack}>{strings.actions.back}</button>
+            <Button type="button" variant="secondary" className="secondary-action" onClick={onBack}>{strings.actions.back}</Button>
           </div>
           <p className="hint">{t.emailPrefix} {SUPER_ADMIN_CONTACT_EMAIL}</p>
         </div>

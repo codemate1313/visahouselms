@@ -1043,7 +1043,7 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
                 submitted the form on the way into the last step and skipped
                 it. Separate nodes, explicit handlers, no default action. */}
             {currentTabIndex < TAB_KEYS.length - 1 ? (
-              <button
+              <Button
                 key="next-step"
                 type="button"
                 className="primary-submit-btn"
@@ -1051,18 +1051,19 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
                 style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 {strings.wizard.nextStep} <Icon name="arrowRight" />
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 key="save"
                 type="button"
                 disabled={saving}
+                loading={saving}
                 className="primary-submit-btn"
                 onClick={() => void save()}
                 style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 {saving ? strings.saving : isNew ? strings.wizard.createInstitute : strings.save}
-              </button>
+              </Button>
             )}
           </div>
         </div>

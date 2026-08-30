@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 import { PUBLIC_FOOTER_COLUMNS, SOCIAL_ICON_NAMES, SOCIAL_LABELS } from "./navConfig";
 import { useFooterParallax } from "./useFooterParallax";
 import "@/styles/public/chrome.css";
@@ -78,30 +79,32 @@ export function PublicFooter({ socialLinks = [] }: { socialLinks?: PublicSocialL
             </div>
             {col.title === "Partnerships" && (
               <div className="vh-footer-back-to-top-wrap">
-                <button
+                <Button
                   type="button"
                   className="vh-footer-back-to-top"
                   onClick={scrollToTop}
                   aria-label="Back to top"
                   title="Scroll to top"
+                  leftIcon={
+                    <svg
+                      className="vh-footer-back-to-top-icon"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <polyline points="18 15 12 9 6 15" />
+                      <polyline points="18 9 12 3 6 9" />
+                    </svg>
+                  }
                 >
-                  <svg
-                    className="vh-footer-back-to-top-icon"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <polyline points="18 15 12 9 6 15" />
-                    <polyline points="18 9 12 3 6 9" />
-                  </svg>
-                  <span>BACK TO TOP</span>
-                </button>
+                  BACK TO TOP
+                </Button>
               </div>
             )}
           </div>

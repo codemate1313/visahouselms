@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
-import { SearchableSelect } from "@/components/ui";
+import { Button, SearchableSelect } from "@/components/ui";
 import { moduleControlDetailStrings as strings } from "../ModuleControlDetail.strings";
 import type { Institute, ManagedModule } from "../types";
 
@@ -30,9 +30,9 @@ export function AssignInstitutePanel({ module, available, selected, onSelectedCh
             disabled={busy}
             emptyMessage={t.emptyMessage}
           />
-          <button type="submit" className="grant-access-btn" disabled={busy || !selected}>
+          <Button type="submit" className="grant-access-btn" disabled={busy || !selected} loading={busy}>
             {busy ? t.granting : t.grantAccess}
-          </button>
+          </Button>
         </form>
       )}
     </CollapsiblePanel>

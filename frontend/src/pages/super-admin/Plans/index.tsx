@@ -3,7 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
-import { SegmentedControl } from "@/components/ui";
+import { Button, SegmentedControl } from "@/components/ui";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
 import { confirmExport } from "@/utils/confirmExport";
@@ -243,15 +243,15 @@ export function Plans() {
           <PlansTable plans={pagedPlans} basePath={catalogue.basePath} emptyMessage={catalogue.empty} onToggleActive={toggleActive} onTogglePopular={handleTogglePopular} onView={setViewingPlan} onRequestDelete={setDeletingPlan} />
           {totalPages > 1 && (
             <div className="pagination">
-              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 <Icon name="arrowLeft" /> Previous
-              </button>
+              </Button>
               <span>
                 Page {page} of {totalPages} ({filteredPlans.length} total)
               </span>
-              <button type="button" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+              <Button type="button" variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
                 Next <Icon name="arrowRight" />
-              </button>
+              </Button>
             </div>
           )}
         </>

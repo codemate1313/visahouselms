@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import type { TargetInstituteOption, TargetStudentOption } from "@/api/types";
 import { RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { platformNotificationsStrings as strings } from "../PlatformNotifications.strings";
 import type { NotificationStatus } from "../types";
 import { AudienceCardGrid } from "./AudienceCardGrid";
@@ -179,9 +180,9 @@ export function PublisherForm({
           </label>
         </div>
 
-        <button type="submit" className="pn-submit-btn" disabled={busy}>
+        <Button type="submit" className="pn-submit-btn" disabled={busy}>
           {submitLabel}
-        </button>
+        </Button>
       </form>
     </div>
   );

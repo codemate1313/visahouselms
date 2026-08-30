@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Badge, Checkbox } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { Icon } from "@/components/icons";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
@@ -300,23 +301,25 @@ export function PaymentGatewaysTab() {
               <strong>Webhook Callback URL:</strong> <code className="ui-code-info">{razorpayWebhookUrl}</code>
             </span>
             <div style={{ display: "flex", gap: "8px" }}>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="btn-secondary"
                 onClick={() => testConnection("razorpay")}
                 disabled={connectionStatus.razorpay === "testing"}
-                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface-muted)", border: "1px solid var(--border)" }}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
               >
                 {connectionStatus.razorpay === "testing" ? "Testing..." : "Test Connection"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 className="btn-secondary"
                 onClick={() => handleCopy(razorpayWebhookUrl, "razorpay")}
                 style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
               >
                 {copiedKey === "razorpay" ? "Copied!" : "Copy URL"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -425,23 +428,25 @@ export function PaymentGatewaysTab() {
               <strong>Webhook Callback URL:</strong> <code className="ui-code-info">{stripeWebhookUrl}</code>
             </span>
             <div style={{ display: "flex", gap: "8px" }}>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="btn-secondary"
                 onClick={() => testConnection("stripe")}
                 disabled={connectionStatus.stripe === "testing"}
-                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem", background: "var(--surface-muted)", border: "1px solid var(--border)" }}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
               >
                 {connectionStatus.stripe === "testing" ? "Testing..." : "Test Connection"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
                 className="btn-secondary"
                 onClick={() => handleCopy(stripeWebhookUrl, "stripe")}
                 style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
               >
                 {copiedKey === "stripe" ? "Copied!" : "Copy URL"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -450,10 +455,9 @@ export function PaymentGatewaysTab() {
         {notice && <p className="success-text">{notice}</p>}
 
         <div className="form-actions" style={{ marginTop: "1.25rem" }}>
-          <button type="submit" disabled={busy} className="btn-primary">
-            <Icon name="check" style={{ fontSize: "16px" }} />
+          <Button type="submit" disabled={busy} className="btn-primary" leftIcon={<Icon name="check" style={{ fontSize: "16px" }} />}>
             {busy ? "Saving Settings..." : t.saveBtn}
-          </button>
+          </Button>
         </div>
       </CollapsiblePanel>
     </form>

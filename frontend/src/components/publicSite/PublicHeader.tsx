@@ -5,6 +5,8 @@ import { useThemeStore } from "@/store/themeStore";
 import { destinationFor } from "@/pages/Login/helpers";
 import { PUBLIC_NAV_ITEMS } from "./navConfig";
 import { useMobileDrawer } from "./useMobileDrawer";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import "@/styles/public/chrome.css";
 
 function ThemeIcon({ dark }: { dark: boolean }) {
@@ -130,20 +132,29 @@ export function PublicHeader() {
         </nav>
 
         <div className="vh-header-actions">
-          <button type="button" className="vh-theme-toggle" title={`Theme: ${dark ? "Dark" : "Light"}`} onClick={toggleTheme}>
-            <ThemeIcon dark={dark} />
-          </button>
-          <button type="button" className="vh-desktop-auth" onClick={goAuth}>
+          <IconButton
+            className="vh-theme-toggle"
+            label={`Theme: ${dark ? "Dark" : "Light"}`}
+            onClick={toggleTheme}
+            icon={<ThemeIcon dark={dark} />}
+          />
+          <Button type="button" className="vh-desktop-auth" onClick={goAuth} rightIcon={<ArrowRightIcon />}>
             {authLabel}
-            <ArrowRightIcon />
-          </button>
-          <button type="button" className="vh-mobile-toggle" onClick={toggle} aria-label="Toggle navigation" aria-controls="vh-mobile-nav" aria-expanded={open}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <line ref={line1Ref} x1={3} y1={6} x2={21} y2={6} />
-              <line ref={line2Ref} x1={3} y1={12} x2={21} y2={12} />
-              <line ref={line3Ref} x1={3} y1={18} x2={21} y2={18} />
-            </svg>
-          </button>
+          </Button>
+          <IconButton
+            className="vh-mobile-toggle"
+            onClick={toggle}
+            label="Toggle navigation"
+            aria-controls="vh-mobile-nav"
+            aria-expanded={open}
+            icon={
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <line ref={line1Ref} x1={3} y1={6} x2={21} y2={6} />
+                <line ref={line2Ref} x1={3} y1={12} x2={21} y2={12} />
+                <line ref={line3Ref} x1={3} y1={18} x2={21} y2={18} />
+              </svg>
+            }
+          />
         </div>
       </div>
 
@@ -161,9 +172,9 @@ export function PublicHeader() {
           </nav>
           <hr className="vh-drawer-divider vh-drawer-item" />
           <div className="vh-drawer-cta vh-drawer-item">
-            <button type="button" className="vh-drawer-btn vh-drawer-btn-solid" onClick={goAuth}>
+            <Button type="button" className="vh-drawer-btn vh-drawer-btn-solid" onClick={goAuth}>
               {authLabel}
-            </button>
+            </Button>
           </div>
           <p className="vh-drawer-foot vh-drawer-item">LanguageCert mock tests, progress analytics &amp; expert feedback.</p>
         </div>

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { getOriginalToken, useImpersonationStore } from "@/store/impersonationStore";
+import { Button } from "@/components/ui/Button/Button";
 import "./ImpersonationBanner.css";
 
 /**
@@ -44,9 +45,9 @@ export function ImpersonationBanner() {
         Viewing as <strong>{target.name}</strong> ({target.email}) — read-only.
         <span className="impersonation-banner-note"> Refreshing this page will end impersonation.</span>
       </span>
-      <button type="button" className="impersonation-banner-exit" onClick={exit}>
+      <Button type="button" variant="secondary" className="impersonation-banner-exit" onClick={exit}>
         Exit
-      </button>
+      </Button>
     </div>
   );
 }

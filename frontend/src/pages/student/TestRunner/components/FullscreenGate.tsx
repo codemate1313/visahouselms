@@ -1,5 +1,6 @@
 import { formatTime } from "../helpers";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { Button } from "@/components/ui/Button/Button";
 
 interface FullscreenGateProps {
   isFinal: boolean;
@@ -31,9 +32,9 @@ export function FullscreenGate({ isFinal, secondsLeft, onEnterFullscreen, timerV
         {securityError && (
           <p className="test-runner-gate-error" role="alert">{securityError}</p>
         )}
-        <button type="button" onClick={onEnterFullscreen}>
+        <Button type="button" onClick={onEnterFullscreen}>
           {t.enterFullscreen}
-        </button>
+        </Button>
       </section>
     </div>
   );

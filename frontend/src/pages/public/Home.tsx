@@ -14,6 +14,7 @@ import { useThemeStore } from "@/store/themeStore";
 import { useSEO } from "@/hooks/useSEO";
 import { useHeroSlides } from "@/hooks/useHeroSlides";
 import { API_BASE_URL } from "@/api/client";
+import { Button } from "@/components/ui/Button/Button";
 import { useContactSettings } from "./useContactSettings";
 import { EVERYTHING_CARDS, HERO_SLIDES, STEP_CARDS, type TestimonialCard } from "./Home.data";
 import { ModuleIcon, ModulePreview, StepCardVisualPreview } from "./Home.previews";
@@ -711,13 +712,13 @@ export function Home() {
               <p className="vh-hero-desc">{activeSlide.subtitle}</p>
               <div className="vh-hero-actions">
                 {activeSlide.cta_text && activeSlide.cta_link && (
-                  <button type="button" className="vh-hero-cta-solid" onClick={() => handleHeroCta(activeSlide.cta_link!)}>
+                  <Button type="button" className="vh-hero-cta-solid" onClick={() => handleHeroCta(activeSlide.cta_link!)}>
                     {activeSlide.cta_text}
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14" />
                       <path d="m13 6 6 6-6 6" />
                     </svg>
-                  </button>
+                  </Button>
                 )}
                 {activeSlide.alt_text && activeSlide.alt_link && (
                   activeSlide.alt_link.startsWith("#") ? (

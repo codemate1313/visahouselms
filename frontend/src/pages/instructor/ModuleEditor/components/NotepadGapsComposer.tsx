@@ -206,7 +206,7 @@ export function NotepadGapsComposer({ part, isEditable, busy, onSubmit, onDelete
       {isEditing && isEditable && (
         <div className="vh-passage-blank-toolbar" style={{ marginTop: "12px", marginBottom: "14px" }}>
           <div className="vh-passage-blank-main-actions">
-            <button
+            <Button
               type="button"
               className="vh-insert-blank-btn"
               onClick={() => insertBlank(nextGapNumber)}
@@ -214,7 +214,7 @@ export function NotepadGapsComposer({ part, isEditable, busy, onSubmit, onDelete
             >
               <Icon name="plus" className="vh-btn-icon" style={{ width: "15px", height: "15px", strokeWidth: 2.5 }} />
               <span>Insert Gap {nextGapNumber <= expectedBlanks ? `(${nextGapNumber})` : ""}</span>
-            </button>
+            </Button>
             <span className="vh-passage-blank-hint">
               Position cursor in the notepad and click <strong>Insert Gap</strong> (or click a gap pill below)
             </span>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/Button/Button";
 import "@/styles/public/chrome.css";
 
 export interface PublicCtaAction {
@@ -16,10 +17,18 @@ function CtaButton({ action, className }: { action: PublicCtaAction; className: 
       </Link>
     );
   }
+  const isOutline = className.includes("outline");
   return (
-    <button type="button" className={className} onClick={action.onClick}>
+    <Button
+      type="button"
+      variant={isOutline ? "secondary" : "primary"}
+      className={className}
+      onClick={action.onClick}
+      data-force-color=""
+      style={{ ["--ui-btn-color" as string]: isOutline ? "#fff" : "var(--ac)" }}
+    >
       {action.label}
-    </button>
+    </Button>
   );
 }
 

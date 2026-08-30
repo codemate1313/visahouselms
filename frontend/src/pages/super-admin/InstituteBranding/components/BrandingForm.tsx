@@ -1,5 +1,5 @@
 import type { ChangeEvent } from "react";
-import { SearchableSelect } from "@/components/ui";
+import { Button, SearchableSelect } from "@/components/ui";
 import { instituteBrandingStrings as strings } from "../InstituteBranding.strings";
 import { FONT_OPTIONS, FONT_WEIGHTS } from "../types";
 
@@ -124,9 +124,9 @@ export function BrandingForm({
       {notice && <p className="success-text">{notice}</p>}
 
       <div className="form-actions">
-        <button onClick={onSave} disabled={saving}>
+        <Button onClick={onSave} disabled={saving} loading={saving}>
           {saving ? t.saving : t.saveBranding}
-        </button>
+        </Button>
       </div>
     </div>
   );

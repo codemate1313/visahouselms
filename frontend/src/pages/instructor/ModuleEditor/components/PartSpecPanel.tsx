@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { RichTextEditor } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
 interface PartSpecPanelProps {
@@ -123,26 +125,24 @@ export function PartSpecPanel({
                 if (event.key === "Escape") cancelTitle();
               }}
             />
-            <button type="button" className="button primary" disabled={busy || !partTitle.trim()} onClick={saveTitle}>
+            <Button type="button" variant="primary" className="button primary" disabled={busy || !partTitle.trim()} onClick={saveTitle}>
               Save
-            </button>
-            <button type="button" className="secondary-button" disabled={busy} onClick={cancelTitle}>
+            </Button>
+            <Button type="button" variant="secondary" className="secondary-button" disabled={busy} onClick={cancelTitle}>
               Cancel
-            </button>
+            </Button>
           </div>
         ) : (
           <>
             <h3 className="vh-unified-part-title" title={part.title}>{part.title}</h3>
             {isEditable && (
-              <button
-                type="button"
+              <IconButton
                 className="vh-title-edit-btn"
                 onClick={() => setIsEditingTitle(true)}
-                aria-label="Rename section heading"
+                label="Rename section heading"
                 title="Rename section heading"
-              >
-                <Icon name="edit" />
-              </button>
+                icon={<Icon name="edit" />}
+              />
             )}
           </>
         )}
@@ -200,18 +200,20 @@ export function PartSpecPanel({
                 </p>
               )}
               <div className="vh-part-instructions-actions" style={{ marginTop: "6px" }}>
-                <button
+                <Button
                   type="button"
+                  variant="primary"
                   disabled={busy || (isMandatoryInstruction && !instructionsDraft.trim())}
                   onClick={saveInstructions}
                   title={isMandatoryInstruction && !instructionsDraft.trim() ? "A heading is required for this part" : undefined}
                 >
                   {instructionsSaveLabel}
-                </button>
+                </Button>
                 {/* Hide cancel for mandatory parts that have no saved heading yet */}
                 {(!isMandatoryInstruction || Boolean(savedInstruction)) && (
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     className="secondary-button"
                     onClick={() => {
                       setInstructionsDraft(effectiveInstruction);
@@ -219,7 +221,7 @@ export function PartSpecPanel({
                     }}
                   >
                     {t.instructionsCancel}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -229,9 +231,9 @@ export function PartSpecPanel({
                 {effectiveInstruction || t.instructionsEmpty}
               </p>
               {isEditable && (
-                <button type="button" className="secondary-button" onClick={() => setIsEditingInstructions(true)}>
+                <Button type="button" variant="secondary" className="secondary-button" onClick={() => setIsEditingInstructions(true)}>
                   {instructionsEditLabel}
-                </button>
+                </Button>
               )}
             </>
           )}

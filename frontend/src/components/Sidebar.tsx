@@ -3,6 +3,8 @@ import { lockBodyScroll } from "@/utils/scrollLock";
 import { createPortal } from "react-dom";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Icon, type IconName } from "./icons";
+import { Button } from "./ui/Button/Button";
+import { IconButton } from "./ui/IconButton/IconButton";
 
 export interface SubMenuItem {
   key: string;
@@ -266,25 +268,25 @@ export function Sidebar({
   return (
     <>
       {isMobileScreen && (
-        <button
-          type="button"
+        <IconButton
           className="mobile-sidebar-toggle-btn"
           onClick={() => setIsOpenOnMobile((prev) => !prev)}
-          aria-label="Toggle Navigation Menu"
-        >
-          {isOpenOnMobile ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          )}
-        </button>
+          label="Toggle Navigation Menu"
+          icon={
+            isOpenOnMobile ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )
+          }
+        />
       )}
 
       {isMobileScreen && isOpenOnMobile && (
@@ -309,19 +311,19 @@ export function Sidebar({
           {brandSubtitle && <span className="sidebar-brand-subtitle">{brandSubtitle}</span>}
         </div>
         {onToggleCollapse && !isMobileScreen && (
-          <button
-            type="button"
+          <IconButton
             className="sidebar-collapse-btn"
             onClick={onToggleCollapse}
             onMouseEnter={(e) => handleMouseEnterTooltip(e, isCollapsed ? "Expand Sidebar" : "Collapse Sidebar")}
             onMouseLeave={handleMouseLeaveTooltip}
-            aria-label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            <Icon
-              name="chevronDown"
-              className={`collapse-chevron ${isCollapsed ? "rotated" : ""}`}
-            />
-          </button>
+            label={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            icon={
+              <Icon
+                name="chevronDown"
+                className={`collapse-chevron ${isCollapsed ? "rotated" : ""}`}
+              />
+            }
+          />
         )}
       </div>
 
@@ -590,15 +592,17 @@ export function Sidebar({
               Are you sure you want to log out of your account? You will need to sign back in to access your portal.
             </p>
             <div className="logout-modal-actions">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 className="logout-modal-btn cancel-btn"
                 onClick={() => setShowLogoutModal(false)}
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="danger"
                 className="logout-modal-btn confirm-btn"
                 onClick={() => {
                   setShowLogoutModal(false);
@@ -606,7 +610,7 @@ export function Sidebar({
                 }}
               >
                 Yes, Logout
-              </button>
+              </Button>
             </div>
           </div>
         </div>,

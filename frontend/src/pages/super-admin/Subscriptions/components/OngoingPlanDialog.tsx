@@ -1,5 +1,6 @@
 import { Icon } from "@/components/icons";
 import { Modal } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { formatDate } from "@/utils/date";
 import "./OngoingPlanDialog.css";
@@ -38,29 +39,29 @@ export function OngoingPlanDialog({
       <p className="ongoing-plan-dialog-summary">{t.summary(planName, expiryDate)}</p>
 
       <div className="ongoing-plan-options">
-        <button type="button" className="ongoing-plan-option" disabled={busy} onClick={() => choose(onEdit)}>
+        <Button type="button" variant="secondary" className="ongoing-plan-option" disabled={busy} onClick={() => choose(onEdit)}>
           <span className="ongoing-plan-option-icon" aria-hidden="true"><Icon name="edit" /></span>
           <span>
             <strong>{t.editTitle}</strong>
             <small>{t.editDescription}</small>
           </span>
-        </button>
+        </Button>
 
-        <button type="button" className="ongoing-plan-option" disabled={busy} onClick={() => choose(onRenew)}>
+        <Button type="button" variant="secondary" className="ongoing-plan-option" disabled={busy} onClick={() => choose(onRenew)}>
           <span className="ongoing-plan-option-icon" aria-hidden="true"><Icon name="subscription" /></span>
           <span>
             <strong>{t.renewTitle}</strong>
             <small>{t.renewDescription(expiryDate)}</small>
           </span>
-        </button>
+        </Button>
 
-        <button type="button" className="ongoing-plan-option is-danger" disabled={busy} onClick={() => choose(onCancel)}>
+        <Button type="button" variant="danger" className="ongoing-plan-option is-danger" disabled={busy} onClick={() => choose(onCancel)}>
           <span className="ongoing-plan-option-icon" aria-hidden="true"><Icon name="trash" /></span>
           <span>
             <strong>{t.cancelTitle}</strong>
             <small>{t.cancelDescription}</small>
           </span>
-        </button>
+        </Button>
       </div>
     </Modal>
   );

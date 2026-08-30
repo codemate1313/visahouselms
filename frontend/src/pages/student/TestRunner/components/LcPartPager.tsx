@@ -1,4 +1,5 @@
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { Button } from "@/components/ui/Button/Button";
 
 interface LcPartPagerProps {
   partIndex: number;
@@ -33,17 +34,18 @@ export function LcPartPager({
   return (
     <div className="lc-pager" aria-label={t.partNavigationAriaLabel}>
       {hasPrevious && (
-        <button
+        <Button
           type="button"
+          variant="secondary"
           className="lc-pager-button"
           disabled={isNavigationLocked}
           onClick={() => onSelectPart(partIndex - 1)}
           title={isNavigationLocked ? t.navigationLocked : undefined}
         >
           {t.previous}
-        </button>
+        </Button>
       )}
-      <button
+      <Button
         type="button"
         className="lc-pager-button"
         disabled={isNavigationLocked || submitting}
@@ -57,7 +59,7 @@ export function LcPartPager({
         title={isNavigationLocked ? t.navigationLocked : undefined}
       >
         {submitting ? strings.footer.submitting : hasNext ? t.next : strings.footer.submitTest}
-      </button>
+      </Button>
     </div>
   );
 }

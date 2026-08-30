@@ -591,7 +591,7 @@ export function PreExamOnboarding({
                         : "Test your voice input to verify clear audio recording before launching."}
                     </p>
 
-                    <button
+                    <Button
                       type="button"
                       className={`onboarding-test-mic-btn ${micTesting ? "is-testing" : micTested ? "is-passed" : ""}`}
                       onClick={handleTestMic}
@@ -604,7 +604,7 @@ export function PreExamOnboarding({
                             ? "✓ Microphone Verified (Click to Re-Test)"
                             : "Run Voice Input Test"}
                       </span>
-                    </button>
+                    </Button>
 
                     {micTesting && (
                       <div className="mic-equalizer-visualizer">
@@ -627,15 +627,16 @@ export function PreExamOnboarding({
                         />
                         <p className="mic-audibility-question">Is your audio clearly audible to you?</p>
                         <div className="mic-audibility-actions">
-                          <button
+                          <Button
                             type="button"
                             className="mic-audibility-btn mic-audibility-yes"
                             onClick={() => setMicTested(true)}
                           >
                             ✓ Yes, it's clear
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="secondary"
                             className="mic-audibility-btn mic-audibility-no"
                             onClick={() => {
                               setMicAudibilityAsked(false);
@@ -645,7 +646,7 @@ export function PreExamOnboarding({
                             }}
                           >
                             ✗ No, re-test
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     )}

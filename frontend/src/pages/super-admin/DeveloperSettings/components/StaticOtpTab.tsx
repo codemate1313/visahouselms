@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { confirmAction } from "@/components/confirmDialog";
 import { Badge, Checkbox } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { Icon } from "@/components/icons";
 import { useToastStore } from "@/store/toastStore";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
@@ -191,9 +192,9 @@ export function StaticOtpTab() {
 
         {/* Save Button Row */}
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", paddingTop: "0.5rem" }}>
-          <button type="submit" className="btn-primary" disabled={saving} style={{ padding: "0.65rem 1.75rem", borderRadius: "10px" }}>
+          <Button type="submit" className="btn-primary" disabled={saving} style={{ padding: "0.65rem 1.75rem", borderRadius: "10px" }}>
             {saving ? "Saving Settings..." : strings.otp.saveLabel}
-          </button>
+          </Button>
         </div>
       </CollapsiblePanel>
     </form>

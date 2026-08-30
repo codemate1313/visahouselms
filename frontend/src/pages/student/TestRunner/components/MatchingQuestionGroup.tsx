@@ -2,6 +2,7 @@ import { useState, type DragEvent } from "react";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
 
 import { renderRichText } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 
 interface MatchingQuestionGroupProps {
   questions: AttemptQuestion[];
@@ -97,7 +98,7 @@ export function MatchingQuestionGroup({
                   ))}
                 </select>
               </label>
-              {pickedKey && <button type="button" onClick={() => assign(question.id, pickedKey)}>Place {pickedKey}</button>}
+              {pickedKey && <Button type="button" size="sm" onClick={() => assign(question.id, pickedKey)}>Place {pickedKey}</Button>}
               {savingIds.has(question.id) && <small>Saving...</small>}
             </div>
           );

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { InstructorAccount, InstructorAccountCreated } from "@/api/types";
-import { RequiredMark } from "@/components/ui";
+import { Button, RequiredMark } from "@/components/ui";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -199,12 +199,12 @@ export function InstructorForm({ basePath = "/super-admin" }: { basePath?: strin
         {error && <p className="error-text">{error}</p>}
 
         <div className="form-actions" style={{ marginTop: "20px" }}>
-          <button type="submit" disabled={saving || uploadingAvatar}>
+          <Button type="submit" disabled={saving || uploadingAvatar} loading={saving}>
             {saving ? strings.saving : isNew ? strings.createInstructor : strings.saveChanges}
-          </button>
-          <button type="button" onClick={() => navigate(`${basePath}/instructors`)}>
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => navigate(`${basePath}/instructors`)}>
             {strings.cancel}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

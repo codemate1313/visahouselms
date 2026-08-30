@@ -1,4 +1,5 @@
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { Button } from "@/components/ui/Button/Button";
 
 interface ViolationPolicyModalProps {
   count: number;
@@ -24,9 +25,9 @@ export function ViolationPolicyModal({
           {autoSubmitted ? t.violationFinalTitle : t.violationWarningTitle(count, limit)}
         </h2>
         <p>{autoSubmitted ? t.violationFinalBody : t.violationWarningBody}</p>
-        <button type="button" onClick={autoSubmitted ? onViewResult : onContinue}>
+        <Button type="button" onClick={autoSubmitted ? onViewResult : onContinue}>
           {autoSubmitted ? t.viewResult : t.continueTest}
-        </button>
+        </Button>
       </section>
     </div>
   );

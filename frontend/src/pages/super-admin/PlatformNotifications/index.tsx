@@ -4,6 +4,7 @@ import type { Announcement } from "@/api/types";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { Modal } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { normalizeSearch } from "./helpers";
 import { platformNotificationsStrings as strings } from "./PlatformNotifications.strings";
@@ -61,14 +62,14 @@ export function PlatformNotifications() {
 
   useEffect(() => {
     setTopBarAction(
-      <button
+      <Button
         type="button"
         className="portal-primary-action-btn"
         onClick={() => setIsPublisherOpen(true)}
       >
         <Icon name="notifications" />
         <span>New Notification</span>
-      </button>,
+      </Button>,
     );
     return () => setTopBarAction(null);
   }, [setTopBarAction]);

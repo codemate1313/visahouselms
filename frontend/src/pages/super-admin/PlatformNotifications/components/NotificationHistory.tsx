@@ -1,6 +1,7 @@
 import { Icon } from "@/components/icons";
 import type { Announcement } from "@/api/types";
 import { SegmentedControl } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { formatDate } from "../helpers";
 import { historyStatusTabs, platformNotificationsStrings as strings } from "../PlatformNotifications.strings";
 import type { HistoryStatusFilter } from "../types";
@@ -81,9 +82,13 @@ export function NotificationHistory({
                 <span className="pn-audience-tag">
                   {t.audiencePrefix}: {item.audience}
                 </span>
-                <button type="button" className="pn-delete-btn" onClick={() => onDelete(item.id)} title={t.deleteTitle}>
-                  <Icon name="trash" />
-                </button>
+                <IconButton
+                  className="pn-delete-btn"
+                  icon={<Icon name="trash" />}
+                  label={t.deleteTitle}
+                  variant="danger"
+                  onClick={() => onDelete(item.id)}
+                />
               </div>
             </article>
           ))

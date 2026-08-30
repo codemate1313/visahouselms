@@ -1,6 +1,7 @@
 import type { TargetStudentOption } from "@/api/types";
 import { instituteAnnouncementsStrings as strings } from "../InstituteAnnouncements.strings";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 
 interface StudentTargetPickerProps {
   students: TargetStudentOption[];
@@ -20,14 +21,14 @@ export function StudentTargetPicker({ students, selectedIds, search, onSearchCha
         <span>{t.targetHeader(selectedIds.length)}</span>
         <div style={{ display: "flex", gap: 12 }}>
           {students.length > 0 && (
-            <button type="button" className="text-button" onClick={onSelectAll}>
+            <Button type="button" variant="text" className="text-button" onClick={onSelectAll}>
               {t.selectAll}
-            </button>
+            </Button>
           )}
           {selectedIds.length > 0 && (
-            <button type="button" className="text-button" onClick={onClearAll}>
+            <Button type="button" variant="text" className="text-button" onClick={onClearAll}>
               {t.clearAll}
-            </button>
+            </Button>
           )}
         </div>
       </div>

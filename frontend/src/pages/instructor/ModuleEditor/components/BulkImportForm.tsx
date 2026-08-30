@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import type { ExamModule, ExamModulePart } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
+import { Button } from "@/components/ui/Button/Button";
 
 interface BulkImportFormProps {
   module: ExamModule;
@@ -23,9 +24,9 @@ export function BulkImportForm({ module, part, importFile, onImportFileChange, b
       <p className="hint">{t.hint(module.title, part.title)}</p>
       <form className="import-upload" onSubmit={onSubmit}>
         <input type="file" accept=".pdf,.csv,application/pdf,text/csv" onChange={(event) => onImportFileChange(event.target.files?.[0] ?? null)} required />
-        <button type="submit" disabled={busy || !importFile}>
+        <Button type="submit" disabled={busy || !importFile}>
           {busy ? t.extracting : t.extract}
-        </button>
+        </Button>
       </form>
     </section>
   );

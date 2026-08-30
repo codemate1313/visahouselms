@@ -4,6 +4,7 @@ import { moduleControlDetailStrings as strings } from "../ModuleControlDetail.st
 import { formatDate } from "../helpers";
 import type { Assignment } from "../types";
 import { Badge } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 interface InstituteAccessTableProps {
   assignments: Assignment[];
@@ -51,15 +52,13 @@ export function InstituteAccessTable({ assignments, onRevoke }: InstituteAccessT
                   </td>
                   <td className="table-actions">
                     {assignment.is_active && (
-                      <button
-                        type="button"
+                      <IconButton
+                        variant="danger"
                         className="danger"
                         onClick={() => onRevoke(assignment.institute_id, assignment.institute_name)}
-                        aria-label={t.revokeAccess}
-                        data-tooltip={t.revokeAccess}
-                      >
-                        <Icon name="revoke" />
-                      </button>
+                        label={t.revokeAccess}
+                        icon={<Icon name="revoke" />}
+                      />
                     )}
                   </td>
                 </tr>

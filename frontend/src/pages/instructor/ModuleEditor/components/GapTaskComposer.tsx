@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
 import { Button, RequiredMark, RichTextEditor, SearchableSelect } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
 export interface GapTaskDraft {
@@ -224,15 +225,16 @@ export function GapTaskComposer({
       {isEditable && isEditingPassage && (
         <div className="vh-passage-blank-toolbar" style={{ marginTop: "12px", marginBottom: "14px" }}>
           <div className="vh-passage-blank-main-actions">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               className="vh-insert-blank-btn"
               onClick={() => insertBlank(nextGapNumber)}
               title="Click where you want the blank in the text, then click here to insert it."
             >
               <Icon name="plus" className="vh-btn-icon" style={{ width: "15px", height: "15px", strokeWidth: 2.5 }} />
               <span>Insert Gap ({nextGapNumber})</span>
-            </button>
+            </Button>
             <span className="vh-passage-blank-hint">
               Position cursor in the text and click <strong>Insert Gap</strong> (or click a gap pill below)
             </span>
@@ -346,29 +348,29 @@ export function GapTaskComposer({
               readOnly={!isEditable}
             />
             {isEditable && options.length > 2 && (
-              <button
-                type="button"
+              <IconButton
+                icon={<Icon name="cross" />}
+                label={`Delete option ${option.key}`}
+                variant="danger"
                 className="option-remove-button"
                 onClick={() => handleDeleteOption(index)}
                 title={`Delete option ${option.key}`}
-                aria-label={`Delete option ${option.key}`}
-              >
-                <Icon name="cross" />
-              </button>
+              />
             )}
           </div>
         ))}
       </div>
       {isEditable && options.length < 26 && (
-        <button
+        <Button
           type="button"
+          variant="secondary"
           className="option-add-button"
           style={{ marginTop: "10px" }}
           onClick={() => setOptions([...options, { key: LETTERS[options.length], text: "" }])}
         >
           <Icon name="plus" />
           {t.addOption}
-        </button>
+        </Button>
       )}
 
       <h3 className="gap-task-subheading">{t.answersHeading}</h3>

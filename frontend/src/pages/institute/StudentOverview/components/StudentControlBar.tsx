@@ -2,6 +2,7 @@ import { Icon } from "@/components/icons";
 import type { InstituteMember } from "../types";
 import { studentOverviewStrings as strings } from "../StudentOverview.strings";
 import { Badge } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 interface StudentControlBarProps {
   student: InstituteMember;
@@ -37,34 +38,39 @@ export function StudentControlBar({
       {!student.deleted_at && (
         <div className="table-actions">
           {canManage && (
-            <button onClick={onResetPassword} aria-label={tips.resetPassword} data-tooltip={tips.resetPassword}>
-              <Icon name="lock" />
-            </button>
+            <IconButton
+              icon={<Icon name="lock" />}
+              label={tips.resetPassword}
+              onClick={onResetPassword}
+              data-tooltip={tips.resetPassword}
+            />
           )}
           {canRevokeSessions && (
-            <button
+            <IconButton
+              icon={<Icon name="revoke" />}
+              label={tips.signOutDevice}
               disabled={!activeSessionCount}
               onClick={onRevokeSessions}
-              aria-label={tips.signOutDevice}
               data-tooltip={tips.signOutDevice}
-            >
-              <Icon name="revoke" />
-            </button>
+            />
           )}
           {canManage && (
-            <button
+            <IconButton
+              icon={<Icon name={student.is_active ? "toggleOff" : "toggleOn"} />}
+              label={student.is_active ? tips.deactivate : tips.reactivate}
               className="action-toggle"
               onClick={onToggleActive}
-              aria-label={student.is_active ? tips.deactivate : tips.reactivate}
               data-tooltip={student.is_active ? tips.deactivate : tips.reactivate}
-            >
-              <Icon name={student.is_active ? "toggleOff" : "toggleOn"} />
-            </button>
+            />
           )}
           {canManage && (
-            <button className="danger" onClick={onArchive} aria-label={tips.delete} data-tooltip={tips.delete}>
-              <Icon name="trash" />
-            </button>
+            <IconButton
+              icon={<Icon name="trash" />}
+              label={tips.delete}
+              variant="danger"
+              onClick={onArchive}
+              data-tooltip={tips.delete}
+            />
           )}
         </div>
       )}

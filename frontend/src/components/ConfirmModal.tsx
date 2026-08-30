@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { CONFIRM_DIALOG_EVENT, type ConfirmRequest, type ConfirmVariant } from "./confirmDialog";
+import { Button } from "./ui/Button/Button";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -94,14 +95,15 @@ export function ConfirmModal({
           >
             {cancelText}
           </button>
-          <button
+          <Button
             type="button"
+            variant={variant === "danger" ? "danger" : "primary"}
             className={`premium-modal-btn confirm-btn btn-${variant}`}
             onClick={onConfirm}
             disabled={loading}
           >
             {loading ? "Processing..." : confirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

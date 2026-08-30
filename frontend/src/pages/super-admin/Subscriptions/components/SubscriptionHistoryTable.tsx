@@ -1,4 +1,5 @@
 import { Badge, DataTableCard } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { subscriptionsStrings as strings } from "../Subscriptions.strings";
 import { STATE_BADGES, stateLabel } from "../helpers";
 import type { SubscriptionInfo } from "../types";
@@ -51,14 +52,15 @@ export function SubscriptionHistoryTable({ history, onCancel }: SubscriptionHist
                   {/* Anything not yet over can be called off - including a term
                       that has been paid for but has not started. */}
                   {!row.cancelled_at && ["active", "grace", "scheduled"].includes(row.state) ? (
-                    <button
+                    <Button
                       type="button"
+                      variant="danger"
                       className="danger-cancel-btn table-cancel-btn"
                       onClick={() => onCancel(row.id)}
                       data-tooltip={strings.cancelTooltip}
                     >
                       {strings.cancel}
-                    </button>
+                    </Button>
                   ) : (
                     <span style={{ fontSize: 12, color: "var(--text-muted)" }}>—</span>
                   )}

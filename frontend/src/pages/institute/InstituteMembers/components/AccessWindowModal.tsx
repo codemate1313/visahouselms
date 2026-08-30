@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 import { Badge, Modal } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { instituteMembersStrings as strings } from "../InstituteMembers.strings";
 import type { InstituteMember } from "../types";
 
@@ -68,12 +69,12 @@ export function AccessWindowModal({
       className="access-window-modal"
       actions={
         <>
-          <button type="submit" form="access-window-form" className="btn-primary" disabled={!canSubmit}>
+          <Button type="submit" form="access-window-form" className="btn-primary" disabled={!canSubmit}>
             {busy ? t.saving : t.confirm(mode)}
-          </button>
-          <button type="button" className="btn-secondary" onClick={onClose} disabled={busy}>
+          </Button>
+          <Button type="button" variant="secondary" className="btn-secondary" onClick={onClose} disabled={busy}>
             {t.cancel}
-          </button>
+          </Button>
         </>
       }
     >
@@ -117,16 +118,18 @@ export function AccessWindowModal({
         <div className="window-quick-picks">
           <span className="muted-text">{t.quickPick}</span>
           {[1, 3, 6, 12].map((months) => (
-            <button
+            <Button
               key={months}
               type="button"
+              variant="secondary"
+              size="sm"
               className="chip-button"
               onClick={() =>
                 setEndsOn(clampIso(addMonths(startsOn || today, months), subscriptionEndsOn))
               }
             >
               {t.months(months)}
-            </button>
+            </Button>
           ))}
         </div>
 

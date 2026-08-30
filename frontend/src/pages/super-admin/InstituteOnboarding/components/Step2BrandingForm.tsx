@@ -5,6 +5,7 @@ import { instituteOnboardingStrings as strings } from "../InstituteOnboarding.st
 import { INITIAL } from "../helpers";
 import { Icon } from "@/components/icons";
 import { commonActions } from "@/content/common.strings";
+import { Button } from "@/components/ui";
 
 interface Step2BrandingFormProps {
   form: typeof INITIAL;
@@ -54,14 +55,16 @@ export function Step2BrandingForm({ form, set, instituteName, logoSrc, adminCred
               <span className="credential-label">Admin Email</span>
               <div className="credential-input-box">
                 <code className="credential-text">{adminCredential.email}</code>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   className="credential-copy-btn"
                   onClick={() => copyToClipboard(adminCredential.email, false)}
                   title="Copy email"
                 >
                   {copiedEmail ? <><Icon name="check" /> {commonActions.copied}</> : commonActions.copy}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -69,14 +72,16 @@ export function Step2BrandingForm({ form, set, instituteName, logoSrc, adminCred
               <span className="credential-label">Temporary Password</span>
               <div className="credential-input-box highlight-pass">
                 <code className="credential-text font-mono bold">{adminCredential.password}</code>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   className="credential-copy-btn"
                   onClick={() => copyToClipboard(adminCredential.password, true)}
                   title="Copy password"
                 >
                   {copiedPass ? <><Icon name="check" /> {commonActions.copied}</> : commonActions.copy}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -116,9 +121,9 @@ export function Step2BrandingForm({ form, set, instituteName, logoSrc, adminCred
       />
 
       <div className="form-actions">
-        <button onClick={onSave} disabled={busy}>
+        <Button onClick={onSave} disabled={busy} loading={busy}>
           {busy ? t.saving : t.saveBrandingAndReview}
-        </button>
+        </Button>
       </div>
     </CollapsiblePanel>
   );

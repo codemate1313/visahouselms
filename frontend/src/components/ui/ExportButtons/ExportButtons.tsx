@@ -1,4 +1,5 @@
 import { Icon } from "@/components/icons";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import "./ExportButtons.css";
 
 export interface ExportButtonsProps {
@@ -31,26 +32,20 @@ export function ExportButtons({
   return (
     <div className={`export-btn-group ${className}`.trim()}>
       {showPdf && (
-        <button
-          type="button"
+        <IconButton
           className="export-btn export-pdf"
           onClick={onExportPdf}
-          data-tooltip={pdfLabel}
-          aria-label={pdfLabel}
-        >
-          <Icon name="filePdf" />
-        </button>
+          label={pdfLabel}
+          icon={<Icon name="filePdf" />}
+        />
       )}
       {showExcel && (
-        <button
-          type="button"
+        <IconButton
           className="export-btn export-excel"
           onClick={onExportExcel}
-          data-tooltip={excelLabel}
-          aria-label={excelLabel}
-        >
-          <Icon name="spreadsheet" />
-        </button>
+          label={excelLabel}
+          icon={<Icon name="spreadsheet" />}
+        />
       )}
     </div>
   );

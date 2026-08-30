@@ -1,4 +1,5 @@
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { Button } from "@/components/ui/Button/Button";
 
 interface TestRunnerFooterProps {
   answeredCount: number;
@@ -29,9 +30,9 @@ export function TestRunnerFooter({
     if (hideSubmit) return null;
     return (
       <footer className="test-runner-footer lc-footer">
-        <button className="lc-end-exam" onClick={onRequestSubmit} disabled={submitting}>
+        <Button className="lc-end-exam" onClick={onRequestSubmit} disabled={submitting}>
           {submitting ? t.submitting : continueToSpeaking ? t.continueToSpeaking : t.endExam}
-        </button>
+        </Button>
       </footer>
     );
   }
@@ -44,9 +45,9 @@ export function TestRunnerFooter({
             closes the main paper and opens Speaking, or submits a standalone
             assessment; both paths retain a confirmation step. */}
         {!hideSubmit && (
-          <button className="test-runner-end-exam" onClick={onRequestSubmit} disabled={submitting}>
+          <Button className="test-runner-end-exam" onClick={onRequestSubmit} disabled={submitting}>
             {submitting ? t.submitting : continueToSpeaking ? t.continueToSpeaking : t.endExam}
-          </button>
+          </Button>
         )}
       </div>
     </footer>

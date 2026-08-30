@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { AnalysisBandStatus, StudentResultAnalysis } from "@/api/types";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 const t = strings.analysis;
 
@@ -770,16 +771,17 @@ export function AnalysisBreakdown({ analysis }: { analysis: StudentResultAnalysi
             <div className="score-details-modal-container" onClick={(e) => e.stopPropagation()}>
               <div className="score-details-modal-header">
                 <h3>{selectedSkill.label} Breakdown</h3>
-                <button
+                <IconButton
                   className="score-details-modal-close-btn"
                   onClick={() => setSelectedSkill(null)}
-                  aria-label="Close"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+                  label="Close"
+                  icon={
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  }
+                />
               </div>
               <div className="score-details-modal-body">
                 <p className="score-details-modal-subheading">

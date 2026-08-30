@@ -1,4 +1,5 @@
 import type { InstructorAccountCreated } from "@/api/types";
+import { Button } from "@/components/ui";
 import { instructorFormStrings as strings } from "../InstructorForm.strings";
 import { extractTemporaryPassword } from "../helpers";
 
@@ -25,12 +26,12 @@ export function CreatedInstructorView({ created, copied, error, onCopyPassword, 
           {error && <p className="error-text">{error}</p>}
         </div>
         <div className="credential-actions">
-          <button className="secondary-button" onClick={onCopyPassword}>
+          <Button variant="secondary" className="secondary-button" onClick={onCopyPassword}>
             {copied ? t.copied : t.copyPassword}
-          </button>
-          <button className="secondary-button" onClick={onDone}>
+          </Button>
+          <Button variant="secondary" className="secondary-button" onClick={onDone}>
             {t.done}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

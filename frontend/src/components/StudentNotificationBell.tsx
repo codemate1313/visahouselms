@@ -8,6 +8,8 @@ import { destinationFor, notificationTime, scoreLabel } from "../utils/notificat
 
 import { Icon } from "./icons";
 import { PinList, type PinListItem } from "./PinList";
+import { Button } from "./ui/Button/Button";
+import { IconButton } from "./ui/IconButton/IconButton";
 
 type PinnableNotification = StudentNotification & PinListItem;
 
@@ -332,21 +334,23 @@ export function NotificationBell({
 
   return (
     <div className="student-notification-shell" ref={shellRef}>
-      <button
-        type="button"
+      <IconButton
         className={`student-notification-bell${unread.length ? " has-unread" : ""}`}
         onClick={togglePanel}
-        aria-label={`Notifications${unread.length ? `, ${unread.length} unread` : ""}`}
+        label={`Notifications${unread.length ? `, ${unread.length} unread` : ""}`}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-      >
-        <Icon name="notifications" />
-        {unread.length > 0 && (
-          <span className="student-notification-count" aria-hidden="true">
-            {unread.length > 99 ? "99+" : unread.length}
-          </span>
-        )}
-      </button>
+        icon={
+          <>
+            <Icon name="notifications" />
+            {unread.length > 0 && (
+              <span className="student-notification-count" aria-hidden="true">
+                {unread.length > 99 ? "99+" : unread.length}
+              </span>
+            )}
+          </>
+        }
+      />
 
       {typeof document !== "undefined" && createPortal(
         <div
@@ -386,29 +390,32 @@ export function NotificationBell({
               </div>
               <div className="student-notification-header-actions">
                 {unread.length > 0 && (
-                  <button
+                  <Button
                     type="button"
+                    variant="text"
                     className="student-notification-read-all"
                     onClick={() => void markAllRead()}
                     title="Mark all notifications as read"
+                    leftIcon={
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    }
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Mark all as read</span>
-                  </button>
+                    Mark all as read
+                  </Button>
                 )}
-                <button
-                  type="button"
+                <IconButton
                   className="student-notification-close-btn"
                   onClick={closePanel}
-                  aria-label="Close notifications"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
+                  label="Close notifications"
+                  icon={
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  }
+                />
               </div>
             </div>
 
@@ -460,7 +467,7 @@ export function NotificationBell({
               ) : error ? (
                 <div className="student-notification-state is-error">
                   <p>{error}</p>
-                  <button type="button" onClick={() => void loadNotifications()}>Try again</button>
+                  <Button type="button" onClick={() => void loadNotifications()}>Try again</Button>
                 </div>
               ) : pinnableItems.length === 0 ? (
                 <div className="student-notification-state">
@@ -535,8 +542,9 @@ export function NotificationBell({
             </div>
 
             <div className="student-notification-drawer-footer">
-              <button
+              <Button
                 type="button"
+                variant="text"
                 className="student-notification-view-all"
                 onClick={() => {
                   closePanel();
@@ -544,7 +552,7 @@ export function NotificationBell({
                 }}
               >
                 View All Notifications
-              </button>
+              </Button>
             </div>
           </div>
         </div>,

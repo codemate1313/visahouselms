@@ -5,6 +5,7 @@ import { fromDateInputValue, toDateInputValue } from "@/components/profileContac
 import { ProfileContactFields } from "@/components/ProfileContactFields";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
 import { RequiredMark } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { noChangesMessage } from "@/content/common.strings";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
@@ -141,7 +142,7 @@ export function InstituteProfile() {
         {success && <p className="success-text">{success}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving}>{saving ? strings.saving : strings.save}</button>
+          <Button type="submit" disabled={saving}>{saving ? strings.saving : strings.save}</Button>
         </div>
       </form>
     </ProfileEditorShell>

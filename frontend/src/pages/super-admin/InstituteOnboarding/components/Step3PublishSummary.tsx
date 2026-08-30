@@ -72,9 +72,9 @@ export function Step3PublishSummary({ onboarding, busy, onPublish }: Step3Publis
           <LinkButton to={`/super-admin/institutes/${onboarding.id}`}>
             {t.manageInstitute}
           </LinkButton>
-          <button type="button" className="secondary-done-btn" onClick={() => navigate("/super-admin/onboarding")}>
+          <Button type="button" variant="secondary" className="secondary-done-btn" onClick={() => navigate("/super-admin/onboarding")}>
             {t.done}
-          </button>
+          </Button>
         </div>
       )}
     </CollapsiblePanel>

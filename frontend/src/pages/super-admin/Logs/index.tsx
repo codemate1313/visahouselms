@@ -7,6 +7,7 @@ import type { LogRow, LogType } from "./types";
 import { LogsFilterBar } from "./components/LogsFilterBar";
 import { LogsTable } from "./components/LogsTable";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui";
 
 export function Logs() {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -105,7 +106,7 @@ export function Logs() {
     <div>
       <div className="page-header">
         <h1>{strings.title}</h1>
-        <button onClick={exportCsv}>{strings.exportCsv}</button>
+        <Button onClick={exportCsv}>{strings.exportCsv}</Button>
       </div>
 
       <div className="tab-bar">
@@ -137,13 +138,13 @@ export function Logs() {
           <LogsTable tab={tab} rows={rows} expanded={expanded} onToggleExpand={(id) => setExpanded(expanded === id ? null : id)} />
 
           <div className="pagination">
-            <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
               <Icon name="arrowLeft" /> {strings.pagination.prev}
-            </button>
+            </Button>
             <span>{strings.pagination.pageOf(page, totalPages, total)}</span>
-            <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+            <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
               {strings.pagination.next} <Icon name="arrowRight" />
-            </button>
+            </Button>
           </div>
         </>
       )}

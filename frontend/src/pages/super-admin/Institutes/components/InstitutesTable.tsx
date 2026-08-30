@@ -3,7 +3,7 @@ import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Badge, Checkbox, DataTableCard } from "@/components/ui";
+import { Badge, Button, Checkbox, DataTableCard } from "@/components/ui";
 import { institutesStrings as strings } from "../Institutes.strings";
 import type { InstituteRow, SortKey } from "../types";
 import {
@@ -61,14 +61,14 @@ export function InstitutesTable({
               />
             </th>
             <th className="col-institute" aria-sort={sortKey === "name" ? sortDirection : "none"}>
-              <button type="button" className="table-sort-button" onClick={() => onChangeSort("name")}>
+              <Button type="button" variant="text" className="table-sort-button" onClick={() => onChangeSort("name")}>
                 {t.institute}
-              </button>
+              </Button>
             </th>
             <th className="col-contact" aria-sort={sortKey === "slug" ? sortDirection : "none"}>
-              <button type="button" className="table-sort-button" onClick={() => onChangeSort("slug")}>
+              <Button type="button" variant="text" className="table-sort-button" onClick={() => onChangeSort("slug")}>
                 {t.contactAndSlug}
-              </button>
+              </Button>
             </th>
             <th className="col-subscription">{t.subscription}</th>
             <th className="col-status">{t.status}</th>

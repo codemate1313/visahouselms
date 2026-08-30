@@ -5,6 +5,7 @@ import type { RetakeRequestView } from "@/api/types";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { retakeRequestsStrings as strings } from "./RetakeRequests.strings";
 import { formatDate } from "@/utils/date";
 import type { BadgeTone } from "@/components/ui";
@@ -146,12 +147,12 @@ export function RetakeRequests() {
                     <td>
                       {request.status === "pending" ? (
                         <div className="row-actions-inline">
-                          <button type="button" className="secondary-button" onClick={() => openResolve(request.id, "approved")}>
+                          <Button type="button" variant="secondary" className="secondary-button" onClick={() => openResolve(request.id, "approved")}>
                             {strings.actions.approve}
-                          </button>
-                          <button type="button" className="secondary-button danger" onClick={() => openResolve(request.id, "rejected")}>
+                          </Button>
+                          <Button type="button" variant="danger" className="secondary-button danger" onClick={() => openResolve(request.id, "rejected")}>
                             {strings.actions.reject}
-                          </button>
+                          </Button>
                         </div>
                       ) : (
                         <span className="text-muted">—</span>

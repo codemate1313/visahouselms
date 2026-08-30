@@ -3,6 +3,7 @@ import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { superAdminTestimonialsStrings as strings } from "../SuperAdminTestimonials.strings";
 import type { DragReorderState, TestimonialAdminItem } from "../types";
+import { Button } from "@/components/ui/Button/Button";
 
 interface TestimonialTableViewProps {
   items: TestimonialAdminItem[];
@@ -85,18 +86,18 @@ export function TestimonialTableView({
                 <div className="table-actions institute-row-actions">
                   <RowActionMenu
                     items={[
-                      <button key="status" type="button" onClick={() => onToggleActive(item)}>
+                      <Button key="status" type="button" variant="text" onClick={() => onToggleActive(item)}>
                         <Icon name={item.is_active ? "toggleOff" : "toggleOn"} />
                         <span>{item.is_active ? strings.deactivateTooltip : strings.activateTooltip}</span>
-                      </button>,
-                      <button key="edit" type="button" onClick={() => onEdit(item)}>
+                      </Button>,
+                      <Button key="edit" type="button" variant="text" onClick={() => onEdit(item)}>
                         <Icon name="edit" />
                         <span>{strings.editTooltip}</span>
-                      </button>,
-                      <button key="delete" type="button" className="danger" onClick={() => onDelete(item.id)}>
+                      </Button>,
+                      <Button key="delete" type="button" variant="danger" className="danger" onClick={() => onDelete(item.id)}>
                         <Icon name="trash" />
                         <span>{strings.deleteTooltip}</span>
-                      </button>,
+                      </Button>,
                     ]}
                   />
                 </div>

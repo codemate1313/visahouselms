@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Badge } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 
 export interface AiKeyConfig {
   id: string;
@@ -258,9 +259,9 @@ export function AiKeyPriorityManager({
           <h2>API key priority</h2>
           <p>Drag keys into the order the evaluator should try them. Failed keys are skipped automatically at runtime.</p>
         </div>
-        <button type="button" className="secondary" onClick={add}>
+        <Button type="button" variant="secondary" className="secondary" onClick={add}>
           <Icon name="plus" /> Add key
-        </button>
+        </Button>
       </div>
 
       {error && <p className="error-text">{error}</p>}
@@ -411,20 +412,21 @@ export function AiKeyPriorityManager({
                 {key.last_status === "ok" ? "Connected" : key.last_status === "failed" ? "Failed" : "Not tested"}
               </Badge>
               <div style={{ display: "flex", gap: 8 }}>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   className="secondary"
                   onClick={() => void loadModels(index)}
                   disabled={loadingModelsId === key.id || testingId === key.id}
                 >
                   {loadingModelsId === key.id ? "Loading models..." : "Load models"}
-                </button>
-                <button type="button" className="secondary" onClick={() => void testKey(index)} disabled={testingId === key.id}>
+                </Button>
+                <Button type="button" variant="secondary" className="secondary" onClick={() => void testKey(index)} disabled={testingId === key.id}>
                   {testingId === key.id ? "Detecting..." : "Detect & test"}
-                </button>
-                <button type="button" className="danger" onClick={() => remove(index)} disabled={rows.length === 1}>
+                </Button>
+                <Button type="button" variant="danger" className="danger" onClick={() => remove(index)} disabled={rows.length === 1}>
                   <Icon name="trash" /> Remove
-                </button>
+                </Button>
               </div>
             </div>
             {key.info && <p className="hint" style={{ margin: "8px 0 0" }}>{key.info}</p>}

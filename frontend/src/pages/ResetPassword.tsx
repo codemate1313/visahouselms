@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 import { resetPasswordStrings as strings } from "./ResetPassword.strings";
 
 export function ResetPassword() {
@@ -129,9 +130,9 @@ export function ResetPassword() {
 
             {error && <div className="concise-error-box">{error}</div>}
 
-            <button type="submit" className="concise-submit-btn" disabled={loading || !token} style={{ marginTop: 16 }}>
+            <Button type="submit" className="concise-submit-btn" disabled={loading || !token} style={{ marginTop: 16 }}>
               {loading ? strings.submitBusy : strings.submitLabel}
-            </button>
+            </Button>
 
             <div style={{ textAlign: "center", marginTop: 20 }}>
               <Link to="/login" className="auth-inline-action is-muted">

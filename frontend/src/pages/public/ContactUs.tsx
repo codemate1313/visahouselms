@@ -5,6 +5,7 @@ import { apiClient, API_BASE_URL } from "@/api/client";
 import { PublicHeader } from "@/components/publicSite/PublicHeader";
 import { PublicFooter } from "@/components/publicSite/PublicFooter";
 import { SegmentedControl } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { useSEO } from "@/hooks/useSEO";
 import { useContactSettings } from "./useContactSettings";
 import type { LandingPlan, LandingPlansPayload } from "./Plans.types";
@@ -591,9 +592,9 @@ export function ContactUs() {
                     </div>
                   ) : null}
 
-                  <button type="submit" className="vh-form-submit-btn" disabled={submittingDemo}>
+                  <Button type="submit" className="vh-form-submit-btn" disabled={submittingDemo}>
                     {submittingDemo ? "Submitting..." : "Apply now"}
-                  </button>
+                  </Button>
                 </form>
               ) : (
                 <form
@@ -677,9 +678,9 @@ export function ContactUs() {
                     </div>
                   ) : null}
 
-                  <button type="submit" className="vh-form-submit-btn" disabled={submittingQuery}>
+                  <Button type="submit" className="vh-form-submit-btn" disabled={submittingQuery}>
                     {submittingQuery ? "Sending..." : "Submit request"}
-                  </button>
+                  </Button>
                 </form>
               )}
             </section>

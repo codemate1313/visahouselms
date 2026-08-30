@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from "react";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Button, Modal, RequiredMark, SegmentedControl } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { Icon } from "@/components/icons";
 import { apiClient } from "@/api/client";
@@ -446,24 +447,20 @@ export function HeroSliderTab() {
                 {/* Actions Area */}
                 <div className="slide-collapsed-actions">
                   <div className="slide-order-buttons" style={{ width: "100%" }}>
-                    <button
-                      type="button"
+                    <IconButton
                       className="slide-order-btn"
                       onClick={() => void handleMove(index, -1)}
                       disabled={index === 0 || busy}
-                      title="Move earlier in carousel"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      type="button"
+                      label="Move earlier in carousel"
+                      icon="↑"
+                    />
+                    <IconButton
                       className="slide-order-btn"
                       onClick={() => void handleMove(index, 1)}
                       disabled={index === slides.length - 1 || busy}
-                      title="Move later in carousel"
-                    >
-                      ↓
-                    </button>
+                      label="Move later in carousel"
+                      icon="↓"
+                    />
                   </div>
 
                   <Button
@@ -486,8 +483,9 @@ export function HeroSliderTab() {
                     <span>{slide.is_active ? "Visible" : "Hidden"}</span>
                   </div>
 
-                  <button
+                  <Button
                     type="button"
+                    variant="danger"
                     className="slide-remove-btn"
                     style={{ width: "100%" }}
                     onClick={() => void handleRemove(slide)}
@@ -495,7 +493,7 @@ export function HeroSliderTab() {
                     disabled={busy}
                   >
                     {t.removeLabel}
-                  </button>
+                  </Button>
                 </div>
               </div>
             );
@@ -679,14 +677,12 @@ export function HeroSliderTab() {
                                 onChange={(e) => editStat(slide, statIndex, { label: e.target.value })}
                                 className="slide-subtitle-input"
                               />
-                              <button
-                                type="button"
+                              <IconButton
                                 className="slide-remove-btn"
                                 onClick={() => removeStat(slide, statIndex)}
-                                title="Remove this stat"
-                              >
-                                ×
-                              </button>
+                                label="Remove this stat"
+                                icon="×"
+                              />
                             </div>
                           ))}
                           <Button type="button" variant="secondary" size="sm" onClick={() => addStat(slide)}>
@@ -742,15 +738,16 @@ export function HeroSliderTab() {
                     Done
                   </Button>
 
-                  <button
+                  <Button
                     type="button"
+                    variant="danger"
                     className="slide-remove-btn"
                     onClick={() => void handleRemove(slide)}
                     title="Remove this slide"
                     disabled={busy}
                   >
                     {t.removeLabel}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

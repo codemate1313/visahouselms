@@ -2,6 +2,7 @@ import { useMemo, useState, type DragEvent } from "react";
 import type { AttemptQuestion, AttemptResponse, QuestionOption } from "@/api/types";
 
 import { renderRichText } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 
 interface SourceTextMatchingGroupProps {
   questions: AttemptQuestion[];
@@ -193,13 +194,14 @@ export function SourceTextMatchingGroup({
 
               {/* Tap flow: pick a text on the left, then place it here. */}
               {pickedKey && canAddMore && !selected.includes(pickedKey) && (
-                <button
+                <Button
                   type="button"
+                  size="sm"
                   className="test-runner-source-text-place"
                   onClick={() => assign(question, pickedKey)}
                 >
                   Place {pickedKey}
-                </button>
+                </Button>
               )}
             </div>
 

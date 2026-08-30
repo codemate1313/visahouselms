@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import type { AttemptSummary } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { formatDateTime } from "@/utils/date";
 import { studentAttemptsStrings as strings } from "./StudentAttempts.strings";
 import type { BadgeTone } from "@/components/ui";
@@ -153,9 +154,9 @@ export function StudentAttempts() {
       {error && (
         <div className="notice-line" style={{ marginBottom: 16 }}>
           <p className="error-text">{error}</p>
-          <button type="button" className="button-link secondary" onClick={() => void loadAttempts(true)}>
+          <Button type="button" variant="text" className="button-link secondary" onClick={() => void loadAttempts(true)}>
             {strings.retry}
-          </button>
+          </Button>
         </div>
       )}
 

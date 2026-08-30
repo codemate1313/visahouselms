@@ -4,6 +4,7 @@ import { confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { Badge, Button, DataTableCard, Input, Modal, SearchInput, Textarea } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { useToastStore } from "@/store/toastStore";
 import "./GrammarContentPage.css";
 
@@ -265,8 +266,9 @@ export function GrammarContentPage() {
               <span>
                 Showing <strong>{filteredItems.length}</strong> of <strong>{items.length}</strong> materials
               </span>
-              <button
+              <Button
                 type="button"
+                variant="text"
                 className="gc-clear-filter-btn"
                 onClick={() => {
                   setSearch("");
@@ -274,7 +276,7 @@ export function GrammarContentPage() {
                 }}
               >
                 Clear filters
-              </button>
+              </Button>
             </div>
           )}
 
@@ -353,16 +355,13 @@ export function GrammarContentPage() {
                           <Icon name="eye" />
                         </a>
 
-                        <button
-                          type="button"
+                        <IconButton
+                          icon={<Icon name="edit" />}
+                          label={`Edit ${item.title}`}
                           className="action-btn-icon action-neutral"
                           onClick={() => openEditModal(item)}
                           title="Edit"
-                          data-tooltip="Edit"
-                          aria-label={`Edit ${item.title}`}
-                        >
-                          <Icon name="edit" />
-                        </button>
+                        />
 
                         <RowActionMenu
                           items={[

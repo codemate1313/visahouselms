@@ -305,13 +305,13 @@ export function Payments() {
           <PaymentsTable rows={pagedRows} onOpenDueForm={openDueForm} />
           {totalPages > 1 && (
             <div className="pagination">
-              <button type="button" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              <Button type="button" variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 <Icon name="arrowLeft" /> {strings.pagination.prev}
-              </button>
+              </Button>
               <span>{strings.pagination.pageOf(page, totalPages, rows.length)}</span>
-              <button type="button" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+              <Button type="button" variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
                 {strings.pagination.next} <Icon name="arrowRight" />
-              </button>
+              </Button>
             </div>
           )}
         </>

@@ -123,8 +123,9 @@ export function TestimonialFormModal({ editingItem, onChange, saving, onClose, o
                       style={{ display: "none" }}
                     />
                     <div className="sat-avatar-actions-row">
-                      <button
+                      <Button
                         type="button"
+                        variant="secondary"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingAvatar}
                         className="sat-btn-choose"
@@ -135,17 +136,18 @@ export function TestimonialFormModal({ editingItem, onChange, saving, onClose, o
                           <line x1="12" y1="3" x2="12" y2="15" />
                         </svg>
                         {uploadingAvatar ? "Uploading..." : "Choose from files"}
-                      </button>
+                      </Button>
 
                       {editingItem.avatar_url && (
-                        <button
+                        <Button
                           type="button"
+                          variant="text"
                           onClick={() => onChange({ ...editingItem, avatar_url: "" })}
                           className="sat-btn-clear"
                           title="Remove image"
                         >
                           Clear
-                        </button>
+                        </Button>
                       )}
                     </div>
 

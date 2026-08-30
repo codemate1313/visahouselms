@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Badge, Modal } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { formatDateTime } from "@/utils/date";
 
 /**
@@ -226,26 +228,26 @@ export function AiQuotaCard() {
             <h3>Quota across your keys</h3>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <button
+            <IconButton
               onClick={handleRefresh}
               disabled={refreshing || busy}
               className="refresh-btn"
-              title="Refresh quota status"
-              aria-label="Refresh quota status"
-            >
-              <svg
-                className={refreshing ? "spin" : ""}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ width: "16px", height: "16px" }}
-              >
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.73-.73" />
-              </svg>
-            </button>
+              label="Refresh quota status"
+              icon={
+                <svg
+                  className={refreshing ? "spin" : ""}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ width: "16px", height: "16px" }}
+                >
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.73-.73" />
+                </svg>
+              }
+            />
             <Badge tone={!data.enabled ? "gray" : worst !== null && worst >= 90 ? "red" : data.totals.rate_limited_today ? "amber" : "green"}>
               {!data.enabled ? "Switched off" : worst !== null && worst >= 90 ? "Near limit" : data.totals.rate_limited_today ? "Hit limits today" : "Healthy"}
             </Badge>
@@ -282,9 +284,9 @@ export function AiQuotaCard() {
           {data.keys.length === 0 && <p className="hint">No AI marking has run yet.</p>}
         </div>
 
-        <button type="button" className="ui-btn ui-btn-secondary ui-btn-sm" onClick={() => setOpen(true)}>
+        <Button type="button" variant="secondary" size="sm" onClick={() => setOpen(true)}>
           Full quota breakdown
-        </button>
+        </Button>
       </section>
 
       <Modal open={open} onClose={() => setOpen(false)} size="lg" title="AI marking quota">
@@ -407,9 +409,9 @@ export function AiQuotaCard() {
           ))}
 
           <div className="form-actions">
-            <button type="button" className="ui-btn ui-btn-primary" onClick={() => void saveLimits()} disabled={busy}>
+            <Button type="button" onClick={() => void saveLimits()} disabled={busy}>
               Save limits
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>

@@ -1,4 +1,5 @@
 import { Checkbox, SearchableSelect } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import type { ModuleImportPreview, QuestionDraft, QuestionType } from "@/api/types";
 import { ANSWER_FREE_TYPES } from "../helpers";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
@@ -47,19 +48,20 @@ export function ModuleImportReviewPanel({
           <p style={{ margin: 0 }}>{t.reviewSummary(preview.question_count, preview.source_filename, moduleTitle)}</p>
         </div>
         <div className="review-actions">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             className="secondary-button"
             onClick={() => onSelectedImportsChange(selectedImports.size === allKeys.length ? new Set() : new Set(allKeys))}
           >
             {selectedImports.size === allKeys.length ? review.deselectAll : review.selectAll}
-          </button>
-          <button type="button" className="secondary-button" onClick={onDiscard}>
+          </Button>
+          <Button type="button" variant="secondary" className="secondary-button" onClick={onDiscard}>
             {review.discard}
-          </button>
-          <button type="button" onClick={onCommit} disabled={busy || !selectedImports.size}>
+          </Button>
+          <Button type="button" onClick={onCommit} disabled={busy || !selectedImports.size}>
             {t.import(selectedImports.size)}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -85,9 +87,9 @@ export function ModuleImportReviewPanel({
                   <h3>{part.part_title}</h3>
                   <p>{t.partSummary(part.questions.length, part.part_title)}</p>
                 </div>
-                <button type="button" className="secondary-button" onClick={() => onOpenPart(part.part_id)}>
+                <Button type="button" variant="secondary" className="secondary-button" onClick={() => onOpenPart(part.part_id)}>
                   {t.openPart(part.part_title)}
-                </button>
+                </Button>
               </div>
               {passageRequired && (
                 <div className="passage-editor-section" style={{ marginBottom: 18 }}>

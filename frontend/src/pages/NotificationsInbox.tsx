@@ -5,6 +5,7 @@ import type { StudentNotification } from "@/api/types";
 import { Icon } from "@/components/icons";
 import { PinList, type PinListItem } from "@/components/PinList";
 import { PageHeader, SearchableSelect, SegmentedControl } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { destinationFor, notificationTime, scoreLabel } from "@/utils/notificationHelpers";
 import { notificationsInboxStrings as strings } from "./NotificationsInbox.strings";
 import "./NotificationsInbox.css";
@@ -147,9 +148,9 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
         title={strings.title}
         subtitle={strings.subtitle}
         actions={unread.length > 0 && (
-          <button type="button" className="notifications-inbox-mark-all" onClick={() => void markAllRead()}>
+          <Button type="button" variant="text" className="notifications-inbox-mark-all" onClick={() => void markAllRead()}>
             {strings.markAllRead}
-          </button>
+          </Button>
         )}
       />
 
@@ -220,9 +221,9 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
           <div className="empty-state">
             <h2>{strings.errorTitle}</h2>
             <p>{error}</p>
-            <button type="button" onClick={() => void loadNotifications()}>
+            <Button type="button" onClick={() => void loadNotifications()}>
               {strings.retryLabel}
-            </button>
+            </Button>
           </div>
         ) : pinnableItems.length === 0 ? (
           <div className="empty-state">

@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import { Checkbox, SearchableSelect } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { blogFormCategories, superAdminBlogFormStrings as strings } from "../SuperAdminBlogForm.strings";
@@ -93,14 +94,15 @@ export function MediaMetadataPanel({ formData, onFieldChange }: MediaMetadataPan
         <div className="sab-field-label-row">
           <label>{t.featuredImageUrl}</label>
           {formData.featured_image_url && (
-            <button
+            <Button
               type="button"
+              variant="text"
               onClick={() => onFieldChange("featured_image_url", "")}
               className="sab-btn-clear-link"
               title="Clear image URL"
             >
               Clear
-            </button>
+            </Button>
           )}
         </div>
 
@@ -123,8 +125,9 @@ export function MediaMetadataPanel({ formData, onFieldChange }: MediaMetadataPan
           placeholder={t.featuredImageUrlPlaceholder}
         />
 
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploadingCover}
           className="sab-choose-file-btn"
@@ -135,7 +138,7 @@ export function MediaMetadataPanel({ formData, onFieldChange }: MediaMetadataPan
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
           <span>{uploadingCover ? "Uploading..." : "Browse from files"}</span>
-        </button>
+        </Button>
 
         {coverUploadError && <span className="sab-upload-error">{coverUploadError}</span>}
       </div>

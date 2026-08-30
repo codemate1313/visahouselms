@@ -1,4 +1,5 @@
 import { ExportButtons, SearchableSelect } from "@/components/ui";
+import { Button } from "@/components/ui/Button/Button";
 import { revenueDashboardStrings as strings } from "../RevenueDashboard.strings";
 import type { InstituteRow, MethodRow } from "../types";
 
@@ -69,9 +70,9 @@ export function RevenueFilterBar({
       </div>
 
       {(instituteFilter || methodFilter || dateFrom || dateTo) && (
-        <button type="button" className="clear-search-btn reset-filters-btn" onClick={onResetFilters}>
+        <Button type="button" variant="secondary" className="clear-search-btn reset-filters-btn" onClick={onResetFilters}>
           {strings.resetFilters}
-        </button>
+        </Button>
       )}
 
       <ExportButtons

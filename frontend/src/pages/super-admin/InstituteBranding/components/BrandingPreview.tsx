@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from "react";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { instituteBrandingStrings as strings } from "../InstituteBranding.strings";
 
 interface BrandingPreviewProps {
@@ -60,24 +61,24 @@ export function BrandingPreview({ primary, secondary, fontFamily, headingWeight,
             <p>{t.description}</p>
           </div>
           <div className="branding-preview-header-actions">
-            <button
-              type="button"
+            <IconButton
               className="branding-preview-theme-btn"
               onClick={() => setPreviewTheme(previewTheme === "light" ? "dark" : "light")}
               title={previewTheme === "light" ? "Switch preview to Dark mode" : "Switch preview to Light mode"}
-              aria-label="Toggle preview theme"
-            >
-              {previewTheme === "light" ? (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-                </svg>
-              ) : (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
-                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-              )}
-            </button>
+              label="Toggle preview theme"
+              icon={
+                previewTheme === "light" ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                  </svg>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )
+              }
+            />
             <button className="branding-preview-button">{t.viewAssignedTests}</button>
           </div>
         </div>

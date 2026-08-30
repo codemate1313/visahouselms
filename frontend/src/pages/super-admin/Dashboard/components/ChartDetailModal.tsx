@@ -5,6 +5,7 @@ import { BarChart } from "@/components/charts/BarChart";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { LineChart } from "@/components/charts/LineChart";
 import { SegmentedControl } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { dashboardStrings as strings } from "../Dashboard.strings";
 import { PAYMENT_STATUS_COLORS, STUDENT_TYPE_COLORS, SUBSCRIPTION_STATE_COLORS, formatMoney } from "../helpers";
 import type { Summary } from "../types";
@@ -355,19 +356,19 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
             <h2 id="chart-detail-title">{title}</h2>
             <p>{description}</p>
           </div>
-          <button
-            type="button"
+          <IconButton
             className="dashboard-detail-close"
             onClick={onClose}
-            aria-label="Close chart details"
+            label="Close chart details"
             title="Close"
             autoFocus
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="dashboard-close-icon">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+            icon={
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="dashboard-close-icon">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            }
+          />
         </header>
 
         <div className="dashboard-detail-body chart-modal-body">

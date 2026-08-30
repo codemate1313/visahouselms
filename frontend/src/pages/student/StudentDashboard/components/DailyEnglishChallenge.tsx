@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
 import { DashboardButton } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
 import "./DailyEnglishChallenge.css";
 
@@ -328,29 +329,25 @@ export function DailyEnglishChallenge() {
                 {facts.length > 0 && (
                   <div className="daily-fact-nav-wrapper">
                     <div className="daily-fact-navigation">
-                      <button
-                        type="button"
+                      <IconButton
                         className="daily-fact-nav-btn"
                         onClick={() => {
                           setFailedImageId(null);
                           setFactIndex((idx) => (idx === 0 ? facts.length - 1 : idx - 1));
                         }}
-                        aria-label="Previous fact"
-                      >
-                        <Icon name="arrowLeft" />
-                      </button>
+                        label="Previous fact"
+                        icon={<Icon name="arrowLeft" />}
+                      />
                       <span className="daily-fact-indicator">{factIndex + 1} / {facts.length}</span>
-                      <button
-                        type="button"
+                      <IconButton
                         className="daily-fact-nav-btn"
                         onClick={() => {
                           setFailedImageId(null);
                           setFactIndex((idx) => (idx === facts.length - 1 ? 0 : idx + 1));
                         }}
-                        aria-label="Next fact"
-                      >
-                        <Icon name="arrowRight" />
-                      </button>
+                        label="Next fact"
+                        icon={<Icon name="arrowRight" />}
+                      />
                     </div>
                   </div>
                 )}

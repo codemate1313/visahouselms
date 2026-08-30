@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import { RichTextContent } from "../RichText/RichText";
+import { Button } from "../Button/Button";
+import { IconButton } from "../IconButton/IconButton";
 import "./RichTextEditor.css";
 
 /**
@@ -287,120 +289,104 @@ export const RichTextEditor = forwardRef<HTMLTextAreaElement, RichTextEditorProp
         <div className="vh-rte-toolbar" role="toolbar" aria-label="Text formatting">
           {controlsVisible && showHistoryControls && (
             <div className="vh-rte-group vh-rte-history">
-              <button
-                type="button"
+              <IconButton
                 className="vh-rte-button"
                 title="Undo (Ctrl+Z)"
-                aria-label="Undo"
+                label="Undo"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => runHistoryCommand("undo")}
-              >
-                <UndoIcon />
-              </button>
-              <button
-                type="button"
+                icon={<UndoIcon />}
+              />
+              <IconButton
                 className="vh-rte-button"
                 title="Redo (Ctrl+Shift+Z)"
-                aria-label="Redo"
+                label="Redo"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => runHistoryCommand("redo")}
-              >
-                <RedoIcon />
-              </button>
+                icon={<RedoIcon />}
+              />
             </div>
           )}
           {controlsVisible && (
             <>
               <div className="vh-rte-group">
                 {WRAPS.map((wrap) => (
-                  <button
+                  <IconButton
                     key={wrap.marker}
-                    type="button"
                     className="vh-rte-button"
                     title={wrap.title}
-                    aria-label={wrap.label}
+                    label={wrap.label}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => toggleWrap(wrap.marker)}
-                  >
-                    {wrap.glyph}
-                  </button>
+                    icon={wrap.glyph}
+                  />
                 ))}
               </div>
 
               <div className="vh-rte-group">
                 {([1, 2] as const).map((level) => (
-                  <button
+                  <IconButton
                     key={level}
-                    type="button"
                     className="vh-rte-button"
                     title={`Heading ${level}`}
-                    aria-label={`Heading ${level}`}
+                    label={`Heading ${level}`}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => applyLinePrefix(() => `${"#".repeat(level)} `)}
-                  >
-                    <span className="vh-rte-glyph is-heading">H{level}</span>
-                  </button>
+                    icon={<span className="vh-rte-glyph is-heading">H{level}</span>}
+                  />
                 ))}
               </div>
 
               <div className="vh-rte-group">
-                <button
-                  type="button"
+                <IconButton
                   className="vh-rte-button"
                   title="Bulleted list"
-                  aria-label="Bulleted list"
+                  label="Bulleted list"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => applyLinePrefix(() => "- ")}
-                >
-                  <BulletIcon />
-                </button>
-                <button
-                  type="button"
+                  icon={<BulletIcon />}
+                />
+                <IconButton
                   className="vh-rte-button"
                   title="Numbered list"
-                  aria-label="Numbered list"
+                  label="Numbered list"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => applyLinePrefix((index) => `${index + 1}. `)}
-                >
-                  <NumberIcon />
-                </button>
-                <button
-                  type="button"
+                  icon={<NumberIcon />}
+                />
+                <IconButton
                   className="vh-rte-button"
                   title="Quote"
-                  aria-label="Quote"
+                  label="Quote"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => applyLinePrefix(() => "> ")}
-                >
-                  <QuoteIcon />
-                </button>
+                  icon={<QuoteIcon />}
+                />
               </div>
 
               <div className="vh-rte-group">
-                <button
-                  type="button"
+                <IconButton
                   className="vh-rte-button"
                   title="Clear formatting from the selection"
-                  aria-label="Clear formatting"
+                  label="Clear formatting"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={clearFormatting}
-                >
-                  <ClearIcon />
-                </button>
+                  icon={<ClearIcon />}
+                />
               </div>
             </>
           )}
 
           {toolbarExtras}
 
-          <button
+          <Button
             type="button"
             className={`vh-rte-button vh-rte-preview-toggle ${showPreview ? "is-active" : ""}`.trim()}
             aria-pressed={showPreview}
             onClick={() => setShowPreview((previous) => !previous)}
           >
             {showPreview ? "Edit" : "Preview"}
-          </button>
+          </Button>
         </div>
       )}
 

@@ -440,21 +440,19 @@ export function ContactSocialTab() {
                       onChange={() => toggleLink(link)}
                       tooltip={link.is_enabled ? "Enabled" : "Disabled"}
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="danger"
                       className="button secondary"
                       onClick={() => removeLink(link)}
                       style={{
                         padding: "6px 12px",
                         fontSize: "12px",
-                        color: "#dc2626",
-                        borderColor: "rgba(220, 38, 38, 0.2)",
-                        background: "rgba(254, 242, 242, 0.6)",
                         flexShrink: 0,
                       }}
                     >
                       {t.removeLabel}
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>

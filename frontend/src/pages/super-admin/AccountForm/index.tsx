@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 import { noChangesMessage } from "@/content/common.strings";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
@@ -220,15 +221,15 @@ export function AccountForm({ basePath = "/super-admin" }: { basePath?: string }
           {error && <p className="error-text">{error}</p>}
 
           <div className="form-actions account-editor-actions">
-            <button
+            <Button
               type="submit"
               disabled={saving || uploadingAvatar || (isNew && !evaluatePassword(password).allMet)}
             >
               {saving ? strings.saving : strings.saveAccount}
-            </button>
-            <button type="button" onClick={() => navigate(`${basePath}/accounts`)}>
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => navigate(`${basePath}/accounts`)}>
               {strings.cancel}
-            </button>
+            </Button>
           </div>
         </section>
       </form>

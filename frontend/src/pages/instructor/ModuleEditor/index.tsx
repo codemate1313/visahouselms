@@ -8,6 +8,7 @@ import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { isEqual } from "@/utils/isEqual";
+import { Button } from "@/components/ui/Button/Button";
 import type {
   ExamModule,
   ExamModuleAsset,
@@ -1147,9 +1148,9 @@ export function ModuleEditor() {
                   </div>
                   <form className="import-upload" onSubmit={previewModuleImport}>
                     <input type="file" accept=".pdf,.csv,application/pdf,text/csv" onChange={(event) => setModuleImportFile(event.target.files?.[0] ?? null)} />
-                    <button type="submit" disabled={busy || !moduleImportFile}>
+                    <Button type="submit" disabled={busy || !moduleImportFile}>
                       {busy ? strings.moduleImport.extracting : strings.moduleImport.extract}
-                    </button>
+                    </Button>
                   </form>
                 </section>
               )}

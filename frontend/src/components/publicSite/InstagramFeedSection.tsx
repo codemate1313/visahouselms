@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { API_BASE_URL } from "@/api/client";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -416,14 +418,12 @@ export function InstagramFeedSection() {
         return (
           <div className="vh-instagram-modal-backdrop" onClick={() => setSelectedItem(null)}>
             <div className="vh-instagram-modal-card" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
+              <IconButton
                 className="vh-instagram-modal-close"
                 onClick={() => setSelectedItem(null)}
-                aria-label="Close"
-              >
-                ✕
-              </button>
+                label="Close"
+                icon="✕"
+              />
 
               <div className="vh-instagram-modal-media">
                 {playMode && isDirectVideo ? (
@@ -455,19 +455,21 @@ export function InstagramFeedSection() {
                       className="vh-instagram-modal-cover-img"
                     />
                     {(isReel || embedUrl || isDirectVideo) && (
-                      <button
+                      <Button
                         type="button"
                         className="vh-instagram-modal-play-btn"
                         onClick={() => setPlayMode(true)}
                         title="Play Reel Video"
+                        leftIcon={
+                          <div className="vh-instagram-play-circle-lg">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                              <polygon points="6 4 20 12 6 20 6 4" />
+                            </svg>
+                          </div>
+                        }
                       >
-                        <div className="vh-instagram-play-circle-lg">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                            <polygon points="6 4 20 12 6 20 6 4" />
-                          </svg>
-                        </div>
-                        <span>Play Video</span>
-                      </button>
+                        Play Video
+                      </Button>
                     )}
                   </div>
                 )}

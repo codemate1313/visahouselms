@@ -3,6 +3,7 @@ import { api } from "@/api/client";
 import { confirmDelete } from "@/components/confirmDialog";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Badge, Button, DataTableCard, FilterBar, Modal, SearchInput, SearchableSelect, SegmentedControl, Input, Textarea } from "@/components/ui";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 import type { BadgeTone } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
@@ -806,25 +807,19 @@ export function Vouchers() {
                       </td>
                       <td className="col-actions text-right">
                         <div className="voucher-table-actions">
-                          <button
-                            type="button"
+                          <IconButton
                             className="voucher-action-btn btn-view"
-                            title="View Full Purchase Details"
-                            aria-label="View Full Purchase Details"
+                            label="View Full Purchase Details"
                             onClick={() => setSelectedPurchaseDetails(p)}
-                          >
-                            <Icon name="eye" style={{ width: 17, height: 17, stroke: "currentColor" }} />
-                          </button>
+                            icon={<Icon name="eye" style={{ width: 17, height: 17, stroke: "currentColor" }} />}
+                          />
                           {p.status === "completed" && (
-                            <button
-                              type="button"
+                            <IconButton
                               className="voucher-action-btn btn-invoice"
-                              title="View Tax Invoice"
-                              aria-label="View Tax Invoice"
+                              label="View Tax Invoice"
                               onClick={() => setSelectedInvoice(p)}
-                            >
-                              <Icon name="filePdf" style={{ width: 16, height: 16, stroke: "currentColor" }} />
-                            </button>
+                              icon={<Icon name="filePdf" style={{ width: 16, height: 16, stroke: "currentColor" }} />}
+                            />
                           )}
                         </div>
                       </td>
@@ -836,19 +831,20 @@ export function Vouchers() {
           )}
           {purchasesTotalPages > 1 && (
             <div className="pagination">
-              <button type="button" disabled={purchasesPage <= 1} onClick={() => setPurchasesPage(purchasesPage - 1)}>
+              <Button type="button" variant="secondary" disabled={purchasesPage <= 1} onClick={() => setPurchasesPage(purchasesPage - 1)}>
                 <Icon name="arrowLeft" /> Previous
-              </button>
+              </Button>
               <span>
                 Page {purchasesPage} of {purchasesTotalPages} ({filteredPurchases.length} total)
               </span>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 disabled={purchasesPage >= purchasesTotalPages}
                 onClick={() => setPurchasesPage(purchasesPage + 1)}
               >
                 Next <Icon name="arrowRight" />
-              </button>
+              </Button>
             </div>
           )}
         </DataTableCard>
@@ -937,26 +933,25 @@ export function Vouchers() {
                           onChange={() => handleToggleCode(uc.id, uc.code, uc.status)}
                           tooltip={uc.status === "available" ? "Deactivate" : "Activate"}
                         />
-                        <button
-                          type="button"
-                          title="Edit Voucher Code"
+                        <IconButton
+                          label="Edit Voucher Code"
                           aria-label={`Edit voucher code ${uc.code}`}
                           onClick={() => openEditCodeModal(uc)}
                           className="action-btn-icon action-edit"
                           style={{ backgroundColor: 'var(--primary-soft)', color: 'var(--primary)' }}
-                        >
-                          <Icon name="edit" />
-                        </button>
+                          icon={<Icon name="edit" />}
+                        />
                         <RowActionMenu
                           items={[
-                            <button
+                            <Button
                               key="delete"
                               type="button"
+                              variant="text"
                               className="action-menu-item text-red-600"
                               onClick={() => handleDeleteCode(uc.id, uc.code)}
                             >
                               <Icon name="trash" className="w-4 h-4 mr-2" /> Delete Code
-                            </button>
+                            </Button>
                           ]}
                         />
                       </div>
@@ -968,15 +963,15 @@ export function Vouchers() {
           </table>
           {unusedTotalPages > 1 && (
             <div className="pagination">
-              <button type="button" disabled={unusedPage <= 1} onClick={() => setUnusedPage(unusedPage - 1)}>
+              <Button type="button" variant="secondary" disabled={unusedPage <= 1} onClick={() => setUnusedPage(unusedPage - 1)}>
                 <Icon name="arrowLeft" /> Previous
-              </button>
+              </Button>
               <span>
                 Page {unusedPage} of {unusedTotalPages} ({filteredUnusedCodes.length} total)
               </span>
-              <button type="button" disabled={unusedPage >= unusedTotalPages} onClick={() => setUnusedPage(unusedPage + 1)}>
+              <Button type="button" variant="secondary" disabled={unusedPage >= unusedTotalPages} onClick={() => setUnusedPage(unusedPage + 1)}>
                 Next <Icon name="arrowRight" />
-              </button>
+              </Button>
             </div>
           )}
         </DataTableCard>
@@ -1159,20 +1154,22 @@ export function Vouchers() {
               <div className="voucher-card-footer">
                 <span className="text-xs font-semibold text-slate-400">Ref: OFF-{vo.id}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => openOfferingModal(vo)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-200 cursor-pointer"
                   >
                     <Icon name="edit" className="w-3.5 h-3.5" /> Edit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="danger"
                     onClick={() => handleDeleteOffering(vo.id, vo.title)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200/80 dark:border-rose-800/60 transition-all duration-200 cursor-pointer"
                   >
                     <Icon name="trash" className="w-3.5 h-3.5" /> Delete
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1243,20 +1240,22 @@ export function Vouchers() {
               <div className="voucher-card-footer">
                 <span className="text-xs font-semibold text-slate-400">Type ID: {vt.id}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => openTypeModal(vt)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-200 cursor-pointer"
                   >
                     <Icon name="edit" className="w-3.5 h-3.5" /> Edit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="danger"
                     onClick={() => handleDeleteType(vt.id, vt.name)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200/80 dark:border-rose-800/60 transition-all duration-200 cursor-pointer"
                   >
                     <Icon name="trash" className="w-3.5 h-3.5" /> Delete
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

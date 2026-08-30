@@ -5,6 +5,8 @@ import "@/styles/voucher-ui.css";
 import { formatCurrencyAmount } from "@/utils/currency";
 import { formatDate } from "@/utils/date";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/utils/razorpay";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 interface VoucherOrder {
   online_payment: boolean;
@@ -251,14 +253,14 @@ export function VouchersSection() {
               </div>
 
               <div className="p-7 pt-0 mt-auto">
-                <button
+                <Button
                   type="button"
                   onClick={() => setSelectedOffering(vo)}
                   disabled={vo.available_stock <= 0}
                   className="w-full vh-pub-cta font-bold py-3 px-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {vo.available_stock > 0 ? "Buy Voucher Code" : "Out of Stock"}
-                </button>
+                </Button>
               </div>
             </div>
           ))}
@@ -274,15 +276,16 @@ export function VouchersSection() {
                 <span className="text-xs font-bold vh-pub-accent-text uppercase tracking-wider">{selectedOffering.voucher_type_name}</span>
                 <h3 className="text-xl font-bold mt-1">Complete Voucher Purchase</h3>
               </div>
-              <button
+              <IconButton
                 onClick={() => setSelectedOffering(null)}
                 className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors mt-0"
-                aria-label="Close"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+                label="Close"
+                icon={
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                }
+              />
             </div>
 
             <div className="p-4 vh-pub-summary-card rounded-2xl border flex justify-between items-center">
@@ -334,13 +337,13 @@ export function VouchersSection() {
                 />
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={submitting}
                 className="w-full py-3.5 vh-pub-cta disabled:opacity-50 font-bold rounded-xl text-sm transition-all shadow-lg mt-2"
               >
                 {submitting ? "Processing Purchase..." : `Pay ${formatOfferingPrice(selectedOffering)} & Get Code`}
-              </button>
+              </Button>
             </form>
           </div>
         </div>
@@ -364,12 +367,13 @@ export function VouchersSection() {
               <div className="text-2xl sm:text-3xl font-black font-mono tracking-widest break-all">
                 {purchaseSuccess.voucher_code}
               </div>
-              <button
+              <Button
+                type="button"
                 onClick={() => handleCopyCode(purchaseSuccess.voucher_code)}
                 className="px-4 py-2 vh-pub-copy-btn font-semibold text-xs rounded-xl transition-all flex items-center gap-2 mx-auto"
               >
                 <span>{copied ? "Copied to Clipboard" : "Copy Code"}</span>
-              </button>
+              </Button>
             </div>
 
             <div className="text-xs vh-pub-muted vh-pub-detail-box space-y-1 text-left p-4 rounded-xl">
@@ -378,12 +382,13 @@ export function VouchersSection() {
               <div><strong>Amount Paid:</strong> {formatCurrencyAmount(purchaseSuccess.final_amount, selectedOffering?.currency ?? "INR")}</div>
             </div>
 
-            <button
+            <Button
+              type="button"
               onClick={() => setPurchaseSuccess(null)}
               className="w-full py-3 vh-pub-done-btn border font-bold text-sm rounded-xl transition-all"
             >
               Done / Close
-            </button>
+            </Button>
           </div>
         </div>
       )}

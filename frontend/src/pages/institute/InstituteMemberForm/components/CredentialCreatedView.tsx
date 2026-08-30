@@ -1,4 +1,5 @@
 import { instituteMemberFormStrings as strings } from "../InstituteMemberForm.strings";
+import { Button } from "@/components/ui/Button/Button";
 
 interface CredentialCreatedViewProps {
   isStudent: boolean;
@@ -17,8 +18,8 @@ export function CredentialCreatedView({ isStudent, email, password, onDone }: Cr
         <div className="credential-row"><span>{t.emailLabel}</span><code>{email}</code></div>
         <div className="credential-row"><span>{t.passwordLabel}</span><code>{password}</code></div>
         <div className="form-actions">
-          <button onClick={() => navigator.clipboard.writeText(password)}>{strings.actions.copyPassword}</button>
-          <button type="button" onClick={onDone}>{strings.actions.done}</button>
+          <Button variant="secondary" onClick={() => navigator.clipboard.writeText(password)}>{strings.actions.copyPassword}</Button>
+          <Button type="button" onClick={onDone}>{strings.actions.done}</Button>
         </div>
       </section>
     </div>

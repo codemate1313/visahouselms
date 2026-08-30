@@ -78,15 +78,16 @@ export function FloatingRubricPanel({
       <div className="rubric-floater-body">
         {/* CEFR anchor descriptors are reference material - collapsed by
             default so they do not dominate the panel. */}
-        <button
+        <Button
           type="button"
+          variant="ghost"
           className="rubric-anchor-toggle"
           onClick={() => onToggleOpen(!isOpen)}
           aria-expanded={isOpen}
         >
           <span>{t.rubricAnchorToggle.title}</span>
           <span className="rubric-anchor-toggle-chevron">{isOpen ? "▴" : "▾"}</span>
-        </button>
+        </Button>
         {isOpen && (
           <div className="cefr-anchor-scale" aria-label={t.cefrAnchorAriaLabel}>
             {part.cefr_scale.map((anchor) => (

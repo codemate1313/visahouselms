@@ -1,4 +1,6 @@
 import type { PublicTheme } from "./authOverlayTypes";
+import { Button } from "@/components/ui/Button/Button";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 interface InstitutePlanBannerProps {
   publicTheme: PublicTheme;
@@ -128,7 +130,7 @@ export function InstitutePlanBanner({ publicTheme, onClose, onGoToCourses }: Ins
       `}</style>
       <div style={overlayStyle} onClick={onClose} role="dialog" aria-modal="true" aria-label="Institute plan notice">
         <div style={cardStyle} onClick={(e) => e.stopPropagation()}>
-          <button style={closeBtnStyle} onClick={onClose} aria-label="Close">×</button>
+          <IconButton style={closeBtnStyle} onClick={onClose} label="Close" icon="×" />
 
           <div style={iconWrapStyle}>🏫</div>
 
@@ -142,12 +144,12 @@ export function InstitutePlanBanner({ publicTheme, onClose, onGoToCourses }: Ins
             admin to request access to more content.
           </p>
 
-          <button className="vh-inst-primary" style={primaryBtnStyle} onClick={onGoToCourses}>
+          <Button type="button" className="vh-inst-primary" style={primaryBtnStyle} onClick={onGoToCourses}>
             Go to My Courses
-          </button>
-          <button className="vh-inst-secondary" style={secondaryBtnStyle} onClick={onClose}>
+          </Button>
+          <Button type="button" variant="secondary" className="vh-inst-secondary" style={secondaryBtnStyle} onClick={onClose}>
             Stay on this page
-          </button>
+          </Button>
         </div>
       </div>
     </>

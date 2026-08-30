@@ -341,7 +341,7 @@ export function StudentVouchers() {
                       {/* CTA Button */}
                       <div className="sv-card-footer">
                         {inStock ? (
-                          <button
+                          <Button
                             type="button"
                             className="sv-btn-buy"
                             onClick={() => handleBuyNow(vo)}
@@ -360,11 +360,11 @@ export function StudentVouchers() {
                                 </svg>
                               </>
                             )}
-                          </button>
+                          </Button>
                         ) : (
-                          <button type="button" className="sv-btn-out-of-stock" disabled>
+                          <Button type="button" variant="secondary" className="sv-btn-out-of-stock" disabled>
                             Out of Stock
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -382,9 +382,9 @@ export function StudentVouchers() {
                   <div className="sv-empty-icon">🎟️</div>
                   <h3>No Vouchers Purchased Yet</h3>
                   <p>You haven't bought any test vouchers yet. Browse available exam vouchers to get instant discounts.</p>
-                  <button type="button" className="sv-btn-browse-empty" onClick={() => setActiveTab("browse")}>
+                  <Button type="button" className="sv-btn-browse-empty" onClick={() => setActiveTab("browse")}>
                     Browse Vouchers Now →
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 myVouchers.map((v) => {
@@ -428,8 +428,9 @@ export function StudentVouchers() {
                           </div>
 
                           <div className="sv-code-actions">
-                            <button
+                            <Button
                               type="button"
+                              variant="secondary"
                               className="sv-code-btn"
                               onClick={() => toggleReveal(v.id)}
                             >
@@ -447,10 +448,11 @@ export function StudentVouchers() {
                                 )}
                               </svg>
                               <span>{isRevealed ? "Hide Code" : "Reveal Code"}</span>
-                            </button>
+                            </Button>
 
-                            <button
+                            <Button
                               type="button"
+                              variant="secondary"
                               className={`sv-code-btn sv-copy-btn ${isCopied ? "is-copied" : ""}`}
                               onClick={() => handleCopy(v.id, v.voucher_code)}
                             >
@@ -470,7 +472,7 @@ export function StudentVouchers() {
                                   <span>Copy Code</span>
                                 </>
                               )}
-                            </button>
+                            </Button>
                           </div>
                         </div>
 
@@ -489,8 +491,9 @@ export function StudentVouchers() {
 
                       {/* Footer Actions */}
                       <div className="sv-card-footer">
-                        <button
+                        <Button
                           type="button"
+                          variant="secondary"
                           className="sv-btn-invoice"
                           onClick={() => setSelectedInvoice(v)}
                         >
@@ -502,7 +505,7 @@ export function StudentVouchers() {
                             <polyline points="10 9 9 9 8 9" />
                           </svg>
                           <span>View Tax Invoice</span>
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   );

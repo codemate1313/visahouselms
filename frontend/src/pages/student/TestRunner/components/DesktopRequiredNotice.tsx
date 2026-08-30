@@ -1,4 +1,5 @@
 import { testRunnerStrings as strings } from "../TestRunner.strings";
+import { Button } from "@/components/ui/Button/Button";
 
 interface DesktopRequiredNoticeProps {
   onBackToDashboard: () => void;
@@ -63,7 +64,7 @@ export function DesktopRequiredNotice({ onBackToDashboard }: DesktopRequiredNoti
           {t.description}
         </p>
 
-        <button
+        <Button
           onClick={onBackToDashboard}
           style={{
             width: "100%",
@@ -81,7 +82,7 @@ export function DesktopRequiredNotice({ onBackToDashboard }: DesktopRequiredNoti
           onMouseOut={(e) => e.currentTarget.style.filter = "none"}
         >
           {t.backToDashboard}
-        </button>
+        </Button>
       </div>
     </div>
   );

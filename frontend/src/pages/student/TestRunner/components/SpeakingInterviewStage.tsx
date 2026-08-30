@@ -433,23 +433,18 @@ export function SpeakingInterviewStage({
               <div className="speaking-prep-status">
                 {t.recordingStartsAutomatically}
                 {showSkip && (
-                  <button
+                  <Button
                     type="button"
+                    variant="danger"
                     onClick={startRecording}
                     style={{
                       marginLeft: "12px",
                       padding: "4px 8px",
-                      background: "#ef4444",
-                      color: "#ffffff",
-                      border: "none",
-                      borderRadius: "4px",
                       fontSize: "11px",
-                      fontWeight: "bold",
-                      cursor: "pointer",
                     }}
                   >
                     Skip Prep
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -615,23 +610,18 @@ export function SpeakingInterviewStage({
                       <>
                         {t.recordingStartsAutomatically}
                         {showSkip && (
-                          <button
+                          <Button
                             type="button"
+                            variant="danger"
                             onClick={startRecording}
                             style={{
                               marginLeft: "12px",
                               padding: "4px 8px",
-                              background: "#ef4444",
-                              color: "#ffffff",
-                              border: "none",
-                              borderRadius: "4px",
                               fontSize: "11px",
-                              fontWeight: "bold",
-                              cursor: "pointer",
                             }}
                           >
                             Skip Prep
-                          </button>
+                          </Button>
                         )}
                       </>
                     )

@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Modal, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { Button } from "@/components/ui/Button/Button";
 import { formatDateTime } from "@/utils/date";
 
 /**
@@ -138,10 +139,10 @@ export function AiEvaluationLog({ onCountChange }: { onCountChange?: (count: num
             }}
             placeholder="Search student, model, or error..."
           />
-          <button type="button" className="button secondary logs-refresh-btn" onClick={() => void load()}>
+          <Button type="button" variant="secondary" className="button secondary logs-refresh-btn" onClick={() => void load()}>
             <Icon name="terminal" />
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -218,8 +219,9 @@ export function AiEvaluationLog({ onCountChange }: { onCountChange?: (count: num
                   </td>
                   <td className="col-log-time">{formatDateTime(row.created_at)}</td>
                   <td className="col-log-action">
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
                       className="log-view-btn"
                       disabled={detailLoading}
                       onClick={(event) => {
@@ -228,7 +230,7 @@ export function AiEvaluationLog({ onCountChange }: { onCountChange?: (count: num
                       }}
                     >
                       View
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}

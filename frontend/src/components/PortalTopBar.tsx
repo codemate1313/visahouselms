@@ -11,6 +11,7 @@ import { NotificationBell } from "./StudentNotificationBell";
 import { DashboardRangeAndThemeToggle } from "./DashboardRangeAndThemeToggle";
 import { ThemeToggle } from "./ThemeToggle";
 import { commonActions } from "@/content/common.strings";
+import { IconButton } from "@/components/ui/IconButton/IconButton";
 
 interface QuickLink {
   title: string;
@@ -579,15 +580,12 @@ export function PortalTopBar({
         </nav>
         <div className="portal-app-heading-row">
           {showBackButton && (
-            <button
-              type="button"
+            <IconButton
               className="portal-back-button"
               onClick={handleBack}
-              aria-label={commonActions.back}
-              title={commonActions.back}
-            >
-              <Icon name="arrowLeft" />
-            </button>
+              label={commonActions.back}
+              icon={<Icon name="arrowLeft" />}
+            />
           )}
           <h2 className="portal-app-heading">{currentTitle}</h2>
           {itemCount !== null && (
