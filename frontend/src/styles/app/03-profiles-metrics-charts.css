@@ -4687,10 +4687,21 @@ button.danger-text:hover,
   font-size: 16px;
 }
 
+.ai-quota-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
 .ai-quota-figures {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface-muted, rgba(0, 0, 0, 0.025));
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
 .ai-quota-figures div {
@@ -4716,13 +4727,15 @@ button.danger-text:hover,
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 4px 0 2px;
+  flex: 1;
   width: 100%;
+  padding: 12px 0 6px;
+  min-height: 220px;
 }
 
 .ai-quota-gauge-svg {
   width: 100%;
-  max-width: 220px;
+  max-width: 260px;
   height: auto;
   overflow: visible;
 }
@@ -4732,21 +4745,21 @@ button.danger-text:hover,
 }
 
 .ai-gauge-center-value {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 800;
   fill: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
 .ai-gauge-center-subtitle {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   fill: var(--text-muted);
   letter-spacing: 0.2px;
 }
 
 .ai-gauge-tick-label {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   fill: var(--text-muted);
 }

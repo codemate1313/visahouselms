@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { Badge, Modal } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
+import { Icon } from "@/components/icons";
 import { formatDateTime } from "@/utils/date";
 
 /**
@@ -241,151 +242,172 @@ export function AiQuotaCard() {
 
   return (
     <>
-      <section className="chart-card reference-styled-chart ai-quota-card">
-        <div className="ai-quota-head">
-          <div>
-            <span className="page-eyebrow">AI marking</span>
-            <h3>Quota Capacity</h3>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <IconButton
-              onClick={handleRefresh}
-              disabled={refreshing || busy}
-              className="refresh-btn"
-              label="Refresh quota status"
-              icon={
-                <svg
-                  className={refreshing ? "spin" : ""}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ width: "16px", height: "16px" }}
-                >
-                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.73-.73" />
-                </svg>
-              }
-            />
-            <Badge tone={!data.enabled ? "gray" : worst !== null && worst >= 90 ? "red" : data.totals.rate_limited_today ? "amber" : "green"}>
-              {!data.enabled ? "Switched off" : worst !== null && worst >= 90 ? "Near limit" : data.totals.rate_limited_today ? "Hit limits today" : "Healthy"}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Semi-Circular Radial Gauge (Option 2) */}
-        <div className="ai-quota-gauge-container">
-          <svg
-            viewBox="0 0 220 125"
-            className="ai-quota-gauge-svg"
-            role="img"
-            aria-label="AI Quota Gauge"
-          >
-            <defs>
-              <linearGradient id="aiGaugeGradOk" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#10b981" />
-                <stop offset="100%" stopColor="#059669" />
-              </linearGradient>
-              <linearGradient id="aiGaugeGradWarning" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#f59e0b" />
-                <stop offset="100%" stopColor="#d97706" />
-              </linearGradient>
-              <linearGradient id="aiGaugeGradCritical" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#ef4444" />
-                <stop offset="100%" stopColor="#b91c2b" />
-              </linearGradient>
-            </defs>
-
-            {/* Background Arc Track */}
-            <path
-              d="M 35 100 A 75 75 0 0 1 185 100"
-              fill="none"
-              stroke="currentColor"
-              className="ai-gauge-bg-track"
-              strokeWidth="14"
-              strokeLinecap="round"
-            />
-
-            {/* Active Gauge Fill */}
-            <path
-              d="M 35 100 A 75 75 0 0 1 185 100"
-              fill="none"
-              stroke={gaugeStroke}
-              strokeWidth="14"
-              strokeLinecap="round"
-              strokeDasharray="235.62"
-              strokeDashoffset={gaugeOffset}
-              style={{ transition: "stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}
-            />
-
-            {/* Center Main Value */}
-            <text
-              x="110"
-              y="78"
-              textAnchor="middle"
-              className="ai-gauge-center-value"
-            >
-              {gaugeValueText}
-            </text>
-
-            {/* Center Subtitle */}
-            <text
-              x="110"
-              y="95"
-              textAnchor="middle"
-              className="ai-gauge-center-subtitle"
-            >
-              {gaugeSubtitleText}
-            </text>
-
-            {/* Min and Max markers */}
-            <text x="35" y="118" textAnchor="middle" className="ai-gauge-tick-label">
-              0%
-            </text>
-            <text x="185" y="118" textAnchor="middle" className="ai-gauge-tick-label">
-              {totalRpdLimit > 0 ? `${compact(totalRpdLimit)}` : "100%"}
-            </text>
-          </svg>
-        </div>
-
-        <div className="ai-quota-figures">
-          <div>
-            <b>{data.totals.requests_today}</b>
-            <span>requests today</span>
-          </div>
-          <div>
-            <b>{compact(data.totals.tokens_today)}</b>
-            <span>tokens today</span>
-          </div>
-          <div>
-            <b>{data.totals.rate_limited_today}</b>
-            <span>rate-limited</span>
-          </div>
-        </div>
-
-        <div className="ai-quota-keys">
-          {data.keys.slice(0, 3).map((key) => (
-            <div key={key.key} className="ai-quota-key-row">
-              <span className="ai-quota-key-name">{key.key}</span>
-              <span className="ai-quota-key-figure">
-                {key.limits.rpd ? `${key.requests_today} / ${key.limits.rpd} today` : `${key.requests_today} today`}
-              </span>
-              <UsageBar percent={key.usage_percent.rpd} />
+      <div
+        className="clickable-chart-card-wrapper"
+        onClick={() => setOpen(true)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === "Enter" && setOpen(true)}
+        title="Click to view detailed AI quota breakdown"
+      >
+        <section className="chart-card reference-styled-chart ai-quota-card">
+          <div className="chart-toolbar">
+            <div className="chart-title-area">
+              <span className="info-icon-badge"><Icon name="analytics" /></span>
+              <span className="chart-tag-text">AI Marking Quota</span>
             </div>
-          ))}
-          {data.keys.length === 0 && <p className="hint">No AI marking has run yet.</p>}
-        </div>
 
-        <Button type="button" variant="secondary" size="sm" onClick={() => setOpen(true)}>
-          Full quota breakdown
-        </Button>
-      </section>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <IconButton
+                onClick={handleRefresh}
+                disabled={refreshing || busy}
+                className="refresh-btn"
+                label="Refresh quota status"
+                icon={
+                  <svg
+                    className={refreshing ? "spin" : ""}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ width: "14px", height: "14px" }}
+                  >
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.73-.73" />
+                  </svg>
+                }
+              />
+              <Badge tone={!data.enabled ? "gray" : worst !== null && worst >= 90 ? "red" : data.totals.rate_limited_today ? "amber" : "green"}>
+                {!data.enabled ? "Off" : worst !== null && worst >= 90 ? "Near limit" : data.totals.rate_limited_today ? "Hit limits" : "Healthy"}
+              </Badge>
+              <button
+                type="button"
+                className="chart-toggle-btn is-active"
+                onClick={() => setOpen(true)}
+                title="Open full quota breakdown"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "28px",
+                  height: "28px",
+                  borderRadius: "8px",
+                  background: "rgba(185, 28, 43, 0.08)",
+                  color: "var(--primary, #b91c2b)",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                <Icon name="analytics" />
+              </button>
+            </div>
+          </div>
 
-      <Modal open={open} onClose={() => setOpen(false)} size="lg" title="AI marking quota">
+          {/* Semi-Circular Radial Gauge */}
+          <div className="ai-quota-gauge-container">
+            <svg
+              viewBox="0 0 240 145"
+              className="ai-quota-gauge-svg"
+              role="img"
+              aria-label="AI Quota Gauge"
+            >
+              <defs>
+                <linearGradient id="aiGaugeGradOk" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="100%" stopColor="#059669" />
+                </linearGradient>
+                <linearGradient id="aiGaugeGradWarning" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#d97706" />
+                </linearGradient>
+                <linearGradient id="aiGaugeGradCritical" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#ef4444" />
+                  <stop offset="100%" stopColor="#b91c2b" />
+                </linearGradient>
+              </defs>
+
+              {/* Background Arc Track */}
+              <path
+                d="M 35 110 A 85 85 0 0 1 205 110"
+                fill="none"
+                stroke="currentColor"
+                className="ai-gauge-bg-track"
+                strokeWidth="15"
+                strokeLinecap="round"
+              />
+
+              {/* Active Gauge Fill */}
+              <path
+                d="M 35 110 A 85 85 0 0 1 205 110"
+                fill="none"
+                stroke={gaugeStroke}
+                strokeWidth="15"
+                strokeLinecap="round"
+                strokeDasharray="267.04"
+                strokeDashoffset={gaugeOffset}
+                style={{ transition: "stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}
+              />
+
+              {/* Center Main Value */}
+              <text
+                x="120"
+                y="85"
+                textAnchor="middle"
+                className="ai-gauge-center-value"
+              >
+                {gaugeValueText}
+              </text>
+
+              {/* Center Subtitle */}
+              <text
+                x="120"
+                y="105"
+                textAnchor="middle"
+                className="ai-gauge-center-subtitle"
+              >
+                {gaugeSubtitleText}
+              </text>
+
+              {/* Min and Max markers */}
+              <text x="35" y="132" textAnchor="middle" className="ai-gauge-tick-label">
+                0%
+              </text>
+              <text x="205" y="132" textAnchor="middle" className="ai-gauge-tick-label">
+                {totalRpdLimit > 0 ? `${compact(totalRpdLimit)}` : "100%"}
+              </text>
+            </svg>
+          </div>
+        </section>
+      </div>
+
+      <Modal open={open} onClose={() => setOpen(false)} size="lg" title="AI marking quota & capacity">
         <div className="ai-quota-detail">
           {error && <p className="error-text">{error}</p>}
           {notice && <p className="success-text">{notice}</p>}
+
+          {/* Quick Metrics Strip inside Modal */}
+          <div className="ai-quota-figures" style={{ marginBottom: "20px" }}>
+            <div>
+              <b>{data.totals.requests_today}</b>
+              <span>requests today</span>
+            </div>
+            <div>
+              <b>{compact(data.totals.tokens_today)}</b>
+              <span>tokens today</span>
+            </div>
+            <div>
+              <b>{data.totals.rate_limited_today}</b>
+              <span>rate-limited</span>
+            </div>
+            <div>
+              <b>{data.totals.failed_today}</b>
+              <span>failed today</span>
+            </div>
+          </div>
 
           <section className="ai-quota-switch-row">
             <div className="toggle-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
