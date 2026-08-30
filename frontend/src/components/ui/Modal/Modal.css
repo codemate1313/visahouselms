@@ -37,24 +37,33 @@
 
 .ui-modal-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 14px;
 }
 
 .ui-modal-header .ui-icon-btn {
-  width: 30px !important;
-  height: 30px !important;
-  min-width: 30px !important;
-  min-height: 30px !important;
-  margin: -5px -5px 0 0;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  margin: 0 !important;
   padding: 0 !important;
   border-radius: 8px !important;
   background: transparent !important;
   color: var(--text-muted) !important;
   box-shadow: none !important;
   opacity: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.ui-modal-header .ui-icon-btn::before,
+.ui-modal-header .ui-icon-btn::after {
+  display: none !important;
+  content: none !important;
 }
 
 .ui-modal-header .ui-icon-btn:hover:not(:disabled) {

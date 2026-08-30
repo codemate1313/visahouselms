@@ -918,9 +918,10 @@
   border-color: #99d5ce;
 }
 
-.module-import-modal {
-  width: min(1180px, calc(100vw - 32px));
-  max-height: calc(100vh - 64px);
+.module-import-modal,
+.ui-modal-card.module-import-modal {
+  width: min(1080px, calc(100vw - 32px)) !important;
+  max-height: calc(100vh - 64px) !important;
 }
 
 .module-import-modal .ui-modal-body {
@@ -955,7 +956,7 @@
 }
 
 .import-review-header > div:first-child {
-  flex: 1 1 260px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -963,8 +964,8 @@
 .section-heading p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 13.5px;
+  line-height: 1.5;
 }
 
 .review-actions {

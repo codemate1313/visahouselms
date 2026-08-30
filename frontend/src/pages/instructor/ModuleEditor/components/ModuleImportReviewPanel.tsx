@@ -87,7 +87,7 @@ export function ModuleImportReviewPanel({
                   <h3>{part.part_title}</h3>
                   <p>{t.partSummary(part.questions.length, part.part_title)}</p>
                 </div>
-                <Button type="button" variant="secondary" className="secondary-button" onClick={() => onOpenPart(part.part_id)}>
+                <Button type="button" variant="primary" onClick={() => onOpenPart(part.part_id)}>
                   {t.openPart(part.part_title)}
                 </Button>
               </div>
