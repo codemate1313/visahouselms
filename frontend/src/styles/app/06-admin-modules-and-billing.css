@@ -3038,6 +3038,13 @@
   font-size: 12px;
 }
 
+.student-notification-view-all,
+.student-notification-view-all .ui-btn-label,
+.student-notification-view-all * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 .student-notification-view-all {
   width: 100%;
   min-height: 48px;
@@ -3046,6 +3053,7 @@
   justify-content: center;
   padding: 12px 20px;
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%) !important;
   border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent) !important;
   border-radius: 12px !important;
@@ -3057,8 +3065,11 @@
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.student-notification-view-all:hover {
+.student-notification-view-all:hover,
+.student-notification-view-all:hover .ui-btn-label,
+.student-notification-view-all:hover * {
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%) !important;
   box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 40%, transparent) !important;
   transform: translateY(-1px) !important;

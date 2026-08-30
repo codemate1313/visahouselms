@@ -1492,7 +1492,7 @@ body:not([data-theme="dark"]) select:hover:not(:disabled) {
 /* Student-dashboard action contrast guard
    Keep filled action buttons readable after inline styles and broad dashboard
    button rules have all resolved. */
-:where(.student-layout, .dashboard, .modal-backdrop, .ui-modal-backdrop) :where(
+:where(.student-layout, .dashboard, .modal-backdrop, .ui-modal-backdrop, .student-notification-drawer-wrapper) :where(
   .ui-btn-primary,
   .ui-btn-danger,
   .uui-btn-primary,
@@ -1500,13 +1500,14 @@ body:not([data-theme="dark"]) select:hover:not(:disabled) {
   .premium-modal-btn.confirm-btn,
   .lc-pager-button,
   .lc-end-exam,
-  .test-runner-end-exam
+  .test-runner-end-exam,
+  .student-notification-view-all
 ) {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
 }
 
-:where(.student-layout, .dashboard, .modal-backdrop, .ui-modal-backdrop) :where(
+:where(.student-layout, .dashboard, .modal-backdrop, .ui-modal-backdrop, .student-notification-drawer-wrapper) :where(
   .ui-btn-primary,
   .ui-btn-danger,
   .uui-btn-primary,
@@ -1514,7 +1515,8 @@ body:not([data-theme="dark"]) select:hover:not(:disabled) {
   .premium-modal-btn.confirm-btn,
   .lc-pager-button,
   .lc-end-exam,
-  .test-runner-end-exam
+  .test-runner-end-exam,
+  .student-notification-view-all
 ) :where(.ui-btn-label, .ui-btn-icon, span, svg) {
   color: inherit !important;
   -webkit-text-fill-color: currentColor !important;

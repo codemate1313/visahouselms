@@ -544,7 +544,7 @@ export function NotificationBell({
             <div className="student-notification-drawer-footer">
               <Button
                 type="button"
-                variant="text"
+                variant="primary"
                 className="student-notification-view-all"
                 onClick={() => {
                   closePanel();
