@@ -46,6 +46,20 @@ def _split_answers(value: object) -> list[str]:
     return list(dict.fromkeys(part.strip(" ().") for part in parts if part.strip(" ().")))
 
 
+def _normalize_cloze_passage(text: str) -> str:
+    if not text:
+        return text
+    # 1. (1) ______ or (1) ___ or (1) _
+    text = re.sub(r"\(\s*(\d+)\s*\)\s*_{1,}", r"{{blank:\1}}", text)
+    # 2. ___ (1) ___ or __(1)
+    text = re.sub(r"_{1,}\s*\(\s*(\d+)\s*\)\s*_{0,}", r"{{blank:\1}}", text)
+    # 3. [1] ___ or [1]
+    text = re.sub(r"\[\s*(\d+)\s*\]\s*_{0,}", r"{{blank:\1}}", text)
+    # 4. Standalone (1) if surrounded by spaces or punctuation: e.g. " ideas (1) . "
+    text = re.sub(r"(?<=\s)\(\s*(\d+)\s*\)(?=[\s,.:;!?])", r"{{blank:\1}}", text)
+    return text
+
+
 def _infer_type(
     options: list[dict],
     answers: list[str],
@@ -399,6 +413,8 @@ def parse_pdf(
             return
         passage_text = "\n".join(current_passage).strip()
         norm_cp = (current.get("target_part") or current_part).lower().replace("-", "_").replace(" ", "_")
+        if "reading_1b" in norm_cp or "reading_2" in norm_cp:
+            passage_text = _normalize_cloze_passage(passage_text)
         part_head = current.get("part_heading") or current_heading or DEFAULT_PART_HEADINGS.get(norm_cp, "")
         preview = _question_preview(
             prompt=" ".join(current["prompt"]),

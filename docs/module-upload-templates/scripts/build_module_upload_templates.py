@@ -362,13 +362,54 @@ PDF_SECTIONS = {
 }
 
 
+DEFAULT_PART_HEADINGS: dict[str, str] = {
+    "reading_1a": "Read each sentence. Choose the word that can best replace the bold word without changing the meaning.",
+    "reading_1b": "Read the text and choose the correct word for each gap.",
+    "reading_2": "Read the text. Six sentences have been removed. Choose the sentence that best fits each gap. One sentence is a distractor.",
+    "reading_3": "Read texts A–D. For questions 18–24, decide which text answers the question.",
+    "reading_4": "Read the text and choose the correct answer for each question.",
+    "listening_1": "You will hear some short conversations. You will hear each conversation twice. Choose the correct answer to complete each conversation.",
+    "listening_2": "You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.",
+    "listening_3": "You will hear a recording. You will hear the recording twice. Complete the notes with NO MORE THAN THREE WORDS for each gap.",
+    "listening_4": "You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.",
+}
+
+PART_ORDER: dict[str, int] = {
+    "listening_1": 1,
+    "listening_2": 2,
+    "listening_3": 3,
+    "listening_4": 4,
+    "reading_1a": 5,
+    "reading_1b": 6,
+    "reading_2": 7,
+    "reading_3": 8,
+    "reading_4": 9,
+    "writing_1": 10,
+    "writing_2": 11,
+    "speaking_1": 12,
+    "speaking_2": 13,
+    "speaking_3": 14,
+    "speaking_4": 15,
+}
+
+
 def _read_csv_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
 
 
 def _part_from_fixture_path(path: Path) -> str:
+    stem = path.stem.lower()
+    if stem.startswith("reading_1a"):
+        return "Reading 1A"
+    if stem.startswith("reading_1b"):
+        return "Reading 1B"
     return path.stem.replace("_", " ").title()
+
+
+def _fixture_sort_key(path: Path) -> int:
+    stem = path.stem.lower()
+    return PART_ORDER.get(stem, 99)
 
 
 def _normalize_upload_row(row: dict[str, str], part_code: str) -> dict[str, object]:
@@ -383,7 +424,10 @@ def _normalize_upload_row(row: dict[str, str], part_code: str) -> dict[str, obje
 
 def _fixture_full_rows(folder: str) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
-    for path in sorted((FIXTURE_ROOT / folder).glob("*.csv")):
+    files = sorted((FIXTURE_ROOT / folder).glob("*.csv"), key=_fixture_sort_key)
+    for path in files:
+        if "full" in path.name.lower() or "combined" in path.name.lower():
+            continue
         part_code = _part_from_fixture_path(path)
         rows.extend(_normalize_upload_row(row, part_code) for row in _read_csv_rows(path))
     return rows
@@ -410,8 +454,12 @@ def full_csv_rows() -> dict[str, list[dict[str, object]]]:
 
 def _fixture_part_sections(folder: str) -> list[dict[str, object]]:
     sections: list[dict[str, object]] = []
-    for path in sorted((FIXTURE_ROOT / folder).glob("*.csv")):
+    files = sorted((FIXTURE_ROOT / folder).glob("*.csv"), key=_fixture_sort_key)
+    for path in files:
+        if "full" in path.name.lower() or "combined" in path.name.lower():
+            continue
         part = _part_from_fixture_path(path)
+        norm_part = path.stem.lower()
         rows = _read_csv_rows(path)
         questions = []
         for row in rows:
@@ -433,10 +481,13 @@ def _fixture_part_sections(folder: str) -> list[dict[str, object]]:
                     "response_seconds": (row.get("response_seconds") or "").strip(),
                 }
             )
+        heading = DEFAULT_PART_HEADINGS.get(norm_part) or next((q["instructions"] for q in questions if q["instructions"]), "")
+        passage = next((q["passage"] for q in questions if q["passage"]), "")
         sections.append(
             {
                 "part": part,
-                "passage": next((q["passage"] for q in questions if q["passage"]), ""),
+                "heading": heading,
+                "passage": passage,
                 "questions": questions,
             }
         )
@@ -468,11 +519,16 @@ def _mapped_sections(map_name: str) -> list[dict[str, object]]:
                     "response_seconds": (row.get("response_seconds") or "").strip(),
                 }
             )
+        part = item["part"]
+        norm_part = part.lower().replace("-", "_").replace(" ", "_")
+        heading = DEFAULT_PART_HEADINGS.get(norm_part) or next((q["instructions"] for q in questions if q["instructions"]), "")
+        passage = next((q["passage"] for q in questions if q["passage"]), "")
         sections.append(
             {
-                "part": item["part"],
+                "part": part,
                 "section": item["section"],
-                "passage": next((q["passage"] for q in questions if q["passage"]), ""),
+                "heading": heading,
+                "passage": passage,
                 "questions": questions,
             }
         )
@@ -539,38 +595,32 @@ def build_pdf(path: Path, title: str, sections: list[dict[str, object]]) -> None
     question_number = 1
     for section in sections:
         story.append(Paragraph(f"Part: {section['part']}", heading_style))
-        if section.get("section"):
-            story.append(Paragraph(f"Section: {section['section']}", small_style))
+        if section.get("heading"):
+            story.append(Paragraph(str(section["heading"]), body_style))
         if section.get("passage"):
             story.append(Paragraph("Reading Passage:", body_style))
-            story.append(Paragraph(str(section["passage"]), body_style))
+            escaped_passage = str(section["passage"]).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br/>")
+            story.append(Paragraph(escaped_passage, body_style))
         for question in section["questions"]:
             number = int(question.get("number") or question_number)
             question_number = max(question_number + 1, number + 1)
-            type_label = question.get("type")
-            if type_label:
-                story.append(Paragraph(f"Question Type: {type_label}", small_style))
-            instructions = question.get("instructions")
-            if instructions:
-                story.append(Paragraph(f"Instructions: {instructions}", small_style))
-            turn_type = question.get("turn_type")
-            if turn_type:
-                prep = question.get("preparation_seconds") or "0"
-                response = question.get("response_seconds") or "0"
-                story.append(Paragraph(f"Speaking Turn: {turn_type} | Prep: {prep}s | Response: {response}s", small_style))
-            story.append(Paragraph(f"{number}. {question['prompt']}", body_style))
+            prompt_text = str(question.get("prompt") or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            story.append(Paragraph(f"{number}. {prompt_text}", body_style))
             for key, text in question.get("options", []):
-                story.append(Paragraph(f"{key}. {text}", body_style))
+                opt_text = str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                story.append(Paragraph(f"{key}. {opt_text}", body_style))
             answer = str(question.get("answer") or "").strip()
             if answer:
-                story.append(Paragraph(f"Answer: {answer}", small_style))
+                ans_text = str(answer).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                story.append(Paragraph(f"Answer: {ans_text}", small_style))
                 answers.append((number, answer))
             story.append(Spacer(1, 1 * mm))
     if answers:
         story.append(Spacer(1, 6 * mm))
         story.append(Paragraph("Answer Key", heading_style))
         for number, answer in answers:
-            story.append(Paragraph(f"{number}. {answer}", body_style))
+            ans_text = str(answer).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            story.append(Paragraph(f"{number}. {ans_text}", body_style))
     doc = SimpleDocTemplate(
         str(path),
         pagesize=A4,
@@ -663,6 +713,7 @@ Keep PDFs selectable, not scanned images. Scanned PDFs need OCR before upload.
 def main() -> None:
     CSV_DIR.mkdir(parents=True, exist_ok=True)
     PDF_DIR.mkdir(parents=True, exist_ok=True)
+    (FIXTURE_ROOT / "pdf").mkdir(parents=True, exist_ok=True)
     for filename, rows in csv_rows().items():
         write_csv(CSV_DIR / filename, rows)
     for filename, rows in full_csv_rows().items():
@@ -673,6 +724,14 @@ def main() -> None:
     for filename, sections in full_pdf_sections().items():
         title = filename.replace("-", " ").replace(".pdf", "").title()
         build_pdf(PDF_DIR / filename, title, sections)
+        if filename == "reading-full-module-upload.pdf":
+            build_pdf(FIXTURE_ROOT / "pdf" / "full-reading-bulk-upload.pdf", "Full Reading Bulk Upload", sections)
+        elif filename == "listening-full-module-upload.pdf":
+            build_pdf(FIXTURE_ROOT / "pdf" / "full-listening-bulk-upload.pdf", "Full Listening Bulk Upload", sections)
+        elif filename == "writing-full-module-upload.pdf":
+            build_pdf(FIXTURE_ROOT / "pdf" / "full-writing-bulk-upload.pdf", "Full Writing Bulk Upload", sections)
+        elif filename == "speaking-full-module-upload.pdf":
+            build_pdf(FIXTURE_ROOT / "pdf" / "full-speaking-bulk-upload.pdf", "Full Speaking Bulk Upload", sections)
     write_readme()
 
 

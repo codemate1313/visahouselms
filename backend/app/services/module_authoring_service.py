@@ -1027,6 +1027,26 @@ def add_question(
     return _question_out(question)
 
 
+LEGACY_INSTRUCTIONS: dict[str, str] = {
+    "listening_1": "Seven three-option multiple-choice questions. Play the audio twice.",
+    "listening_2": "Two three-option multiple-choice questions per conversation. Play the audio twice.",
+    "listening_3": "Seven gap answers of no more than three words. Play the audio twice.",
+    "listening_4": "Six three-option multiple-choice questions. Play the audio twice.",
+}
+
+DEFAULT_PART_HEADINGS: dict[str, str] = {
+    "reading_1a": "Read each sentence. Choose the word that can best replace the bold word without changing the meaning.",
+    "reading_1b": "Read the text and choose the correct word for each gap.",
+    "reading_2": "Read the text. Six sentences have been removed. Choose the sentence that best fits each gap. One sentence is a distractor.",
+    "reading_3": "Read texts A–D. For questions 18–24, decide which text answers the question.",
+    "reading_4": "Read the text and choose the correct answer for each question.",
+    "listening_1": "You will hear some short conversations. You will hear each conversation twice. Choose the correct answer to complete each conversation.",
+    "listening_2": "You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.",
+    "listening_3": "You will hear a recording. You will hear the recording twice. Complete the notes with NO MORE THAN THREE WORDS for each gap.",
+    "listening_4": "You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.",
+}
+
+
 def _part_key(value: object) -> str:
     return re.sub(r"[^a-z0-9]+", "", str(value or "").strip().lower())
 
@@ -1064,6 +1084,20 @@ def _turn_timing(part: ExamModulePart, turn_type: Optional[str]) -> tuple[int, i
     )
 
 
+def _normalize_cloze_passage(text: str) -> str:
+    if not text:
+        return text
+    # 1. (1) ______ or (1) ___ or (1) _
+    text = re.sub(r"\(\s*(\d+)\s*\)\s*_{1,}", r"{{blank:\1}}", text)
+    # 2. ___ (1) ___ or __(1)
+    text = re.sub(r"_{1,}\s*\(\s*(\d+)\s*\)\s*_{0,}", r"{{blank:\1}}", text)
+    # 3. [1] ___ or [1]
+    text = re.sub(r"\[\s*(\d+)\s*\]\s*_{0,}", r"{{blank:\1}}", text)
+    # 4. Standalone (1) if surrounded by spaces or punctuation: e.g. " ideas (1) . "
+    text = re.sub(r"(?<=\s)\(\s*(\d+)\s*\)(?=[\s,.:;!?])", r"{{blank:\1}}", text)
+    return text
+
+
 def _normalize_import_question_for_part(part: ExamModulePart, question: dict, index: int) -> dict:
     data = dict(question)
     data.pop("target_part", None)
@@ -1081,6 +1115,9 @@ def _normalize_import_question_for_part(part: ExamModulePart, question: dict, in
 
     if constraints.get("inline_marker_required") and "{{blank}}" not in data.get("prompt", ""):
         data["prompt"] = f"{data.get('prompt', '').strip()} {{{{blank}}}}".strip()
+
+    if constraints.get("layout") in {"shared_cloze", "inline_matching_blanks"} and data.get("passage"):
+        data["passage"] = _normalize_cloze_passage(data["passage"])
 
     if part.part_code == "reading_1a" and not re.search(r"\*\*(.+?)\*\*", data.get("prompt", "")):
         prompt = data.get("prompt", "")
@@ -1242,16 +1279,25 @@ def _assign_module_import_questions(module: ExamModule, questions: list[dict]) -
             continue
         if (part.answer_constraints or {}).get("layout") == "notepad_gaps":
             _synthesize_notepad_passage(assigned)
+        elif (part.answer_constraints or {}).get("layout") in {"shared_cloze", "inline_matching_blanks"}:
+            for q in assigned:
+                if q.get("passage"):
+                    q["passage"] = _normalize_cloze_passage(q["passage"])
         ceiling = _module_import_capacity(part)
         remaining = None if ceiling is None else max(0, ceiling - len(part.questions))
-        extracted_heading = next((q.get("part_heading") for q in assigned if q.get("part_heading")), "")
+        extracted_heading = (
+            next((q.get("part_heading") for q in assigned if q.get("part_heading")), "")
+            or DEFAULT_PART_HEADINGS.get(part.part_code, "")
+        )
+        saved_inst = "" if part.instructions == LEGACY_INSTRUCTIONS.get(part.part_code) else (part.instructions or "")
+        effective_heading = extracted_heading or saved_inst or None
         result.append(
             {
                 "part_id": part.id,
                 "part_code": part.part_code,
                 "part_title": part.title,
-                "part_heading": extracted_heading or part.instructions or None,
-                "instructions": extracted_heading or part.instructions or None,
+                "part_heading": effective_heading,
+                "instructions": effective_heading,
                 "section_type": part.section_type,
                 "layout": (part.answer_constraints or {}).get("layout"),
                 "allowed_question_types": list((part.answer_constraints or {}).get("allowed_question_types") or []),
@@ -1338,10 +1384,17 @@ def import_module_questions(
                     f"Importing {len(questions)} more would exceed it."
                 ),
             )
-        if not part.instructions:
-            batch_heading = batch.get("part_heading") or batch.get("instructions") or next((q.get("part_heading") for q in questions if q.get("part_heading")), None)
-            if batch_heading:
-                part.instructions = batch_heading
+        batch_heading = (
+            batch.get("part_heading")
+            or batch.get("instructions")
+            or next((q.get("part_heading") for q in questions if q.get("part_heading")), None)
+        )
+        if batch_heading:
+            part.instructions = batch_heading
+        elif not part.instructions or part.instructions == LEGACY_INSTRUCTIONS.get(part.part_code):
+            default_h = DEFAULT_PART_HEADINGS.get(part.part_code)
+            if default_h:
+                part.instructions = default_h
         for offset, question in enumerate(questions):
             normalized = _normalize_import_question_for_part(part, question, len(part.questions) + offset)
             _validate_question_for_part(

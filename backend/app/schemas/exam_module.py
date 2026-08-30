@@ -127,6 +127,8 @@ class ModuleInstituteAssignment(BaseModel):
 
 class ModulePartQuestionBatch(BaseModel):
     part_id: int = Field(gt=0)
+    part_heading: Optional[str] = Field(default=None, max_length=1000)
+    instructions: Optional[str] = Field(default=None, max_length=1000)
     questions: list[QuestionCreate] = Field(default_factory=list, max_length=500)
 
 

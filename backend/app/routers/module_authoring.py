@@ -127,7 +127,12 @@ def commit_module_import(
         actor,
         module_id,
         [
-            {"part_id": part.part_id, "questions": [question.model_dump() for question in part.questions]}
+            {
+                "part_id": part.part_id,
+                "part_heading": part.part_heading,
+                "instructions": part.instructions,
+                "questions": [question.model_dump() for question in part.questions],
+            }
             for part in payload.parts
         ],
         payload.source_type,
