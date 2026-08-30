@@ -203,10 +203,41 @@ export function AiQuotaCard() {
 
   const totalRpdLimit = data.keys.reduce((sum, key) => sum + (key.limits.rpd || 0), 0);
   const totalRequestsToday = data.totals.requests_today;
-  const dailyUsedPercent = totalRpdLimit > 0
-    ? Math.min(100, Math.round((totalRequestsToday / totalRpdLimit) * 100))
-    : null;
+  const rawPercent = totalRpdLimit > 0 ? (totalRequestsToday / totalRpdLimit) * 100 : null;
+  const dailyUsedPercent = rawPercent !== null ? Math.min(100, Math.round(rawPercent)) : null;
   const remainingToday = totalRpdLimit > 0 ? Math.max(0, totalRpdLimit - totalRequestsToday) : null;
+
+  const arcLength = 235.62;
+  const effectivePct =
+    dailyUsedPercent !== null
+      ? Math.max(totalRequestsToday > 0 ? 3 : 0, Math.min(100, dailyUsedPercent))
+      : totalRequestsToday > 0
+        ? 12
+        : 0;
+  const gaugeOffset = arcLength * (1 - effectivePct / 100);
+
+  const gaugeStroke =
+    dailyUsedPercent === null
+      ? "url(#aiGaugeGradOk)"
+      : dailyUsedPercent >= 90
+        ? "url(#aiGaugeGradCritical)"
+        : dailyUsedPercent >= 60
+          ? "url(#aiGaugeGradWarning)"
+          : "url(#aiGaugeGradOk)";
+
+  const gaugeValueText =
+    dailyUsedPercent !== null
+      ? rawPercent !== null && rawPercent > 0 && rawPercent < 1
+        ? "<1%"
+        : `${dailyUsedPercent}%`
+      : `${totalRequestsToday}`;
+
+  const gaugeSubtitleText =
+    totalRpdLimit > 0
+      ? remainingToday !== null && remainingToday > 0
+        ? `${remainingToday} left today`
+        : "Daily quota used"
+      : "Requests today";
 
   return (
     <>
@@ -214,7 +245,7 @@ export function AiQuotaCard() {
         <div className="ai-quota-head">
           <div>
             <span className="page-eyebrow">AI marking</span>
-            <h3>Quota across your keys</h3>
+            <h3>Quota Capacity</h3>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <IconButton
@@ -243,6 +274,81 @@ export function AiQuotaCard() {
           </div>
         </div>
 
+        {/* Semi-Circular Radial Gauge (Option 2) */}
+        <div className="ai-quota-gauge-container">
+          <svg
+            viewBox="0 0 220 125"
+            className="ai-quota-gauge-svg"
+            role="img"
+            aria-label="AI Quota Gauge"
+          >
+            <defs>
+              <linearGradient id="aiGaugeGradOk" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#10b981" />
+                <stop offset="100%" stopColor="#059669" />
+              </linearGradient>
+              <linearGradient id="aiGaugeGradWarning" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#f59e0b" />
+                <stop offset="100%" stopColor="#d97706" />
+              </linearGradient>
+              <linearGradient id="aiGaugeGradCritical" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#ef4444" />
+                <stop offset="100%" stopColor="#b91c2b" />
+              </linearGradient>
+            </defs>
+
+            {/* Background Arc Track */}
+            <path
+              d="M 35 100 A 75 75 0 0 1 185 100"
+              fill="none"
+              stroke="currentColor"
+              className="ai-gauge-bg-track"
+              strokeWidth="14"
+              strokeLinecap="round"
+            />
+
+            {/* Active Gauge Fill */}
+            <path
+              d="M 35 100 A 75 75 0 0 1 185 100"
+              fill="none"
+              stroke={gaugeStroke}
+              strokeWidth="14"
+              strokeLinecap="round"
+              strokeDasharray="235.62"
+              strokeDashoffset={gaugeOffset}
+              style={{ transition: "stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1)" }}
+            />
+
+            {/* Center Main Value */}
+            <text
+              x="110"
+              y="78"
+              textAnchor="middle"
+              className="ai-gauge-center-value"
+            >
+              {gaugeValueText}
+            </text>
+
+            {/* Center Subtitle */}
+            <text
+              x="110"
+              y="95"
+              textAnchor="middle"
+              className="ai-gauge-center-subtitle"
+            >
+              {gaugeSubtitleText}
+            </text>
+
+            {/* Min and Max markers */}
+            <text x="35" y="118" textAnchor="middle" className="ai-gauge-tick-label">
+              0%
+            </text>
+            <text x="185" y="118" textAnchor="middle" className="ai-gauge-tick-label">
+              {totalRpdLimit > 0 ? `${compact(totalRpdLimit)}` : "100%"}
+            </text>
+          </svg>
+        </div>
+
         <div className="ai-quota-figures">
           <div>
             <b>{data.totals.requests_today}</b>
@@ -255,42 +361,6 @@ export function AiQuotaCard() {
           <div>
             <b>{data.totals.rate_limited_today}</b>
             <span>rate-limited</span>
-          </div>
-        </div>
-
-        <div className="ai-quota-capacity-card">
-          <div className="ai-quota-capacity-header">
-            <span className="ai-quota-capacity-label">Daily Quota Usage</span>
-            <span className="ai-quota-capacity-count">
-              {totalRpdLimit > 0 ? (
-                <>
-                  <b>{totalRequestsToday.toLocaleString()}</b> / {totalRpdLimit.toLocaleString()} requests
-                  <span className="ai-quota-capacity-pct">({dailyUsedPercent}%)</span>
-                </>
-              ) : (
-                <>
-                  <b>{totalRequestsToday.toLocaleString()}</b> requests today
-                </>
-              )}
-            </span>
-          </div>
-
-          <div className={`ai-quota-progress-track ${toneFor(dailyUsedPercent)}`}>
-            <div
-              className="ai-quota-progress-fill"
-              style={{
-                width: dailyUsedPercent !== null ? `${Math.max(totalRequestsToday > 0 ? 3 : 0, Math.min(100, dailyUsedPercent))}%` : "0%",
-              }}
-            />
-          </div>
-
-          <div className="ai-quota-capacity-footer">
-            <span>
-              {remainingToday !== null
-                ? `${remainingToday.toLocaleString()} requests remaining today`
-                : "No daily ceiling configured"}
-            </span>
-            <span className="ai-quota-reset-pill">Daily reset</span>
           </div>
         </div>
 
