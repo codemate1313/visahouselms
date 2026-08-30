@@ -1,7 +1,7 @@
-prompt,option_a,option_b,option_c,correct_answer,question_type,points
-"What is the discussion mainly about?",Choosing research methods,Planning a sports event,Reviewing a film,A,mcq_single,1
-"Why does Maya prefer interviews?",They reveal opinions,They are cheaper,They take less time,A,mcq_single,1
-"What weakness does Ravi mention?",Small sample size,Unclear deadline,Old equipment,A,mcq_single,1
-"Which source will the group check next?",A journal article,A news report,A lecture slide,A,mcq_single,1
-"What does the tutor suggest adding?",A comparison table,A personal story,A longer title,A,mcq_single,1
-"What will the group do before Friday?",Revise the proposal,Collect all data,Submit the final report,A,mcq_single,1
+prompt,option_a,option_b,option_c,correct_answer,question_type,points,instructions
+What is the discussion mainly about?,Choosing research methods,Planning a sports event,Reviewing a film,A,mcq_single,1,You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.
+Why does Maya prefer interviews?,They reveal opinions,They are cheaper,They take less time,A,mcq_single,1,You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.
+What weakness does Ravi mention?,Small sample size,Unclear deadline,Old equipment,A,mcq_single,1,You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.
+Which source will the group check next?,A journal article,A news report,A lecture slide,A,mcq_single,1,You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.
+What does the tutor suggest adding?,A comparison table,A personal story,A longer title,A,mcq_single,1,You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.
+What will the group do before Friday?,Revise the proposal,Collect all data,Submit the final report,A,mcq_single,1,You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.

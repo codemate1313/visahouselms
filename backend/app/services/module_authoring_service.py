@@ -1244,11 +1244,14 @@ def _assign_module_import_questions(module: ExamModule, questions: list[dict]) -
             _synthesize_notepad_passage(assigned)
         ceiling = _module_import_capacity(part)
         remaining = None if ceiling is None else max(0, ceiling - len(part.questions))
+        extracted_heading = next((q.get("part_heading") for q in assigned if q.get("part_heading")), "")
         result.append(
             {
                 "part_id": part.id,
                 "part_code": part.part_code,
                 "part_title": part.title,
+                "part_heading": extracted_heading or part.instructions or None,
+                "instructions": extracted_heading or part.instructions or None,
                 "section_type": part.section_type,
                 "layout": (part.answer_constraints or {}).get("layout"),
                 "allowed_question_types": list((part.answer_constraints or {}).get("allowed_question_types") or []),
@@ -1299,6 +1302,7 @@ def preview_module_import(db: Session, actor: User, module_id: int, preview: dic
         "source_filename": preview["source_filename"],
         "source_text": preview["source_text"],
         "parts": parts,
+        "part_headings": preview.get("part_headings", {}),
         "question_count": sum(part["question_count"] for part in parts),
         "warning_count": len(cleaned_preview_warnings) + len(warnings),
         "warnings": cleaned_preview_warnings + warnings,
@@ -1334,6 +1338,10 @@ def import_module_questions(
                     f"Importing {len(questions)} more would exceed it."
                 ),
             )
+        if not part.instructions:
+            batch_heading = batch.get("part_heading") or batch.get("instructions") or next((q.get("part_heading") for q in questions if q.get("part_heading")), None)
+            if batch_heading:
+                part.instructions = batch_heading
         for offset, question in enumerate(questions):
             normalized = _normalize_import_question_for_part(part, question, len(part.questions) + offset)
             _validate_question_for_part(

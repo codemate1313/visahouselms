@@ -166,6 +166,35 @@ export function ModuleImportReviewPanel({
                   <p>{t.partSummary(part.questions.length, part.part_title)}</p>
                 </div>
               </div>
+              {(() => {
+                const extractedHeading =
+                  part.part_heading ||
+                  preview.part_headings?.[part.part_code] ||
+                  part.questions[0]?.part_heading ||
+                  part.instructions;
+                if (!extractedHeading) return null;
+                return (
+                  <div
+                    className="authoring-panel vh-import-heading-banner"
+                    style={{
+                      marginBottom: 16,
+                      padding: "12px 16px",
+                      borderRadius: "8px",
+                      background: "color-mix(in srgb, var(--primary) 6%, var(--surface))",
+                      border: "1px solid color-mix(in srgb, var(--primary) 20%, transparent)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--primary)" }}>
+                        Part Heading / Instructions (Shown to Candidates)
+                      </span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: "13.5px", fontWeight: 550, color: "var(--text)" }}>
+                      {extractedHeading}
+                    </p>
+                  </div>
+                );
+              })()}
               {(passageRequired || isNotepadGaps) && (
                 <div className="passage-editor-section" style={{ marginBottom: 18 }}>
                   <label style={{ fontWeight: 700, fontSize: "13px", display: "block", marginBottom: 6, color: "var(--text)" }}>

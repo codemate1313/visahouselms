@@ -1,11 +1,11 @@
-prompt,option_a,option_b,option_c,correct_answer,question_type,points,group_label
-"Conversation 1: What does the man want to change?",His course time,His address,His password,A,mcq_single,1,Conversation 1
-"Conversation 1: What does the woman ask him to provide?",Student ID,Photo ID,Payment receipt,A,mcq_single,1,Conversation 1
-"Conversation 2: Why did the class move rooms?",Projector issue,Noise outside,Large group size,C,mcq_single,1,Conversation 2
-"Conversation 2: Where should students wait?",Reception,Room 4,The courtyard,B,mcq_single,1,Conversation 2
-"Conversation 3: What is the customer buying?",Headphones,A charger,A keyboard,B,mcq_single,1,Conversation 3
-"Conversation 3: What discount is available?",Ten percent,Fifteen percent,Twenty percent,A,mcq_single,1,Conversation 3
-"Conversation 4: What does the speaker recommend?",Booking early,Travelling by taxi,Changing hotel,A,mcq_single,1,Conversation 4
-"Conversation 4: Which day is busiest?",Friday,Saturday,Sunday,B,mcq_single,1,Conversation 4
-"Conversation 5: What problem does the student report?",Missing marks,Wrong name,Lost card,A,mcq_single,1,Conversation 5
-"Conversation 5: When will it be fixed?",Today,Tomorrow,Next week,B,mcq_single,1,Conversation 5
+prompt,option_a,option_b,option_c,correct_answer,question_type,points,group_label,instructions
+Conversation 1: What does the man want to change?,His course time,His address,His password,A,mcq_single,1,Conversation 1,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.
+Conversation 1: What does the woman ask him to provide?,Student ID,Photo ID,Payment receipt,A,mcq_single,1,Conversation 1,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.
+Conversation 2: Why did the class move rooms?,Projector issue,Noise outside,Large group size,C,mcq_single,1,Conversation 2,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.
+Conversation 2: Where should students wait?,Reception,Room 4,The courtyard,B,mcq_single,1,Conversation 2,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.
+Conversation 3: What is the customer buying?,Headphones,A charger,A keyboard,B,mcq_single,1,Conversation 3,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.
+Conversation 3: What discount is available?,Ten percent,Fifteen percent,Twenty percent,A,mcq_single,1,Conversation 3,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.
+Conversation 4: What does the speaker recommend?,Booking early,Travelling by taxi,Changing hotel,A,mcq_single,1,Conversation 4,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.
+Conversation 4: Which day is busiest?,Friday,Saturday,Sunday,B,mcq_single,1,Conversation 4,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.
+Conversation 5: What problem does the student report?,Missing marks,Wrong name,Lost card,A,mcq_single,1,Conversation 5,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.
+Conversation 5: When will it be fixed?,Today,Tomorrow,Next week,B,mcq_single,1,Conversation 5,You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.

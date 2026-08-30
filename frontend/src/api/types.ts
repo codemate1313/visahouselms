@@ -210,6 +210,8 @@ export interface QuestionDraft {
   question_type: QuestionType;
   prompt: string;
   instructions: string | null;
+  part_heading?: string | null;
+  target_part?: string;
   passage: string | null;
   image_path: string | null;
   image_url?: string | null;
@@ -257,6 +259,8 @@ export interface ModuleImportPreviewPart {
   part_id: number;
   part_code: string;
   part_title: string;
+  part_heading?: string | null;
+  instructions?: string | null;
   section_type: IeltsSection;
   layout?: string | null;
   allowed_question_types: QuestionType[];
@@ -271,6 +275,7 @@ export interface ModuleImportPreview {
   source_filename: string;
   source_text: string;
   parts: ModuleImportPreviewPart[];
+  part_headings?: Record<string, string>;
   question_count: number;
   warning_count: number;
   warnings: string[];

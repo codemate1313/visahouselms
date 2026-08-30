@@ -25,6 +25,8 @@ const DEFAULT_INSTRUCTIONS: Record<string, string> = {
   reading_4: "Read the text and choose the correct answer for each question.",
   listening_1: "You will hear some short conversations. You will hear each conversation twice. Choose the correct answer to complete each conversation.",
   listening_2: "You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.",
+  listening_3: "You will hear a recording. You will hear the recording twice. Complete the notes with NO MORE THAN THREE WORDS for each gap.",
+  listening_4: "You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.",
 };
 
 /** Old blueprint strings seeded into the DB before heading requirements were updated. If part.instructions matches one of these exactly we treat it as "not set" so the new defaults / mandatory flow kicks in. */

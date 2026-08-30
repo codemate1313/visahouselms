@@ -95,6 +95,19 @@ def _infer_type(
     return "short_answer"
 
 
+DEFAULT_PART_HEADINGS: dict[str, str] = {
+    "reading_1a": "Read each sentence. Choose the word that can best replace the bold word without changing the meaning.",
+    "reading_1b": "Read the text and choose the correct word for each gap.",
+    "reading_2": "Read the text. Six sentences have been removed. Choose the sentence that best fits each gap. One sentence is a distractor.",
+    "reading_3": "Read texts A–D. For questions 18–24, decide which text answers the question.",
+    "reading_4": "Read the text and choose the correct answer for each question.",
+    "listening_1": "You will hear some short conversations. You will hear each conversation twice. Choose the correct answer to complete each conversation.",
+    "listening_2": "You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.",
+    "listening_3": "You will hear a recording. You will hear the recording twice. Complete the notes with NO MORE THAN THREE WORDS for each gap.",
+    "listening_4": "You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.",
+}
+
+
 def _question_preview(
     *,
     prompt: str,
@@ -102,6 +115,7 @@ def _question_preview(
     correct_answers: list[str],
     question_type: str = "",
     instructions: str = "",
+    part_heading: str = "",
     passage: str = "",
     explanation: str = "",
     points: object = 1,
@@ -191,6 +205,8 @@ def _question_preview(
         "difficulty": difficulty,
         "warnings": warnings,
     }
+    if _clean(part_heading):
+        result["part_heading"] = _clean(part_heading)
     if _clean(target_part):
         result["target_part"] = _clean(target_part)
     return result
@@ -200,6 +216,7 @@ def parse_csv(
     content: bytes,
     default_target_part: str = "",
     default_section_type: str = "",
+    filename: str = "",
 ) -> tuple[str, list[dict], list[str]]:
     try:
         decoded = content.decode("utf-8-sig")
@@ -224,6 +241,19 @@ def parse_csv(
             result[norm_key] = _clean_multiline(value) if norm_key in {"passage", "context"} else _clean(value)
         return result
 
+    file_hint = filename.lower() if filename else ""
+    detected_part = ""
+    for known_part in (
+        "listening_1", "listening_2", "listening_3", "listening_4",
+        "reading_1a", "reading_1b", "reading_2", "reading_3", "reading_4",
+        "writing_1", "writing_2", "speaking_1", "speaking_2", "speaking_3", "speaking_4",
+    ):
+        if known_part in file_hint or known_part.replace("_", "-") in file_hint or known_part.replace("_", " ") in file_hint:
+            detected_part = known_part
+            break
+
+    fallback_part = default_target_part or detected_part or default_section_type
+
     questions: list[dict] = []
     warnings: list[str] = []
     for row_number, raw_row in enumerate(reader, start=2):
@@ -234,10 +264,22 @@ def parse_csv(
             or row.get("part")
             or row.get("part_title")
             or row.get("module_part")
-            or default_target_part
-            or default_section_type
+            or fallback_part
             or ""
         )
+        row_heading = (
+            row.get("part_heading")
+            or row.get("heading")
+            or row.get("part_instruction")
+            or row.get("part_instructions")
+            or row.get("instruction")
+            or row.get("instructions")
+            or ""
+        )
+        if not row_heading and target_part:
+            norm_tp = target_part.lower().replace("-", "_").replace(" ", "_")
+            if norm_tp in DEFAULT_PART_HEADINGS:
+                row_heading = DEFAULT_PART_HEADINGS[norm_tp]
         is_l1 = bool(
             target_part
             and (
@@ -276,6 +318,7 @@ def parse_csv(
             correct_answers=_split_answers(answer),
             question_type=row.get("question_type") or row.get("type") or "",
             instructions=row.get("instructions") or "",
+            part_heading=row_heading,
             passage=row.get("passage") or row.get("context") or "",
             explanation=row.get("explanation") or row.get("rationale") or "",
             points=row.get("points") or 1,
@@ -303,6 +346,7 @@ def parse_pdf(
     content: bytes,
     default_target_part: str = "",
     default_section_type: str = "",
+    filename: str = "",
 ) -> tuple[str, list[dict], list[str]]:
     try:
         reader = PdfReader(io.BytesIO(content))
@@ -328,10 +372,24 @@ def parse_pdf(
                     answer_map[int(match.group(1))] = _split_answers(match.group(2))
             break
 
+    file_hint = filename.lower() if filename else ""
+    detected_part = ""
+    for known_part in (
+        "listening_1", "listening_2", "listening_3", "listening_4",
+        "reading_1a", "reading_1b", "reading_2", "reading_3", "reading_4",
+        "writing_1", "writing_2", "speaking_1", "speaking_2", "speaking_3", "speaking_4",
+    ):
+        if known_part in file_hint or known_part.replace("_", "-") in file_hint or known_part.replace("_", " ") in file_hint:
+            detected_part = known_part
+            break
+
+    fallback_part = default_target_part or detected_part or default_section_type or ""
     questions: list[dict] = []
     warnings: list[str] = []
     current: Optional[dict] = None
-    current_part = default_target_part or default_section_type or ""
+    current_part = fallback_part
+    norm_init_part = fallback_part.lower().replace("-", "_").replace(" ", "_")
+    current_heading = DEFAULT_PART_HEADINGS.get(norm_init_part, "")
     current_passage = []
     mode = "prompt"
 
@@ -340,13 +398,16 @@ def parse_pdf(
         if not current:
             return
         passage_text = "\n".join(current_passage).strip()
+        norm_cp = (current.get("target_part") or current_part).lower().replace("-", "_").replace(" ", "_")
+        part_head = current.get("part_heading") or current_heading or DEFAULT_PART_HEADINGS.get(norm_cp, "")
         preview = _question_preview(
             prompt=" ".join(current["prompt"]),
             options=current["options"],
             correct_answers=current["answers"] or answer_map.get(current["number"], []),
             explanation=" ".join(current["explanation"]),
             passage=passage_text or None,
-            target_part=current.get("target_part", "") or default_target_part or default_section_type or "",
+            part_heading=part_head,
+            target_part=current.get("target_part", "") or fallback_part,
         )
         if preview["warnings"]:
             warnings.append(
@@ -364,17 +425,29 @@ def parse_pdf(
         if part_match:
             finish()
             current_part = part_match.group(1)
+            norm_cp = current_part.lower().replace("-", "_").replace(" ", "_")
+            current_heading = DEFAULT_PART_HEADINGS.get(norm_cp, "")
             current_passage = []
             mode = "prompt"
+        elif not current and (
+            line.lower().startswith("you will hear")
+            or line.lower().startswith("read each")
+            or line.lower().startswith("read the")
+            or line.lower().startswith("read text")
+            or line.lower().startswith("complete the notes")
+        ):
+            current_heading = line
         elif question_match:
             finish()
+            norm_cp = current_part.lower().replace("-", "_").replace(" ", "_")
             current = {
                 "number": int(question_match.group(1)),
                 "prompt": [question_match.group(2)],
                 "options": [],
                 "answers": [],
                 "explanation": [],
-                "target_part": current_part or default_target_part or default_section_type or "",
+                "part_heading": current_heading or DEFAULT_PART_HEADINGS.get(norm_cp, ""),
+                "target_part": current_part or fallback_part,
             }
             mode = "prompt"
         elif current and answer_match:
@@ -432,16 +505,37 @@ async def preview_upload(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is not a valid text CSV")
 
     source_text, questions, warnings = (
-        parse_pdf(content, default_target_part=default_target_part, default_section_type=default_section_type)
+        parse_pdf(
+            content,
+            default_target_part=default_target_part,
+            default_section_type=default_section_type,
+            filename=filename,
+        )
         if extension == "pdf"
-        else parse_csv(content, default_target_part=default_target_part, default_section_type=default_section_type)
+        else parse_csv(
+            content,
+            default_target_part=default_target_part,
+            default_section_type=default_section_type,
+            filename=filename,
+        )
     )
+    part_headings: dict[str, str] = {}
+    for q in questions:
+        tp = q.get("target_part") or ""
+        ph = q.get("part_heading") or ""
+        if tp and ph and tp not in part_headings:
+            part_headings[tp] = ph
+        elif tp and tp not in part_headings:
+            norm_tp = tp.lower().replace("-", "_").replace(" ", "_")
+            if norm_tp in DEFAULT_PART_HEADINGS:
+                part_headings[tp] = DEFAULT_PART_HEADINGS[norm_tp]
     return {
         "source_type": extension,
         "source_filename": filename[:255],
         "source_text": source_text,
         "questions": questions,
         "question_count": len(questions),
+        "part_headings": part_headings,
         "warning_count": len(warnings),
         "warnings": warnings,
     }

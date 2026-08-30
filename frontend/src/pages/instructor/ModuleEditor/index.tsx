@@ -640,12 +640,20 @@ export function ModuleEditor() {
   async function commitModuleImport() {
     if (!module || !modulePreview) return;
     const batches = modulePreview.parts
-      .map((part) => ({
-        part_id: part.part_id,
-        questions: part.questions
-          .filter((_, index) => selectedModuleImports.has(`${part.part_id}:${index}`))
-          .map(questionPayload),
-      }))
+      .map((part) => {
+        const extractedHeading =
+          part.part_heading ||
+          modulePreview.part_headings?.[part.part_code] ||
+          part.questions[0]?.part_heading;
+        return {
+          part_id: part.part_id,
+          part_heading: extractedHeading || undefined,
+          instructions: extractedHeading || undefined,
+          questions: part.questions
+            .filter((_, index) => selectedModuleImports.has(`${part.part_id}:${index}`))
+            .map(questionPayload),
+        };
+      })
       .filter((part) => part.questions.length > 0);
     const count = batches.reduce((total, part) => total + part.questions.length, 0);
     if (!count) {

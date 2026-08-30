@@ -180,7 +180,7 @@ export function ListeningAudioPanel(props: ListeningAudioPanelProps) {
                   </details>
                 )}
                 {isEditable && (
-                  <Button variant="danger" className="danger-text" onClick={() => onDeleteAudio(asset.id)}>
+                  <Button variant="danger" size="sm" onClick={() => onDeleteAudio(asset.id)}>
                     {t.delete}
                   </Button>
                 )}
