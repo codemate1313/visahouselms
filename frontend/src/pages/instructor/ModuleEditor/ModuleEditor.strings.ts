@@ -50,6 +50,8 @@ export const moduleEditorStrings = {
     calculatedDurationLabel: "Calculated exam duration",
     calculatedSpeakingDurationHint: "The duration updates automatically from the preparation and recording time of the Speaking prompts you add.",
     calculatedCompositeDurationHint: "The duration is the total of the four selected source modules.",
+    calculatedFinalTestDurationHint: "The duration is fixed to the full four-skill LanguageCert Academic exam.",
+    finalTestUploadHint: "Optional: upload one combined PDF or CSV covering all four skills. After the draft is created, the system sorts the questions into the Listening, Reading, Writing, and Speaking parts for review before saving. You can also skip this and upload a separate custom PDF or CSV for each part individually, just like authoring a standalone module.",
     shuffle: "Shuffle",
     shuffleTitle: "Randomly pick unused source modules for each section",
     shuffleExhaustedWarning: (sections: string) =>

@@ -1,65 +1,56 @@
-part_code,question_type,prompt,option_a,option_b,option_c,option_d,option_e,option_f,option_g,option_h,correct_answer,points,passage
-Reading 1A,mcq_single,"The committee's findings were largely ______ with those of the earlier study, which strengthened confidence in both sets of results.",consistent,persistent,insistent,resistant,,,,,A,1,
-Reading 1A,mcq_single,"Rather than stating her objection openly, she chose to ______ her disagreement in a series of carefully worded questions.",announce,veil,broadcast,inflate,,,,,B,1,
-Reading 1A,mcq_single,The report was criticised for relying on ______ evidence - a handful of memorable stories rather than systematic data.,empirical,statistical,anecdotal,theoretical,,,,,C,1,
-Reading 1A,mcq_single,Funding for the project was ______ on the team publishing its interim results by the end of the year.,contingent,reluctant,redundant,abundant,,,,,A,1,
-Reading 1A,mcq_single,"Although the two theories appear similar, a closer reading reveals a ______ but important difference in how each defines value.",blatant,subtle,drastic,profound,,,,,B,1,
-Reading 1A,mcq_single,The museum's new wing was designed to ______ the original building rather than compete with it.,complement,compliment,compensate,compile,,,,,A,1,
-Reading 1B,mcq_single,,emerged,emerge,emergency,,,,,,B,1,"Rethinking the office
+part_code,question_type,prompt,option_a,option_b,option_c,option_d,option_e,option_f,option_g,option_h,correct_answer,passage
+Reading 1A,mcq_single,"The committee's findings were largely ______ with those of the earlier study, which strengthened confidence in both sets of results.",consistent,persistent,insistent,resistant,,,,,A,
+Reading 1A,mcq_single,"Rather than stating her objection openly, she chose to ______ her disagreement in a series of carefully worded questions.",announce,veil,broadcast,inflate,,,,,B,
+Reading 1A,mcq_single,The report was criticised for relying on ______ evidence - a handful of memorable stories rather than systematic data.,empirical,statistical,anecdotal,theoretical,,,,,C,
+Reading 1A,mcq_single,Funding for the project was ______ on the team publishing its interim results by the end of the year.,contingent,reluctant,redundant,abundant,,,,,A,
+Reading 1A,mcq_single,"Although the two theories appear similar, a closer reading reveals a ______ but important difference in how each defines value.",blatant,subtle,drastic,profound,,,,,B,
+Reading 1A,mcq_single,The museum's new wing was designed to ______ the original building rather than compete with it.,complement,compliment,compensate,compile,,,,,A,
+Reading 1B,mcq_single,,emerged,emerge,emergency,,,,,,B,"Rethinking the office
 
-For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas (1) ______. Employers were also drawn to the lower cost per employee.
+For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas {{blank:1}}. Employers were also drawn to the lower cost per employee.
 
-Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction (2) ______ by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
+Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction {{blank:2}} by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
 
-The explanation may lie in privacy. In a room with no barriers, a conversation is (3) ______ to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to (4) ______ full focus after a distraction.
+The explanation may lie in privacy. In a room with no barriers, a conversation is {{blank:3}} to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to {{blank:4}} full focus after a distraction.
 
-None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a (5) ______ of spaces - quiet rooms for concentration alongside open areas for collaboration."
-Reading 1B,mcq_single,,reduced,lessened,declined,,,,,,C,1,"Rethinking the office
+None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a {{blank:5}} of spaces - quiet rooms for concentration alongside open areas for collaboration."
+Reading 1B,mcq_single,,reduced,lessened,declined,,,,,,C,"Rethinking the office
 
-For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas (1) ______. Employers were also drawn to the lower cost per employee.
+For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas {{blank:1}}. Employers were also drawn to the lower cost per employee.
 
-Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction (2) ______ by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
+Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction {{blank:2}} by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
 
-The explanation may lie in privacy. In a room with no barriers, a conversation is (3) ______ to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to (4) ______ full focus after a distraction.
+The explanation may lie in privacy. In a room with no barriers, a conversation is {{blank:3}} to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to {{blank:4}} full focus after a distraction.
 
-None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a (5) ______ of spaces - quiet rooms for concentration alongside open areas for collaboration."
-Reading 1B,mcq_single,,audible,audio,auditory,,,,,,A,1,"Rethinking the office
+None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a {{blank:5}} of spaces - quiet rooms for concentration alongside open areas for collaboration."
+Reading 1B,mcq_single,,audible,audio,auditory,,,,,,A,"Rethinking the office
 
-For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas (1) ______. Employers were also drawn to the lower cost per employee.
+For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas {{blank:1}}. Employers were also drawn to the lower cost per employee.
 
-Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction (2) ______ by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
+Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction {{blank:2}} by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
 
-The explanation may lie in privacy. In a room with no barriers, a conversation is (3) ______ to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to (4) ______ full focus after a distraction.
+The explanation may lie in privacy. In a room with no barriers, a conversation is {{blank:3}} to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to {{blank:4}} full focus after a distraction.
 
-None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a (5) ______ of spaces - quiet rooms for concentration alongside open areas for collaboration."
-Reading 1B,mcq_single,,return,restore,regain,,,,,,C,1,"Rethinking the office
+None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a {{blank:5}} of spaces - quiet rooms for concentration alongside open areas for collaboration."
+Reading 1B,mcq_single,,return,restore,regain,,,,,,C,"Rethinking the office
 
-For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas (1) ______. Employers were also drawn to the lower cost per employee.
+For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas {{blank:1}}. Employers were also drawn to the lower cost per employee.
 
-Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction (2) ______ by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
+Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction {{blank:2}} by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
 
-The explanation may lie in privacy. In a room with no barriers, a conversation is (3) ______ to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to (4) ______ full focus after a distraction.
+The explanation may lie in privacy. In a room with no barriers, a conversation is {{blank:3}} to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to {{blank:4}} full focus after a distraction.
 
-None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a (5) ______ of spaces - quiet rooms for concentration alongside open areas for collaboration."
-Reading 1B,mcq_single,,row,range,rank,,,,,,B,1,"Rethinking the office
+None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a {{blank:5}} of spaces - quiet rooms for concentration alongside open areas for collaboration."
+Reading 1B,mcq_single,,row,range,rank,,,,,,B,"Rethinking the office
 
-For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas (1) ______. Employers were also drawn to the lower cost per employee.
+For most of the twentieth century, the open-plan office was presented as a straightforward improvement on the private room. Removing walls, it was argued, would encourage the informal exchanges from which good ideas {{blank:1}}. Employers were also drawn to the lower cost per employee.
 
-Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction (2) ______ by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
+Recent research has complicated that picture. When one firm converted two floors to open plan, face-to-face interaction {{blank:2}} by roughly seventy per cent, while email traffic rose. Rather than talking more, staff appeared to retreat behind headphones and screens.
 
-The explanation may lie in privacy. In a room with no barriers, a conversation is (3) ______ to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to (4) ______ full focus after a distraction.
+The explanation may lie in privacy. In a room with no barriers, a conversation is {{blank:3}} to everyone within earshot, and workers seem to compensate by having fewer of them. Concentration suffers too: studies of interrupted work suggest it can take twenty minutes to {{blank:4}} full focus after a distraction.
 
-None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a (5) ______ of spaces - quiet rooms for concentration alongside open areas for collaboration."
-Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,B,1,"Citizen science
-
-Citizen science - research carried out with the help of volunteers - has grown rapidly over the past two decades. {{blank:1}}, the practice is far from new: amateur naturalists were recording bird migrations and rainfall long before the term was coined. What has changed is scale. {{blank:2}} smartphones and online platforms, a single project can now gather millions of observations in one season.
-
-The appeal to researchers is obvious. They obtain data at a volume no funded team could collect alone, and across areas far wider than a research station can cover. {{blank:3}}, the benefits run in both directions: participants consistently report a better grasp of how evidence is gathered and why it is uncertain.
-
-{{blank:4}}, the approach has its critics, and their central objection is data quality. Volunteers differ widely in training, and an enthusiastic observer may record a rare species that was never there. {{blank:5}}, most large projects now build in verification: photographs are required, records are cross-checked against known ranges, and statistical models weight observations by an observer's track record.
-
-{{blank:6}}, citizen science is best understood not as a cheap substitute for professional research, but as a distinct method with strengths a laboratory cannot reproduce."
-Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,E,1,"Citizen science
+None of this means the open plan should be abandoned. It suggests instead that a single layout is unlikely to suit every kind of work, and that offices should offer a {{blank:5}} of spaces - quiet rooms for concentration alongside open areas for collaboration."
+Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,B,"Citizen science
 
 Citizen science - research carried out with the help of volunteers - has grown rapidly over the past two decades. {{blank:1}}, the practice is far from new: amateur naturalists were recording bird migrations and rainfall long before the term was coined. What has changed is scale. {{blank:2}} smartphones and online platforms, a single project can now gather millions of observations in one season.
 
@@ -68,7 +59,7 @@ The appeal to researchers is obvious. They obtain data at a volume no funded tea
 {{blank:4}}, the approach has its critics, and their central objection is data quality. Volunteers differ widely in training, and an enthusiastic observer may record a rare species that was never there. {{blank:5}}, most large projects now build in verification: photographs are required, records are cross-checked against known ranges, and statistical models weight observations by an observer's track record.
 
 {{blank:6}}, citizen science is best understood not as a cheap substitute for professional research, but as a distinct method with strengths a laboratory cannot reproduce."
-Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,G,1,"Citizen science
+Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,E,"Citizen science
 
 Citizen science - research carried out with the help of volunteers - has grown rapidly over the past two decades. {{blank:1}}, the practice is far from new: amateur naturalists were recording bird migrations and rainfall long before the term was coined. What has changed is scale. {{blank:2}} smartphones and online platforms, a single project can now gather millions of observations in one season.
 
@@ -77,7 +68,7 @@ The appeal to researchers is obvious. They obtain data at a volume no funded tea
 {{blank:4}}, the approach has its critics, and their central objection is data quality. Volunteers differ widely in training, and an enthusiastic observer may record a rare species that was never there. {{blank:5}}, most large projects now build in verification: photographs are required, records are cross-checked against known ranges, and statistical models weight observations by an observer's track record.
 
 {{blank:6}}, citizen science is best understood not as a cheap substitute for professional research, but as a distinct method with strengths a laboratory cannot reproduce."
-Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,A,1,"Citizen science
+Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,G,"Citizen science
 
 Citizen science - research carried out with the help of volunteers - has grown rapidly over the past two decades. {{blank:1}}, the practice is far from new: amateur naturalists were recording bird migrations and rainfall long before the term was coined. What has changed is scale. {{blank:2}} smartphones and online platforms, a single project can now gather millions of observations in one season.
 
@@ -86,7 +77,7 @@ The appeal to researchers is obvious. They obtain data at a volume no funded tea
 {{blank:4}}, the approach has its critics, and their central objection is data quality. Volunteers differ widely in training, and an enthusiastic observer may record a rare species that was never there. {{blank:5}}, most large projects now build in verification: photographs are required, records are cross-checked against known ranges, and statistical models weight observations by an observer's track record.
 
 {{blank:6}}, citizen science is best understood not as a cheap substitute for professional research, but as a distinct method with strengths a laboratory cannot reproduce."
-Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,F,1,"Citizen science
+Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,A,"Citizen science
 
 Citizen science - research carried out with the help of volunteers - has grown rapidly over the past two decades. {{blank:1}}, the practice is far from new: amateur naturalists were recording bird migrations and rainfall long before the term was coined. What has changed is scale. {{blank:2}} smartphones and online platforms, a single project can now gather millions of observations in one season.
 
@@ -95,7 +86,7 @@ The appeal to researchers is obvious. They obtain data at a volume no funded tea
 {{blank:4}}, the approach has its critics, and their central objection is data quality. Volunteers differ widely in training, and an enthusiastic observer may record a rare species that was never there. {{blank:5}}, most large projects now build in verification: photographs are required, records are cross-checked against known ranges, and statistical models weight observations by an observer's track record.
 
 {{blank:6}}, citizen science is best understood not as a cheap substitute for professional research, but as a distinct method with strengths a laboratory cannot reproduce."
-Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,D,1,"Citizen science
+Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,F,"Citizen science
 
 Citizen science - research carried out with the help of volunteers - has grown rapidly over the past two decades. {{blank:1}}, the practice is far from new: amateur naturalists were recording bird migrations and rainfall long before the term was coined. What has changed is scale. {{blank:2}} smartphones and online platforms, a single project can now gather millions of observations in one season.
 
@@ -104,7 +95,16 @@ The appeal to researchers is obvious. They obtain data at a volume no funded tea
 {{blank:4}}, the approach has its critics, and their central objection is data quality. Volunteers differ widely in training, and an enthusiastic observer may record a rare species that was never there. {{blank:5}}, most large projects now build in verification: photographs are required, records are cross-checked against known ranges, and statistical models weight observations by an observer's track record.
 
 {{blank:6}}, citizen science is best understood not as a cheap substitute for professional research, but as a distinct method with strengths a laboratory cannot reproduce."
-Reading 3,matching_reusable,Which text explains where you can get feedback on a draft before submitting it?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,B,1,"A - Library: extended opening
+Reading 2,matching_unique,,However,In fact,For instance,Ultimately,Thanks to,In response,Crucially,In particular,D,"Citizen science
+
+Citizen science - research carried out with the help of volunteers - has grown rapidly over the past two decades. {{blank:1}}, the practice is far from new: amateur naturalists were recording bird migrations and rainfall long before the term was coined. What has changed is scale. {{blank:2}} smartphones and online platforms, a single project can now gather millions of observations in one season.
+
+The appeal to researchers is obvious. They obtain data at a volume no funded team could collect alone, and across areas far wider than a research station can cover. {{blank:3}}, the benefits run in both directions: participants consistently report a better grasp of how evidence is gathered and why it is uncertain.
+
+{{blank:4}}, the approach has its critics, and their central objection is data quality. Volunteers differ widely in training, and an enthusiastic observer may record a rare species that was never there. {{blank:5}}, most large projects now build in verification: photographs are required, records are cross-checked against known ranges, and statistical models weight observations by an observer's track record.
+
+{{blank:6}}, citizen science is best understood not as a cheap substitute for professional research, but as a distinct method with strengths a laboratory cannot reproduce."
+Reading 3,matching_reusable,Which text explains where you can get feedback on a draft before submitting it?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,B,"A - Library: extended opening
 From 12 May until the end of the examination period, the main library will open at 07:00 and close at 02:00 daily, including weekends. Group study rooms may be booked online up to seven days in advance; bookings not claimed within fifteen minutes will be released. Silent study is enforced on floors 4 and 5. Hot food may not be brought into the building.
 
 B - Academic Writing Centre
@@ -115,7 +115,7 @@ Over ninety employers will attend this year's fair in the Sports Hall on 3 June,
 
 D - Accommodation Office
 Applications for university housing for the next academic year close on 30 June. Late applications are considered only if rooms remain. Students wishing to remain in their current room must apply again; rooms are not renewed automatically. The office can also advise on private rented housing and will check a tenancy agreement before you sign it."
-Reading 3,matching_reusable,Which text warns that a service will not be continued automatically?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,D,1,"A - Library: extended opening
+Reading 3,matching_reusable,Which text warns that a service will not be continued automatically?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,D,"A - Library: extended opening
 From 12 May until the end of the examination period, the main library will open at 07:00 and close at 02:00 daily, including weekends. Group study rooms may be booked online up to seven days in advance; bookings not claimed within fifteen minutes will be released. Silent study is enforced on floors 4 and 5. Hot food may not be brought into the building.
 
 B - Academic Writing Centre
@@ -126,7 +126,7 @@ Over ninety employers will attend this year's fair in the Sports Hall on 3 June,
 
 D - Accommodation Office
 Applications for university housing for the next academic year close on 30 June. Late applications are considered only if rooms remain. Students wishing to remain in their current room must apply again; rooms are not renewed automatically. The office can also advise on private rented housing and will check a tenancy agreement before you sign it."
-Reading 3,matching_reusable,Which text states a time limit after which a reservation is cancelled?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,A,1,"A - Library: extended opening
+Reading 3,matching_reusable,Which text states a time limit after which a reservation is cancelled?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,A,"A - Library: extended opening
 From 12 May until the end of the examination period, the main library will open at 07:00 and close at 02:00 daily, including weekends. Group study rooms may be booked online up to seven days in advance; bookings not claimed within fifteen minutes will be released. Silent study is enforced on floors 4 and 5. Hot food may not be brought into the building.
 
 B - Academic Writing Centre
@@ -137,7 +137,7 @@ Over ninety employers will attend this year's fair in the Sports Hall on 3 June,
 
 D - Accommodation Office
 Applications for university housing for the next academic year close on 30 June. Late applications are considered only if rooms remain. Students wishing to remain in their current room must apply again; rooms are not renewed automatically. The office can also advise on private rented housing and will check a tenancy agreement before you sign it."
-Reading 3,matching_reusable,Which text says that attendance requires no advance booking?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,C,1,"A - Library: extended opening
+Reading 3,matching_reusable,Which text says that attendance requires no advance booking?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,C,"A - Library: extended opening
 From 12 May until the end of the examination period, the main library will open at 07:00 and close at 02:00 daily, including weekends. Group study rooms may be booked online up to seven days in advance; bookings not claimed within fifteen minutes will be released. Silent study is enforced on floors 4 and 5. Hot food may not be brought into the building.
 
 B - Academic Writing Centre
@@ -148,7 +148,7 @@ Over ninety employers will attend this year's fair in the Sports Hall on 3 June,
 
 D - Accommodation Office
 Applications for university housing for the next academic year close on 30 June. Late applications are considered only if rooms remain. Students wishing to remain in their current room must apply again; rooms are not renewed automatically. The office can also advise on private rented housing and will check a tenancy agreement before you sign it."
-Reading 3,matching_reusable,Which text tells you a document will be checked on your behalf before you commit to it?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,D,1,"A - Library: extended opening
+Reading 3,matching_reusable,Which text tells you a document will be checked on your behalf before you commit to it?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,D,"A - Library: extended opening
 From 12 May until the end of the examination period, the main library will open at 07:00 and close at 02:00 daily, including weekends. Group study rooms may be booked online up to seven days in advance; bookings not claimed within fifteen minutes will be released. Silent study is enforced on floors 4 and 5. Hot food may not be brought into the building.
 
 B - Academic Writing Centre
@@ -159,7 +159,7 @@ Over ninety employers will attend this year's fair in the Sports Hall on 3 June,
 
 D - Accommodation Office
 Applications for university housing for the next academic year close on 30 June. Late applications are considered only if rooms remain. Students wishing to remain in their current room must apply again; rooms are not renewed automatically. The office can also advise on private rented housing and will check a tenancy agreement before you sign it."
-Reading 3,matching_reusable,Which text sets out a restriction on what you may bring into the building?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,A,1,"A - Library: extended opening
+Reading 3,matching_reusable,Which text sets out a restriction on what you may bring into the building?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,A,"A - Library: extended opening
 From 12 May until the end of the examination period, the main library will open at 07:00 and close at 02:00 daily, including weekends. Group study rooms may be booked online up to seven days in advance; bookings not claimed within fifteen minutes will be released. Silent study is enforced on floors 4 and 5. Hot food may not be brought into the building.
 
 B - Academic Writing Centre
@@ -170,7 +170,7 @@ Over ninety employers will attend this year's fair in the Sports Hall on 3 June,
 
 D - Accommodation Office
 Applications for university housing for the next academic year close on 30 June. Late applications are considered only if rooms remain. Students wishing to remain in their current room must apply again; rooms are not renewed automatically. The office can also advise on private rented housing and will check a tenancy agreement before you sign it."
-Reading 3,matching_reusable,Which text advises bringing multiple copies of a document with you?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,C,1,"A - Library: extended opening
+Reading 3,matching_reusable,Which text advises bringing multiple copies of a document with you?,Library: extended opening,Academic Writing Centre,Careers Fair,Accommodation Office,,,,,C,"A - Library: extended opening
 From 12 May until the end of the examination period, the main library will open at 07:00 and close at 02:00 daily, including weekends. Group study rooms may be booked online up to seven days in advance; bookings not claimed within fifteen minutes will be released. Silent study is enforced on floors 4 and 5. Hot food may not be brought into the building.
 
 B - Academic Writing Centre
@@ -181,7 +181,7 @@ Over ninety employers will attend this year's fair in the Sports Hall on 3 June,
 
 D - Accommodation Office
 Applications for university housing for the next academic year close on 30 June. Late applications are considered only if rooms remain. Students wishing to remain in their current room must apply again; rooms are not renewed automatically. The office can also advise on private rented housing and will check a tenancy agreement before you sign it."
-Reading 4,mcq_single,"According to the passage, the rebound effect occurs mainly because efficiency -",makes a service cheaper to use,requires expensive new equipment,is usually overstated by manufacturers,reduces the quality of the service,,,,,A,1,"The rebound effect
+Reading 4,mcq_single,"According to the passage, the rebound effect occurs mainly because efficiency -",makes a service cheaper to use,requires expensive new equipment,is usually overstated by manufacturers,reduces the quality of the service,,,,,A,"The rebound effect
 
 When a technology becomes more efficient, the intuitive expectation is that it will consume less. A refrigerator that uses half the electricity of its predecessor should, on that reasoning, halve the household's cooling bill. Economists have known for over a century that this expectation is frequently disappointed, and the reason has a name: the rebound effect.
 
@@ -192,7 +192,7 @@ The indirect rebound is harder to see and harder to measure. Money not spent on 
 The size of the effect is disputed, and the dispute matters. Most estimates for household energy in wealthy countries put direct rebound somewhere between ten and thirty per cent - meaning the majority of the intended saving is still realised. A minority of researchers argue that once economy-wide effects are included, rebound can approach or even exceed one hundred per cent, a proposition known as backfire. Backfire remains contested, and the evidence for it at national scale is thin.
 
 What follows for policy is less that efficiency fails than that it rarely works alone. Where efficiency lowers the cost of a service, a carbon price or a tax can hold that cost steady, allowing the technical gain to be kept rather than spent. Efficiency standards paired with pricing consistently outperform either instrument used by itself. The lesson is not that we should stop making things more efficient. It is that efficiency changes what a service costs, and people notice prices."
-Reading 4,mcq_single,The example of the driver is used to illustrate -,indirect rebound,direct rebound,backfire,the failure of efficiency standards,,,,,B,1,"The rebound effect
+Reading 4,mcq_single,The example of the driver is used to illustrate -,indirect rebound,direct rebound,backfire,the failure of efficiency standards,,,,,B,"The rebound effect
 
 When a technology becomes more efficient, the intuitive expectation is that it will consume less. A refrigerator that uses half the electricity of its predecessor should, on that reasoning, halve the household's cooling bill. Economists have known for over a century that this expectation is frequently disappointed, and the reason has a name: the rebound effect.
 
@@ -203,7 +203,7 @@ The indirect rebound is harder to see and harder to measure. Money not spent on 
 The size of the effect is disputed, and the dispute matters. Most estimates for household energy in wealthy countries put direct rebound somewhere between ten and thirty per cent - meaning the majority of the intended saving is still realised. A minority of researchers argue that once economy-wide effects are included, rebound can approach or even exceed one hundred per cent, a proposition known as backfire. Backfire remains contested, and the evidence for it at national scale is thin.
 
 What follows for policy is less that efficiency fails than that it rarely works alone. Where efficiency lowers the cost of a service, a carbon price or a tax can hold that cost steady, allowing the technical gain to be kept rather than spent. Efficiency standards paired with pricing consistently outperform either instrument used by itself. The lesson is not that we should stop making things more efficient. It is that efficiency changes what a service costs, and people notice prices."
-Reading 4,mcq_single,What does the passage say about the household that saves on heating?,It will always reduce its total emissions,It typically saves the money rather than spending it,Its overall emissions may rise despite the saving,Its saving is cancelled out by higher heating costs later,,,,,C,1,"The rebound effect
+Reading 4,mcq_single,What does the passage say about the household that saves on heating?,It will always reduce its total emissions,It typically saves the money rather than spending it,Its overall emissions may rise despite the saving,Its saving is cancelled out by higher heating costs later,,,,,C,"The rebound effect
 
 When a technology becomes more efficient, the intuitive expectation is that it will consume less. A refrigerator that uses half the electricity of its predecessor should, on that reasoning, halve the household's cooling bill. Economists have known for over a century that this expectation is frequently disappointed, and the reason has a name: the rebound effect.
 
@@ -214,7 +214,7 @@ The indirect rebound is harder to see and harder to measure. Money not spent on 
 The size of the effect is disputed, and the dispute matters. Most estimates for household energy in wealthy countries put direct rebound somewhere between ten and thirty per cent - meaning the majority of the intended saving is still realised. A minority of researchers argue that once economy-wide effects are included, rebound can approach or even exceed one hundred per cent, a proposition known as backfire. Backfire remains contested, and the evidence for it at national scale is thin.
 
 What follows for policy is less that efficiency fails than that it rarely works alone. Where efficiency lowers the cost of a service, a carbon price or a tax can hold that cost steady, allowing the technical gain to be kept rather than spent. Efficiency standards paired with pricing consistently outperform either instrument used by itself. The lesson is not that we should stop making things more efficient. It is that efficiency changes what a service costs, and people notice prices."
-Reading 4,mcq_single,How does the writer treat the idea of backfire?,As the established consensus among economists,As a minority position that is not well supported,As proof that efficiency policy should be abandoned,As a phenomenon confined to household energy use,,,,,B,1,"The rebound effect
+Reading 4,mcq_single,How does the writer treat the idea of backfire?,As the established consensus among economists,As a minority position that is not well supported,As proof that efficiency policy should be abandoned,As a phenomenon confined to household energy use,,,,,B,"The rebound effect
 
 When a technology becomes more efficient, the intuitive expectation is that it will consume less. A refrigerator that uses half the electricity of its predecessor should, on that reasoning, halve the household's cooling bill. Economists have known for over a century that this expectation is frequently disappointed, and the reason has a name: the rebound effect.
 
@@ -225,7 +225,7 @@ The indirect rebound is harder to see and harder to measure. Money not spent on 
 The size of the effect is disputed, and the dispute matters. Most estimates for household energy in wealthy countries put direct rebound somewhere between ten and thirty per cent - meaning the majority of the intended saving is still realised. A minority of researchers argue that once economy-wide effects are included, rebound can approach or even exceed one hundred per cent, a proposition known as backfire. Backfire remains contested, and the evidence for it at national scale is thin.
 
 What follows for policy is less that efficiency fails than that it rarely works alone. Where efficiency lowers the cost of a service, a carbon price or a tax can hold that cost steady, allowing the technical gain to be kept rather than spent. Efficiency standards paired with pricing consistently outperform either instrument used by itself. The lesson is not that we should stop making things more efficient. It is that efficiency changes what a service costs, and people notice prices."
-Reading 4,mcq_single,It can be inferred from the final paragraph that the writer would most likely support -,replacing efficiency standards with carbon pricing,combining efficiency standards with carbon pricing,removing taxes on energy-efficient products,delaying efficiency standards until rebound is fully understood,,,,,B,1,"The rebound effect
+Reading 4,mcq_single,It can be inferred from the final paragraph that the writer would most likely support -,replacing efficiency standards with carbon pricing,combining efficiency standards with carbon pricing,removing taxes on energy-efficient products,delaying efficiency standards until rebound is fully understood,,,,,B,"The rebound effect
 
 When a technology becomes more efficient, the intuitive expectation is that it will consume less. A refrigerator that uses half the electricity of its predecessor should, on that reasoning, halve the household's cooling bill. Economists have known for over a century that this expectation is frequently disappointed, and the reason has a name: the rebound effect.
 
@@ -236,7 +236,7 @@ The indirect rebound is harder to see and harder to measure. Money not spent on 
 The size of the effect is disputed, and the dispute matters. Most estimates for household energy in wealthy countries put direct rebound somewhere between ten and thirty per cent - meaning the majority of the intended saving is still realised. A minority of researchers argue that once economy-wide effects are included, rebound can approach or even exceed one hundred per cent, a proposition known as backfire. Backfire remains contested, and the evidence for it at national scale is thin.
 
 What follows for policy is less that efficiency fails than that it rarely works alone. Where efficiency lowers the cost of a service, a carbon price or a tax can hold that cost steady, allowing the technical gain to be kept rather than spent. Efficiency standards paired with pricing consistently outperform either instrument used by itself. The lesson is not that we should stop making things more efficient. It is that efficiency changes what a service costs, and people notice prices."
-Reading 4,mcq_single,The writer's main purpose in the passage is to -,warn that efficiency measures are ineffective and should be replaced,explain a well-documented effect and what it implies for policy,compare energy consumption in wealthy and developing economies,argue that economists have misunderstood household behaviour,,,,,B,1,"The rebound effect
+Reading 4,mcq_single,The writer's main purpose in the passage is to -,warn that efficiency measures are ineffective and should be replaced,explain a well-documented effect and what it implies for policy,compare energy consumption in wealthy and developing economies,argue that economists have misunderstood household behaviour,,,,,B,"The rebound effect
 
 When a technology becomes more efficient, the intuitive expectation is that it will consume less. A refrigerator that uses half the electricity of its predecessor should, on that reasoning, halve the household's cooling bill. Economists have known for over a century that this expectation is frequently disappointed, and the reason has a name: the rebound effect.
 

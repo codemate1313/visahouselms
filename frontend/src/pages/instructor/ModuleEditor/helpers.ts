@@ -12,6 +12,12 @@ export const MODULE_TYPES = new Set<ExamModuleType>(["reading", "speaking", "wri
 export const CHOICE_TYPES = new Set<QuestionType>(["mcq_single", "mcq_multiple", "true_false_not_given", "yes_no_not_given", "matching_unique", "matching_reusable"]);
 export const ANSWER_FREE_TYPES = new Set<QuestionType>(["essay", "speaking_prompt"]);
 export const COMPOSITE_TYPES = new Set<ExamModuleType>(["full_mock", "final_test"]);
+/* Only Full Mock is assembled by picking (and optionally shuffling) 4
+   completed source modules. Final Test is authored like a standalone module -
+   its own custom Reading/Listening/Writing/Speaking PDF and question inputs
+   per part - so it is excluded here even though it shares Full Mock's part
+   layout and derived duration. */
+export const MOCK_SOURCE_TYPES = new Set<ExamModuleType>(["full_mock"]);
 export const DERIVED_DURATION_MODULE_TYPES = new Set<ExamModuleType>(["speaking", "full_mock", "final_test"]);
 export const SOURCE_SECTIONS: ExamSection[] = ["listening", "reading", "writing", "speaking"];
 /* Layouts where the candidate meets one composed task - a gapped passage, a

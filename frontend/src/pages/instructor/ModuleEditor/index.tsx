@@ -20,7 +20,7 @@ import type {
   ModuleImportPreview,
 } from "@/api/types";
 import { moduleEditorStrings as strings } from "./ModuleEditor.strings";
-import { CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, MODULE_TYPE_META, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload } from "./helpers";
+import { CHOICE_TYPES, COMPOSED_TASK_LAYOUTS, COMPOSITE_TYPES, MOCK_SOURCE_TYPES, DERIVED_DURATION_MODULE_TYPES, MODULE_TYPES, MODULE_TYPE_META, SOURCE_SECTIONS, detectConversationSpeakers, emptyQuestion, notepadPromptForBlank, questionPayload } from "./helpers";
 import { NewModuleForm } from "./components/NewModuleForm";
 import { ModulePartNav } from "./components/ModulePartNav";
 import { ModuleReadinessPanel } from "./components/ModuleReadinessPanel";
@@ -167,7 +167,7 @@ export function ModuleEditor() {
     navigate(location.pathname + location.search, { replace: true, state: null });
   }, [location.pathname, location.search, location.state, navigate]);
   useEffect(() => {
-    if (!isNew || !requestedType || !COMPOSITE_TYPES.has(requestedType)) return;
+    if (!isNew || !requestedType || !MOCK_SOURCE_TYPES.has(requestedType)) return;
     setLoadingSources(true);
     apiClient.get<ExamModule[]>("/instructor/modules")
       .then(({ data }) => {
@@ -352,8 +352,11 @@ export function ModuleEditor() {
     event.preventDefault();
     if (!requestedType) return;
     const isComposite = COMPOSITE_TYPES.has(requestedType);
-    const sourceModuleIds = SOURCE_SECTIONS.map((section) => Number(selectedSources[section])).filter(Boolean);
-    if (isComposite && !moduleImportFile && sourceModuleIds.length !== SOURCE_SECTIONS.length) {
+    const usesMockSources = MOCK_SOURCE_TYPES.has(requestedType);
+    const sourceModuleIds = usesMockSources
+      ? SOURCE_SECTIONS.map((section) => Number(selectedSources[section])).filter(Boolean)
+      : [];
+    if (usesMockSources && !moduleImportFile && sourceModuleIds.length !== SOURCE_SECTIONS.length) {
       setError(strings.newModule.validation);
       return;
     }

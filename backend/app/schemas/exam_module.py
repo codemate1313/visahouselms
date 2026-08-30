@@ -49,13 +49,16 @@ class ModuleCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_composite_sources(self):
-        composite = self.module_type in {"full_mock", "final_test"}
-        if composite and len(self.source_module_ids) != 4:
+        if self.module_type == "full_mock" and len(self.source_module_ids) != 4:
             raise ValueError(
-                "Full Mock and Final Test require one completed Listening, Reading, Writing, and Speaking module"
+                "Full Mock requires one completed Listening, Reading, Writing, and Speaking module"
             )
-        if not composite and self.source_module_ids:
-            raise ValueError("Source modules are only used by Full Mock and Final Test")
+        if self.module_type == "final_test" and self.source_module_ids:
+            raise ValueError(
+                "Final Test is built from custom Reading, Listening, Writing, and Speaking uploads, not source modules"
+            )
+        if self.module_type not in {"full_mock", "final_test"} and self.source_module_ids:
+            raise ValueError("Source modules are only used by Full Mock")
         return self
 
 

@@ -7,7 +7,7 @@ import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import type { ExamModule, ExamModuleType, ExamSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
-import { COMPOSITE_TYPES, DERIVED_DURATION_MODULE_TYPES, SOURCE_SECTIONS, MODULE_TYPE_META } from "../helpers";
+import { COMPOSITE_TYPES, MOCK_SOURCE_TYPES, DERIVED_DURATION_MODULE_TYPES, SOURCE_SECTIONS, MODULE_TYPE_META } from "../helpers";
 import type { ModuleDetailsState } from "./ModuleDetailsForm";
 import { OnboardingInstructionsEditor } from "./OnboardingInstructionsEditor";
 import { HorizontalAuthoringStepper } from "./HorizontalAuthoringStepper";
@@ -74,15 +74,16 @@ export function NewModuleForm({
 
   const meta = MODULE_TYPE_META[requestedType];
   const isComposite = COMPOSITE_TYPES.has(requestedType);
+  const usesMockSources = MOCK_SOURCE_TYPES.has(requestedType);
   const durationIsCalculated = DERIVED_DURATION_MODULE_TYPES.has(requestedType);
   const allSourcesSelected = SOURCE_SECTIONS.every((section) => selectedSources[section]);
-  const selectedSourceDuration = isComposite
+  const selectedSourceDuration = usesMockSources
     ? SOURCE_SECTIONS.reduce((total, section) => {
         const moduleId = Number(selectedSources[section]);
         return total + (sourceModules.find((module) => module.id === moduleId)?.duration_minutes ?? 0);
       }, 0)
     : 0;
-  const displayedDuration = isComposite
+  const displayedDuration = usesMockSources
     ? selectedSourceDuration || meta.defaultDuration
     : durationIsCalculated
       ? meta.defaultDuration
@@ -94,7 +95,7 @@ export function NewModuleForm({
       document.getElementById("new-module-title")?.focus();
       return;
     }
-    if (isComposite && !moduleImportFile && !allSourcesSelected) {
+    if (usesMockSources && !moduleImportFile && !allSourcesSelected) {
       setValidationError("Please select all 4 required source modules or upload one full module PDF/CSV before proceeding.");
       return;
     }
@@ -278,7 +279,11 @@ export function NewModuleForm({
                 </div>
                 {durationIsCalculated && (
                   <p className="field-hint">
-                    {isComposite ? t.calculatedCompositeDurationHint : t.calculatedSpeakingDurationHint}
+                    {usesMockSources
+                      ? t.calculatedCompositeDurationHint
+                      : isComposite
+                        ? t.calculatedFinalTestDurationHint
+                        : t.calculatedSpeakingDurationHint}
                   </p>
                 )}
               </div>
@@ -287,7 +292,11 @@ export function NewModuleForm({
                 <div className="vh-label-row">
                   <label htmlFor="new-module-full-upload">{strings.moduleImport.fileLabel}</label>
                 </div>
-                <p className="field-hint">{strings.moduleImport.createHint(typeLabel)}</p>
+                <p className="field-hint">
+                  {isComposite && !usesMockSources
+                    ? t.finalTestUploadHint
+                    : strings.moduleImport.createHint(typeLabel)}
+                </p>
                 <input
                   id="new-module-full-upload"
                   type="file"
@@ -307,8 +316,9 @@ export function NewModuleForm({
             />
           )}
 
-          {/* Composite Source Modules Selection (for full_mock and final_test) */}
-          {isComposite && (
+          {/* Source Modules Selection - Full Mock only. Final Test is authored
+              from its own custom per-section uploads, like a standalone module. */}
+          {usesMockSources && (
             <div className="vh-studio-card vh-composite-card">
               <div className="vh-card-header">
                 <div className="vh-composite-header-row">
@@ -442,7 +452,7 @@ export function NewModuleForm({
                 type="submit"
                 variant="primary"
                 className="vh-btn-primary-brand"
-                disabled={busy || !details.title.trim() || (isComposite && !moduleImportFile && !allSourcesSelected)}
+                disabled={busy || !details.title.trim() || (usesMockSources && !moduleImportFile && !allSourcesSelected)}
                 style={{ minWidth: 220, padding: "12px 28px" }}
               >
                 <span>{busy ? t.creating : `Create ${typeLabel}`}</span>
