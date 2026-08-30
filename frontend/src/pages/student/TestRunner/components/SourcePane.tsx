@@ -43,17 +43,48 @@ export function SourcePane({
     && (matchingType === "matching_unique" || matchingType === "matching_reusable")
   );
   const usesSharedCloze = currentPart.part_code === "reading_1b" && currentPart.answer_constraints.layout === "shared_cloze";
+  const isReading4 = currentPart.section_type === "reading" && (
+    currentPart.part_code === "reading_4"
+    || currentPart.part_code.endsWith("reading_4")
+    || currentPart.part_code.endsWith("_4")
+    || (currentPart.title || "").toLowerCase().includes("reading 4")
+    || (currentPart.title || "").toLowerCase().includes("reading part 4")
+  );
   /* The notepad is the answer surface, so it is rendered once in the question
      pane. Its text also rides along on every question as the passage - showing
      that here would repeat the whole notepad, blank markers and all. */
   const usesNotepadGaps = currentPart.answer_constraints.layout === "notepad_gaps";
   const sourcePassages = usesNotepadGaps ? [] : passages;
-  const isReading4 = (
-    currentPart.part_code === "reading_4"
-    || currentPart.part_code.endsWith("reading_4")
-    || currentPart.title?.toLowerCase().includes("reading 4")
-    || currentPart.title?.toLowerCase().includes("reading part 4")
-  );
+
+  function formatJustifiedReadingPassage(text: string): string {
+    if (!text?.trim()) return "";
+    let normalized = text.trim();
+    const rawLines = normalized.split("\n");
+    if (
+      rawLines.length > 1 &&
+      rawLines[0].trim().length > 0 &&
+      rawLines[0].trim().length <= 75 &&
+      !/[.,;:!?]$/.test(rawLines[0].trim()) &&
+      !rawLines[0].startsWith("#") &&
+      rawLines[1].trim().length > 0
+    ) {
+      normalized = rawLines[0].trim() + "\n\n" + rawLines.slice(1).join("\n");
+    }
+
+    const chunks = normalized.split(/\n\s*\n+/);
+    const paragraphs: string[] = [];
+    for (const chunk of chunks) {
+      const lines = chunk.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (!lines.length) continue;
+      if (/^([#>\-*]|\d+\.)/.test(lines[0])) {
+        paragraphs.push(chunk.trim());
+      } else {
+        paragraphs.push(lines.join(" "));
+      }
+    }
+    return paragraphs.join("\n\n");
+  }
+
   return (
     <section className="test-runner-source-pane" ref={sourcePaneRef}>
       <div className="test-runner-pane-heading">
@@ -132,23 +163,22 @@ export function SourcePane({
           languageCertSkin={languageCertSkin}
         />
       ) : sourcePassages.length > 0 ? (
-        sourcePassages.map((passage, index) => (
-          <article
-            className={`test-runner-passage${isReading4 ? " is-reading-4 test-runner-passage-justified" : ""}`}
-            key={`${currentPart.id}-${index}`}
-          >
-            {sourcePassages.length > 1 && (
-              <strong>
-                {t.passagePrefix} {index + 1}
-              </strong>
-            )}
-            <RichTextContent
-              text={passage}
-              unwrapSoftBreaks={isReading4}
-              className={isReading4 ? "test-runner-text-justified" : ""}
-            />
-          </article>
-        ))
+        sourcePassages.map((passage, index) => {
+          const displayPassage = isReading4 ? formatJustifiedReadingPassage(passage) : passage;
+          return (
+            <article
+              className={`test-runner-passage${isReading4 ? " is-reading-4" : ""}`}
+              key={`${currentPart.id}-${index}`}
+            >
+              {sourcePassages.length > 1 && (
+                <strong>
+                  {t.passagePrefix} {index + 1}
+                </strong>
+              )}
+              <RichTextContent text={displayPassage} />
+            </article>
+          );
+        })
       ) : !isWriting && images.length === 0 && currentPart.assets.length === 0 ? (
         <div className="test-runner-source-placeholder">
           <strong>

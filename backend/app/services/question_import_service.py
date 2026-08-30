@@ -17,11 +17,6 @@ OPTION_RE = re.compile(r"^\(?([A-Z])\)?\s*[.)\-:]\s*(.+)$", re.IGNORECASE)
 ANSWER_RE = re.compile(r"^(?:correct\s+)?answer(?:s)?\s*[:\-]\s*(.+)$", re.IGNORECASE)
 EXPLANATION_RE = re.compile(r"^(?:explanation|rationale)\s*[:\-]\s*(.+)$", re.IGNORECASE)
 PART_HEADER_RE = re.compile(r"^(?:part|section)\s*[:\-]\s*(.+)$", re.IGNORECASE)
-TIMING_RE = re.compile(
-    r"^prep(?:aration)?(?:\s*sec(?:ond)?s?)?\s*[:\-]\s*(\d+)\s*(?:s|sec|seconds)?"
-    r"(?:\s*\|\s*response(?:\s*sec(?:ond)?s?)?\s*[:\-]\s*(\d+)\s*(?:s|sec|seconds)?)?$",
-    re.IGNORECASE,
-)
 ANSWER_KEY_HEADER_RE = re.compile(r"^(?:answers?|answer\s+key)\s*:?$", re.IGNORECASE)
 ANSWER_KEY_ENTRY_RE = re.compile(
     r"^(\d{1,4})\s*[.)\-:]?\s*(?:answer\s*[:\-]\s*)?([A-Z](?:\s*(?:,|;|/|&|\band\b)\s*[A-Z])*)$",
@@ -49,20 +44,6 @@ def _split_answers(value: object) -> list[str]:
     text = re.sub(r"^(?:OPTION|ANSWER)\s+", "", text)
     parts = re.split(r"\s*(?:,|;|\||/|\band\b)\s*", text)
     return list(dict.fromkeys(part.strip(" ().") for part in parts if part.strip(" ().")))
-
-
-def _normalize_cloze_passage(text: str) -> str:
-    if not text:
-        return text
-    # 1. (1) ______ or (1) ___ or (1) _
-    text = re.sub(r"\(\s*(\d+)\s*\)\s*_{1,}", r"{{blank:\1}}", text)
-    # 2. ___ (1) ___ or __(1)
-    text = re.sub(r"_{1,}\s*\(\s*(\d+)\s*\)\s*_{0,}", r"{{blank:\1}}", text)
-    # 3. [1] ___ or [1]
-    text = re.sub(r"\[\s*(\d+)\s*\]\s*_{0,}", r"{{blank:\1}}", text)
-    # 4. Standalone (1) if surrounded by spaces or punctuation: e.g. " ideas (1) . "
-    text = re.sub(r"(?<=\s)\(\s*(\d+)\s*\)(?=[\s,.:;!?])", r"{{blank:\1}}", text)
-    return text
 
 
 def _infer_type(
@@ -114,19 +95,6 @@ def _infer_type(
     return "short_answer"
 
 
-DEFAULT_PART_HEADINGS: dict[str, str] = {
-    "reading_1a": "Read each sentence. Choose the word that can best replace the bold word without changing the meaning.",
-    "reading_1b": "Read the text and choose the correct word for each gap.",
-    "reading_2": "Read the text. Six sentences have been removed. Choose the sentence that best fits each gap. One sentence is a distractor.",
-    "reading_3": "Read texts A–D. For questions 18–24, decide which text answers the question.",
-    "reading_4": "Read the text and choose the correct answer for each question.",
-    "listening_1": "You will hear some short conversations. You will hear each conversation twice. Choose the correct answer to complete each conversation.",
-    "listening_2": "You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.",
-    "listening_3": "You will hear a recording. You will hear the recording twice. Complete the notes with NO MORE THAN THREE WORDS for each gap.",
-    "listening_4": "You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.",
-}
-
-
 def _question_preview(
     *,
     prompt: str,
@@ -134,7 +102,6 @@ def _question_preview(
     correct_answers: list[str],
     question_type: str = "",
     instructions: str = "",
-    part_heading: str = "",
     passage: str = "",
     explanation: str = "",
     points: object = 1,
@@ -224,8 +191,6 @@ def _question_preview(
         "difficulty": difficulty,
         "warnings": warnings,
     }
-    if _clean(part_heading):
-        result["part_heading"] = _clean(part_heading)
     if _clean(target_part):
         result["target_part"] = _clean(target_part)
     return result
@@ -235,7 +200,6 @@ def parse_csv(
     content: bytes,
     default_target_part: str = "",
     default_section_type: str = "",
-    filename: str = "",
 ) -> tuple[str, list[dict], list[str]]:
     try:
         decoded = content.decode("utf-8-sig")
@@ -260,19 +224,6 @@ def parse_csv(
             result[norm_key] = _clean_multiline(value) if norm_key in {"passage", "context"} else _clean(value)
         return result
 
-    file_hint = filename.lower() if filename else ""
-    detected_part = ""
-    for known_part in (
-        "listening_1", "listening_2", "listening_3", "listening_4",
-        "reading_1a", "reading_1b", "reading_2", "reading_3", "reading_4",
-        "writing_1", "writing_2", "speaking_1", "speaking_2", "speaking_3", "speaking_4",
-    ):
-        if known_part in file_hint or known_part.replace("_", "-") in file_hint or known_part.replace("_", " ") in file_hint:
-            detected_part = known_part
-            break
-
-    fallback_part = default_target_part or detected_part or default_section_type
-
     questions: list[dict] = []
     warnings: list[str] = []
     for row_number, raw_row in enumerate(reader, start=2):
@@ -283,22 +234,10 @@ def parse_csv(
             or row.get("part")
             or row.get("part_title")
             or row.get("module_part")
-            or fallback_part
+            or default_target_part
+            or default_section_type
             or ""
         )
-        row_heading = (
-            row.get("part_heading")
-            or row.get("heading")
-            or row.get("part_instruction")
-            or row.get("part_instructions")
-            or row.get("instruction")
-            or row.get("instructions")
-            or ""
-        )
-        if not row_heading and target_part:
-            norm_tp = target_part.lower().replace("-", "_").replace(" ", "_")
-            if norm_tp in DEFAULT_PART_HEADINGS:
-                row_heading = DEFAULT_PART_HEADINGS[norm_tp]
         is_l1 = bool(
             target_part
             and (
@@ -337,20 +276,14 @@ def parse_csv(
             correct_answers=_split_answers(answer),
             question_type=row.get("question_type") or row.get("type") or "",
             instructions=row.get("instructions") or "",
-            part_heading=row_heading,
             passage=row.get("passage") or row.get("context") or "",
             explanation=row.get("explanation") or row.get("rationale") or "",
             points=row.get("points") or 1,
             difficulty=row.get("difficulty") or "medium",
             group_label=row.get("group_label") or row.get("conversation") or "",
             turn_type=row.get("turn_type") or row.get("speaking_turn") or "",
-            preparation_seconds=row.get("preparation_seconds")
-            or row.get("prep_seconds")
-            or row.get("prep_sec")
-            or row.get("prep"),
-            response_seconds=row.get("response_seconds")
-            or row.get("response_sec")
-            or row.get("response"),
+            preparation_seconds=row.get("preparation_seconds"),
+            response_seconds=row.get("response_seconds"),
             adaptive_follow_up=row.get("adaptive_follow_up") or False,
             target_part=target_part,
         )
@@ -366,37 +299,10 @@ def parse_csv(
     return decoded[:MAX_EXTRACTED_TEXT], questions, warnings
 
 
-def _format_pdf_passage_lines(lines: list[str]) -> str:
-    paragraphs: list[str] = []
-    curr: list[str] = []
-    for raw in lines:
-        line = raw.strip()
-        if not line:
-            if curr:
-                paragraphs.append(" ".join(curr))
-                curr = []
-            continue
-        if not curr:
-            curr.append(line)
-            continue
-        prev = curr[-1]
-        is_prev_short_title = len(curr) == 1 and len(prev) <= 45 and not re.search(r"[.!?]$", prev)
-        is_prev_sentence_end = bool(re.search(r'[.!?:\"]$', prev) and re.match(r'^[A-Z0-9\"\'\(\[]', line))
-        if is_prev_short_title or is_prev_sentence_end:
-            paragraphs.append(" ".join(curr))
-            curr = [line]
-        else:
-            curr.append(line)
-    if curr:
-        paragraphs.append(" ".join(curr))
-    return "\n\n".join(paragraphs)
-
-
 def parse_pdf(
     content: bytes,
     default_target_part: str = "",
     default_section_type: str = "",
-    filename: str = "",
 ) -> tuple[str, list[dict], list[str]]:
     try:
         reader = PdfReader(io.BytesIO(content))
@@ -422,24 +328,10 @@ def parse_pdf(
                     answer_map[int(match.group(1))] = _split_answers(match.group(2))
             break
 
-    file_hint = filename.lower() if filename else ""
-    detected_part = ""
-    for known_part in (
-        "listening_1", "listening_2", "listening_3", "listening_4",
-        "reading_1a", "reading_1b", "reading_2", "reading_3", "reading_4",
-        "writing_1", "writing_2", "speaking_1", "speaking_2", "speaking_3", "speaking_4",
-    ):
-        if known_part in file_hint or known_part.replace("_", "-") in file_hint or known_part.replace("_", " ") in file_hint:
-            detected_part = known_part
-            break
-
-    fallback_part = default_target_part or detected_part or default_section_type or ""
     questions: list[dict] = []
     warnings: list[str] = []
     current: Optional[dict] = None
-    current_part = fallback_part
-    norm_init_part = fallback_part.lower().replace("-", "_").replace(" ", "_")
-    current_heading = DEFAULT_PART_HEADINGS.get(norm_init_part, "")
+    current_part = default_target_part or default_section_type or ""
     current_passage = []
     mode = "prompt"
 
@@ -447,21 +339,38 @@ def parse_pdf(
         nonlocal current
         if not current:
             return
-        passage_text = _format_pdf_passage_lines(current_passage).strip()
-        norm_cp = (current.get("target_part") or current_part).lower().replace("-", "_").replace(" ", "_")
-        if "reading_1b" in norm_cp or "reading_2" in norm_cp:
-            passage_text = _normalize_cloze_passage(passage_text)
-        part_head = current.get("part_heading") or current_heading or DEFAULT_PART_HEADINGS.get(norm_cp, "")
+        def _clean_passage_text(raw_lines: list[str]) -> str:
+            if not raw_lines:
+                return ""
+            raw = "\n".join(raw_lines).strip()
+            lines = [l.strip() for l in raw.splitlines() if l.strip()]
+            if (
+                len(lines) > 1
+                and len(lines[0]) <= 75
+                and not lines[0].endswith((".", ":", ";", "!", "?", ","))
+                and not lines[0].startswith("#")
+            ):
+                raw = lines[0] + "\n\n" + "\n".join(lines[1:])
+            chunks = re.split(r"\n\s*\n+", raw)
+            paragraphs = []
+            for chunk in chunks:
+                chunk_lines = [l.strip() for l in chunk.splitlines() if l.strip()]
+                if not chunk_lines:
+                    continue
+                if re.match(r"^([#>\-*]|\d+\.)", chunk_lines[0]):
+                    paragraphs.append(chunk.strip())
+                else:
+                    paragraphs.append(" ".join(chunk_lines))
+            return "\n\n".join(paragraphs).strip()
+
+        passage_text = _clean_passage_text(current_passage)
         preview = _question_preview(
             prompt=" ".join(current["prompt"]),
             options=current["options"],
             correct_answers=current["answers"] or answer_map.get(current["number"], []),
             explanation=" ".join(current["explanation"]),
             passage=passage_text or None,
-            part_heading=part_head,
-            preparation_seconds=current.get("preparation_seconds"),
-            response_seconds=current.get("response_seconds"),
-            target_part=current.get("target_part", "") or fallback_part,
+            target_part=current.get("target_part", "") or default_target_part or default_section_type or "",
         )
         if preview["warnings"]:
             warnings.append(
@@ -476,41 +385,22 @@ def parse_pdf(
         answer_match = ANSWER_RE.match(line)
         explanation_match = EXPLANATION_RE.match(line)
         part_match = PART_HEADER_RE.match(line)
-        timing_match = TIMING_RE.match(line)
         if part_match:
             finish()
             current_part = part_match.group(1)
-            norm_cp = current_part.lower().replace("-", "_").replace(" ", "_")
-            current_heading = DEFAULT_PART_HEADINGS.get(norm_cp, "")
             current_passage = []
             mode = "prompt"
-        elif not current and (
-            line.lower().startswith("you will hear")
-            or line.lower().startswith("read each")
-            or line.lower().startswith("read the")
-            or line.lower().startswith("read text")
-            or line.lower().startswith("complete the notes")
-        ):
-            current_heading = line
         elif question_match:
             finish()
-            norm_cp = current_part.lower().replace("-", "_").replace(" ", "_")
             current = {
                 "number": int(question_match.group(1)),
                 "prompt": [question_match.group(2)],
                 "options": [],
                 "answers": [],
                 "explanation": [],
-                "part_heading": current_heading or DEFAULT_PART_HEADINGS.get(norm_cp, ""),
-                "preparation_seconds": None,
-                "response_seconds": None,
-                "target_part": current_part or fallback_part,
+                "target_part": current_part or default_target_part or default_section_type or "",
             }
             mode = "prompt"
-        elif current and timing_match:
-            current["preparation_seconds"] = timing_match.group(1)
-            current["response_seconds"] = timing_match.group(2)
-            mode = "timing"
         elif current and answer_match:
             current["answers"] = _split_answers(answer_match.group(1))
             mode = "answer"
@@ -566,37 +456,16 @@ async def preview_upload(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is not a valid text CSV")
 
     source_text, questions, warnings = (
-        parse_pdf(
-            content,
-            default_target_part=default_target_part,
-            default_section_type=default_section_type,
-            filename=filename,
-        )
+        parse_pdf(content, default_target_part=default_target_part, default_section_type=default_section_type)
         if extension == "pdf"
-        else parse_csv(
-            content,
-            default_target_part=default_target_part,
-            default_section_type=default_section_type,
-            filename=filename,
-        )
+        else parse_csv(content, default_target_part=default_target_part, default_section_type=default_section_type)
     )
-    part_headings: dict[str, str] = {}
-    for q in questions:
-        tp = q.get("target_part") or ""
-        ph = q.get("part_heading") or ""
-        if tp and ph and tp not in part_headings:
-            part_headings[tp] = ph
-        elif tp and tp not in part_headings:
-            norm_tp = tp.lower().replace("-", "_").replace(" ", "_")
-            if norm_tp in DEFAULT_PART_HEADINGS:
-                part_headings[tp] = DEFAULT_PART_HEADINGS[norm_tp]
     return {
         "source_type": extension,
         "source_filename": filename[:255],
         "source_text": source_text,
         "questions": questions,
         "question_count": len(questions),
-        "part_headings": part_headings,
         "warning_count": len(warnings),
         "warnings": warnings,
     }
