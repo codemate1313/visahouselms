@@ -571,7 +571,7 @@ export function SpeakingInterviewStage({
             ) : !hasCandidateText ? (
               <div className="speaking-candidate-empty">
                 <Icon name="microphone" />
-                <strong>Listen to Sonia</strong>
+                <strong>Listen to Instructor</strong>
                 <span>The examiner will give the instructions and ask the question aloud.</span>
               </div>
             ) : null}

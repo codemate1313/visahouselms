@@ -29,7 +29,7 @@ AVATAR_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 EXAMINER_PROFILES = {
     "sonia": {
         "id": "sonia",
-        "name": "Sonia Radcliffe",
+        "name": "Instructor",
         "title": "Senior Language CERT Speaking Examiner",
         "gender": "female",
         "voice": "en-GB-SoniaNeural",
@@ -38,7 +38,7 @@ EXAMINER_PROFILES = {
     },
     "ryan": {
         "id": "ryan",
-        "name": "Ryan Mitchell",
+        "name": "Instructor",
         "title": "Senior Language CERT Speaking Examiner",
         "gender": "male",
         "voice": "en-GB-RyanNeural",
@@ -47,7 +47,7 @@ EXAMINER_PROFILES = {
     },
     "jenny": {
         "id": "jenny",
-        "name": "Jenny Parker",
+        "name": "Instructor",
         "title": "Language CERT Speaking Specialist",
         "gender": "female",
         "voice": "en-US-JennyNeural",
@@ -56,7 +56,7 @@ EXAMINER_PROFILES = {
     },
     "guy": {
         "id": "guy",
-        "name": "Guy Thornton",
+        "name": "Instructor",
         "title": "Language CERT Speaking Specialist",
         "gender": "male",
         "voice": "en-US-GuyNeural",
