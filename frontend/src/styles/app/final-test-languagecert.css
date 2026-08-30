@@ -956,6 +956,20 @@
   margin-bottom: 0;
 }
 
+/* Reading 4 passage justification in Final Test skin */
+.lc-exam .test-runner-passage.is-reading-4,
+.lc-exam .test-runner-passage.test-runner-passage-justified,
+.lc-exam .test-runner-passage.is-reading-4 p,
+.lc-exam .test-runner-passage.test-runner-passage-justified p,
+.lc-exam .test-runner-passage.is-reading-4 .vh-rich-text,
+.lc-exam .test-runner-passage.test-runner-passage-justified .vh-rich-text,
+.lc-exam .test-runner-passage.is-reading-4 .vh-rich-text p,
+.lc-exam .test-runner-passage.test-runner-passage-justified .vh-rich-text p {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+  hyphens: auto;
+}
+
 .lc-exam .test-runner-blank-dots {
   color: var(--lc-ink);
   font-weight: 700;

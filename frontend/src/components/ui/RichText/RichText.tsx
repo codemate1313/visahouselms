@@ -16,8 +16,11 @@ import "./RichText.css";
  * Block: # headings, - bullets, 1. numbers, > quotes, blank line = paragraph.
  */
 
-/** Joins the lines of one paragraph, keeping the author's line breaks. */
-function renderLines(lines: string[]): ReactNode {
+/** Joins the lines of one paragraph, keeping author line breaks or flowing continuously when unwrapped. */
+function renderLines(lines: string[], unwrapSoftBreaks: boolean = false): ReactNode {
+  if (unwrapSoftBreaks) {
+    return renderRichText(lines.join(" "));
+  }
   return lines.map((line, index) => (
     <span key={index}>
       {index > 0 && <br />}
@@ -29,15 +32,17 @@ function renderLines(lines: string[]): ReactNode {
 export interface RichTextContentProps {
   text: string | null | undefined;
   className?: string;
+  unwrapSoftBreaks?: boolean;
 }
 
 /**
  * Block-level counterpart to `renderRichText`, for passages and any other field
  * long enough to carry headings, lists or more than one paragraph.
  */
-export function RichTextContent({ text, className = "" }: RichTextContentProps) {
+export function RichTextContent({ text, className = "", unwrapSoftBreaks = false }: RichTextContentProps) {
   if (!text?.trim()) return null;
   const blocks = parseRichTextBlocks(text);
+  const shouldUnwrap = Boolean(unwrapSoftBreaks || className.includes("justified"));
 
   return (
     <div className={`vh-rich-text ${className}`.trim()}>
@@ -61,9 +66,9 @@ export function RichTextContent({ text, className = "" }: RichTextContentProps) 
           );
         }
         if (block.kind === "quote") {
-          return <blockquote key={index}>{renderLines(block.lines)}</blockquote>;
+          return <blockquote key={index}>{renderLines(block.lines, shouldUnwrap)}</blockquote>;
         }
-        return <p key={index}>{renderLines(block.lines)}</p>;
+        return <p key={index}>{renderLines(block.lines, shouldUnwrap)}</p>;
       })}
     </div>
   );

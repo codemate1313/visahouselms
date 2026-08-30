@@ -48,6 +48,12 @@ export function SourcePane({
      that here would repeat the whole notepad, blank markers and all. */
   const usesNotepadGaps = currentPart.answer_constraints.layout === "notepad_gaps";
   const sourcePassages = usesNotepadGaps ? [] : passages;
+  const isReading4 = (
+    currentPart.part_code === "reading_4"
+    || currentPart.part_code.endsWith("reading_4")
+    || currentPart.title?.toLowerCase().includes("reading 4")
+    || currentPart.title?.toLowerCase().includes("reading part 4")
+  );
   return (
     <section className="test-runner-source-pane" ref={sourcePaneRef}>
       <div className="test-runner-pane-heading">
@@ -127,13 +133,20 @@ export function SourcePane({
         />
       ) : sourcePassages.length > 0 ? (
         sourcePassages.map((passage, index) => (
-          <article className="test-runner-passage" key={`${currentPart.id}-${index}`}>
+          <article
+            className={`test-runner-passage${isReading4 ? " is-reading-4 test-runner-passage-justified" : ""}`}
+            key={`${currentPart.id}-${index}`}
+          >
             {sourcePassages.length > 1 && (
               <strong>
                 {t.passagePrefix} {index + 1}
               </strong>
             )}
-            <RichTextContent text={passage} />
+            <RichTextContent
+              text={passage}
+              unwrapSoftBreaks={isReading4}
+              className={isReading4 ? "test-runner-text-justified" : ""}
+            />
           </article>
         ))
       ) : !isWriting && images.length === 0 && currentPart.assets.length === 0 ? (

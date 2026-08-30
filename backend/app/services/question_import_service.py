@@ -366,6 +366,32 @@ def parse_csv(
     return decoded[:MAX_EXTRACTED_TEXT], questions, warnings
 
 
+def _format_pdf_passage_lines(lines: list[str]) -> str:
+    paragraphs: list[str] = []
+    curr: list[str] = []
+    for raw in lines:
+        line = raw.strip()
+        if not line:
+            if curr:
+                paragraphs.append(" ".join(curr))
+                curr = []
+            continue
+        if not curr:
+            curr.append(line)
+            continue
+        prev = curr[-1]
+        is_prev_short_title = len(curr) == 1 and len(prev) <= 45 and not re.search(r"[.!?]$", prev)
+        is_prev_sentence_end = bool(re.search(r'[.!?:\"]$', prev) and re.match(r'^[A-Z0-9\"\'\(\[]', line))
+        if is_prev_short_title or is_prev_sentence_end:
+            paragraphs.append(" ".join(curr))
+            curr = [line]
+        else:
+            curr.append(line)
+    if curr:
+        paragraphs.append(" ".join(curr))
+    return "\n\n".join(paragraphs)
+
+
 def parse_pdf(
     content: bytes,
     default_target_part: str = "",
@@ -421,7 +447,7 @@ def parse_pdf(
         nonlocal current
         if not current:
             return
-        passage_text = "\n".join(current_passage).strip()
+        passage_text = _format_pdf_passage_lines(current_passage).strip()
         norm_cp = (current.get("target_part") or current_part).lower().replace("-", "_").replace(" ", "_")
         if "reading_1b" in norm_cp or "reading_2" in norm_cp:
             passage_text = _normalize_cloze_passage(passage_text)

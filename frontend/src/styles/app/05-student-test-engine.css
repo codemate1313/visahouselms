@@ -1584,6 +1584,29 @@ body.test-runner-route-active #root {
   margin: 0;
 }
 
+/* Reading 4 passage justification (Reading, Full Mock, and Final Test) */
+.test-runner-passage.is-reading-4,
+.test-runner-passage.test-runner-passage-justified,
+.test-runner-passage.is-reading-4 p,
+.test-runner-passage.test-runner-passage-justified p,
+.test-runner-passage.is-reading-4 .vh-rich-text,
+.test-runner-passage.test-runner-passage-justified .vh-rich-text,
+.test-runner-passage.is-reading-4 .vh-rich-text p,
+.test-runner-passage.test-runner-passage-justified .vh-rich-text p,
+.test-runner-text-justified,
+.test-runner-text-justified p {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+  hyphens: auto;
+}
+
+.test-runner-passage.is-reading-4 p + p,
+.test-runner-passage.test-runner-passage-justified p + p,
+.test-runner-passage.is-reading-4 .vh-rich-text p + p,
+.test-runner-passage.test-runner-passage-justified .vh-rich-text p + p {
+  margin-top: 14px;
+}
+
 .test-runner-source-placeholder {
   padding: 18px;
   border: 1px dashed #cfd2d8;
