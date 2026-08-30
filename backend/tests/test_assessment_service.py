@@ -125,8 +125,20 @@ class QuestionImportTests(unittest.TestCase):
         self.assertIn("Part: Speaking 3", source)
         self.assertEqual(warnings, [])
         self.assertEqual(len(questions), 1)
-        self.assertEqual(questions[0]["prompt"], "Read the short text aloud.")
+        self.assertEqual(questions[0]["prompt"], "Read the given text aloud.")
         self.assertEqual(questions[0]["passage"], "The training centre opens early during exam week.")
+
+        # Test the "Read the given text aloud" input format
+        content_given = _simple_pdf([
+            "Part: Speaking 3",
+            "1. Read the given text aloud: The training centre opens early during exam week.",
+        ])
+        _, questions_given, _ = question_import_service.parse_pdf(
+            content_given,
+            default_section_type="speaking",
+        )
+        self.assertEqual(questions_given[0]["prompt"], "Read the given text aloud.")
+        self.assertEqual(questions_given[0]["passage"], "The training centre opens early during exam week.")
 
 
 class AssessmentServiceTests(unittest.TestCase):

@@ -869,9 +869,26 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             0,
         )
 
-        self.assertEqual(normalized["prompt"], "Read the short text aloud.")
+        self.assertEqual(normalized["prompt"], "Read the given text aloud.")
         self.assertEqual(normalized["passage"], "The training centre opens early during exam week.")
         self.assertEqual(normalized["interaction"]["turn_type"], "read_aloud")
+
+        normalized_given = module_authoring_service._normalize_import_question_for_part(
+            part,
+            {
+                "question_type": "speaking_prompt",
+                "prompt": "Read the given text aloud: The training centre opens early during exam week.",
+                "passage": "",
+                "options": [],
+                "correct_answers": [],
+                "interaction": {"turn_type": "read_aloud"},
+                "points": 1,
+                "difficulty": "medium",
+            },
+            0,
+        )
+        self.assertEqual(normalized_given["prompt"], "Read the given text aloud.")
+        self.assertEqual(normalized_given["passage"], "The training centre opens early during exam week.")
 
     def _speaking_part(self, part_code: str):
         created = self._create("speaking")

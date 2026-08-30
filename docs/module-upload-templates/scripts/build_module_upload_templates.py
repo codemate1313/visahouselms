@@ -167,7 +167,7 @@ def csv_rows() -> dict[str, list[dict[str, object]]]:
                 "part_code": "Speaking 1",
             },
             {
-                "prompt": "Read the short text aloud: The training centre opens early during exam week so learners can revise before class.",
+                "prompt": "Read the given text aloud: The training centre opens early during exam week so learners can revise before class.",
                 "question_type": "speaking_prompt",
                 "points": 1,
                 "difficulty": "medium",

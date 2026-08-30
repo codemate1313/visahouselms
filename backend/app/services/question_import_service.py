@@ -151,12 +151,12 @@ def _question_preview(
     is_speaking_three = "speaking_3" in part_lower.replace(" ", "_") or "speaking 3" in part_lower
     if is_speaking_three and kind == "speaking_prompt" and not str(passage or "").strip():
         read_aloud_match = re.match(
-            r"^\s*read\s+(?:the\s+)?(?:short\s+)?text\s+aloud\s*:?\s*(.*)$",
+            r"^\s*read\s+(?:the\s+)?(?:short\s+|given\s+)?text\s+aloud\s*:?\s*(.*)$",
             prompt,
             re.IGNORECASE | re.DOTALL,
         )
         if read_aloud_match and read_aloud_match.group(1).strip():
-            prompt = "Read the short text aloud."
+            prompt = "Read the given text aloud."
             passage = read_aloud_match.group(1).strip()
     needs_answer = not is_subjective
     if needs_answer and not answers:

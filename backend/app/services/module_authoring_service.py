@@ -1155,9 +1155,9 @@ def _normalize_import_question_for_part(part: ExamModulePart, question: dict, in
         interaction["adaptive_follow_up"] = bool(interaction.get("adaptive_follow_up", turn_type == "follow_up"))
         if part.part_code == "speaking_3" and turn_type == "read_aloud" and not (data.get("passage") or "").strip():
             prompt = str(data.get("prompt") or "").strip()
-            read_aloud_match = re.match(r"^\s*read\s+(?:the\s+)?(?:short\s+)?text\s+aloud\s*:?\s*(.*)$", prompt, re.IGNORECASE | re.DOTALL)
+            read_aloud_match = re.match(r"^\s*read\s+(?:the\s+)?(?:short\s+|given\s+)?text\s+aloud\s*:?\s*(.*)$", prompt, re.IGNORECASE | re.DOTALL)
             if read_aloud_match and read_aloud_match.group(1).strip():
-                data["prompt"] = "Read the short text aloud."
+                data["prompt"] = "Read the given text aloud."
                 data["passage"] = read_aloud_match.group(1).strip()
             else:
                 data["passage"] = prompt
