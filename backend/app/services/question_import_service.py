@@ -6,6 +6,9 @@ from typing import Optional
 from fastapi import HTTPException, UploadFile, status
 from pypdf import PdfReader
 
+from app.services.module_authoring_service import DEFAULT_PART_HEADINGS
+
+
 
 MAX_PDF_BYTES = 15 * 1024 * 1024
 MAX_CSV_BYTES = 5 * 1024 * 1024
