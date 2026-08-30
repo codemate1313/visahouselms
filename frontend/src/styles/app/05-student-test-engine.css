@@ -812,6 +812,18 @@ body.test-runner-route-active #root {
   border-top: none;
 }
 
+[data-theme="dark"] .student-progress-page .progress-section.collapsible-panel {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .student-progress-page .progress-section .collapsible-panel-static-header {
+  background: #16161a !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
 .student-progress-page .table-wrap {
   margin-bottom: 6px;
 }
@@ -869,8 +881,8 @@ body.test-runner-route-active #root {
 }
 
 [data-theme="dark"] .badge-card-3d {
-  background: #18181b;
-  border-color: rgba(255, 255, 255, 0.08);
+  background: #16161a;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .badge-card-3d.is-earned {
@@ -879,7 +891,7 @@ body.test-runner-route-active #root {
 }
 
 [data-theme="dark"] .badge-card-3d.is-earned {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, transparent 60%), #18181b;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, transparent 60%), #16161a;
   border-color: rgba(16, 185, 129, 0.3);
 }
 
@@ -895,7 +907,7 @@ body.test-runner-route-active #root {
 }
 
 [data-theme="dark"] .badge-card-3d.is-locked {
-  background: rgba(255, 255, 255, 0.025);
+  background: #16161a;
   opacity: 0.75;
 }
 
@@ -7557,7 +7569,6 @@ html[data-theme="dark"] body .dashboard .test-runner-option:has(input:checked) {
   gap: 10px;
   width: 100%;
 }
-
 
 
 

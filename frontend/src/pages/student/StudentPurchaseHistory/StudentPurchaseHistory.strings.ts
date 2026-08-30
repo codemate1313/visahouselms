@@ -69,7 +69,6 @@ export const studentPurchaseHistoryStrings = {
     from: "Valid From",
     to: "Valid Until",
     downloadPdf: "Download PDF",
-    printInvoice: "Print Invoice",
     close: "Close",
   },
 };

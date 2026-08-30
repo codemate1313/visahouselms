@@ -1,7 +1,6 @@
 export const invoiceStrings = {
   titlePrefix: "Invoice",
   backToPayments: "Back to Payments",
-  print: "Print",
   downloadPdf: "Download PDF",
   shareLink: "Copy Link",
   emailReceipt: "Email Receipt",

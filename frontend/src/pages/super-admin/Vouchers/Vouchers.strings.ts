@@ -59,6 +59,5 @@ export const vouchersStrings = {
   invoiceModal: {
     title: "Voucher Purchase Tax Invoice",
     close: "Close",
-    print: "Print / Save PDF",
   },
 };

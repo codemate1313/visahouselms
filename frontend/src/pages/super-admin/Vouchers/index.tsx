@@ -1540,9 +1540,6 @@ export function Vouchers() {
               <Button variant="secondary" onClick={() => setSelectedInvoice(null)}>
                 Close
               </Button>
-              <Button variant="primary" onClick={() => window.print()}>
-                Print / Save Invoice
-              </Button>
             </div>
           </div>
         )}

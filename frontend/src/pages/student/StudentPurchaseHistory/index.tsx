@@ -691,14 +691,6 @@ export function StudentPurchaseHistory() {
                 <Icon name="download" style={{ fontSize: "16px" }} />
                 {strings.invoiceModal.downloadPdf}
               </button>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => window.print()}
-              >
-                <Icon name="printer" style={{ fontSize: "16px" }} />
-                {strings.invoiceModal.printInvoice}
-              </button>
             </div>
           </div>
         </div>
