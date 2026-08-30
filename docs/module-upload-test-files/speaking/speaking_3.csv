@@ -1,4 +1,5 @@
 prompt,question_type,points,turn_type,preparation_seconds,response_seconds
-"Read this notice aloud: The college library will close at 5 pm on Friday because maintenance work is planned for the evening.",speaking_prompt,1,read_aloud,20,90
+"Read the short text aloud: The training centre opens early during exam week so learners can revise before class.",speaking_prompt,1,read_aloud,20,90
 "Why do public notices need to be clear?",speaking_prompt,1,follow_up,0,40
 "Tell me about a time when instructions helped you complete a task.",speaking_prompt,1,follow_up,0,40
+"What is one benefit of opening the centre early?",speaking_prompt,1,follow_up,0,40

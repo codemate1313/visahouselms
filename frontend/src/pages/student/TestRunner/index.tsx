@@ -127,6 +127,7 @@ export function TestRunner() {
     return Number.isFinite(stored) && stored > 0 ? stored : null;
   });
   const [submitting, setSubmitting] = useState(false);
+  const [sealingSpeakingPhase, setSealingSpeakingPhase] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [isListeningLocked, setIsListeningLocked] = useState(false);
   const hasSpeakingPart = attempt?.parts.some((part) => part.section_type === "speaking") ?? false;
@@ -291,7 +292,9 @@ export function TestRunner() {
         const restoredIndex = (!Number.isNaN(candidateIndex) && candidateIndex >= 0 && candidateIndex < data.parts.length) ? candidateIndex : 0;
         const splitComposite = isSplitCompositeModule(data.module_type)
           && data.parts.some((part) => part.section_type === "speaking");
-        const speakingStarted = sessionStorage.getItem(securityStorageKey(id, "speaking-started")) === "true"
+        const serverSpeakingPhase = data.phase === "speaking" || data.phase === "speaking_pending";
+        const speakingStarted = serverSpeakingPhase
+          || sessionStorage.getItem(securityStorageKey(id, "speaking-started")) === "true"
           || data.parts.some((part) => part.section_type === "speaking" && part.answered_count > 0);
         const mainPaperComplete = data.parts
           .filter((part) => MAIN_TEST_SECTION_TYPES.has(part.section_type))
@@ -1403,14 +1406,7 @@ export function TestRunner() {
     });
   }
 
-  async function enterSpeakingPhase() {
-    if (!attempt || speakingTransitionRef.current) return;
-    const firstSpeakingIndex = attempt.parts.findIndex((part) => part.section_type === "speaking");
-    if (firstSpeakingIndex < 0) {
-      await submit();
-      return;
-    }
-    speakingTransitionRef.current = true;
+  async function flushPendingSavesBeforeSpeakingPhase() {
     // Let any active or just-debounced Writing save finish before its editor is
     // unmounted. The local response is already updated, but this keeps the
     // server copy caught up before the paper becomes inaccessible.
@@ -1419,10 +1415,54 @@ export function TestRunner() {
     while (savingIdsRef.current.size > 0 && Date.now() < flushDeadline) {
       await new Promise((resolve) => setTimeout(resolve, 150));
     }
-    sessionStorage.setItem(securityStorageKey(id, "speaking-started"), "true");
-    setConfirmSubmit(false);
-    await selectPart(speakingEntryIndex(attempt.parts, firstSpeakingIndex), true);
-    speakingTransitionRef.current = false;
+  }
+
+  async function sealMainPaperForSpeaking(startNow: boolean) {
+    if (!attempt || speakingTransitionRef.current) return;
+    const firstSpeakingIndex = attempt.parts.findIndex((part) => part.section_type === "speaking");
+    if (firstSpeakingIndex < 0) {
+      await submit();
+      return;
+    }
+    speakingTransitionRef.current = true;
+    setSealingSpeakingPhase(true);
+    try {
+      await flushPendingSavesBeforeSpeakingPhase();
+      const { data } = await apiClient.post<Attempt>(
+        `/student/attempts/${id}/speaking-phase`,
+        { start_now: startNow },
+        { headers: securityHeaders() },
+      );
+      const targetIndex = speakingEntryIndex(
+        data.parts,
+        data.parts.findIndex((part) => part.section_type === "speaking"),
+      );
+      sessionStorage.setItem(securityStorageKey(id, "speaking-started"), "true");
+      sessionStorage.setItem(`test-runner-part:${id}`, String(targetIndex));
+      setAttempt(data);
+      setPartIndex(targetIndex);
+      setConfirmSubmit(false);
+      resetRunnerScroll();
+      if (!startNow) {
+        stopSecurityMedia();
+        if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
+        sessionStorage.removeItem(securityStorageKey(id, "token"));
+        navigate("/student/my-courses", { replace: true });
+      }
+    } catch (err: unknown) {
+      showError(extractErrorMessage(err, strings.errors.part), strings.errors.partTitle);
+    } finally {
+      speakingTransitionRef.current = false;
+      setSealingSpeakingPhase(false);
+    }
+  }
+
+  async function enterSpeakingPhase() {
+    await sealMainPaperForSpeaking(true);
+  }
+
+  async function deferSpeakingPhase() {
+    await sealMainPaperForSpeaking(false);
   }
 
   // Declared after every hook: this branch flips on window resize, so returning
@@ -1703,9 +1743,10 @@ export function TestRunner() {
           answeredCount={answeredCount}
           totalQuestions={totalQuestions}
           isFinal={attempt.is_final}
-          submitting={submitting}
+          submitting={submitting || sealingSpeakingPhase}
           onClose={() => setConfirmSubmit(false)}
           onConfirm={isSplitCompositeAttempt && !isSpeakingPhase ? enterSpeakingPhase : submit}
+          onDeferSpeaking={isSplitCompositeAttempt && !isSpeakingPhase ? deferSpeakingPhase : undefined}
           continueToSpeaking={isSplitCompositeAttempt && !isSpeakingPhase}
         />
       )}

@@ -798,6 +798,7 @@ export interface Attempt {
   onboarding_instructions?: OnboardingInstruction[] | null;
   course_id: number | null;
   status: AttemptStatus;
+  phase?: "main" | "speaking_pending" | "speaking";
   is_final: boolean;
   security_required: boolean;
   security_authorized: boolean;

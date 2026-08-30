@@ -8,24 +8,42 @@ interface SubmitConfirmModalProps {
   submitting: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  onDeferSpeaking?: () => void;
   continueToSpeaking?: boolean;
 }
 
-export function SubmitConfirmModal({ answeredCount, totalQuestions, isFinal, submitting, onClose, onConfirm, continueToSpeaking = false }: SubmitConfirmModalProps) {
+export function SubmitConfirmModal({
+  answeredCount,
+  totalQuestions,
+  isFinal,
+  submitting,
+  onClose,
+  onConfirm,
+  onDeferSpeaking,
+  continueToSpeaking = false,
+}: SubmitConfirmModalProps) {
   const t = strings.submitModal;
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`modal-card${continueToSpeaking ? " speaking-choice-modal" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2>{continueToSpeaking ? t.speakingHeading : t.heading}</h2>
         <p>
           {t.summary(answeredCount, totalQuestions)} {continueToSpeaking ? t.speakingWarning : isFinal ? t.finalWarning : t.standardWarning}
         </p>
         <div className="form-actions">
-          <Button variant="secondary" className="secondary-button" onClick={onClose}>
+          <Button variant="secondary" className="secondary-button" onClick={onClose} disabled={submitting}>
             {t.keepWorking}
           </Button>
+          {continueToSpeaking && onDeferSpeaking ? (
+            <Button variant="secondary" className="secondary-button" onClick={onDeferSpeaking} disabled={submitting}>
+              {t.doSpeakingLater}
+            </Button>
+          ) : null}
           <Button onClick={onConfirm} disabled={submitting}>
-            {submitting ? strings.footer.submitting : continueToSpeaking ? t.continueToSpeaking : t.submitNow}
+            {submitting ? strings.footer.submitting : continueToSpeaking ? t.startSpeakingNow : t.submitNow}
           </Button>
         </div>
       </div>

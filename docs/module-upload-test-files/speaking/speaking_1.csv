@@ -1,4 +1,7 @@
 prompt,question_type,points,turn_type,preparation_seconds,response_seconds
 "Please confirm your full name and where you are from.",speaking_prompt,1,identity,0,30
-"Tell me about a subject you enjoy studying.",speaking_prompt,1,topic_question,0,30
+"Tell me about a place in your city that you enjoy visiting.",speaking_prompt,1,topic_question,0,30
 "What do you usually do after classes?",speaking_prompt,1,topic_question,0,30
+"Tell me about a subject you enjoy studying.",speaking_prompt,1,topic_question,0,30
+"Do you prefer studying in the morning or evening? Why?",speaking_prompt,1,topic_question,0,30
+"What kind of weather do you like most?",speaking_prompt,1,topic_question,0,30

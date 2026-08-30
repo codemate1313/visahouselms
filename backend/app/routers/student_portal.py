@@ -82,6 +82,10 @@ def _current_user_out(user: User) -> CurrentUser:
     )
 
 
+class SpeakingPhaseRequest(BaseModel):
+    start_now: bool = True
+
+
 @router.get("/daily-english")
 def get_daily_english_challenge(
     db: Session = Depends(get_db),
@@ -557,6 +561,22 @@ def begin_final_test(
 ):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     return attempt_service.begin_secure_attempt(db, attempt, session, x_attempt_token)
+
+
+@router.post("/attempts/{attempt_id}/speaking-phase")
+def seal_main_paper_for_speaking(
+    attempt_id: int,
+    payload: SpeakingPhaseRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    attempt_service.require_security_access(attempt, session, x_attempt_token)
+    sealed = attempt_service.seal_main_paper_for_speaking(db, attempt, start_now=payload.start_now)
+    authorized = attempt_service.security_access_valid(sealed, session, x_attempt_token)
+    return attempt_service.get_student_view(db, sealed, security_authorized=authorized)
 
 
 @router.post("/attempts/{attempt_id}/security/heartbeat")

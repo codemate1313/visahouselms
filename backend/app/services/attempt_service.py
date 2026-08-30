@@ -51,6 +51,11 @@ FINAL_TEST_AUTO_SUBMIT_VIOLATION_LIMIT = 3
 
 logger = logging.getLogger(__name__)
 _randomizer = SystemRandom()
+MAIN_PAPER_SECTION_TYPES = {"listening", "reading", "writing"}
+SPEAKING_PHASE_MAIN = "main"
+SPEAKING_PHASE_PENDING = "speaking_pending"
+SPEAKING_PHASE_ACTIVE = "speaking"
+SPEAKING_LOCKED_PHASES = {SPEAKING_PHASE_PENDING, SPEAKING_PHASE_ACTIVE}
 
 FLAG_SEVERITY = {
     "blur": "low",
@@ -146,7 +151,40 @@ def _build_content_snapshot(module: ExamModule, *, randomize: bool) -> dict:
                 "sort_order": question.sort_order,
             }
         parts[str(part.id)] = {"question_ids": question_ids, "questions": question_data}
-    return {"version": 1, "part_ids": part_ids, "parts": parts}
+    return {"version": 1, "part_ids": part_ids, "parts": parts, "phase": SPEAKING_PHASE_MAIN}
+
+
+def _attempt_phase(attempt: TestAttempt) -> str:
+    phase = (attempt.content_snapshot or {}).get("phase")
+    if phase in {SPEAKING_PHASE_MAIN, SPEAKING_PHASE_PENDING, SPEAKING_PHASE_ACTIVE}:
+        return phase
+    return SPEAKING_PHASE_MAIN
+
+
+def _set_attempt_phase(attempt: TestAttempt, phase: str) -> None:
+    snapshot = dict(attempt.content_snapshot or {})
+    snapshot["phase"] = phase
+    attempt.content_snapshot = snapshot
+
+
+def _main_paper_is_locked(attempt: TestAttempt) -> bool:
+    return _attempt_phase(attempt) in SPEAKING_LOCKED_PHASES
+
+
+def _split_composite_has_speaking(attempt: TestAttempt) -> bool:
+    return (
+        attempt.module.module_type in {"full_mock", "final_test"}
+        and any(part.section_type == "speaking" for part in attempt.module.parts)
+    )
+
+
+def _speaking_duration_minutes(attempt: TestAttempt) -> int:
+    total = sum(
+        part.duration_minutes or 0
+        for part in attempt.module.parts
+        if part.section_type == "speaking"
+    )
+    return total or 15
 
 
 def _snapshot_question(attempt: TestAttempt, part_id: int, question_id: int) -> Optional[dict]:
@@ -528,7 +566,12 @@ def _serialize_parts(
     include_draft_grades: bool = False,
 ) -> list[dict]:
     parts = sorted(attempt.module.parts, key=lambda item: item.sort_order)
-    default_part_id = parts[0].id if parts else None
+    first_speaking_part_id = next((part.id for part in parts if part.section_type == "speaking"), None)
+    default_part_id = (
+        first_speaking_part_id
+        if _main_paper_is_locked(attempt) and first_speaking_part_id
+        else (parts[0].id if parts else None)
+    )
     return [
         _serialize_part(
             attempt,
@@ -536,6 +579,7 @@ def _serialize_parts(
             reveal=reveal,
             include_questions=(
                 not hide_content
+                and (reveal or not _main_paper_is_locked(attempt) or part.section_type == "speaking")
                 and (
                     not attempt.security_required
                     or reveal
@@ -607,7 +651,11 @@ def get_student_view(
 ) -> dict:
     from app.services import grading_service, retake_service
 
-    if attempt.status == ATTEMPT_IN_PROGRESS and attempt.expires_at <= _now():
+    if (
+        attempt.status == ATTEMPT_IN_PROGRESS
+        and attempt.expires_at <= _now()
+        and _attempt_phase(attempt) != SPEAKING_PHASE_PENDING
+    ):
         _auto_expire(db, attempt)
         attempt = get_attempt_or_404(db, db.get(User, attempt.user_id), attempt.id)
     if attempt.status in (ATTEMPT_GRADING, ATTEMPT_GRADED) and (
@@ -654,6 +702,7 @@ def get_student_view(
         "reevaluation": grading_service.reevaluation_for_student(db, attempt),
         "retake_request": retake_service.get_retake_for_student(db, attempt),
         "ai_evaluation_status": _ai_evaluation_status(db, attempt),
+        "phase": _attempt_phase(attempt),
         "parts": _serialize_parts(
             attempt,
             reveal=reveal,
@@ -892,6 +941,17 @@ def begin_secure_attempt(
         attempt = get_attempt_or_404(db, db.get(User, attempt.user_id), attempt.id)
     elif attempt.status != ATTEMPT_IN_PROGRESS:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This Final Test cannot be started")
+    elif _attempt_phase(attempt) == SPEAKING_PHASE_PENDING:
+        now = _now()
+        _set_attempt_phase(attempt, SPEAKING_PHASE_ACTIVE)
+        attempt.security_started_at = now
+        attempt.security_last_heartbeat_at = now
+        attempt.expires_at = now + timedelta(
+            minutes=_speaking_duration_minutes(attempt) + EXPIRY_BUFFER_MINUTES
+        )
+        db.add(attempt)
+        db.commit()
+        attempt = get_attempt_or_404(db, db.get(User, attempt.user_id), attempt.id)
     return get_student_view(db, attempt, security_authorized=True)
 
 
@@ -960,6 +1020,11 @@ def get_attempt_part_view(attempt: TestAttempt, part_id: int) -> dict:
     part = next((item for item in attempt.module.parts if item.id == part_id), None)
     if part is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test part not found")
+    if _main_paper_is_locked(attempt) and part.section_type != "speaking":
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="The Listening, Reading and Writing paper is closed. Resume from Speaking.",
+        )
     return _serialize_part(attempt, part, reveal=False, include_questions=True)
 
 
@@ -972,8 +1037,43 @@ def _require_in_progress(attempt: TestAttempt) -> None:
         attempt.expires_at = now + timedelta(minutes=duration + EXPIRY_BUFFER_MINUTES)
     if attempt.status != ATTEMPT_IN_PROGRESS:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This attempt is no longer in progress")
-    if attempt.expires_at <= _now():
+    if attempt.expires_at <= _now() and _attempt_phase(attempt) != SPEAKING_PHASE_PENDING:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Time is up for this attempt")
+
+
+def seal_main_paper_for_speaking(db: Session, attempt: TestAttempt, *, start_now: bool) -> TestAttempt:
+    _require_in_progress(attempt)
+    require_live_security(attempt)
+    if not _split_composite_has_speaking(attempt):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This attempt does not have a separate Speaking phase",
+        )
+
+    answers_by_question = {answer.question_id for answer in attempt.answers}
+    incomplete_parts: list[str] = []
+    for part in sorted(attempt.module.parts, key=lambda item: item.sort_order):
+        if part.section_type not in MAIN_PAPER_SECTION_TYPES:
+            continue
+        question_ids = [question.id for question in _ordered_questions(attempt, part)]
+        if question_ids and any(question_id not in answers_by_question for question_id in question_ids):
+            incomplete_parts.append(part.title or part.part_code or part.section_type.title())
+
+    if incomplete_parts:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Complete {', '.join(incomplete_parts)} before moving to Speaking",
+        )
+
+    _set_attempt_phase(attempt, SPEAKING_PHASE_ACTIVE if start_now else SPEAKING_PHASE_PENDING)
+    if start_now:
+        attempt.expires_at = _now() + timedelta(
+            minutes=_speaking_duration_minutes(attempt) + EXPIRY_BUFFER_MINUTES
+        )
+    db.add(attempt)
+    db.commit()
+    db.refresh(attempt)
+    return attempt
 
 
 def _question_or_404(attempt: TestAttempt, question_id: int) -> tuple[ExamModulePart, ExamModuleQuestion]:
@@ -993,6 +1093,11 @@ def save_answer(
 ) -> dict:
     _require_in_progress(attempt)
     part, question = _question_or_404(attempt, question_id)
+    if _main_paper_is_locked(attempt) and part.section_type != "speaking":
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="The Listening, Reading and Writing paper is closed. Resume from Speaking.",
+        )
     if response and question.question_type in {"short_answer", "fill_blank"}:
         text = str(response.get("text") or "").strip()
         max_words = (part.answer_constraints or {}).get("max_answer_words")

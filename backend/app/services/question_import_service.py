@@ -17,6 +17,11 @@ OPTION_RE = re.compile(r"^\(?([A-Z])\)?\s*[.)\-:]\s*(.+)$", re.IGNORECASE)
 ANSWER_RE = re.compile(r"^(?:correct\s+)?answer(?:s)?\s*[:\-]\s*(.+)$", re.IGNORECASE)
 EXPLANATION_RE = re.compile(r"^(?:explanation|rationale)\s*[:\-]\s*(.+)$", re.IGNORECASE)
 PART_HEADER_RE = re.compile(r"^(?:part|section)\s*[:\-]\s*(.+)$", re.IGNORECASE)
+TIMING_RE = re.compile(
+    r"^prep(?:aration)?(?:\s*sec(?:ond)?s?)?\s*[:\-]\s*(\d+)\s*(?:s|sec|seconds)?"
+    r"(?:\s*\|\s*response(?:\s*sec(?:ond)?s?)?\s*[:\-]\s*(\d+)\s*(?:s|sec|seconds)?)?$",
+    re.IGNORECASE,
+)
 ANSWER_KEY_HEADER_RE = re.compile(r"^(?:answers?|answer\s+key)\s*:?$", re.IGNORECASE)
 ANSWER_KEY_ENTRY_RE = re.compile(
     r"^(\d{1,4})\s*[.)\-:]?\s*(?:answer\s*[:\-]\s*)?([A-Z](?:\s*(?:,|;|/|&|\band\b)\s*[A-Z])*)$",
@@ -339,8 +344,13 @@ def parse_csv(
             difficulty=row.get("difficulty") or "medium",
             group_label=row.get("group_label") or row.get("conversation") or "",
             turn_type=row.get("turn_type") or row.get("speaking_turn") or "",
-            preparation_seconds=row.get("preparation_seconds"),
-            response_seconds=row.get("response_seconds"),
+            preparation_seconds=row.get("preparation_seconds")
+            or row.get("prep_seconds")
+            or row.get("prep_sec")
+            or row.get("prep"),
+            response_seconds=row.get("response_seconds")
+            or row.get("response_sec")
+            or row.get("response"),
             adaptive_follow_up=row.get("adaptive_follow_up") or False,
             target_part=target_part,
         )
@@ -423,6 +433,8 @@ def parse_pdf(
             explanation=" ".join(current["explanation"]),
             passage=passage_text or None,
             part_heading=part_head,
+            preparation_seconds=current.get("preparation_seconds"),
+            response_seconds=current.get("response_seconds"),
             target_part=current.get("target_part", "") or fallback_part,
         )
         if preview["warnings"]:
@@ -438,6 +450,7 @@ def parse_pdf(
         answer_match = ANSWER_RE.match(line)
         explanation_match = EXPLANATION_RE.match(line)
         part_match = PART_HEADER_RE.match(line)
+        timing_match = TIMING_RE.match(line)
         if part_match:
             finish()
             current_part = part_match.group(1)
@@ -463,9 +476,15 @@ def parse_pdf(
                 "answers": [],
                 "explanation": [],
                 "part_heading": current_heading or DEFAULT_PART_HEADINGS.get(norm_cp, ""),
+                "preparation_seconds": None,
+                "response_seconds": None,
                 "target_part": current_part or fallback_part,
             }
             mode = "prompt"
+        elif current and timing_match:
+            current["preparation_seconds"] = timing_match.group(1)
+            current["response_seconds"] = timing_match.group(2)
+            mode = "timing"
         elif current and answer_match:
             current["answers"] = _split_answers(answer_match.group(1))
             mode = "answer"

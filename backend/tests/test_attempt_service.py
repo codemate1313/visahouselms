@@ -14,7 +14,7 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings
 from app.core.cache import app_cache
 from app.core.security import hash_password
-from app.models import Base, ExamModuleAsset, ExamModuleQuestion, StudentNotification
+from app.models import Base, ExamModuleAsset, ExamModulePart, ExamModuleQuestion, StudentNotification
 from app.models.attempt import (
     ATTEMPT_GRADED,
     ATTEMPT_GRADING,
@@ -1925,6 +1925,113 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertGreater(view["expires_at"].replace(tzinfo=None), provisional_expiry)
         self.assertTrue(view["parts"][0]["questions"])
         self.assertTrue(all(not part["questions"] for part in view["parts"][1:]))
+
+    def test_final_test_speaking_phase_locks_completed_main_paper(self):
+        module = self._build_reading_module()
+        module.module_type = "final_test"
+        speaking_part = ExamModulePart(
+            module_id=module.id,
+            section_type="speaking",
+            part_code="speaking_1",
+            title="Speaking 1",
+            skill_focus="Speaking prompt",
+            instructions=None,
+            question_limit=1,
+            minimum_questions=1,
+            max_marks=Decimal("1"),
+            duration_minutes=2,
+            auto_marked=False,
+            ai_evaluation_enabled=True,
+            answer_constraints={"preparation_seconds": 30, "response_seconds": 60},
+            rubric=[],
+            sort_order=99,
+        )
+        self.db.add(speaking_part)
+        self.db.flush()
+        self.db.add(
+            ExamModuleQuestion(
+                part_id=speaking_part.id,
+                **_question("speaking_prompt", "Talk about a useful course.", Decimal("1"), []),
+                source_type="manual",
+                source_filename=None,
+                sort_order=0,
+                created_by_id=self.instructor.id,
+            )
+        )
+        self.db.commit()
+
+        created = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, created["id"])
+        session = SimpleNamespace(device_id=46)
+        token = attempt_service.secure_preflight(
+            self.db,
+            attempt,
+            session,
+            {
+                "client_id": "test-client-identifier-0006",
+                "rules_consent": True,
+                "camera_active": True,
+                "microphone_active": True,
+                "screen_share_active": True,
+                "fullscreen_active": True,
+                "display_surface": "monitor",
+            },
+            "127.0.0.1",
+        )["attempt_token"]
+        attempt_service.begin_secure_attempt(self.db, attempt, session, token)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt.id)
+
+        main_questions = [
+            question
+            for part in attempt.module.parts
+            if part.section_type in attempt_service.MAIN_PAPER_SECTION_TYPES
+            for question in part.questions
+        ]
+        for question in main_questions:
+            attempt_service.save_answer(self.db, attempt, question.id, {"selected": "A"})
+
+        sealed = attempt_service.seal_main_paper_for_speaking(self.db, attempt, start_now=False)
+        self.assertEqual(sealed.content_snapshot["phase"], "speaking_pending")
+
+        resumed = attempt_service.get_student_view(self.db, sealed, security_authorized=True)
+        self.assertEqual(resumed["phase"], "speaking_pending")
+        self.assertTrue(resumed["parts"][-1]["questions"])
+        self.assertTrue(all(not part["questions"] for part in resumed["parts"][:-1]))
+
+        sealed.expires_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=1)
+        sealed.security_last_heartbeat_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=5)
+        self.db.add(sealed)
+        self.db.commit()
+        sealed = attempt_service.get_attempt_or_404(self.db, self.student, sealed.id)
+        pending_view = attempt_service.get_student_view(self.db, sealed, security_authorized=False)
+        self.assertEqual(pending_view["status"], ATTEMPT_IN_PROGRESS)
+        self.assertEqual(pending_view["phase"], "speaking_pending")
+
+        resume_token = attempt_service.secure_preflight(
+            self.db,
+            sealed,
+            session,
+            {
+                "client_id": "test-client-identifier-0006-resume",
+                "rules_consent": True,
+                "camera_active": True,
+                "microphone_active": True,
+                "screen_share_active": True,
+                "fullscreen_active": True,
+                "display_surface": "monitor",
+            },
+            "127.0.0.1",
+        )["attempt_token"]
+        resumed_start = attempt_service.begin_secure_attempt(self.db, sealed, session, resume_token)
+        self.assertEqual(resumed_start["phase"], "speaking")
+        self.assertGreater(resumed_start["expires_at"].replace(tzinfo=None), datetime.now(timezone.utc).replace(tzinfo=None))
+
+        with self.assertRaises(HTTPException) as save_ctx:
+            attempt_service.save_answer(self.db, sealed, main_questions[0].id, {"selected": "B"})
+        self.assertEqual(save_ctx.exception.status_code, 423)
+        with self.assertRaises(HTTPException) as part_ctx:
+            attempt_service.get_attempt_part_view(sealed, attempt.module.parts[0].id)
+        self.assertEqual(part_ctx.exception.status_code, 423)
 
     def test_final_test_heartbeat_records_media_loss_and_answer_revisions_block_stale_writes(self):
         module = self._build_reading_module()

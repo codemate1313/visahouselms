@@ -1327,6 +1327,18 @@
   font-size: 21px;
 }
 
+.speaking-choice-modal {
+  width: min(520px, 100%);
+}
+
+.speaking-choice-modal .form-actions {
+  flex-wrap: wrap;
+}
+
+.speaking-choice-modal .form-actions button {
+  flex: 1 1 150px;
+}
+
 .credential-row {
   display: flex;
   justify-content: space-between;
