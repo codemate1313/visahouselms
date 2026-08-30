@@ -95,8 +95,8 @@ export function NewModuleForm({
       document.getElementById("new-module-title")?.focus();
       return;
     }
-    if (usesMockSources && !moduleImportFile && !allSourcesSelected) {
-      setValidationError("Please select all 4 required source modules or upload one full module PDF/CSV before proceeding.");
+    if (usesMockSources && !allSourcesSelected) {
+      setValidationError("Please select all 4 required source modules (Reading, Listening, Writing, Speaking) before proceeding.");
       return;
     }
     setValidationError(null);
@@ -288,23 +288,25 @@ export function NewModuleForm({
                 )}
               </div>
 
-              <div className="vh-form-group">
-                <div className="vh-label-row">
-                  <label htmlFor="new-module-full-upload">{strings.moduleImport.fileLabel}</label>
+              {!usesMockSources && (
+                <div className="vh-form-group">
+                  <div className="vh-label-row">
+                    <label htmlFor="new-module-full-upload">{strings.moduleImport.fileLabel}</label>
+                  </div>
+                  <p className="field-hint">
+                    {isComposite
+                      ? t.finalTestUploadHint
+                      : strings.moduleImport.createHint(typeLabel)}
+                  </p>
+                  <input
+                    id="new-module-full-upload"
+                    type="file"
+                    accept=".pdf,.csv,application/pdf,text/csv"
+                    onChange={(event) => onModuleImportFileChange(event.target.files?.[0] ?? null)}
+                  />
+                  {moduleImportFile && <p className="field-hint">Selected: {moduleImportFile.name}</p>}
                 </div>
-                <p className="field-hint">
-                  {isComposite && !usesMockSources
-                    ? t.finalTestUploadHint
-                    : strings.moduleImport.createHint(typeLabel)}
-                </p>
-                <input
-                  id="new-module-full-upload"
-                  type="file"
-                  accept=".pdf,.csv,application/pdf,text/csv"
-                  onChange={(event) => onModuleImportFileChange(event.target.files?.[0] ?? null)}
-                />
-                {moduleImportFile && <p className="field-hint">Selected: {moduleImportFile.name}</p>}
-              </div>
+              )}
             </div>
           ) : (
             <OnboardingInstructionsEditor
@@ -452,7 +454,7 @@ export function NewModuleForm({
                 type="submit"
                 variant="primary"
                 className="vh-btn-primary-brand"
-                disabled={busy || !details.title.trim() || (usesMockSources && !moduleImportFile && !allSourcesSelected)}
+                disabled={busy || !details.title.trim() || (usesMockSources && !allSourcesSelected)}
                 style={{ minWidth: 220, padding: "12px 28px" }}
               >
                 <span>{busy ? t.creating : `Create ${typeLabel}`}</span>
