@@ -99,25 +99,7 @@ function UsageBar({ percent }: { percent: number | null }) {
   );
 }
 
-/** Requests per hour over the last day, with failures stacked on top. */
-function UsageSparkline({ series }: { series: QuotaSummary["series"] }) {
-  if (series.length === 0) return null;
-  const peak = Math.max(...series.map((point) => point.requests), 1);
-  return (
-    <div className="ai-quota-spark" aria-label="AI requests per hour over the last day">
-      {series.map((point) => (
-        <div
-          key={point.hour}
-          className="ai-quota-spark-col"
-          title={`${formatDateTime(point.hour)} — ${point.requests} request${point.requests === 1 ? "" : "s"}, ${point.failed} failed`}
-        >
-          <span className="ai-quota-spark-failed" style={{ height: `${(point.failed / peak) * 100}%` }} />
-          <span className="ai-quota-spark-ok" style={{ height: `${((point.requests - point.failed) / peak) * 100}%` }} />
-        </div>
-      ))}
-    </div>
-  );
-}
+
 
 export function AiQuotaCard() {
   const [data, setData] = useState<QuotaSummary | null>(null);
@@ -219,6 +201,13 @@ export function AiQuotaCard() {
     return highest === null ? keyMax : Math.max(highest, keyMax);
   }, null);
 
+  const totalRpdLimit = data.keys.reduce((sum, key) => sum + (key.limits.rpd || 0), 0);
+  const totalRequestsToday = data.totals.requests_today;
+  const dailyUsedPercent = totalRpdLimit > 0
+    ? Math.min(100, Math.round((totalRequestsToday / totalRpdLimit) * 100))
+    : null;
+  const remainingToday = totalRpdLimit > 0 ? Math.max(0, totalRpdLimit - totalRequestsToday) : null;
+
   return (
     <>
       <section className="chart-card reference-styled-chart ai-quota-card">
@@ -269,7 +258,41 @@ export function AiQuotaCard() {
           </div>
         </div>
 
-        <UsageSparkline series={data.series} />
+        <div className="ai-quota-capacity-card">
+          <div className="ai-quota-capacity-header">
+            <span className="ai-quota-capacity-label">Daily Quota Usage</span>
+            <span className="ai-quota-capacity-count">
+              {totalRpdLimit > 0 ? (
+                <>
+                  <b>{totalRequestsToday.toLocaleString()}</b> / {totalRpdLimit.toLocaleString()} requests
+                  <span className="ai-quota-capacity-pct">({dailyUsedPercent}%)</span>
+                </>
+              ) : (
+                <>
+                  <b>{totalRequestsToday.toLocaleString()}</b> requests today
+                </>
+              )}
+            </span>
+          </div>
+
+          <div className={`ai-quota-progress-track ${toneFor(dailyUsedPercent)}`}>
+            <div
+              className="ai-quota-progress-fill"
+              style={{
+                width: dailyUsedPercent !== null ? `${Math.max(totalRequestsToday > 0 ? 3 : 0, Math.min(100, dailyUsedPercent))}%` : "0%",
+              }}
+            />
+          </div>
+
+          <div className="ai-quota-capacity-footer">
+            <span>
+              {remainingToday !== null
+                ? `${remainingToday.toLocaleString()} requests remaining today`
+                : "No daily ceiling configured"}
+            </span>
+            <span className="ai-quota-reset-pill">Daily reset</span>
+          </div>
+        </div>
 
         <div className="ai-quota-keys">
           {data.keys.slice(0, 3).map((key) => (

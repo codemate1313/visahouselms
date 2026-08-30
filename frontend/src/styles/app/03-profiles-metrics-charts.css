@@ -4712,36 +4712,90 @@ button.danger-text:hover,
   color: var(--text-muted);
 }
 
-.ai-quota-spark {
+.ai-quota-capacity-card {
+  padding: 12px 14px;
+  background: var(--surface-muted, rgba(0, 0, 0, 0.025));
+  border: 1px solid var(--border);
+  border-radius: 8px;
   display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  height: 60px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.ai-quota-spark-col {
-  display: flex;
-  flex: 1 1 0;
   flex-direction: column;
-  justify-content: flex-end;
-  min-width: 4px;
-  height: 100%;
-  background: rgba(120, 120, 120, 0.08);
-  border-radius: 3px 3px 0 0;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+
+.ai-quota-capacity-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ai-quota-capacity-label {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.ai-quota-capacity-count {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.ai-quota-capacity-count b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.ai-quota-capacity-pct {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.ai-quota-progress-track {
+  height: 8px;
+  background: rgba(120, 120, 120, 0.12);
+  border-radius: 999px;
   overflow: hidden;
+  position: relative;
 }
 
-.ai-quota-spark-ok {
-  display: block;
+.ai-quota-progress-fill {
+  height: 100%;
+  border-radius: inherit;
   background: #10b981;
-  min-height: 1px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.ai-quota-spark-failed {
-  display: block;
-  background: #ef4444;
+.ai-quota-progress-track.is-warning .ai-quota-progress-fill {
+  background: #f59e0b;
+}
+
+.ai-quota-progress-track.is-critical .ai-quota-progress-fill {
+  background: var(--primary, #b91c2b);
+}
+
+.ai-quota-progress-track.is-unknown .ai-quota-progress-fill {
+  background: #3b82f6;
+}
+
+.ai-quota-capacity-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ai-quota-reset-pill {
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(120, 120, 120, 0.08);
+  color: var(--text-muted);
 }
 
 .ai-quota-keys {
@@ -4975,11 +5029,31 @@ button.danger-text:hover,
 [data-theme="dark"] .ai-quota-bar.is-warning span { background: #fbbf24; }
 [data-theme="dark"] .ai-quota-bar.is-critical span { background: #fca5a5; }
 
-[data-theme="dark"] .ai-quota-spark-col {
-  background: rgba(255, 255, 255, 0.05);
+[data-theme="dark"] .ai-quota-capacity-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
 }
-[data-theme="dark"] .ai-quota-spark-ok { background: #34d399; }
-[data-theme="dark"] .ai-quota-spark-failed { background: #f87171; }
+
+[data-theme="dark"] .ai-quota-progress-track {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .ai-quota-progress-track.is-ok .ai-quota-progress-fill {
+  background: #34d399;
+}
+
+[data-theme="dark"] .ai-quota-progress-track.is-warning .ai-quota-progress-fill {
+  background: #fbbf24;
+}
+
+[data-theme="dark"] .ai-quota-progress-track.is-critical .ai-quota-progress-fill {
+  background: #f87171;
+}
+
+[data-theme="dark"] .ai-quota-reset-pill {
+  background: rgba(255, 255, 255, 0.06);
+  color: #9ca3af;
+}
 
 [data-theme="dark"] .ai-quota-switch-row,
 [data-theme="dark"] .ai-quota-key-card {
