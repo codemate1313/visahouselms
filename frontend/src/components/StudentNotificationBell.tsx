@@ -391,20 +391,16 @@ export function NotificationBell({
               </div>
               <div className="student-notification-header-actions">
                 {unread.length > 0 && (
-                  <Button
+                  <button
                     type="button"
-                    variant="text"
                     className="student-notification-read-all"
                     onClick={() => void markAllRead()}
-                    title="Mark all notifications as read"
-                    leftIcon={
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    }
                   >
-                    Mark all as read
-                  </Button>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Mark all as read</span>
+                  </button>
                 )}
                 <IconButton
                   className="student-notification-close-btn"

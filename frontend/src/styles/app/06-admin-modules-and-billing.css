@@ -2758,12 +2758,20 @@
   flex-shrink: 0 !important;
 }
 
-.student-notification-read-all:hover {
+.student-notification-read-all:hover,
+button.student-notification-read-all:hover,
+button.student-notification-read-all:hover:not(:disabled) {
   color: #ffffff !important;
   background: var(--primary-hover) !important;
   border-color: var(--primary-hover) !important;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 25%, transparent) !important;
   transform: translateY(-1px) !important;
+}
+
+.student-notification-read-all:hover *,
+button.student-notification-read-all:hover * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
 .student-notification-item {
@@ -5702,12 +5710,20 @@ button.start-test-btn.is-exhausted-btn:hover {
   border-color: color-mix(in srgb, var(--primary) 30%, transparent) !important;
 }
 
-[data-theme="dark"] .student-notification-read-all:hover {
+[data-theme="dark"] .student-notification-read-all:hover,
+[data-theme="dark"] button.student-notification-read-all:hover,
+[data-theme="dark"] button.student-notification-read-all:hover:not(:disabled) {
   background: var(--primary) !important;
   border-color: var(--primary) !important;
   color: #ffffff !important;
   box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 40%, transparent) !important;
   transform: translateY(-1px) !important;
+}
+
+[data-theme="dark"] .student-notification-read-all:hover *,
+[data-theme="dark"] button.student-notification-read-all:hover * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
 /* Dark-mode hardening for legacy/local component CSS that still ships fixed

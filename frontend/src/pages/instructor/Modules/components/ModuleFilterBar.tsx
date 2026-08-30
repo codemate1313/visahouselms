@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import type { ModuleBlueprint } from "@/api/types";
-import { Button, SearchInput, SearchableSelect } from "@/components/ui";
+import { SearchInput, SearchableSelect } from "@/components/ui";
 import { modulesStrings as strings } from "../Modules.strings";
 
 interface ModuleFilterBarProps {
@@ -11,7 +11,7 @@ interface ModuleFilterBarProps {
   onTypeChange: (value: string) => void;
   status: string;
   onStatusChange: (value: string) => void;
-  onSubmit: (event: FormEvent) => void;
+  onSubmit?: (event: FormEvent) => void;
 }
 
 export function ModuleFilterBar({
@@ -25,7 +25,7 @@ export function ModuleFilterBar({
   onSubmit,
 }: ModuleFilterBarProps) {
   return (
-    <form className="filter-bar course-filter-bar" onSubmit={onSubmit}>
+    <form className="filter-bar course-filter-bar" onSubmit={onSubmit ? onSubmit : (e) => e.preventDefault()}>
       <SearchInput
         aria-label={strings.searchAriaLabel}
         placeholder={strings.searchPlaceholder}
@@ -54,7 +54,6 @@ export function ModuleFilterBar({
         searchable={false}
         className="status-filter-select"
       />
-      <Button type="submit">{strings.search}</Button>
     </form>
   );
 }

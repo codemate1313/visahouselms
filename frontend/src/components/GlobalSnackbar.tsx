@@ -87,6 +87,7 @@ function SnackbarCard({ toast }: { toast: ToastItem }) {
         className="snackbar-close-btn"
         onClick={() => removeToast(toast.id)}
         label="Close notification"
+        showTooltip={false}
         icon={<Icon name="cross" />}
       />
 

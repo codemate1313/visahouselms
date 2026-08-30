@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { confirmDelete } from "@/components/confirmDialog";
 import type { ExamModule, ModuleBlueprint } from "@/api/types";
@@ -17,11 +17,17 @@ export function Modules() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const [{ data: rows }, { data: templates }] = await Promise.all([
-        apiClient.get<ExamModule[]>("/instructor/modules", { params: { search: search || undefined, module_type: type || undefined, status: status || undefined } }),
+        apiClient.get<ExamModule[]>("/instructor/modules", {
+          params: {
+            search: search.trim() || undefined,
+            module_type: type || undefined,
+            status: status || undefined,
+          },
+        }),
         apiClient.get<ModuleBlueprint[]>("/instructor/modules/blueprints"),
       ]);
       setModules(rows);
@@ -32,14 +38,13 @@ export function Modules() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [search, type, status]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [type, status]);
-
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    load();
-  }
+  // Debounced auto-search: live filtering without requiring a manual Search button
+  useEffect(() => {
+    const timer = setTimeout(load, search.trim() ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [load, search]);
 
   async function deleteDraft(moduleId: number, title: string) {
     if (!await confirmDelete(strings.confirmDelete.message(title), strings.confirmDelete.title)) return;
@@ -71,7 +76,6 @@ export function Modules() {
         onTypeChange={setType}
         status={status}
         onStatusChange={setStatus}
-        onSubmit={submit}
       />
       {error && <p className="error-text">{error}</p>}
       {loading ? (
