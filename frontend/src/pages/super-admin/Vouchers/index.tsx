@@ -1098,13 +1098,10 @@ export function Vouchers() {
               className="voucher-premium-card"
               style={{ "--accent-color": vo.voucher_type_badge_color || "#0284c7" } as React.CSSProperties}
             >
-              {/* Accent Top Color Stripe */}
-              <div className="h-1.5 w-full" style={{ backgroundColor: vo.voucher_type_badge_color || "#0284c7" }} />
-
               <div className="voucher-card-body">
                 {/* Header Row */}
                 <div className="voucher-card-top-row">
-                  <span className="voucher-type-badge glass-badge max-w-[160px] truncate" title={vo.voucher_type_name}>
+                  <span className="voucher-type-badge glass-badge" title={vo.voucher_type_name}>
                     {vo.voucher_type_name}
                   </span>
                   <div className={`status-indicator ${vo.is_active ? "active" : "inactive"}`}>
@@ -1157,18 +1154,20 @@ export function Vouchers() {
                   <Button
                     type="button"
                     variant="secondary"
+                    size="sm"
                     onClick={() => openOfferingModal(vo)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-200 cursor-pointer"
+                    leftIcon={<Icon name="edit" className="w-3.5 h-3.5" />}
                   >
-                    <Icon name="edit" className="w-3.5 h-3.5" /> Edit
+                    Edit
                   </Button>
                   <Button
                     type="button"
                     variant="danger"
+                    size="sm"
                     onClick={() => handleDeleteOffering(vo.id, vo.title)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200/80 dark:border-rose-800/60 transition-all duration-200 cursor-pointer"
+                    leftIcon={<Icon name="trash" className="w-3.5 h-3.5" />}
                   >
-                    <Icon name="trash" className="w-3.5 h-3.5" /> Delete
+                    Delete
                   </Button>
                 </div>
               </div>
@@ -1199,13 +1198,10 @@ export function Vouchers() {
               className="voucher-premium-card"
               style={{ "--accent-color": vt.badge_color || "#0284c7" } as React.CSSProperties}
             >
-              {/* Accent Top Color Stripe */}
-              <div className="h-1.5 w-full" style={{ backgroundColor: vt.badge_color || "#0284c7" }} />
-
               <div className="voucher-card-body">
                 {/* Header Row */}
                 <div className="voucher-card-top-row">
-                  <span className="voucher-type-badge glass-badge max-w-[160px] truncate" title={vt.name}>
+                  <span className="voucher-type-badge glass-badge" title={vt.name}>
                     {vt.name}
                   </span>
                   <div className={`status-indicator ${vt.is_active ? "active" : "inactive"}`}>
@@ -1243,18 +1239,20 @@ export function Vouchers() {
                   <Button
                     type="button"
                     variant="secondary"
+                    size="sm"
                     onClick={() => openTypeModal(vt)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-200 cursor-pointer"
+                    leftIcon={<Icon name="edit" className="w-3.5 h-3.5" />}
                   >
-                    <Icon name="edit" className="w-3.5 h-3.5" /> Edit
+                    Edit
                   </Button>
                   <Button
                     type="button"
                     variant="danger"
+                    size="sm"
                     onClick={() => handleDeleteType(vt.id, vt.name)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200/80 dark:border-rose-800/60 transition-all duration-200 cursor-pointer"
+                    leftIcon={<Icon name="trash" className="w-3.5 h-3.5" />}
                   >
-                    <Icon name="trash" className="w-3.5 h-3.5" /> Delete
+                    Delete
                   </Button>
                 </div>
               </div>

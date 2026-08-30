@@ -18,9 +18,10 @@ class VoucherType(Base):
     badge_color: Mapped[str] = mapped_column(String(20), nullable=False, default="#0284c7")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
 
-    offerings: Mapped[List["VoucherOffering"]] = relationship("VoucherOffering", back_populates="voucher_type", cascade="all, delete-orphan")
-    codes: Mapped[List["VoucherCode"]] = relationship("VoucherCode", back_populates="voucher_type", cascade="all, delete-orphan")
+    offerings: Mapped[List["VoucherOffering"]] = relationship("VoucherOffering", back_populates="voucher_type")
+    codes: Mapped[List["VoucherCode"]] = relationship("VoucherCode", back_populates="voucher_type")
 
 
 class VoucherOffering(Base):
@@ -37,6 +38,7 @@ class VoucherOffering(Base):
     image_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
 
     voucher_type: Mapped["VoucherType"] = relationship("VoucherType", back_populates="offerings")
     gst_rate: Mapped[Optional["GstRate"]] = relationship("GstRate")  # noqa: F821
@@ -55,6 +57,7 @@ class VoucherCode(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     purchased_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     purchase_id: Mapped[Optional[int]] = mapped_column(ForeignKey("voucher_purchases.id", ondelete="SET NULL"), nullable=True)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True, index=True)
 
     voucher_type: Mapped["VoucherType"] = relationship("VoucherType", back_populates="codes")
     purchase: Mapped[Optional["VoucherPurchase"]] = relationship("VoucherPurchase", foreign_keys=[purchase_id])
