@@ -211,7 +211,7 @@ LISTENING_PARTS = [
         "minimum_questions": 7,
         "max_marks": 7,
         "auto_marked": True,
-        "answer_constraints": {"allowed_question_types": ["fill_blank", "short_answer"], "max_answer_words": 3, "audio_plays": 2, "audio_required": True, "inline_marker_required": True, "layout": "notepad_gaps", "preserve_question_order": True},
+        "answer_constraints": {"allowed_question_types": ["fill_blank", "short_answer"], "max_answer_words": 3, "audio_plays": 2, "audio_required": True, "inline_marker_required": True, "shared_passage": True, "layout": "notepad_gaps", "preserve_question_order": True},
     },
     {
         "part_code": "listening_4",

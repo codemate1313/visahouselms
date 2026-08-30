@@ -268,6 +268,7 @@ export interface ModuleImportPreviewPart {
   part_code: string;
   part_title: string;
   section_type: IeltsSection;
+  layout?: string | null;
   allowed_question_types: QuestionType[];
   existing_count: number;
   remaining_slots: number | null;

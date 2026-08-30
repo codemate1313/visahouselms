@@ -28,6 +28,15 @@ def _clean(value: object) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
 
 
+def _clean_multiline(value: object) -> str:
+    """Like _clean, but keeps line breaks - a shared passage (or a notepad's
+    heading-then-gapped-paragraph text) depends on them to tell its lines
+    apart; collapsing to one line loses the heading and runs every gap
+    together."""
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in str(value or "").splitlines()]
+    return "\n".join(lines).strip()
+
+
 def _split_answers(value: object) -> list[str]:
     text = _clean(value).upper()
     if not text:
@@ -189,10 +198,11 @@ def parse_csv(content: bytes) -> tuple[str, list[dict], list[str]]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CSV header row is missing")
 
     def normalized_row(row: dict) -> dict[str, str]:
-        return {
-            re.sub(r"[^a-z0-9]+", "_", str(key or "").strip().lower()).strip("_"): _clean(value)
-            for key, value in row.items()
-        }
+        result: dict[str, str] = {}
+        for key, value in row.items():
+            norm_key = re.sub(r"[^a-z0-9]+", "_", str(key or "").strip().lower()).strip("_")
+            result[norm_key] = _clean_multiline(value) if norm_key in {"passage", "context"} else _clean(value)
+        return result
 
     questions: list[dict] = []
     warnings: list[str] = []

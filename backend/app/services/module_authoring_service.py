@@ -336,7 +336,7 @@ def validation_errors(module: ExamModule) -> list[str]:
             missing_markers = [question for question in part.questions if "{{blank}}" not in question.prompt]
             if missing_markers:
                 errors.append(f"Every question in {part.title} must place a {{{{blank}}}} marker in its prompt.")
-        if constraints.get("layout") == "shared_cloze" and part.questions:
+        if constraints.get("layout") in {"shared_cloze", "notepad_gaps"} and part.questions:
             ordered = sorted(part.questions, key=lambda question: question.sort_order)
             shared_passage = ordered[0].passage or ""
             missing_gaps = [
@@ -1172,6 +1172,49 @@ def _module_import_capacity(part: ExamModulePart) -> Optional[int]:
     return part.question_limit or (part.answer_constraints or {}).get("maximum_questions")
 
 
+_NOTEPAD_MARKER_RE = re.compile(r"\{\{blank:\d+\}\}")
+
+
+def _synthesize_notepad_passage(rows: list[dict]) -> None:
+    """Give a notepad_gaps part one shared passage across all its rows.
+
+    Imported rows normally arrive as independent sentences (one bare
+    {{blank}} each, empty passage) because the source CSV/PDF was authored
+    per-question, like every other listening part. The authoring composer
+    and the student runtime both expect a single passage - heading line
+    optional, then the body with sequential {{blank:N}} markers - shared by
+    every row (see NotepadGapsComposer/NotepadGapsGroup). Without this, the
+    "Edit Notepad" panel shows an empty box after import even though rows
+    were created. This mirrors the frontend's own buildFallbackNotepad, but
+    also keeps a heading when the source supplied a shared passage.
+    """
+    if not rows:
+        return
+    total = len(rows)
+    candidate_lines = [line for line in str(rows[0].get("passage") or "").strip().splitlines() if line.strip()]
+    body_markers = sum(len(_NOTEPAD_MARKER_RE.findall(line)) for line in candidate_lines)
+    if candidate_lines and body_markers >= total:
+        passage = "\n".join(candidate_lines)
+    else:
+        # A PDF's text before its numbered list (e.g. a "Part: Listening 3"
+        # header followed by a title and some intro sentences) has no
+        # {{blank:N}} markers at all - it never reaches the per-question
+        # prompt loop below. Keep it as heading + plain context lines rather
+        # than discarding everything but the first line.
+        gapless_lines = [line for line in candidate_lines if not _NOTEPAD_MARKER_RE.search(line)]
+        heading = gapless_lines[0] if gapless_lines else ""
+        context_lines = gapless_lines[1:]
+        body_lines = []
+        for index, row in enumerate(rows):
+            prompt = str(row.get("prompt") or "").strip()
+            marker = f"{{{{blank:{index + 1}}}}}"
+            line = prompt.replace("{{blank}}", marker, 1) if "{{blank}}" in prompt else f"{prompt} {marker}".strip()
+            body_lines.append(line)
+        passage = "\n".join(([heading] if heading else []) + context_lines + body_lines)
+    for row in rows:
+        row["passage"] = passage
+
+
 def _assign_module_import_questions(module: ExamModule, questions: list[dict]) -> tuple[list[dict], list[str]]:
     parts = sorted(module.parts, key=lambda item: item.sort_order)
     by_hint = {}
@@ -1242,6 +1285,8 @@ def _assign_module_import_questions(module: ExamModule, questions: list[dict]) -
         assigned = grouped[part.id]
         if not assigned:
             continue
+        if (part.answer_constraints or {}).get("layout") == "notepad_gaps":
+            _synthesize_notepad_passage(assigned)
         ceiling = _module_import_capacity(part)
         remaining = None if ceiling is None else max(0, ceiling - len(part.questions))
         result.append(
@@ -1250,6 +1295,7 @@ def _assign_module_import_questions(module: ExamModule, questions: list[dict]) -
                 "part_code": part.part_code,
                 "part_title": part.title,
                 "section_type": part.section_type,
+                "layout": (part.answer_constraints or {}).get("layout"),
                 "allowed_question_types": list((part.answer_constraints or {}).get("allowed_question_types") or []),
                 "existing_count": len(part.questions),
                 "remaining_slots": remaining,

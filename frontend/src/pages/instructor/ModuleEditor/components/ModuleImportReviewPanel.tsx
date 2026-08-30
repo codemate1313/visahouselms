@@ -28,6 +28,67 @@ const IMAGE_ELIGIBLE_SECTIONS = new Set(["writing"]);
 
 const keyFor = (partId: number, index: number) => `${partId}:${index}`;
 
+const NOTEPAD_BLANK_RE = /\{\{blank:(\d+)\}\}/g;
+
+/* Mirrors NotepadGapsGroup's own split: a first line with no blank marker is
+   the notepad's heading, everything else is the body shown line by line. */
+function splitNotepad(passage: string) {
+  const allLines = passage.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const hasHeading = allLines.length > 1 && !allLines[0].includes("{{blank:");
+  return {
+    heading: hasHeading ? allLines[0] : null,
+    lines: hasHeading ? allLines.slice(1) : allLines,
+  };
+}
+
+/* Shows the shared passage the way students will see it - heading plus a
+   gapped paragraph - instead of the raw {{blank:N}} markers, so the reviewer
+   can tell at a glance whether the import produced real notepad content. */
+function NotepadPreview({ passage, questions }: { passage: string; questions: QuestionDraft[] }) {
+  const { heading, lines } = splitNotepad(passage);
+  if (!heading && lines.length === 0) return null;
+  return (
+    <div
+      style={{
+        marginTop: 12,
+        padding: "12px 14px",
+        borderRadius: 10,
+        border: "1px solid var(--border)",
+        background: "var(--surface-color-variant, rgba(255,255,255,0.03))",
+        fontSize: "14px",
+        lineHeight: 1.6,
+      }}
+    >
+      {heading && <div style={{ fontWeight: 700, marginBottom: 8 }}>{heading}</div>}
+      {lines.map((line, lineIndex) => {
+        NOTEPAD_BLANK_RE.lastIndex = 0;
+        const parts: (string | { blankIndex: number })[] = [];
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
+        while ((match = NOTEPAD_BLANK_RE.exec(line)) !== null) {
+          if (match.index > lastIndex) parts.push(line.slice(lastIndex, match.index));
+          parts.push({ blankIndex: Number(match[1]) });
+          lastIndex = match.index + match[0].length;
+        }
+        if (lastIndex < line.length) parts.push(line.slice(lastIndex));
+        return (
+          <p key={lineIndex} style={{ margin: "0 0 6px" }}>
+            {parts.map((part, partIndex) =>
+              typeof part === "string" ? (
+                <span key={partIndex}>{part}</span>
+              ) : (
+                <strong key={partIndex} style={{ padding: "0 4px", borderBottom: "1px solid var(--text)" }}>
+                  {questions[part.blankIndex - 1]?.correct_answers?.[0] || `(${part.blankIndex})`}
+                </strong>
+              ),
+            )}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ModuleImportReviewPanel({
   preview,
   moduleTitle,
@@ -91,6 +152,7 @@ export function ModuleImportReviewPanel({
       <div className="preview-list">
         {preview.parts.map((part) => {
           const allowedTypes = part.allowed_question_types ?? [];
+          const isNotepadGaps = part.layout === "notepad_gaps";
           const passageRequired = part.section_type === "reading" && part.part_code !== "reading_1a";
           const partNeedsImage = IMAGE_ELIGIBLE_SECTIONS.has(part.section_type);
           const isListening1 = part.part_code === "listening_1" || part.part_code.endsWith("listening_1");
@@ -102,12 +164,18 @@ export function ModuleImportReviewPanel({
                   <p>{t.partSummary(part.questions.length, part.part_title)}</p>
                 </div>
               </div>
-              {passageRequired && (
+              {(passageRequired || isNotepadGaps) && (
                 <div className="passage-editor-section" style={{ marginBottom: 18 }}>
-                  <label style={{ fontWeight: 700, fontSize: "13px", display: "block", marginBottom: 6, color: "var(--text)" }}>Shared Passage Text</label>
+                  <label style={{ fontWeight: 700, fontSize: "13px", display: "block", marginBottom: 6, color: "var(--text)" }}>
+                    {isNotepadGaps ? "Notepad Heading & Passage" : "Shared Passage Text"}
+                  </label>
                   <textarea
-                    rows={5}
-                    placeholder="Type or paste the reading passage here..."
+                    rows={isNotepadGaps ? 8 : 5}
+                    placeholder={
+                      isNotepadGaps
+                        ? "First line is the heading. Below it, write the notepad text with {{blank:1}}, {{blank:2}}... in order."
+                        : "Type or paste the reading passage here..."
+                    }
                     value={part.questions[0]?.passage ?? ""}
                     onChange={(event) => {
                       const text = event.target.value;
@@ -117,7 +185,12 @@ export function ModuleImportReviewPanel({
                     }}
                     style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--surface)", fontFamily: "inherit" }}
                   />
-                  <span className="field-hint" style={{ display: "block", marginTop: 4 }}>This part requires a passage. The text entered here will be saved to all questions.</span>
+                  <span className="field-hint" style={{ display: "block", marginTop: 4 }}>
+                    {isNotepadGaps
+                      ? "This is the notepad students see. The {{blank:N}} markers must stay in order - each one links to the answer for that numbered item below."
+                      : "This part requires a passage. The text entered here will be saved to all questions."}
+                  </span>
+                  {isNotepadGaps && <NotepadPreview passage={part.questions[0]?.passage ?? ""} questions={part.questions} />}
                 </div>
               )}
               {part.questions.map((question, index) => {
