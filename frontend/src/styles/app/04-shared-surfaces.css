@@ -938,11 +938,8 @@
 }
 
 .module-import-modal .import-review-header {
-  position: sticky;
-  top: 0;
-  z-index: 30000;
   padding-bottom: 14px;
-  background: var(--surface);
+  background: transparent !important;
   border-bottom: 1px solid var(--border);
 }
 
@@ -953,6 +950,7 @@
   gap: 16px;
   margin-bottom: 18px;
   flex-wrap: wrap;
+  background: transparent !important;
 }
 
 .import-review-header > div:first-child {
@@ -992,25 +990,25 @@
   box-shadow: none !important;
 }
 
-.review-actions button.secondary-button {
+.review-actions button.ui-btn-secondary {
   background: var(--surface) !important;
   border: 1px solid var(--border) !important;
   color: var(--text) !important;
 }
 
-.review-actions button.secondary-button:hover:not(:disabled) {
+.review-actions button.ui-btn-secondary:hover:not(:disabled) {
   background: var(--surface-muted) !important;
   border-color: var(--border-hover, var(--border)) !important;
   color: var(--text) !important;
 }
 
-[data-theme="dark"] .review-actions button.secondary-button {
+[data-theme="dark"] .review-actions button.ui-btn-secondary {
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: rgba(255, 255, 255, 0.14) !important;
   color: #f4f4f5 !important;
 }
 
-[data-theme="dark"] .review-actions button.secondary-button:hover:not(:disabled) {
+[data-theme="dark"] .review-actions button.ui-btn-secondary:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.14) !important;
   border-color: rgba(255, 255, 255, 0.22) !important;
   color: #ffffff !important;
@@ -1236,23 +1234,9 @@
 
 .question-actions {
   display: flex;
-  gap: 6px;
-}
-
-.question-actions button {
-  padding: 6px 11px;
-  font-size: 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-.question-actions button.danger-text:hover,
-.question-actions .danger-text:hover {
-  background: var(--danger-fill, #dc2626) !important;
-  color: #ffffff !important;
-  border-color: var(--danger-fill, #dc2626) !important;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 

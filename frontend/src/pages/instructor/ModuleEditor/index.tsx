@@ -231,6 +231,13 @@ export function ModuleEditor() {
   const partIsFull = Boolean(
     selectedPart?.question_limit && selectedPart.questions.length >= selectedPart.question_limit,
   );
+  const allPartsComplete = Boolean(
+    module?.parts &&
+      module.parts.length > 0 &&
+      module.parts.every((part) =>
+        part.question_limit ? part.questions.length >= part.question_limit : part.questions.length > 0
+      )
+  );
   const remainingSlots = selectedPart?.question_limit
     ? Math.max(0, selectedPart.question_limit - selectedPart.questions.length)
     : null;
@@ -1138,7 +1145,7 @@ export function ModuleEditor() {
                 onSubmit={saveDetails}
                 onDelete={deleteModule}
               />
-              {isEditable && (
+              {isEditable && !allPartsComplete && (
                 <section className="authoring-panel" style={{ marginTop: 24 }}>
                   <div className="panel-title">
                     <div>

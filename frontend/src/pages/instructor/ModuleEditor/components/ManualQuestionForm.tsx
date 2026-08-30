@@ -747,7 +747,7 @@ export function ManualQuestionForm({
             {editingQuestionId ? t.updateQuestion : t.addQuestion}
           </Button>
           {editingQuestionId && (
-            <Button type="button" variant="secondary" className="secondary-button" onClick={onCancelEdit}>
+            <Button type="button" variant="secondary" onClick={onCancelEdit}>
               {t.cancel}
             </Button>
           )}

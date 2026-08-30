@@ -90,10 +90,10 @@ export function SavedQuestionsList({ part, isEditable, onEdit, onDelete }: Saved
               </div>
               {isEditable && (
                 <div className="question-actions">
-                  <Button variant="secondary" className="secondary-button" onClick={() => onEdit(question)}>
+                  <Button variant="secondary" size="sm" onClick={() => onEdit(question)}>
                     {t.edit}
                   </Button>
-                  <Button variant="danger" className="danger-text" onClick={() => onDelete(question)}>
+                  <Button variant="danger" size="sm" onClick={() => onDelete(question)}>
                     {t.delete}
                   </Button>
                 </div>

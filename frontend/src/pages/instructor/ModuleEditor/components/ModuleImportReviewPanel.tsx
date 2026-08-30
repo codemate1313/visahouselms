@@ -51,12 +51,11 @@ export function ModuleImportReviewPanel({
           <Button
             type="button"
             variant="secondary"
-            className="secondary-button"
             onClick={() => onSelectedImportsChange(selectedImports.size === allKeys.length ? new Set() : new Set(allKeys))}
           >
             {selectedImports.size === allKeys.length ? review.deselectAll : review.selectAll}
           </Button>
-          <Button type="button" variant="secondary" className="secondary-button" onClick={onDiscard}>
+          <Button type="button" variant="secondary" onClick={onDiscard}>
             {review.discard}
           </Button>
           <Button type="button" onClick={onCommit} disabled={busy || !selectedImports.size}>

@@ -48,7 +48,6 @@ export function ImportReviewPanel({
           <Button
             type="button"
             variant="secondary"
-            className="secondary-button"
             onClick={() =>
               onSelectedImportsChange(
                 selectedImports.size === preview.questions.length ? new Set() : new Set(preview.questions.map((_, index) => index))
@@ -57,7 +56,7 @@ export function ImportReviewPanel({
           >
             {selectedImports.size === preview.questions.length ? t.deselectAll : t.selectAll}
           </Button>
-          <Button variant="secondary" className="secondary-button" onClick={onDiscard}>
+          <Button variant="secondary" onClick={onDiscard}>
             {t.discard}
           </Button>
           <Button onClick={onCommit} disabled={busy || !selectedImports.size}>

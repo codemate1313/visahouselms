@@ -125,10 +125,10 @@ export function PartSpecPanel({
                 if (event.key === "Escape") cancelTitle();
               }}
             />
-            <Button type="button" variant="primary" className="button primary" disabled={busy || !partTitle.trim()} onClick={saveTitle}>
+            <Button type="button" variant="primary" disabled={busy || !partTitle.trim()} onClick={saveTitle}>
               Save
             </Button>
-            <Button type="button" variant="secondary" className="secondary-button" disabled={busy} onClick={cancelTitle}>
+            <Button type="button" variant="secondary" disabled={busy} onClick={cancelTitle}>
               Cancel
             </Button>
           </div>
@@ -214,7 +214,6 @@ export function PartSpecPanel({
                   <Button
                     type="button"
                     variant="secondary"
-                    className="secondary-button"
                     onClick={() => {
                       setInstructionsDraft(effectiveInstruction);
                       setIsEditingInstructions(false);
@@ -231,7 +230,7 @@ export function PartSpecPanel({
                 {effectiveInstruction || t.instructionsEmpty}
               </p>
               {isEditable && (
-                <Button type="button" variant="secondary" className="secondary-button" onClick={() => setIsEditingInstructions(true)}>
+                <Button type="button" variant="secondary" onClick={() => setIsEditingInstructions(true)}>
                   {instructionsEditLabel}
                 </Button>
               )}
