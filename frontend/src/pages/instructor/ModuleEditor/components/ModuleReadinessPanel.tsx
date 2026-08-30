@@ -78,12 +78,27 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
         variant="ghost"
         className={`vh-readiness-header-pill ${isReady ? "is-ready" : "needs-work"} ${isOpen ? "is-open" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
-        title={isReady ? "Click to publish or view status" : "Click to view pending checklist"}
+        title={isReady ? "Click to view readiness details" : "Click to view pending checklist"}
       >
         <span className="vh-status-dot" />
         <span className="vh-pill-label">{isReady ? t.ready : `${errors.length} Action Items`}</span>
         <Icon name="chevronDown" />
       </Button>
+
+      {/* Direct Publish Button in Row Beside Ready Status */}
+      {isReady && module.status === "draft" && (
+        <Button
+          type="button"
+          variant="primary"
+          className="vh-readiness-row-publish-btn"
+          onClick={() => onChangeStatus("published")}
+          disabled={busy}
+          title="Publish module"
+        >
+          <span>{t.publish}</span>
+          <Icon name="arrowRight" />
+        </Button>
+      )}
 
       {/* Popover Dropdown Menu */}
       {isOpen && (
