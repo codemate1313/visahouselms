@@ -2,6 +2,7 @@ import { useState } from "react";
 import { chartHoverProps } from "./hoverProps";
 import { Icon } from "../icons";
 import { ChartViewToggle } from "./ChartViewToggle";
+import { calculateIntegerTicks } from "./BarChart";
 import "./LineChart.css";
 
 export interface LineChartDatum {
@@ -41,7 +42,7 @@ export function LineChart({
   }));
 
   const maximum = Math.max(0, ...rows.map((r) => r.value));
-  const gridMax = maximum < 10 ? Math.max(1, maximum) : Math.ceil(maximum * 1.2);
+  const { gridMax, ticks } = calculateIntegerTicks(maximum);
 
   if (!rows.length || maximum === 0) {
     return null;
@@ -94,8 +95,6 @@ export function LineChart({
     ? `${pathD} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`
     : "";
 
-  const tickCount = 5;
-  const ticks = Array.from({ length: tickCount }, (_, i) => (gridMax / (tickCount - 1)) * i);
   const displayPoints = rows.length === 1 ? [points[1]] : points;
 
   return (
