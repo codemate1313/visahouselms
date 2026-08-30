@@ -4,7 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { PasswordInput } from "@/components/PasswordInput";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
-import { RequiredMark } from "@/components/ui";
+import { Button, RequiredMark } from "@/components/ui";
 import { useAuthStore } from "@/store/authStore";
 import { evaluatePassword } from "@/utils/passwordStrength";
 import { destinationFor } from "@/pages/Login/helpers";
@@ -110,9 +110,14 @@ export function ChangePassword({ apiBase = "/super-admin" }: ChangePasswordProps
         {success && <p className="success-text">{strings.notices.saved}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={saving || !strength.allMet || confirmMismatch || (!isFirstLoginPasswordSetup && !currentPassword)}>
+          <Button
+            type="submit"
+            variant="primary"
+            loading={saving}
+            disabled={saving || !strength.allMet || confirmMismatch || (!isFirstLoginPasswordSetup && !currentPassword)}
+          >
             {saving ? strings.saving : strings.updatePassword}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

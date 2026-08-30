@@ -148,7 +148,13 @@ def send_to_user(db: Session, user_id: int, title: str, body: str, link_url: Opt
 
     credentials = _load_credentials(db)
     project_id = get_setting(db, "fcm.project_id") or credentials.project_id
-    credentials.refresh(GoogleAuthRequest())
+    try:
+        credentials.refresh(GoogleAuthRequest())
+    except Exception as exc:
+        from app.services.notification_service import notify_api_key_down
+
+        notify_api_key_down(db, "FCM (push notifications)", f"Could not obtain an access token from Google: {exc}")
+        raise
     url = f"https://fcm.googleapis.com/v1/projects/{project_id}/messages:send"
 
     stale = []

@@ -1585,12 +1585,12 @@ export function Vouchers() {
                   </select>
                 </div>
                 <div className="form-actions mt-6 flex justify-end gap-3">
-                  <button type="button" className="ui-btn btn-secondary" onClick={() => setShowCodeModal(false)}>
+                  <Button variant="secondary" type="button" onClick={() => setShowCodeModal(false)}>
                     Cancel
-                  </button>
-                  <button type="submit" className="ui-btn btn-primary">
+                  </Button>
+                  <Button variant="primary" type="submit">
                     Save Changes
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>

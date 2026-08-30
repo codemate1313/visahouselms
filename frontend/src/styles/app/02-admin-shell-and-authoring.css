@@ -6106,6 +6106,32 @@ button.danger:hover:not(:disabled) {
   -webkit-text-fill-color: #fff4bd;
 }
 
+.change-password-page .form-actions button:not(.secondary-btn):not([type="button"]),
+.change-password-page .form-actions .ui-btn-primary {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--primary) !important;
+  box-shadow: 0 4px 14px var(--primary-soft);
+}
+
+.change-password-page .form-actions button:not(.secondary-btn):not([type="button"]):hover:not(:disabled),
+.change-password-page .form-actions .ui-btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 18px var(--primary-soft);
+}
+
+.change-password-page .form-actions button:not(.secondary-btn):not([type="button"]):disabled,
+.change-password-page .form-actions .ui-btn-primary:disabled {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #ffffff !important;
+  opacity: 0.55 !important;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 /* ---------- Password strength meter ---------- */
 .strength-meter {
   margin-top: 8px;

@@ -93,27 +93,47 @@
   background: color-mix(in srgb, var(--primary) 5%, transparent);
 }
 
-:where(.btn-primary, .sab-btn-primary, .sat-btn-primary, .invoice-btn-primary, .invoice-btn-success, .logout-modal-btn.confirm-btn) {
-  background: var(--primary);
-  border: 1px solid var(--primary);
-  color: #fff;
+.btn-primary,
+.sab-btn-primary,
+.sat-btn-primary,
+.invoice-btn-primary,
+.invoice-btn-success,
+.logout-modal-btn.confirm-btn {
+  background: var(--primary) !important;
+  border: 1px solid var(--primary) !important;
+  color: #fff !important;
   box-shadow: 0 4px 14px var(--primary-soft);
 }
 
-:where(.btn-primary, .sab-btn-primary, .sat-btn-primary, .invoice-btn-primary, .invoice-btn-success, .logout-modal-btn.confirm-btn):hover:not(:disabled) {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
-  color: #fff;
+.btn-primary:hover:not(:disabled),
+.sab-btn-primary:hover:not(:disabled),
+.sat-btn-primary:hover:not(:disabled),
+.invoice-btn-primary:hover:not(:disabled),
+.invoice-btn-success:hover:not(:disabled),
+.logout-modal-btn.confirm-btn:hover:not(:disabled) {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  color: #fff !important;
 }
 
-:where(.btn-secondary, .sab-btn-secondary, .sat-btn-secondary, .invoice-btn-secondary, .logout-modal-btn.cancel-btn, .danger-cancel-btn) {
+.btn-secondary,
+.sab-btn-secondary,
+.sat-btn-secondary,
+.invoice-btn-secondary,
+.logout-modal-btn.cancel-btn,
+.danger-cancel-btn {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
   box-shadow: none;
 }
 
-:where(.btn-secondary, .sab-btn-secondary, .sat-btn-secondary, .invoice-btn-secondary, .logout-modal-btn.cancel-btn, .danger-cancel-btn):hover:not(:disabled) {
+.btn-secondary:hover:not(:disabled),
+.sab-btn-secondary:hover:not(:disabled),
+.sat-btn-secondary:hover:not(:disabled),
+.invoice-btn-secondary:hover:not(:disabled),
+.logout-modal-btn.cancel-btn:hover:not(:disabled),
+.danger-cancel-btn:hover:not(:disabled) {
   background: var(--surface-muted);
   border-color: var(--primary);
   color: var(--text);

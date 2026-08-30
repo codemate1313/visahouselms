@@ -9,6 +9,7 @@ from app.core import actor_context
 from app.models.attempt import ATTEMPT_GRADED, AttemptPartGrade, RetakeRequest, TestAttempt
 from app.models.notification import (
     AI_EVALUATION_FAILED,
+    API_KEY_DOWN,
     GRADE_RELEASED,
     GRADING_CLAIMED,
     GRADING_QUEUE_ROUTED,
@@ -420,6 +421,53 @@ def notify_security_event(db: Session, title: str, message: str, *, link_url: st
         message=message,
         link_url=link_url,
     )
+
+
+# In-process cooldown so a provider stuck rejecting every request doesn't
+# email the super admins on every single call - one alert per outage is
+# enough, a fresh one only once the outage has had time to actually change.
+_API_KEY_ALERT_COOLDOWN_SECONDS = 30 * 60
+_api_key_alert_last_sent: dict[str, datetime] = {}
+
+
+def notify_api_key_down(db: Session, service_name: str, detail: str) -> None:
+    """Alert every super admin (in-app + email) that a third-party API key
+    (payment gateway, AI evaluator, ...) is being rejected by its provider -
+    almost always an expired/revoked/misconfigured key in Platform Settings."""
+    last_sent = _api_key_alert_last_sent.get(service_name)
+    now = datetime.now(timezone.utc)
+    if last_sent is not None and (now - last_sent).total_seconds() < _API_KEY_ALERT_COOLDOWN_SECONDS:
+        return
+    _api_key_alert_last_sent[service_name] = now
+
+    title = f"{service_name} API key is down"
+    message = f"{service_name} is rejecting requests, likely due to an invalid or expired API key. {detail[:400]}"
+    notify_roles(
+        db,
+        {SUPER_ADMIN, DEVELOPER},
+        kind=API_KEY_DOWN,
+        title=title,
+        message=message,
+        link_url="/super-admin/platform-settings",
+    )
+
+    admins = active_users_for_roles(db, {SUPER_ADMIN})
+    for admin in admins:
+        if not admin.email:
+            continue
+        send_notification_email(
+            db,
+            admin.email,
+            f"[Action needed] {title}",
+            (
+                f"Hi {admin.first_name or 'Admin'},\n\n"
+                f"{message}\n\n"
+                "Please check and update the key under Platform Settings as soon as possible, "
+                "since this is blocking the affected feature for users.\n\n"
+                "- Visa House LMS"
+            ),
+            user_id=admin.id,
+        )
 
 
 def create_grade_released_notification(db: Session, attempt: TestAttempt) -> StudentNotification:

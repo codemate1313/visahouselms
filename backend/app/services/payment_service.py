@@ -585,16 +585,21 @@ def create_user_plan_order(
         db.flush()
 
         stripe_gw = get_gateway("stripe", secret_key=secret_key)
-        stripe_order = stripe_gw.create_order(
-            amount=final_amount,
-            currency="usd",
-            meta={
-                "payment_id": payment.id,
-                "plan_id": plan_id,
-                "user_id": user_id,
-                "plan_name": plan.name,
-            },
-        )
+        try:
+            stripe_order = stripe_gw.create_order(
+                amount=final_amount,
+                currency="usd",
+                meta={
+                    "payment_id": payment.id,
+                    "plan_id": plan_id,
+                    "user_id": user_id,
+                    "plan_name": plan.name,
+                },
+            )
+        except RuntimeError as exc:
+            if getattr(exc, "status_code", None) == 401:
+                notification_service.notify_api_key_down(db, "Stripe", str(exc))
+            raise
 
         payment.gateway_reference = stripe_order["id"]
         db.add(payment)
@@ -670,8 +675,10 @@ def create_user_plan_order(
         )
         if res.status_code != 200:
             err_msg = res.json().get("error", {}).get("description", "Razorpay order creation failed")
+            if res.status_code == 401:
+                notification_service.notify_api_key_down(db, "Razorpay", err_msg)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Razorpay error: {err_msg}")
-        
+
         order_data = res.json()
         payment.gateway_reference = order_data["id"]
         db.add(payment)
@@ -1104,6 +1111,8 @@ def create_institute_renewal_order(
         )
         if res.status_code != 200:
             err_msg = res.json().get("error", {}).get("description", "Razorpay order creation failed")
+            if res.status_code == 401:
+                notification_service.notify_api_key_down(db, "Razorpay", err_msg)
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Razorpay error: {err_msg}")
         order_data = res.json()
         payment.gateway_reference = order_data["id"]

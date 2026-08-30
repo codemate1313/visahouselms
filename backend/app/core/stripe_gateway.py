@@ -58,7 +58,9 @@ class StripeGateway(PaymentGateway):
                 msg = err_json.get("error", {}).get("message", "Stripe API error")
             except Exception:
                 msg = err_body
-            raise RuntimeError(f"Stripe Payment Error: {msg}")
+            error = RuntimeError(f"Stripe Payment Error: {msg}")
+            error.status_code = e.code
+            raise error from e
 
     def verify_payment(self, reference: Optional[str]) -> bool:
         """Fetch PaymentIntent status from Stripe API."""

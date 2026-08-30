@@ -24,6 +24,7 @@ RETAKE_RESOLVED = "retake_resolved"
 SYSTEM_JOB_FAILED = "system_job_failed"
 SYSTEM_SECURITY_EVENT = "system_security_event"
 SUPPORT_TICKET_ASSIGNED = "support_ticket_assigned"
+API_KEY_DOWN = "api_key_down"
 
 
 class Announcement(Base):

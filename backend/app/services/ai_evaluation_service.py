@@ -1887,6 +1887,23 @@ def _is_transient(exc: Exception) -> bool:
     return False
 
 
+def _alert_if_key_auth_error(db: Session, config: dict, exc: Exception) -> None:
+    """A 401/403 from the provider means the configured key itself is bad
+    (revoked, expired, wrong project) rather than a transient or quota issue -
+    tell the super admins so they can fix Platform Settings."""
+    status_code = None
+    if isinstance(exc, httpx.HTTPStatusError):
+        status_code = exc.response.status_code
+    elif isinstance(exc, HTTPException):
+        status_code = exc.status_code
+    if status_code not in (401, 403):
+        return
+    from app.services.notification_service import notify_api_key_down
+
+    provider_label = _provider_label(config.get("provider") or "unknown")
+    notify_api_key_down(db, f"AI evaluation ({provider_label})", _redact_secrets(exc)[:300])
+
+
 def _readable_response(raw: object) -> str:
     """The provider's own reply, kept for the log. Truncated: a rationale-heavy
     response is a few KB, but a misbehaving endpoint can return anything."""
@@ -2025,6 +2042,7 @@ def request_suggestion(
             record.error = _redact_secrets(exc)[:4000]
             db.add(record)
             failed_records.append(record)
+            _alert_if_key_auth_error(db, config, exc)
 
     db.commit()
     detail = _redact_secrets(getattr(last_error, "detail", last_error)) if last_error else "All AI evaluators failed"
@@ -2122,6 +2140,7 @@ def request_speaking_suggestions(
             record.error = _redact_secrets(exc)[:4000]
             db.add(record)
             failed_records.append(record)
+            _alert_if_key_auth_error(db, config, exc)
 
     db.commit()
     detail = _redact_secrets(getattr(last_error, "detail", last_error)) if last_error else "All AI evaluators failed"
