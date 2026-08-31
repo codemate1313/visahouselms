@@ -336,26 +336,14 @@ export function AiQuotaCard() {
               <Badge tone={!data.enabled ? "gray" : worst !== null && worst >= 90 ? "red" : data.totals.rate_limited_today ? "amber" : "green"}>
                 {!data.enabled ? "Off" : worst !== null && worst >= 90 ? "Near limit" : data.totals.rate_limited_today ? "Hit limits" : "Healthy"}
               </Badge>
-              <button
-                type="button"
-                className="chart-toggle-btn is-active"
+              <IconButton
                 onClick={() => setOpen(true)}
-                aria-label="Open full quota breakdown"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "8px",
-                  background: "rgba(185, 28, 43, 0.08)",
-                  color: "var(--primary, #b91c2b)",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <Icon name="analytics" />
-              </button>
+                className="chart-open-detail-btn"
+                label="Open full quota breakdown"
+                variant="plain"
+                size="sm"
+                icon={<Icon name="analytics" />}
+              />
             </div>
           </div>
 

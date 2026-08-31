@@ -305,6 +305,14 @@ def memory() -> dict:
             "uptime_seconds": _uptime_seconds(),
             "disk": _disk_usage(Path("/")),
             "storage": _directory_size(settings.storage_path),
+            "approximate": False,
+            "total_bytes": None,
+            "used_bytes": None,
+            "available_bytes": None,
+            "cached_bytes": None,
+            "used_percent": None,
+            "swap": None,
+            "app": None,
             "note": "This host does not expose a memory reading we can read.",
         }
 

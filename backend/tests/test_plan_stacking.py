@@ -568,6 +568,40 @@ class SittingsTests(unittest.TestCase):
         )
         self.assertEqual(row["sittings_remaining"], 1)
 
+    def test_final_test_can_use_each_direct_purchase_once(self):
+        from app.services import attempt_service
+
+        final = ExamModule(
+            title="Final Test", module_type="final_test", duration_minutes=60,
+            created_by_id=self.student.id, status="published", is_visible=True,
+        )
+        self.db.add(final)
+        self.db.flush()
+        self.plan.modules = [final]
+        self.db.add(self.plan)
+        self.db.commit()
+
+        self._buy()
+        view = attempt_service.start_attempt(self.db, self.student, final)
+        attempt = self.db.get(TestAttempt, view["id"] if "id" in view else view["attempt_id"])
+        attempt.status = self.ATTEMPT_SUBMITTED
+        attempt.submitted_at = _now()
+        self.db.commit()
+
+        self._buy()
+        plan_view = subscription_service.my_current_plan_view(self.db, self.student)
+        row = next(m for m in plan_view["plan"]["modules"] if m["module_id"] == final.id)
+        self.assertFalse(row["is_exhausted"])
+        self.assertFalse(row["retake_available"])
+        self.assertEqual(row["sittings_remaining"], 1)
+
+        second_view = attempt_service.start_attempt(self.db, self.student, final)
+        second_attempt = self.db.get(
+            TestAttempt,
+            second_view["id"] if "id" in second_view else second_view["attempt_id"],
+        )
+        self.assertEqual(second_attempt.sitting_number, 2)
+
 
 class AlreadyPurchasedTests(unittest.TestCase):
     """A plan the student already holds must read as purchased, and refuse a
@@ -756,4 +790,3 @@ class AlreadyPurchasedTests(unittest.TestCase):
 
         # 5. Confirm that sittings_remaining is now 0 (since the post-subscription attempt consumed it)
         self.assertEqual(entitlement_service.sittings_remaining(self.db, self.student.id, self.module.id), 0)
-

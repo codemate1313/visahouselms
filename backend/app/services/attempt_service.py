@@ -297,12 +297,6 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     retake_request = None
 
     if original_attempt:
-        if is_final:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="You have already attempted the final test. Final tests cannot be retaken.",
-            )
-
         # A direct student who bought the plan again bought another go at it.
         # Before this, a repeat purchase bought only more days to look at a
         # paper they had already sat - full price for no further sitting - and
@@ -317,6 +311,12 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
             from app.services import entitlement_service
 
             has_paid_sitting = entitlement_service.sittings_remaining(db, user.id, module.id) > 0
+
+        if is_final and not has_paid_sitting:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="You have already attempted the final test. Final tests cannot be retaken.",
+            )
 
         if not has_paid_sitting and not dev_unlimited_speaking:
             retake_request = retake_service.get_available_retake(db, user.id, module.id)

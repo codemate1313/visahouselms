@@ -29,7 +29,12 @@ interface ChartDetailModalProps {
   onClose: () => void;
 }
 
-function computePresetDates(presetId: string, latestMonthStr: string = "2026-07") {
+function currentMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function computePresetDates(presetId: string, latestMonthStr: string = currentMonthKey()) {
   const parts = latestMonthStr.split("-");
   const year = parseInt(parts[0], 10) || 2026;
   const month = parseInt(parts[1], 10) || 7;
@@ -80,7 +85,6 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
             { id: "all", label: "All Partner Institutes" },
             { id: "high", label: "High Revenue (> ₹500)" },
             { id: "top", label: "Top Performer" },
-            { id: "custom", label: "Custom Timeline" },
           ],
         };
       case "byMonth":
@@ -133,7 +137,7 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
 
   const latestMonth = summary.revenue_by_month.length > 0
     ? summary.revenue_by_month[summary.revenue_by_month.length - 1].month
-    : "2026-07";
+    : currentMonthKey();
 
   const initialDates = computePresetDates(filterConfig.defaultOption, latestMonth);
 
@@ -174,20 +178,9 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
     title = t.byInstituteTitle;
     description = "Revenue performance across partner institute accounts";
 
-    // Dynamic timeframe calculation for institutes
-    const rangeMonths = summary.revenue_by_month.filter((r) => {
-      if (fromDate && r.month < fromDate) return false;
-      if (toDate && r.month > toDate) return false;
-      return true;
-    });
-
-    const rangeTotalRev = rangeMonths.reduce((sum, r) => sum + Number(r.total), 0);
-    const allTotalRev = summary.revenue_by_month.reduce((sum, r) => sum + Number(r.total), 0);
-    const timeRatio = allTotalRev > 0 ? rangeTotalRev / allTotalRev : 0;
-
     let rawData = summary.revenue_by_institute.map((r) => ({
       label: r.institute_name,
-      value: Math.round(Number(r.total) * timeRatio),
+      value: Number(r.total),
     }));
 
     if (activeFilter === "high") {
@@ -388,7 +381,7 @@ export function ChartDetailModal({ chartKey, summary, onClose }: ChartDetailModa
               />
 
               {/* Timeline From Date -> To Date Inputs */}
-              {(chartKey === "byMonth" || chartKey === "byInstitute") && (
+              {chartKey === "byMonth" && (
                 <div className="chart-custom-date-picker" style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--surface-muted, #f8fafc)", padding: "4px 10px", borderRadius: 12, border: "1px solid var(--border-subtle, rgba(203,213,225,0.8))" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted, var(--slate-500))" }}>From:</span>

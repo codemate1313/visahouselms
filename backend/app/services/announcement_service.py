@@ -177,6 +177,23 @@ def create_announcement(
     return _out(item)
 
 
+def delete_admin_announcement(db: Session, announcement_id: int, institute_id: Optional[int]) -> bool:
+    item = (
+        db.query(Announcement)
+        .filter(Announcement.id == announcement_id, Announcement.institute_id == institute_id)
+        .first()
+    )
+    if item is None:
+        return False
+
+    db.query(StudentNotification).filter(StudentNotification.announcement_id == item.id).delete(
+        synchronize_session=False
+    )
+    db.delete(item)
+    db.commit()
+    return True
+
+
 def _audience_roles(audience_str: str) -> tuple[str, ...]:
     parts = [p.strip() for p in audience_str.split(",") if p.strip()]
     if "all" in parts or not parts:

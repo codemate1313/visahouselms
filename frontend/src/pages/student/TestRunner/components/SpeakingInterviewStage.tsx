@@ -363,19 +363,6 @@ export function SpeakingInterviewStage({
      is running, rather than sitting on a static "Playing Question..." with
      nothing on screen to show anything is happening. */
   const isWaitingSilently = mode === "ready" && !examinerBusy && !manualStartOffered;
-  const dockStatusLabel = mode === "ready"
-    ? (isWaitingSilently ? t.waitingForExaminerAudio : t.playingQuestion)
-    : mode === "preparing"
-      ? t.preparingNow(preparationLeft)
-      : mode === "starting"
-        ? t.startingRecording
-        : mode === "recording"
-          ? t.recordingNow
-          : mode === "uploading"
-            ? t.saving
-            : mode === "complete"
-              ? t.saved
-              : t.playingQuestion;
   const materialClassName = [
     "speaking-candidate-material",
     hasCandidateText ? "has-text" : "",
@@ -461,9 +448,6 @@ export function SpeakingInterviewStage({
               </div>
 
               <div className="speaking-interview-actions">
-                <Button className="speaking-control-button is-status" disabled leftIcon={<span className="speaking-status-spinner" aria-hidden="true" />}>
-                  {dockStatusLabel}
-                </Button>
                 <Button
                   className="speaking-control-button"
                   disabled={!canStartManually}
@@ -610,7 +594,7 @@ export function SpeakingInterviewStage({
                       <span className="speaking-status-spinner" aria-hidden="true" />
                       {t.waitingForExaminerAudio}
                     </span>
-                  ) : t.playingQuestion
+                  ) : null
                 : mode === "preparing"
                     ? (
                       <>
@@ -653,7 +637,7 @@ export function SpeakingInterviewStage({
                 leftIcon={<Icon name="microphone" />}
                 onClick={beginPreparation}
               >
-                {manualStartOffered ? t.startResponse : t.playingQuestion}
+                {manualStartOffered ? t.startResponse : t.recordAnswer}
               </Button>
               <Button
                 variant="primary"

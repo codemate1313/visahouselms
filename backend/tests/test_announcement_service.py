@@ -214,6 +214,23 @@ class AnnouncementServiceTests(unittest.TestCase):
         self.assertIn(self.student.id, notified_user_ids)
         self.assertNotIn(self.other_student.id, notified_user_ids)
 
+    def test_delete_platform_announcement_removes_generated_notifications(self) -> None:
+        from app.models.notification import Announcement
+
+        created = announcement_service.create_announcement(
+            self.db,
+            self.super_admin,
+            AnnouncementCreate(title="Remove this", message="This should disappear."),
+            institute_id=None,
+        )
+        self.assertGreater(self.db.query(StudentNotification).count(), 0)
+
+        deleted = announcement_service.delete_admin_announcement(self.db, created["id"], institute_id=None)
+
+        self.assertTrue(deleted)
+        self.assertIsNone(self.db.query(Announcement).get(created["id"]))
+        self.assertEqual(self.db.query(StudentNotification).filter_by(announcement_id=created["id"]).count(), 0)
+
     def test_target_options(self) -> None:
         self.other_institute.is_active = False
         self.db.commit()

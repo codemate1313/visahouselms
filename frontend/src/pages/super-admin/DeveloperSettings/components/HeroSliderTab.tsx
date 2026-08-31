@@ -217,7 +217,7 @@ export function HeroSliderTab() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("category", "hero");
-    const res = await apiClient.post<{ url: string }>("/media/upload", formData, {
+    const res = await apiClient.post<{ url: string }>("/super-admin/upload-image", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return res.data.url;

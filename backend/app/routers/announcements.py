@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -68,6 +68,16 @@ def create_platform_announcement(
     actor: User = Depends(get_current_user),
 ):
     return announcement_service.create_announcement(db, actor, payload, institute_id=None)
+
+
+@platform_router.delete("/{announcement_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_platform_announcement(
+    announcement_id: int,
+    db: Session = Depends(get_db),
+):
+    deleted = announcement_service.delete_admin_announcement(db, announcement_id, institute_id=None)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Announcement not found")
 
 
 @student_router.get("")

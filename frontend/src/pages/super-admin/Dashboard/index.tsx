@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { lockBodyScroll } from "@/utils/scrollLock";
 import { apiClient } from "@/api/client";
 import { useAuthStore } from "@/store/authStore";
-import { PageHeader } from "@/components/ui";
+import { Button, PageHeader } from "@/components/ui";
 import { dashboardStrings as strings } from "./Dashboard.strings";
 import type { MetricDetail, MetricKey, Summary } from "./types";
 import { computeRevenueTrend } from "./helpers";
@@ -94,22 +94,26 @@ export function Dashboard() {
       {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
 
       <div className="dashboard-card-groups" aria-label="Dashboard card groups">
-        <button
+        <Button
           type="button"
+          variant={activeGroup === "institute" ? "primary" : "ghost"}
+          size="sm"
           className={activeGroup === "institute" ? "is-active" : ""}
           onClick={() => setActiveGroup("institute")}
           aria-pressed={activeGroup === "institute"}
         >
           Institute Info
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant={activeGroup === "technical" ? "primary" : "ghost"}
+          size="sm"
           className={activeGroup === "technical" ? "is-active" : ""}
           onClick={() => setActiveGroup("technical")}
           aria-pressed={activeGroup === "technical"}
         >
           Technical Info
-        </button>
+        </Button>
       </div>
 
       {activeGroup === "institute" ? (
