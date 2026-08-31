@@ -5080,3 +5080,23 @@ button.danger-text:hover,
   }
 }
 
+
+/* ==========================================================================
+   Server memory card
+   --------------------------------------------------------------------------
+   Shares the quota card's bar and figure rules so the two sit together as one
+   pair on the dashboard; only the outer shape is its own.
+   ========================================================================== */
+
+.server-memory-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 0;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.server-memory-card .ai-quota-figures b {
+  font-size: 20px;
+}

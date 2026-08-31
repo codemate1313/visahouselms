@@ -7607,3 +7607,159 @@ html[data-theme="dark"] body .dashboard .test-runner-option:has(input:checked) {
 }
 
 
+
+/* ==========================================================================
+   AI marking countdown
+   --------------------------------------------------------------------------
+   Replaces the three dots the student used to watch: a dial that empties over
+   the time their own submission is expected to take, and a line underneath
+   that names the stage the evaluation should be at. In overtime the dial
+   stays full and the clock counts up.
+   ========================================================================== */
+
+.ai-progress-panel {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 12px);
+  background: var(--surface-muted, rgba(120, 120, 120, 0.06));
+}
+
+.ai-progress-dial {
+  position: relative;
+  flex: 0 0 88px;
+  width: 88px;
+  height: 88px;
+}
+
+.ai-progress-dial svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ai-progress-track,
+.ai-progress-sweep {
+  fill: none;
+  stroke-width: 6;
+}
+
+.ai-progress-track {
+  stroke: var(--border);
+}
+
+.ai-progress-sweep {
+  stroke: var(--primary, #2563eb);
+  stroke-linecap: round;
+  /* Matches the one-second tick, so the sweep glides instead of stepping. */
+  transition: stroke-dashoffset 1s linear;
+}
+
+.ai-progress-panel.is-overtime .ai-progress-sweep {
+  stroke: #d97706;
+  animation: ai-progress-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ai-progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.ai-progress-readout {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.ai-progress-readout b {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.ai-progress-readout span {
+  max-width: 74px;
+  font-size: 9px;
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+
+.ai-progress-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ai-progress-copy h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.ai-progress-phase {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text);
+  animation: ai-progress-phase-in 400ms ease;
+}
+
+@keyframes ai-progress-phase-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+
+.ai-progress-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---- compact clock for the page header ---- */
+
+.ai-progress-inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ai-progress-inline-clock {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.ai-progress-inline-phase {
+  font-size: 13px;
+  color: var(--text-muted);
+  animation: ai-progress-phase-in 400ms ease;
+}
+
+@media (max-width: 640px) {
+  .ai-progress-panel {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-progress-sweep,
+  .ai-progress-phase,
+  .ai-progress-inline-phase,
+  .ai-progress-panel.is-overtime .ai-progress-sweep {
+    animation: none;
+    transition: none;
+  }
+}

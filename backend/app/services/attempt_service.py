@@ -10,6 +10,7 @@ from typing import Optional
 from uuid import uuid4
 
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -165,6 +166,20 @@ def _set_attempt_phase(attempt: TestAttempt, phase: str) -> None:
     snapshot = dict(attempt.content_snapshot or {})
     snapshot["phase"] = phase
     attempt.content_snapshot = snapshot
+
+
+def _set_resume_part(attempt: TestAttempt, part_id: int) -> None:
+    snapshot = dict(attempt.content_snapshot or {})
+    snapshot["resume_part_id"] = part_id
+    attempt.content_snapshot = snapshot
+
+
+def _resume_part_id(attempt: TestAttempt) -> Optional[int]:
+    value = (attempt.content_snapshot or {}).get("resume_part_id")
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _main_paper_is_locked(attempt: TestAttempt) -> bool:
@@ -592,38 +607,60 @@ def _serialize_parts(
     ]
 
 
-def _ai_evaluation_status(db: Session, attempt: TestAttempt) -> str:
-    if attempt.status == ATTEMPT_GRADED:
-        return "completed"
-
-    eligible_part_ids = {
+def _ai_eligible_part_ids(attempt: TestAttempt) -> set[int]:
+    """Parts of this module the AI is allowed to mark."""
+    return {
         part.id
         for part in attempt.module.parts
         if not part.auto_marked and part.ai_evaluation_enabled
     }
-    if not eligible_part_ids:
-        return "disabled"
-    if attempt.status != ATTEMPT_GRADING:
-        return "not_started"
 
+
+def _ai_pending_part_ids(attempt: TestAttempt) -> set[int]:
+    """Of those, the ones still without a published grade."""
     grades_by_part = {grade.part_id: grade for grade in attempt.part_grades}
-    pending_part_ids = {
+    return {
         part_id
-        for part_id in eligible_part_ids
+        for part_id in _ai_eligible_part_ids(attempt)
         if grades_by_part.get(part_id) is None or grades_by_part[part_id].status == PART_GRADE_PENDING
     }
-    if not pending_part_ids:
-        return "completed"
 
-    from app.models.attempt import AiEvaluation
+
+def _ai_active_job(db: Session, attempt: TestAttempt):
+    """The queued or running AI job for this attempt, if there is one. The
+    attempt id lives inside a JSON payload, so the filter happens in Python
+    over the (short) list of jobs that are actually active."""
     from app.models.job import JOB_PENDING, JOB_RUNNING, Job
 
     active_jobs = (
         db.query(Job)
         .filter(Job.type == "ai_auto_grade", Job.status.in_([JOB_PENDING, JOB_RUNNING]))
+        .order_by(Job.id.asc())
         .all()
     )
-    if any((job.payload or {}).get("attempt_id") == attempt.id for job in active_jobs):
+    for job in active_jobs:
+        if (job.payload or {}).get("attempt_id") == attempt.id:
+            return job
+    return None
+
+
+def _ai_evaluation_status(db: Session, attempt: TestAttempt) -> str:
+    if attempt.status == ATTEMPT_GRADED:
+        return "completed"
+
+    eligible_part_ids = _ai_eligible_part_ids(attempt)
+    if not eligible_part_ids:
+        return "disabled"
+    if attempt.status != ATTEMPT_GRADING:
+        return "not_started"
+
+    pending_part_ids = _ai_pending_part_ids(attempt)
+    if not pending_part_ids:
+        return "completed"
+
+    from app.models.attempt import AiEvaluation
+
+    if _ai_active_job(db, attempt) is not None:
         return "pending"
 
     failed_ai_rows = (
@@ -639,6 +676,47 @@ def _ai_evaluation_status(db: Session, attempt: TestAttempt) -> str:
         return "manual_required"
 
     return "manual_required"
+
+
+def _ai_evaluation_progress(db: Session, attempt: TestAttempt) -> Optional[dict]:
+    """What the student's spinner needs: when the AI started on this attempt,
+    how long their submission should take, and how much of it is already done.
+
+    Only built while an evaluation is actually in flight - every other state
+    has a result to show instead of a wait to describe.
+    """
+    from app.models.attempt import AiEvaluation
+    from app.services import ai_evaluation_service
+
+    pending_part_ids = _ai_pending_part_ids(attempt)
+    if not pending_part_ids:
+        return None
+    eligible_part_ids = _ai_eligible_part_ids(attempt)
+
+    # The clock starts when the work was queued, not when the student opened
+    # this page - they may have arrived a minute late, or reloaded.
+    job = _ai_active_job(db, attempt)
+    started_at = (job.started_at or job.created_at) if job else None
+    if started_at is None:
+        started_at = (
+            db.query(func.min(AiEvaluation.created_at))
+            .filter(
+                AiEvaluation.attempt_id == attempt.id,
+                AiEvaluation.part_id.in_(pending_part_ids),
+                AiEvaluation.status == "pending",
+            )
+            .scalar()
+        )
+    if started_at is None:
+        started_at = attempt.submitted_at
+
+    estimate = ai_evaluation_service.estimate_evaluation(db, attempt, pending_part_ids)
+    return {
+        **estimate,
+        "started_at": _utc_out(started_at),
+        "parts_total": len(eligible_part_ids),
+        "parts_done": len(eligible_part_ids - pending_part_ids),
+    }
 
 
 def get_student_view(
@@ -665,6 +743,7 @@ def get_student_view(
         db.add(attempt)
         db.commit()
     reveal = attempt.status in (ATTEMPT_GRADING, ATTEMPT_GRADED)
+    ai_status = _ai_evaluation_status(db, attempt)
     effective_expires_at = attempt.expires_at
     if attempt.started_at and attempt.module and attempt.module.duration_minutes:
         max_expiry = attempt.started_at + timedelta(minutes=attempt.module.duration_minutes)
@@ -701,8 +780,12 @@ def get_student_view(
         "flag_count": len(attempt.flags),
         "reevaluation": grading_service.reevaluation_for_student(db, attempt),
         "retake_request": retake_service.get_retake_for_student(db, attempt),
-        "ai_evaluation_status": _ai_evaluation_status(db, attempt),
+        "ai_evaluation_status": ai_status,
+        # Present only while the AI is working, so the student's wait can be a
+        # timer sized to what they wrote rather than an open-ended spinner.
+        "ai_evaluation_progress": _ai_evaluation_progress(db, attempt) if ai_status == "pending" else None,
         "phase": _attempt_phase(attempt),
+        "resume_part_id": _resume_part_id(attempt),
         "parts": _serialize_parts(
             attempt,
             reveal=reveal,
@@ -1028,6 +1111,23 @@ def get_attempt_part_view(attempt: TestAttempt, part_id: int) -> dict:
     return _serialize_part(attempt, part, reveal=False, include_questions=True)
 
 
+def save_resume_progress(db: Session, attempt: TestAttempt, part_id: int) -> dict:
+    if attempt.status != ATTEMPT_IN_PROGRESS:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This attempt is not in progress")
+    part = next((item for item in attempt.module.parts if item.id == part_id), None)
+    if part is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test part not found")
+    if _main_paper_is_locked(attempt) and part.section_type != "speaking":
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="The Listening, Reading and Writing paper is closed. Resume from Speaking.",
+        )
+    _set_resume_part(attempt, part.id)
+    db.add(attempt)
+    db.commit()
+    return {"resume_part_id": part.id}
+
+
 def _require_in_progress(attempt: TestAttempt) -> None:
     if attempt.status == ATTEMPT_READY:
         now = _now()
@@ -1066,6 +1166,12 @@ def seal_main_paper_for_speaking(db: Session, attempt: TestAttempt, *, start_now
         )
 
     _set_attempt_phase(attempt, SPEAKING_PHASE_ACTIVE if start_now else SPEAKING_PHASE_PENDING)
+    first_speaking_part = next(
+        (part for part in sorted(attempt.module.parts, key=lambda item: item.sort_order) if part.section_type == "speaking"),
+        None,
+    )
+    if first_speaking_part:
+        _set_resume_part(attempt, first_speaking_part.id)
     if start_now:
         attempt.expires_at = _now() + timedelta(
             minutes=_speaking_duration_minutes(attempt) + EXPIRY_BUFFER_MINUTES

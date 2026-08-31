@@ -83,6 +83,16 @@ function speakingEntryIndex(parts: Attempt["parts"], candidateIndex: number): nu
   return firstUnfinished >= 0 ? firstUnfinished : candidateIndex;
 }
 
+function resumeEntryIndex(parts: Attempt["parts"], resumePartId: number | null | undefined, fallbackIndex: number): number {
+  const serverIndex = resumePartId ? parts.findIndex((part) => part.id === resumePartId) : -1;
+  if (serverIndex >= 0) return serverIndex;
+  const firstIncomplete = parts.findIndex(
+    (part) => part.question_count > 0 && part.answered_count < part.question_count,
+  );
+  if (firstIncomplete >= 0) return firstIncomplete;
+  return Math.min(Math.max(fallbackIndex, 0), Math.max(parts.length - 1, 0));
+}
+
 export function TestRunner() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -214,6 +224,20 @@ export function TestRunner() {
     }
   }, [id, partIndex, setSearchParams]);
 
+  useEffect(() => {
+    const activePartId = attempt?.parts[partIndex]?.id;
+    if (!id || !activePartId || attempt?.status !== "in_progress") return;
+    apiClient.put(
+      `/student/attempts/${id}/progress`,
+      { part_id: activePartId },
+      { headers: { ...securityHeaders(), "X-Skip-Loader": "1" } },
+    ).catch(() => {
+      // Resume progress is a convenience marker. Answer saves remain the source
+      // of truth, and the initial load can still fall back to the first
+      // incomplete part if this lightweight update is rejected.
+    });
+  }, [attempt?.id, attempt?.status, attempt?.parts, id, partIndex, securityHeaders]);
+
   const activeHeartbeatPartId = attempt?.parts[partIndex]?.id ?? null;
   const currentPart = attempt?.parts[partIndex];
   const isListeningPart = currentPart?.section_type === "listening";
@@ -307,7 +331,7 @@ export function TestRunner() {
           ? firstSpeakingIndex
           : splitComposite && requestedSpeaking && !mainPaperComplete
             ? 0
-            : restoredIndex;
+            : resumeEntryIndex(data.parts, data.resume_part_id, restoredIndex);
         const resolvedPartIndex = speakingEntryIndex(data.parts, phaseIndex);
         setPartIndex(resolvedPartIndex);
 

@@ -18,6 +18,37 @@ export const attemptResultStrings = {
     retryAi: "Try AI marking again",
     retrying: "Sending...",
     retryFailed: "Could not send this for AI marking again.",
+    progress: {
+      heading: "Marking your answers",
+      remainingLabel: "estimated time left",
+      elapsedLabel: "time taken so far",
+      phases: {
+        collecting: "Collecting your answers...",
+        reading: "Reading what you wrote...",
+        listening: "Listening to your recording...",
+        language: "Checking grammar, vocabulary and accuracy...",
+        rubric: "Weighing it against the marking rubric...",
+        band: "Working out your CEFR band...",
+        feedback: "Writing your feedback...",
+      },
+      overtimePhases: [
+        "Still working on it...",
+        "Long answers take the examiner longer too...",
+        "Almost there - your result appears here on its own...",
+      ],
+      /** Says why the wait is as long as it is, in the student's own numbers. */
+      workload: (progress: { words: number; audio_seconds: number }) => {
+        const pieces: string[] = [];
+        if (progress.words > 0) pieces.push(`${progress.words.toLocaleString()} words`);
+        if (progress.audio_seconds > 0) {
+          const minutes = Math.floor(progress.audio_seconds / 60);
+          const seconds = progress.audio_seconds % 60;
+          pieces.push(minutes > 0 ? `${minutes}m ${seconds}s of audio` : `${seconds}s of audio`);
+        }
+        return pieces.length ? `Marking ${pieces.join(" and ")}` : "Marking your submission";
+      },
+      partsDone: (done: number, total: number) => `${done} of ${total} sections done`,
+    },
   },
   metrics: {
     totalQuestions: "Total questions",

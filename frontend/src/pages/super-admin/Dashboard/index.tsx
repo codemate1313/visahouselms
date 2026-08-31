@@ -12,6 +12,7 @@ import { MetricDetailModal } from "./components/MetricDetailModal";
 import { PendingSignupsAlert } from "./components/PendingSignupsAlert";
 import { NoLivePlanAlert } from "./components/NoLivePlanAlert";
 import { AiQuotaCard } from "./components/AiQuotaCard";
+import { ServerMemoryCard } from "./components/ServerMemoryCard";
 
 export function Dashboard() {
   const user = useAuthStore((state) => state.user);
@@ -91,6 +92,7 @@ export function Dashboard() {
       <ExecutiveMetricGrid summary={summary} revenueTrend={revenueTrend} onOpen={openMetric} />
       <div className="dashboard-charts-grid">
         <AiQuotaCard />
+        <ServerMemoryCard />
         {summary.permissions.can_view_monetary_analytics && summary.revenue && (
           <DashboardCharts summary={summary} />
         )}

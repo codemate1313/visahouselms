@@ -53,6 +53,10 @@ IN_FLIGHT_WINDOW_SECONDS = 300
 # and a part with three of them can pass the limit - budget the whole part, not
 # each file.
 MAX_INLINE_BYTES_PER_PART = 18 * 1024 * 1024
+AI_TIMEOUT_SMALL_SECONDS = 45.0
+AI_TIMEOUT_MEDIUM_SECONDS = 90.0
+AI_TIMEOUT_LARGE_SECONDS = 120.0
+AI_TIMEOUT_EXTRA_LARGE_SECONDS = 180.0
 # What counts as "nothing was said". Opus at the recorder's bitrate is roughly
 # 3 KB a second, so this is about two seconds - long enough to clear a click or
 # a breath, short enough that any real attempt at an answer is above it.
@@ -81,6 +85,18 @@ OPENAI_EVALUATION_MODEL_PREFIXES = (
     "o4",
     "o3",
 )
+
+
+def _ai_timeout_for_payload(total_audio_bytes: int) -> float:
+    """Choose a provider timeout from the cumulative Speaking audio payload."""
+    mb = max(0, total_audio_bytes) / 1024 / 1024
+    if mb <= 5:
+        return AI_TIMEOUT_SMALL_SECONDS
+    if mb <= 10:
+        return AI_TIMEOUT_MEDIUM_SECONDS
+    if mb <= 15:
+        return AI_TIMEOUT_LARGE_SECONDS
+    return AI_TIMEOUT_EXTRA_LARGE_SECONDS
 
 
 def _now() -> datetime:
@@ -1016,6 +1032,7 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
         "framework": cefr_service.FRAMEWORK_VERSION,
         "policy_version": cefr_service.POLICY_VERSION,
         "skill": part.section_type,
+        "audio_bytes": inline_bytes,
         "part": {"title": part.title, "skill_focus": part.skill_focus},
         "rubric": part.rubric or [],
         "responses": responses,
@@ -1096,6 +1113,7 @@ def _batch_payload(attempt: TestAttempt, parts: list[ExamModulePart]) -> dict:
         "framework": cefr_service.FRAMEWORK_VERSION,
         "policy_version": cefr_service.POLICY_VERSION,
         "skill": "speaking",
+        "audio_bytes": inline_bytes,
         "parts": payload_parts,
         "instructions": (
             "You are an expert Language CERT and CEFR speaking examiner. "
@@ -1148,6 +1166,8 @@ def _request_summary(payload: dict, config: dict) -> dict:
         "model": config.get("model"),
         "key_label": config.get("key_label"),
         "skill": payload.get("skill"),
+        "audio_kb_total": round(int(payload.get("audio_bytes") or 0) / 1024),
+        "timeout_seconds": _ai_timeout_for_payload(int(payload.get("audio_bytes") or 0)),
         "part_title": payload.get("part", {}).get("title") if payload.get("part") else "Speaking section",
         "skill_focus": payload.get("part", {}).get("skill_focus") if payload.get("part") else None,
         "criteria": [
@@ -1433,7 +1453,8 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
 
     headers = _gemini_headers(api_key)
 
-    with httpx.Client(timeout=45.0) as client:
+    timeout = _ai_timeout_for_payload(int(payload.get("audio_bytes") or 0))
+    with httpx.Client(timeout=timeout) as client:
         res = client.post(url, headers=headers, json=gemini_payload)
 
         # A schema this endpoint will not accept must not cost the student
@@ -1629,7 +1650,8 @@ def _openai_evaluator(config: dict, payload: dict) -> dict:
             }
         },
     }
-    with httpx.Client(timeout=45.0) as client:
+    timeout = _ai_timeout_for_payload(int(payload.get("audio_bytes") or 0))
+    with httpx.Client(timeout=timeout) as client:
         response = client.post(
             "https://api.openai.com/v1/responses",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -2465,3 +2487,129 @@ def evaluate_attempt_part_directly(database_url: str, attempt_id: int, part_id: 
         # leaked a pool per call and slowly starved the database of
         # connections over a sitting.
         engine.dispose()
+
+
+# ---- How long this evaluation should take -------------------------------
+#
+# The student watches a countdown while the provider works, so the figure has
+# to come from their own submission rather than a fixed guess: 60 words and a
+# 4-minute recording are not the same wait. Size sets the shape of the
+# estimate; the median of recent real evaluations keeps it anchored, so a
+# provider that is generally slow today does not leave every student watching a
+# timer that expired a minute ago.
+
+# The recorder writes Opus at roughly 3 KB a second (the same figure
+# MIN_AUDIO_BYTES is derived from), which turns a file size into a duration
+# without opening the file.
+AUDIO_BYTES_PER_SECOND = 3 * 1024
+# Picking the job off the queue and loading the attempt.
+ESTIMATE_QUEUE_SECONDS = 5
+ESTIMATE_WRITING_CALL_SECONDS = 12.0
+ESTIMATE_WRITING_SECONDS_PER_WORD = 0.05
+ESTIMATE_SPEAKING_CALL_SECONDS = 18.0
+ESTIMATE_SPEAKING_SECONDS_PER_AUDIO_SECOND = 0.3
+ESTIMATE_MIN_SECONDS = 20
+ESTIMATE_MAX_SECONDS = 300
+# How far a size-derived estimate may sit from what recent evaluations of the
+# same skill actually took.
+ESTIMATE_HISTORY_FLOOR = 0.6
+ESTIMATE_HISTORY_CEILING = 2.5
+ESTIMATE_HISTORY_SAMPLE = 40
+ESTIMATE_HISTORY_MIN_ROWS = 5
+ESTIMATE_HISTORY_TTL_SECONDS = 300
+
+# skill -> (median seconds, cached at). Recomputed on demand; a student polling
+# every few seconds must not put a query behind every tick.
+_history_cache: dict[str, tuple[float, float]] = {}
+
+
+def _median(values: list[float]) -> float:
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) / 2
+
+
+def _median_duration_seconds(db: Session, skill: str) -> Optional[float]:
+    """Median wall time of recent completed evaluations for this skill."""
+    cached = _history_cache.get(skill)
+    now = time.monotonic()
+    if cached and now - cached[1] < ESTIMATE_HISTORY_TTL_SECONDS:
+        return cached[0] or None
+
+    rows = (
+        db.query(AiEvaluation.duration_ms)
+        .join(ExamModulePart, ExamModulePart.id == AiEvaluation.part_id)
+        .filter(
+            AiEvaluation.status == "completed",
+            AiEvaluation.duration_ms.isnot(None),
+            ExamModulePart.section_type == skill,
+        )
+        .order_by(AiEvaluation.id.desc())
+        .limit(ESTIMATE_HISTORY_SAMPLE)
+        .all()
+    )
+    durations = [row[0] / 1000 for row in rows if row[0] and row[0] > 0]
+    median = _median(durations) if len(durations) >= ESTIMATE_HISTORY_MIN_ROWS else 0.0
+    _history_cache[skill] = (median, now)
+    return median or None
+
+
+def _part_input_size(attempt: TestAttempt, part: ExamModulePart) -> tuple[int, int]:
+    """(words written, seconds recorded) the AI has to read for this part."""
+    answers = {answer.question_id: answer for answer in attempt.answers}
+    words = 0
+    audio_bytes = 0
+    for question in part.questions:
+        answer = answers.get(question.id)
+        if answer is None:
+            continue
+        if part.section_type == "speaking" and answer.audio_path:
+            full_path = settings.storage_path / answer.audio_path
+            try:
+                audio_bytes += full_path.stat().st_size
+            except OSError:
+                continue
+        else:
+            text = (answer.response or {}).get("text") if answer.response else None
+            if text:
+                words += len(str(text).split())
+    return words, int(audio_bytes / AUDIO_BYTES_PER_SECOND)
+
+
+def estimate_evaluation(db: Session, attempt: TestAttempt, part_ids: set[int]) -> dict:
+    """How long the parts still waiting on the AI should take, and why."""
+    total = float(ESTIMATE_QUEUE_SECONDS)
+    words = 0
+    audio_seconds = 0
+    skills: list[str] = []
+
+    for part in attempt.module.parts:
+        if part.id not in part_ids:
+            continue
+        part_words, part_audio = _part_input_size(attempt, part)
+        words += part_words
+        audio_seconds += part_audio
+        if part.section_type not in skills:
+            skills.append(part.section_type)
+
+        if part.section_type == "speaking":
+            seconds = ESTIMATE_SPEAKING_CALL_SECONDS + part_audio * ESTIMATE_SPEAKING_SECONDS_PER_AUDIO_SECOND
+        else:
+            seconds = ESTIMATE_WRITING_CALL_SECONDS + part_words * ESTIMATE_WRITING_SECONDS_PER_WORD
+
+        median = _median_duration_seconds(db, part.section_type)
+        if median:
+            seconds = min(max(seconds, median * ESTIMATE_HISTORY_FLOOR), median * ESTIMATE_HISTORY_CEILING)
+        total += seconds
+
+    bounded = min(max(total, ESTIMATE_MIN_SECONDS), ESTIMATE_MAX_SECONDS)
+    return {
+        # Rounded to five seconds: the input is an estimate, and a countdown
+        # starting at 1:47 claims a precision it does not have.
+        "estimated_seconds": int(round(bounded / 5) * 5),
+        "words": words,
+        "audio_seconds": audio_seconds,
+        "skills": skills,
+    }

@@ -1,13 +1,16 @@
 import { useState } from "react";
-import type { StudentResultAnalysis } from "@/api/types";
+import type { AiEvaluationProgress as AiProgress, StudentResultAnalysis } from "@/api/types";
 import { attemptResultStrings as strings } from "../AttemptResult.strings";
 import { AnalysisBreakdown } from "./AnalysisBreakdown";
 import { Button } from "@/components/ui/Button/Button";
+import { AiEvaluationProgress } from "./AiEvaluationProgress";
 
 interface AnalysisPanelProps {
   analysis: StudentResultAnalysis | null;
   analysisError: boolean;
   awaitingAiGrading?: boolean;
+  /** Server-sized estimate for the evaluation still running, when there is one. */
+  aiProgress?: AiProgress | null;
   manualReviewRequired?: boolean;
   /** Ask the AI to mark the unmarked parts again. Absent when there is nothing to retry. */
   onRetryAi?: () => void;
@@ -19,6 +22,7 @@ export function AnalysisPanel({
   analysis,
   analysisError,
   awaitingAiGrading,
+  aiProgress,
   manualReviewRequired,
   onRetryAi,
   retryingAi,
@@ -48,14 +52,18 @@ export function AnalysisPanel({
       </div>
 
       {awaitingAiGrading && (
-        <div className="banner warning" style={{ display: "flex", alignItems: "center", gap: "12px", maxWidth: "none" }}>
-          <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "4px" }}>
-            <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
-            <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
-            <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
-          </span>
-          <span>{t.aiPending}</span>
-        </div>
+        aiProgress ? (
+          <AiEvaluationProgress progress={aiProgress} />
+        ) : (
+          <div className="banner warning" style={{ display: "flex", alignItems: "center", gap: "12px", maxWidth: "none" }}>
+            <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "4px" }}>
+              <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+              <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+              <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+            </span>
+            <span>{t.aiPending}</span>
+          </div>
+        )
       )}
 
       {manualReviewRequired && (

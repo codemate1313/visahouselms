@@ -7,6 +7,7 @@ import { getAttemptMetrics } from "@/pages/student/attemptMetrics";
 import { attemptResultStrings as strings } from "./AttemptResult.strings";
 import { PerformanceOverviewPanel } from "./components/PerformanceOverviewPanel";
 import { AnalysisPanel } from "./components/AnalysisPanel";
+import { AiEvaluationProgress } from "./components/AiEvaluationProgress";
 import { ReevaluationStatus } from "@/components/ReevaluationStatus";
 import { ReevaluationRequestModal } from "./components/ReevaluationRequestForm";
 import { RetakeRequestStatus } from "./components/RetakeRequestStatus";
@@ -19,7 +20,10 @@ import { Button } from "@/components/ui/Button/Button";
 // provider call can take a while), so a freshly submitted human-graded
 // attempt is polled briefly for the result to land.
 const AI_GRADING_POLL_INTERVAL_MS = 4000;
-const AI_GRADING_POLL_MAX_ATTEMPTS = 15;
+// The watch has to outlast the countdown the student is looking at, or the
+// page gives up at a minute while their timer still reads two.
+const AI_GRADING_POLL_MIN_MS = 60_000;
+const AI_GRADING_POLL_MAX_MS = 6 * 60_000;
 
 export function AttemptResult() {
   const { id } = useParams();
@@ -35,6 +39,9 @@ export function AttemptResult() {
   const [requestingRetake, setRequestingRetake] = useState(false);
   const [showRetakeModal, setShowRetakeModal] = useState(false);
   const mountedAtRef = useRef(new Date().toISOString());
+  // How long to keep watching, read inside the interval so a re-estimate does
+  // not tear the poll down and start it again.
+  const pollWindowRef = useRef(AI_GRADING_POLL_MIN_MS);
   // The poll gives up after a minute. Grading can legitimately still be
   // running at that point, so the page has to say so instead of leaving a
   // spinner that no longer watches anything.
@@ -57,7 +64,18 @@ export function AttemptResult() {
   }, [id]);
 
   const awaitingAiGrading = attempt?.ai_evaluation_status === "pending";
+  const aiProgress = attempt?.ai_evaluation_progress ?? null;
+  const aiEstimateSeconds = aiProgress?.estimated_seconds ?? 0;
   const aiManualReviewRequired = attempt?.ai_evaluation_status === "manual_required";
+
+  // Half again the estimate, plus a margin for the queue: long enough that the
+  // watch outlives the countdown, capped so a stuck job cannot poll for ever.
+  useEffect(() => {
+    pollWindowRef.current = Math.min(
+      AI_GRADING_POLL_MAX_MS,
+      Math.max(AI_GRADING_POLL_MIN_MS, aiEstimateSeconds * 1500 + 30_000),
+    );
+  }, [aiEstimateSeconds]);
 
   useEffect(() => {
     // `pollTimedOut` is a dependency, not just state: clearing it from the
@@ -68,7 +86,7 @@ export function AttemptResult() {
 
     const timer = window.setInterval(() => {
       attempts += 1;
-      if (attempts > AI_GRADING_POLL_MAX_ATTEMPTS) {
+      if (attempts * AI_GRADING_POLL_INTERVAL_MS > pollWindowRef.current) {
         window.clearInterval(timer);
         if (active) setPollTimedOut(true);
         return;
@@ -247,14 +265,18 @@ export function AttemptResult() {
                 </Button>
               </>
             ) : awaitingAiGrading ? (
-              <>
-                <span>{strings.aiEvaluation.inProgress}</span>
-                <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "4px" }}>
-                  <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
-                  <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
-                  <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
-                </span>
-              </>
+              aiProgress ? (
+                <AiEvaluationProgress progress={aiProgress} variant="inline" />
+              ) : (
+                <>
+                  <span>{strings.aiEvaluation.inProgress}</span>
+                  <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "4px" }}>
+                    <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+                    <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+                    <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
+                  </span>
+                </>
+              )
             ) : aiManualReviewRequired && attempt.status === "grading" ? (
               strings.aiEvaluation.manualReview
             ) : (
@@ -274,6 +296,7 @@ export function AttemptResult() {
         analysis={analysis}
         analysisError={analysisError}
         awaitingAiGrading={awaitingAiGrading}
+        aiProgress={aiProgress}
         onRetryAi={aiManualReviewRequired && attempt.status === "grading" ? () => void retryAiEvaluation() : undefined}
         retryingAi={retryingAi}
         retryMessage={retryMessage}

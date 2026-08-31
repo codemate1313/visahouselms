@@ -86,6 +86,10 @@ class SpeakingPhaseRequest(BaseModel):
     start_now: bool = True
 
 
+class AttemptProgressRequest(BaseModel):
+    part_id: int
+
+
 @router.get("/daily-english")
 def get_daily_english_challenge(
     db: Session = Depends(get_db),
@@ -614,6 +618,22 @@ def save_answer(
     attempt_service.require_security_access(attempt, session, x_attempt_token)
     attempt_service.require_live_security(attempt)
     return attempt_service.save_answer(db, attempt, question_id, payload.response, payload.revision)
+
+
+@router.put("/attempts/{attempt_id}/progress")
+def save_attempt_progress(
+    attempt_id: int,
+    payload: AttemptProgressRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_student),
+    session: UserSession = Depends(get_current_session),
+    x_attempt_token: Optional[str] = Header(default=None),
+):
+    attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
+    if attempt.security_required:
+        attempt_service.require_security_access(attempt, session, x_attempt_token)
+        attempt_service.require_live_security(attempt)
+    return attempt_service.save_resume_progress(db, attempt, payload.part_id)
 
 
 @router.post("/attempts/{attempt_id}/answers/{question_id}/audio", status_code=status.HTTP_201_CREATED)

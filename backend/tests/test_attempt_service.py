@@ -575,6 +575,51 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(job.status, "pending")
         self.assertEqual(job.payload, {"attempt_id": attempt.id})
 
+    def _submit_writing_attempt_with(self, module, text: str):
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": text})
+        attempt_service.submit_attempt(self.db, attempt)
+        return attempt_service.get_student_view(self.db, attempt)
+
+    def test_pending_ai_evaluation_reports_a_countdown_sized_by_what_was_written(self):
+        self._enable_ai_evaluation()
+        # One module per attempt: a student may only sit a given module once.
+        short_module = self._build_writing_module()
+        self._course_with_module(short_module.id)
+        long_module = self._build_writing_module()
+        self._course_with_module(long_module.id)
+
+        short_view = self._submit_writing_attempt_with(short_module, "Too short an answer.")
+        long_view = self._submit_writing_attempt_with(long_module, "word " * 600)
+
+        progress = short_view["ai_evaluation_progress"]
+        self.assertEqual(short_view["ai_evaluation_status"], "pending")
+        self.assertIsNotNone(progress["started_at"])
+        self.assertGreater(progress["estimated_seconds"], 0)
+        self.assertEqual(progress["skills"], ["writing"])
+        self.assertEqual(progress["parts_done"], 0)
+        self.assertGreater(progress["parts_total"], 0)
+
+        # The whole point of the timer: a longer submission has to read as a
+        # longer wait, not the same spinner.
+        self.assertGreater(long_view["ai_evaluation_progress"]["words"], progress["words"])
+        self.assertGreater(
+            long_view["ai_evaluation_progress"]["estimated_seconds"],
+            progress["estimated_seconds"],
+        )
+
+    def test_graded_attempt_carries_no_evaluation_countdown(self):
+        module = self._build_reading_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        attempt_service.submit_attempt(self.db, attempt)
+
+        self.assertIsNone(attempt_service.get_student_view(self.db, attempt)["ai_evaluation_progress"])
+
     def test_writing_submit_does_not_enqueue_ai_when_part_toggle_disabled(self):
         self._enable_ai_evaluation()
         created = module_authoring_service.create_module(
@@ -844,12 +889,27 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         self.assertEqual(captured["payload"]["task"], "cefr_rubric_evaluation_batch")
         self.assertEqual(len(captured["payload"]["parts"]), len(parts))
+        expected_audio_bytes = sum(
+            (settings.storage_path / answer.audio_path).stat().st_size
+            for answer in attempt.answers
+            if answer.audio_path
+        )
+        self.assertEqual(captured["payload"]["audio_bytes"], expected_audio_bytes)
         self.assertEqual(self.db.query(AiEvaluation).filter_by(status="completed").count(), 1)
+        record = self.db.query(AiEvaluation).filter_by(status="completed").one()
+        self.assertEqual(record.request_summary["audio_kb_total"], round(expected_audio_bytes / 1024))
+        self.assertEqual(record.request_summary["timeout_seconds"], 45.0)
         self.assertEqual(self.db.query(AiEvaluationLimit).one().used_count, 1)
         self.db.refresh(attempt)
         grades = {grade.part_id: grade for grade in attempt.part_grades}
         self.assertEqual(set(grades), {part.id for part in parts})
         self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in grades.values()))
+
+    def test_ai_evaluation_timeout_scales_with_cumulative_audio_size(self):
+        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(5 * 1024 * 1024), 45.0)
+        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(10 * 1024 * 1024), 90.0)
+        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(15 * 1024 * 1024), 120.0)
+        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(16 * 1024 * 1024), 180.0)
 
     def test_pre_submit_speaking_evaluation_is_not_sent_per_part(self):
         self._enable_ai_evaluation()

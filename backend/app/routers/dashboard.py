@@ -7,7 +7,7 @@ from app.database import get_db
 from app.dependencies.auth import get_current_user, require_role
 from app.models.role import SUPER_ADMIN
 from app.models.user import User
-from app.services import dashboard_service
+from app.services import dashboard_service, system_resource_service
 
 router = APIRouter(
     prefix="/super-admin/dashboard",
@@ -19,6 +19,12 @@ router = APIRouter(
 @router.get("/summary")
 def get_summary(db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     return dashboard_service.get_summary(db, actor)
+
+
+@router.get("/server-resources")
+def get_server_resources():
+    """Memory on the VPS this backend runs on, and the share the site itself holds."""
+    return system_resource_service.memory()
 
 
 @router.get("/metrics/{metric}")

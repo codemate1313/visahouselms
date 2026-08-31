@@ -799,6 +799,7 @@ export interface Attempt {
   course_id: number | null;
   status: AttemptStatus;
   phase?: "main" | "speaking_pending" | "speaking";
+  resume_part_id?: number | null;
   is_final: boolean;
   security_required: boolean;
   security_authorized: boolean;
@@ -820,7 +821,23 @@ export interface Attempt {
   reevaluation: ReevaluationRequestView | null;
   retake_request: RetakeRequestView | null;
   ai_evaluation_status: "not_started" | "disabled" | "pending" | "completed" | "manual_required";
+  /** Only while the AI is marking: what it is working on and how long that
+   *  submission should take, so the wait can be a timer rather than a spinner. */
+  ai_evaluation_progress: AiEvaluationProgress | null;
   parts: AttemptPart[];
+}
+
+/** Server-sized estimate for an evaluation that is still running. */
+export interface AiEvaluationProgress {
+  /** When the evaluation was queued - the countdown runs from here, not from
+   *  when the student opened the page. */
+  started_at: string | null;
+  estimated_seconds: number;
+  words: number;
+  audio_seconds: number;
+  skills: string[];
+  parts_total: number;
+  parts_done: number;
 }
 
 export type AnalysisBandStatus = "strong" | "steady" | "priority" | "pending";
