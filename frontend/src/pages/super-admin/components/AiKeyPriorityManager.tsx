@@ -24,6 +24,9 @@ export interface AiKeyConfig {
 type AiProviderSelection = "gemini" | "openai" | "custom_json" | "disabled";
 type AiDetectedProvider = "gemini" | "custom_json" | "openai" | "anthropic" | "unknown";
 
+const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
+
 const providerOptions: Array<{ value: AiDetectedProvider; label: string; supported: boolean }> = [
   { value: "gemini", label: "Google Gemini", supported: true },
   { value: "custom_json", label: "Custom JSON", supported: true },
@@ -35,20 +38,18 @@ const providerOptions: Array<{ value: AiDetectedProvider; label: string; support
 interface ModelOption {
   value: string;
   label: string;
+  available?: boolean;
 }
 
 const DEFAULT_MODEL_OPTIONS_BY_PROVIDER: Record<string, ModelOption[]> = {
   gemini: [
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Recommended)" },
-    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
-    { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite" },
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Recommended)" },
+    { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
     { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
   ],
   openai: [
-    { value: "gpt-4o", label: "GPT-4o (Recommended)" },
-    { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+    { value: "gpt-4o-mini", label: "GPT-4o Mini (Recommended)" },
+    { value: "gpt-4o", label: "GPT-4o" },
     { value: "o3-mini", label: "o3-mini" },
   ],
 };
@@ -138,8 +139,8 @@ function providerInfo(provider: AiDetectedProvider) {
 }
 
 function defaultModelForProvider(provider: AiDetectedProvider, fallback: string) {
-  if (provider === "openai") return "gpt-4o-mini";
-  if (provider === "gemini") return "gemini-2.0-flash";
+  if (provider === "openai") return DEFAULT_OPENAI_MODEL;
+  if (provider === "gemini") return DEFAULT_GEMINI_MODEL;
   if (provider === "custom_json") return fallback;
   return "";
 }
@@ -156,6 +157,13 @@ function modelMatchesProvider(provider: AiDetectedProvider, model: string) {
 
 function isMaskedSecret(value: string) {
   return Boolean(value) && value.split("").every((char) => char === "*");
+}
+
+function selectableModelValue(preferred?: string, options?: ModelOption[]) {
+  if (preferred && options?.some((option) => option.value === preferred && option.available !== false)) {
+    return preferred;
+  }
+  return options?.find((option) => option.available !== false)?.value;
 }
 
 export function AiKeyPriorityManager({
@@ -215,7 +223,7 @@ export function AiKeyPriorityManager({
         ...providerPatch,
         // Prefer what the key actually offers over whatever model was typed:
         // a retired model is exactly what this button exists to replace.
-        model: data.model || data.model_options?.[0]?.value || key.model || model,
+        model: selectableModelValue(data.model, data.model_options) || key.model || model,
         model_options: data.model_options || [],
         info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}`,
       });
@@ -248,7 +256,7 @@ export function AiKeyPriorityManager({
         : {};
       update(index, {
         ...providerPatch,
-        model: data.model || data.model_options?.[0]?.value || key.model || model,
+        model: selectableModelValue(data.model, data.model_options) || key.model || model,
         model_options: data.model_options || [],
         last_status: data.ok ? "ok" : "failed",
         last_checked_at: new Date().toISOString(),

@@ -84,7 +84,7 @@ class Settings(BaseSettings):
 
     ai_enabled: bool = True
     ai_provider: str = "gemini"
-    ai_model: str = "gemini-1.5-flash"
+    ai_model: str = "gemini-2.5-flash"
     ai_api_key: Optional[str] = None
     ai_endpoint_url: Optional[str] = None
 

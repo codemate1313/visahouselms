@@ -12,21 +12,8 @@ import { developerSettingsStrings as strings } from "../DeveloperSettings.string
 
 type AiProvider = "gemini" | "openai" | "custom_json";
 
-const MODEL_OPTIONS_BY_PROVIDER: Record<string, Array<{ value: string; label: string }>> = {
-  gemini: [
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Recommended)" },
-    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
-    { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite" },
-    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
-  ],
-  openai: [
-    { value: "gpt-4o", label: "GPT-4o (Recommended)" },
-    { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-    { value: "o3-mini", label: "o3-mini" },
-  ],
-};
+const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
 
 interface AiEvaluationForm {
   enabled: boolean;
@@ -35,6 +22,12 @@ interface AiEvaluationForm {
   api_key: string;
   api_keys: AiKeyConfig[];
   model: string;
+}
+
+function defaultModelForProvider(provider: AiProvider) {
+  if (provider === "openai") return DEFAULT_OPENAI_MODEL;
+  if (provider === "custom_json") return "";
+  return DEFAULT_GEMINI_MODEL;
 }
 
 function hydrateApiKeys(data: Partial<AiEvaluationForm>): AiKeyConfig[] {
@@ -48,7 +41,7 @@ function hydrateApiKeys(data: Partial<AiEvaluationForm>): AiKeyConfig[] {
     id: "legacy",
     label: "Primary API Key",
     provider: data.provider === "custom_json" || data.provider === "openai" ? data.provider : "gemini",
-    model: data.model || "gemini-2.0-flash",
+    model: data.model || DEFAULT_GEMINI_MODEL,
     endpoint_url: data.endpoint_url || "",
     api_key: data.api_key,
     enabled: true,
@@ -79,7 +72,7 @@ export function AiEvaluationTab() {
     endpoint_url: "",
     api_key: "",
     api_keys: [],
-    model: "gemini-2.0-flash",
+    model: DEFAULT_GEMINI_MODEL,
   });
   const [configured, setConfigured] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +91,7 @@ export function AiEvaluationTab() {
         endpoint_url: data.endpoint_url ?? "",
         api_key: data.api_key ?? "",
         api_keys: hydrateApiKeys(data),
-        model: data.model ?? "gemini-2.0-flash",
+        model: data.model ?? DEFAULT_GEMINI_MODEL,
       };
       setForm(nextForm);
       originalRef.current = buildPayload(nextForm);
@@ -132,7 +125,7 @@ export function AiEvaluationTab() {
       <CollapsiblePanel
         className="form-card-collapsible"
         title={t.title}
-        description="Configure Google Gemini 1.5/2.0 Flash or Custom Evaluator for automatic Writing & Speaking scoring."
+        description="Configure Google Gemini, OpenAI, or a custom evaluator for automatic Writing & Speaking scoring."
         badge={<Badge tone={configured ? "green" : "gray"}>{configured ? t.readyBadge : t.notConfiguredBadge}</Badge>}
       >
         <label className="toggle-row">
@@ -152,26 +145,11 @@ export function AiEvaluationTab() {
               ]}
               searchable={false}
               value={form.provider}
-              onChange={(value) => setForm({ ...form, provider: value === "custom_json" || value === "openai" ? value : "gemini" })}
+              onChange={(value) => {
+                const provider = value === "custom_json" || value === "openai" ? value : "gemini";
+                setForm({ ...form, provider, model: defaultModelForProvider(provider) });
+              }}
             />
-          </div>
-          <div>
-            <label>{t.modelLabel}</label>
-            {form.provider === "custom_json" ? (
-              <input
-                value={form.model}
-                onChange={(event) => setForm({ ...form, model: event.target.value })}
-                placeholder="custom-model-name"
-              />
-            ) : (
-              <SearchableSelect
-                ariaLabel={t.modelLabel}
-                options={MODEL_OPTIONS_BY_PROVIDER[form.provider] || MODEL_OPTIONS_BY_PROVIDER.gemini}
-                searchable={false}
-                value={form.model || (form.provider === "openai" ? "gpt-4o" : "gemini-2.0-flash")}
-                onChange={(value) => setForm({ ...form, model: String(value) })}
-              />
-            )}
           </div>
           {form.provider === "custom_json" && (
             <div>
@@ -190,7 +168,7 @@ export function AiEvaluationTab() {
           keys={form.api_keys}
           onChange={(api_keys) => setForm({ ...form, api_keys })}
           provider={form.provider}
-          model={form.model}
+          model={form.model || defaultModelForProvider(form.provider)}
           endpointUrl={form.endpoint_url}
           testPath="/super-admin/dev-settings/ai-evaluation/test-key"
           modelsPath="/super-admin/dev-settings/ai-evaluation/models"

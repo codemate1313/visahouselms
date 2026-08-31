@@ -81,7 +81,7 @@ AI_TIMEOUT_FINAL_MAX_SECONDS = 900.0
 # a breath, short enough that any real attempt at an answer is above it.
 MIN_AUDIO_BYTES = 8 * 1024
 MIN_WRITTEN_CHARACTERS = 15
-DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 MASKED_SECRET = "********"
 SUPPORTED_KEY_PROVIDERS = {"gemini", "custom_json", "openai"}
@@ -450,7 +450,7 @@ def gemini_model_chain(model: Optional[str], live_models: Optional[list[str]] = 
 def _default_model_options(provider: str, model: Optional[str] = None) -> list[dict]:
     if provider == "gemini":
         selected = _resolve_model_for_provider(provider, model)
-        values = [selected, DEFAULT_GEMINI_MODEL, "gemini-1.5-flash"]
+        values = [selected, DEFAULT_GEMINI_MODEL, "gemini-2.5-flash-lite", "gemini-2.5-pro"]
         return [_model_option(value) for value in dict.fromkeys(value for value in values if value)]
     if provider == "openai":
         selected = _resolve_model_for_provider(provider, model)
@@ -463,7 +463,11 @@ def _default_model_options(provider: str, model: Optional[str] = None) -> list[d
 
 def _choose_model_from_options(provider: str, preferred: Optional[str], options: list[dict]) -> str:
     preferred_value = (preferred or "").removeprefix("models/")
-    values = [str(option.get("value") or "").removeprefix("models/") for option in options]
+    values = [
+        str(option.get("value") or "").removeprefix("models/")
+        for option in options
+        if option.get("available", True) is not False
+    ]
     if preferred_value and preferred_value in values:
         return preferred_value
     for value in values:
@@ -696,6 +700,9 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
         )
         provider = detected["provider"] if detected["supported"] or detected["provider"] != "unknown" else selected_provider
         model = _resolve_model_for_provider(provider, str(item.get("model") or "").strip()[:120])
+        model_options = item.get("model_options") if isinstance(item.get("model_options"), list) else []
+        if model_options:
+            model = _choose_model_from_options(provider, model, model_options)
         normalized.append({
             "id": key_id,
             "label": str(item.get("label") or f"API Key {index + 1}").strip()[:80],
@@ -708,7 +715,7 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
             "last_status": item.get("last_status"),
             "last_checked_at": item.get("last_checked_at"),
             "info": item.get("info"),
-            "model_options": item.get("model_options") if isinstance(item.get("model_options"), list) else [],
+            "model_options": model_options,
         })
     set_setting(db, "ai.api_keys", json.dumps(normalized) if normalized else None)
 

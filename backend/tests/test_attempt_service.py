@@ -2035,6 +2035,24 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertFalse(retired["available"])
         self.assertIn("no longer available", retired["label"])
 
+    def test_saved_ai_key_does_not_keep_an_unavailable_gemini_model(self):
+        ai_evaluation_service.save_configured_keys(self.db, [{
+            "id": "gemini-1",
+            "label": "Gemini key",
+            "provider": "gemini",
+            "model": "gemini-2.0-flash-lite",
+            "api_key": "AIza-secret",
+            "enabled": True,
+            "priority": 1,
+            "model_options": [
+                {"value": "gemini-2.0-flash-lite", "label": "Gemini 2.0 Flash Lite - no longer available", "available": False},
+                {"value": "gemini-2.5-flash", "label": "Gemini 2.5 Flash"},
+            ],
+        }])
+
+        [saved] = ai_evaluation_service._configured_keys(self.db, mask=False)
+        self.assertEqual(saved["model"], "gemini-2.5-flash")
+
     def test_saved_ai_key_preserves_masked_secret_and_model_options(self):
         ai_evaluation_service.save_configured_keys(self.db, [{
             "id": "openai-1",
