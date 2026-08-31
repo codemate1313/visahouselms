@@ -31,8 +31,13 @@ export function ResultRadial({ metrics, activeSegment, onHoverSegment }: ResultR
 
   return (
     <div className="result-radial" role="img" aria-label={`${metrics.attempted} of ${metrics.total} attempted, ${metrics.correct} correct`}>
-      <svg viewBox="0 0 200 200" aria-hidden="true">
-        <circle className="result-radial-track" cx="100" cy="100" r="74" pathLength="100" />
+      <div
+        className={`result-radial-backdrop ${activeObj ? "is-active" : ""}`}
+        style={activeObj ? { color: activeObj.color } : undefined}
+        aria-hidden="true"
+      />
+      <svg viewBox="0 0 220 220" aria-hidden="true">
+        <circle className="result-radial-track" cx="110" cy="110" r="82" pathLength="100" />
         {metrics.total > 0 &&
           segments.map((segment) => {
             const percentage = (segment.value * 100) / metrics.total;
@@ -45,9 +50,9 @@ export function ResultRadial({ metrics, activeSegment, onHoverSegment }: ResultR
               <circle
                 key={segment.key}
                 className={`result-radial-segment ${isHovered ? "is-hovered" : ""} ${isDimmed ? "is-dimmed" : ""}`}
-                cx="100"
-                cy="100"
-                r="74"
+                cx="110"
+                cy="110"
+                r="82"
                 pathLength="100"
                 stroke={segment.color}
                 strokeDasharray={`${percentage} ${100 - percentage}`}
@@ -62,17 +67,20 @@ export function ResultRadial({ metrics, activeSegment, onHoverSegment }: ResultR
         {activeObj ? (
           <div className="result-radial-active-content" style={{ color: activeObj.color }}>
             <strong className="result-radial-active-val">{activeObj.value}</strong>
-            <small className="result-radial-active-lbl">
-              {activeObj.label} ({activePercent}%)
-            </small>
+            <div className="result-radial-active-badge-wrap">
+              <span className="result-radial-active-badge">{activePercent}%</span>
+            </div>
+            <span className="result-radial-active-lbl">
+              {activeObj.label}
+            </span>
           </div>
         ) : (
           <div className="result-radial-default-content">
-            <strong>
+            <strong className="result-radial-default-val">
               {metrics.attempted}
-              <span>/{metrics.total}</span>
+              <span className="result-radial-default-total">/{metrics.total}</span>
             </strong>
-            <small>{strings.metrics.attemptedSuffix}</small>
+            <small className="result-radial-default-lbl">{strings.metrics.attemptedSuffix}</small>
           </div>
         )}
       </div>

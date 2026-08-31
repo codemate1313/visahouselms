@@ -53,31 +53,59 @@ export function AnalysisPanel({
 
       {awaitingAiGrading && (
         aiProgress ? (
-          <AiEvaluationProgress progress={aiProgress} />
+          <AiEvaluationProgress progress={aiProgress} statusNote={retryMessage} />
         ) : (
-          <div className="banner warning" style={{ display: "flex", alignItems: "center", gap: "12px", maxWidth: "none" }}>
+          <div className="ai-pending-banner" role="status">
             <span className="color-dots-loader" style={{ width: "auto", height: "auto", gap: "4px" }}>
               <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
               <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
               <span style={{ width: "8px", height: "8px", flex: "0 0 8px" }} />
             </span>
-            <span>{t.aiPending}</span>
+            <span className="ai-pending-banner-text">{t.aiPending}</span>
           </div>
         )
       )}
 
       {manualReviewRequired && (
-        <div className="banner warning" style={{ display: "flex", alignItems: "center", gap: "12px", maxWidth: "none", flexWrap: "wrap" }}>
-          <span>{t.manualReview}</span>
+        <div className="ai-manual-review-card" role="status">
+          <div className="ai-manual-review-body">
+            <div className="ai-manual-review-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <div className="ai-manual-review-copy">
+              <div className="ai-manual-review-header-row">
+                <span className="ai-manual-review-badge">Instructor Review Required</span>
+              </div>
+              <p className="ai-manual-review-text">{t.manualReview}</p>
+            </div>
+          </div>
           {onRetryAi && (
-            <Button type="button" variant="secondary" size="sm" onClick={onRetryAi} disabled={retryingAi}>
-              {retryingAi ? strings.aiEvaluation.retrying : strings.aiEvaluation.retryAi}
-            </Button>
+            <div className="ai-manual-review-actions">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="ai-manual-review-btn"
+                onClick={onRetryAi}
+                disabled={retryingAi}
+              >
+                <svg className="ai-manual-review-btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M2.5 8a5.5 5.5 0 0 1 9.35-3.9M13.5 8a5.5 5.5 0 0 1-9.35 3.9" />
+                  <polyline points="13.5 4.5 13.5 8 10 8" />
+                  <polyline points="2.5 11.5 2.5 8 6 8" />
+                </svg>
+                {retryingAi ? strings.aiEvaluation.retrying : strings.aiEvaluation.retryAi}
+              </Button>
+            </div>
           )}
         </div>
       )}
 
-      {retryMessage && <p className="hint" style={{ marginTop: -4 }}>{retryMessage}</p>}
+      {retryMessage && !aiProgress && <p className="hint" style={{ marginTop: -4 }}>{retryMessage}</p>}
 
       {!analysis && !analysisError && <div className="analysis-loading">{t.analysing}</div>}
       {analysisError && <p className="error-text">{t.unavailable}</p>}
