@@ -48,15 +48,34 @@ RATE_LIMIT_KEY_SWITCH_SECONDS = 2.0
 # part. Long enough to cover a slow provider call, short enough that a crashed
 # worker cannot wedge a part for ever.
 IN_FLIGHT_WINDOW_SECONDS = 300
+# A Final Test's call is allowed to run far longer than that (see
+# AI_TIMEOUT_FINAL_MAX_SECONDS below), and a guard that expires mid-call is no
+# guard: the next trigger would send the same recordings again, paying the
+# quota twice and racing the first response to the grade. Kept a minute past
+# the longest call the timeout can permit.
+IN_FLIGHT_FINAL_WINDOW_SECONDS = 960
 # Gemini accepts about 20 MB of inline data per request. Speaking answers are
 # recorded as compressed audio, so a single long answer can still be several MB
 # and a part with three of them can pass the limit - budget the whole part, not
 # each file.
 MAX_INLINE_BYTES_PER_PART = 18 * 1024 * 1024
+# How long to wait on the provider for one evaluation. Speaking is the only
+# skill whose payload varies by an order of magnitude - a written answer is
+# kilobytes, a recorded one megabytes - so the window is chosen from the audio
+# actually being sent.
 AI_TIMEOUT_SMALL_SECONDS = 45.0
-AI_TIMEOUT_MEDIUM_SECONDS = 90.0
-AI_TIMEOUT_LARGE_SECONDS = 120.0
-AI_TIMEOUT_EXTRA_LARGE_SECONDS = 180.0
+AI_TIMEOUT_MEDIUM_SECONDS = 180.0
+AI_TIMEOUT_LARGE_SECONDS = 240.0
+AI_TIMEOUT_EXTRA_LARGE_SECONDS = 300.0
+# A Final Test sends the whole Speaking paper - every part, every prompt - in a
+# single request, where a practice module sends one part at a time. The same
+# megabyte therefore arrives alongside far more of it, so the window keeps
+# growing with the payload instead of flattening out at the practice ceiling:
+# a paper cut off mid-marking lands in the examiner queue as "manual review
+# required" with the work all but done.
+AI_TIMEOUT_FINAL_BASE_SECONDS = 240.0
+AI_TIMEOUT_FINAL_SECONDS_PER_MB = 30.0
+AI_TIMEOUT_FINAL_MAX_SECONDS = 900.0
 # What counts as "nothing was said". Opus at the recorder's bitrate is roughly
 # 3 KB a second, so this is about two seconds - long enough to clear a click or
 # a breath, short enough that any real attempt at an answer is above it.
@@ -87,19 +106,34 @@ OPENAI_EVALUATION_MODEL_PREFIXES = (
 )
 
 
-def _ai_timeout_for_payload(total_audio_bytes: int) -> float:
-    """Choose a provider timeout from the cumulative Speaking audio payload."""
+def _ai_timeout_for_payload(total_audio_bytes: int, *, is_final: bool = False) -> float:
+    """Choose a provider timeout from the cumulative Speaking audio payload.
+
+    Transcribing and marking a recording costs the model roughly in proportion
+    to its length, so the wait is bought by the megabyte rather than fixed.
+    """
     if total_audio_bytes <= 0:
         return AI_TIMEOUT_SMALL_SECONDS
 
-    # Transcribing and evaluating speaking audio files (e.g. 13+ minutes of audio)
-    # takes significant processing time by the AI model. Use larger timeouts.
     mb = total_audio_bytes / 1024 / 1024
+    if is_final:
+        return min(
+            AI_TIMEOUT_FINAL_BASE_SECONDS + mb * AI_TIMEOUT_FINAL_SECONDS_PER_MB,
+            AI_TIMEOUT_FINAL_MAX_SECONDS,
+        )
     if mb <= 2:
-        return AI_TIMEOUT_EXTRA_LARGE_SECONDS  # 180s (3 minutes)
+        return AI_TIMEOUT_MEDIUM_SECONDS
     if mb <= 5:
-        return 240.0  # 4 minutes
-    return 300.0  # 5 minutes
+        return AI_TIMEOUT_LARGE_SECONDS
+    return AI_TIMEOUT_EXTRA_LARGE_SECONDS
+
+
+def _timeout_for_request(payload: dict) -> float:
+    """The window for a built payload - Final Tests carry their own flag."""
+    return _ai_timeout_for_payload(
+        int(payload.get("audio_bytes") or 0),
+        is_final=bool(payload.get("is_final")),
+    )
 
 
 
@@ -1037,6 +1071,7 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
         "policy_version": cefr_service.POLICY_VERSION,
         "skill": part.section_type,
         "audio_bytes": inline_bytes,
+        "is_final": bool(attempt.is_final),
         "part": {"title": part.title, "skill_focus": part.skill_focus},
         "rubric": part.rubric or [],
         "responses": responses,
@@ -1118,6 +1153,7 @@ def _batch_payload(attempt: TestAttempt, parts: list[ExamModulePart]) -> dict:
         "policy_version": cefr_service.POLICY_VERSION,
         "skill": "speaking",
         "audio_bytes": inline_bytes,
+        "is_final": bool(attempt.is_final),
         "parts": payload_parts,
         "instructions": (
             "You are an expert Language CERT and CEFR speaking examiner. "
@@ -1171,7 +1207,7 @@ def _request_summary(payload: dict, config: dict) -> dict:
         "key_label": config.get("key_label"),
         "skill": payload.get("skill"),
         "audio_kb_total": round(int(payload.get("audio_bytes") or 0) / 1024),
-        "timeout_seconds": _ai_timeout_for_payload(int(payload.get("audio_bytes") or 0)),
+        "timeout_seconds": _timeout_for_request(payload),
         "part_title": payload.get("part", {}).get("title") if payload.get("part") else "Speaking section",
         "skill_focus": payload.get("part", {}).get("skill_focus") if payload.get("part") else None,
         "criteria": [
@@ -1457,7 +1493,7 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
 
     headers = _gemini_headers(api_key)
 
-    timeout = _ai_timeout_for_payload(int(payload.get("audio_bytes") or 0))
+    timeout = _timeout_for_request(payload)
     with httpx.Client(timeout=timeout) as client:
         res = client.post(url, headers=headers, json=gemini_payload)
 
@@ -1654,7 +1690,7 @@ def _openai_evaluator(config: dict, payload: dict) -> dict:
             }
         },
     }
-    timeout = _ai_timeout_for_payload(int(payload.get("audio_bytes") or 0))
+    timeout = _timeout_for_request(payload)
     with httpx.Client(timeout=timeout) as client:
         response = client.post(
             "https://api.openai.com/v1/responses",
@@ -1939,15 +1975,17 @@ def _readable_response(raw: object) -> str:
         return str(raw)[:8000]
 
 
-def _evaluation_in_flight(db: Session, attempt_id: int, part_id: int) -> bool:
+def _evaluation_in_flight(db: Session, attempt_id: int, part_id: int, *, is_final: bool = False) -> bool:
     """True while another request for this same part is still with a provider.
 
     The pre-emptive trigger fires whenever a student leaves a Writing or
     Speaking part, so tabbing between two parts used to queue a fresh provider
     call each time - the fastest way there is to hit a per-minute rate limit
     with duplicate work. The cutoff keeps a crashed worker's abandoned row from
-    blocking the part for ever."""
-    cutoff = _now() - timedelta(seconds=IN_FLIGHT_WINDOW_SECONDS)
+    blocking the part for ever, and follows the window that kind of attempt is
+    actually allowed to spend with the provider."""
+    window = IN_FLIGHT_FINAL_WINDOW_SECONDS if is_final else IN_FLIGHT_WINDOW_SECONDS
+    cutoff = _now() - timedelta(seconds=window)
     return (
         db.query(AiEvaluation)
         .filter(
@@ -2395,7 +2433,7 @@ def retry_attempt_evaluation(db: Session, attempt: TestAttempt) -> dict:
             ),
         }
 
-    if any(_evaluation_in_flight(db, attempt.id, part.id) for part in pending):
+    if any(_evaluation_in_flight(db, attempt.id, part.id, is_final=attempt.is_final) for part in pending):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An AI marking attempt is already running for this test. Give it a moment.",
@@ -2458,7 +2496,7 @@ def evaluate_attempt_part_directly(database_url: str, attempt_id: int, part_id: 
         if grade is not None and grade.status != "pending":
             return  # Already graded
 
-        if _evaluation_in_flight(db, attempt_id, part_id):
+        if _evaluation_in_flight(db, attempt_id, part_id, is_final=attempt.is_final):
             logger.info(
                 "Skipping duplicate pre-emptive AI evaluation for attempt %s part %s",
                 attempt_id,

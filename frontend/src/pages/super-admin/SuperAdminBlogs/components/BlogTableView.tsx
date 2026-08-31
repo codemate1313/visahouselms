@@ -65,7 +65,7 @@ export function BlogTableView({ items, onToggleActive, onDelete }: BlogTableView
                 <div className="sab-table-actions">
                   <IconButton
                     className="sab-action-btn-icon"
-                    data-sab-tooltip={item.is_published ? strings.unpublishTooltip : strings.publishTooltip}
+                    data-tooltip={item.is_published ? strings.unpublishTooltip : strings.publishTooltip}
                     label={item.is_published ? strings.unpublishTooltip : strings.publishTooltip}
                     showTooltip={false}
                     onClick={() => onToggleActive(item)}
@@ -74,7 +74,7 @@ export function BlogTableView({ items, onToggleActive, onDelete }: BlogTableView
                   <Link
                     to={`/super-admin/blogs/${item.id}`}
                     className="sab-action-btn-icon edit"
-                    data-sab-tooltip={strings.editTooltip}
+                    data-tooltip={strings.editTooltip}
                     aria-label={strings.editTooltip}
                   >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -84,7 +84,7 @@ export function BlogTableView({ items, onToggleActive, onDelete }: BlogTableView
                   </Link>
                   <IconButton
                     className="sab-action-btn-icon delete"
-                    data-sab-tooltip={strings.deleteTooltip}
+                    data-tooltip={strings.deleteTooltip}
                     label={strings.deleteTooltip}
                     showTooltip={false}
                     variant="danger"

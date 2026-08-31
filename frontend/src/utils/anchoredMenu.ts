@@ -91,3 +91,43 @@ export function placeAnchoredMenu(
 
   return { top, left, width, maxHeight, openUpward };
 }
+
+export interface TooltipPlacement {
+  top: number;
+  left: number;
+  /** The tooltip sits under the trigger because there was no room above it. */
+  openBelow: boolean;
+}
+
+/**
+ * Where a tooltip should sit for a given trigger.
+ *
+ * Tooltips are portaled to <body> and positioned `fixed` for the same reason
+ * the menus above are: an ancestor with `overflow: hidden` - a rounded modal
+ * card, a table wrapper - clips a tooltip drawn inside it, and no z-index
+ * undoes real clipping. The vertical gap is applied by the tooltip's own CSS
+ * transform, so the anchor here is just the trigger's top or bottom edge.
+ */
+export function placeTooltip(
+  trigger: HTMLElement,
+  size: { width: number; height: number },
+  gap = 8,
+  margin = 8,
+): TooltipPlacement {
+  const rect = trigger.getBoundingClientRect();
+  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+  const openBelow = rect.top - margin < size.height + gap;
+  // The tooltip is centred on this point, so half its width has to fit either
+  // side of it - clamping the centre to the viewport alone would still let a
+  // wide tooltip beside a corner button hang off the edge.
+  const halfWidth = Math.min(size.width, Math.max(viewportWidth - margin * 2, 0)) / 2;
+  return {
+    top: openBelow ? rect.bottom : rect.top,
+    left: clamp(
+      rect.left + rect.width / 2,
+      margin + halfWidth,
+      Math.max(margin + halfWidth, viewportWidth - margin - halfWidth),
+    ),
+    openBelow,
+  };
+}

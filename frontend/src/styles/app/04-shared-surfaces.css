@@ -3777,8 +3777,6 @@
   background: rgba(244, 244, 245, 0.8);
 }
 
-.snackbar-item [data-tooltip]::before,
-.snackbar-item [data-tooltip]::after,
 .snackbar-close-btn::before,
 .snackbar-close-btn::after {
   display: none !important;

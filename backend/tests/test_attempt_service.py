@@ -912,6 +912,32 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(15 * 1024 * 1024), 300.0)
         self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(16 * 1024 * 1024), 300.0)
 
+    def test_final_test_audio_buys_a_longer_evaluation_window(self):
+        timeout = ai_evaluation_service._ai_timeout_for_payload
+
+        # A Final Test sends the whole Speaking paper in one request, so the
+        # window keeps growing with the payload instead of flattening out.
+        self.assertEqual(timeout(5 * 1024 * 1024, is_final=True), 390.0)
+        self.assertEqual(timeout(15 * 1024 * 1024, is_final=True), 690.0)
+        self.assertEqual(
+            timeout(40 * 1024 * 1024, is_final=True),
+            ai_evaluation_service.AI_TIMEOUT_FINAL_MAX_SECONDS,
+        )
+
+        for megabytes in (3, 6, 12, 18):
+            payload = megabytes * 1024 * 1024
+            self.assertGreater(timeout(payload, is_final=True), timeout(payload))
+
+        # A part with no audio at all is a written answer either way.
+        self.assertEqual(timeout(0, is_final=True), ai_evaluation_service.AI_TIMEOUT_SMALL_SECONDS)
+
+        # The window is read off the built payload, so the flag has to survive
+        # the trip from the attempt into the request.
+        self.assertEqual(
+            ai_evaluation_service._timeout_for_request({"audio_bytes": 5 * 1024 * 1024, "is_final": True}),
+            390.0,
+        )
+
     def test_pre_submit_speaking_evaluation_is_not_sent_per_part(self):
         self._enable_ai_evaluation()
         speaking_module = self._speaking_module_with_prompts()

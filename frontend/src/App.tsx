@@ -6,6 +6,7 @@ import { GlobalConfirmModal } from "./components/ConfirmModal";
 import { GlobalDialog } from "./components/GlobalDialog";
 import { GlobalLoader } from "./components/GlobalLoader";
 import { GlobalSnackbar } from "./components/GlobalSnackbar";
+import { GlobalTooltip } from "./components/GlobalTooltip";
 import { GsapInteractionLayer } from "./components/GsapInteractionLayer";
 import { ResponsiveTableCards } from "./components/ResponsiveTableCards";
 import { SessionHeartbeat } from "./components/SessionHeartbeat";
@@ -141,6 +142,7 @@ function App() {
       <GlobalDialog />
       <GlobalSnackbar />
       <GlobalConfirmModal />
+      <GlobalTooltip />
       <GsapInteractionLayer />
       <ResponsiveTableCards />
       <SessionHeartbeat />

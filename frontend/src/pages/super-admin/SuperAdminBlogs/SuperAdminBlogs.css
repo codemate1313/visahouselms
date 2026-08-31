@@ -438,56 +438,6 @@
   background: #fef2f2;
 }
 
-/* Dedicated Tooltip for Blog Action Buttons */
-[data-sab-tooltip] {
-  position: relative !important;
-}
-
-[data-sab-tooltip]::before {
-  content: attr(data-sab-tooltip);
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%) translateY(-4px);
-  background: #0f0f14;
-  color: #ffffff !important;
-  padding: 5px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  border-radius: var(--radius-xs);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  box-shadow: 0 4px 14px rgba(17, 17, 19, 0.35);
-  z-index: 99999;
-  line-height: 1.2;
-  text-align: center;
-}
-
-[data-sab-tooltip]::after {
-  content: "";
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%) translateY(-4px);
-  border-width: 0 5px 6px 5px;
-  border-style: solid;
-  border-color: transparent transparent #0f0f14 transparent;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-  z-index: 99999;
-}
-
-[data-sab-tooltip]:hover::before,
-[data-sab-tooltip]:hover::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
 /* Card Body */
 .sab-card-body {
   padding: 14px 16px 10px;

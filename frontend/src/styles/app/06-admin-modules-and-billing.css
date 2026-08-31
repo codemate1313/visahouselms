@@ -5887,8 +5887,7 @@ button.start-test-btn.is-exhausted-btn:hover {
   box-shadow: 0 0 0 3px var(--primary-soft) !important;
 }
 
-[data-theme="dark"] .chart-tooltip,
-[data-theme="dark"] [data-tooltip]::before {
+[data-theme="dark"] .chart-tooltip {
   background: rgba(16, 16, 20, 0.96) !important;
   color: #f7f7f8 !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
