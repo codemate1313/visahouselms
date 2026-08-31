@@ -2351,8 +2351,16 @@ class AttemptServiceTestCase(unittest.TestCase):
         )
         self.assertEqual(resolved["status"], "resolved")
         self.assertEqual(self.db.query(ReevaluationRequest).count(), 1)
-        self.db.refresh(queue)
         self.assertEqual(queue.status, "completed")
+
+        with self.assertRaises(HTTPException) as cm:
+            grading_service.request_reevaluation(
+                self.db,
+                self.student,
+                attempt,
+                "Second reevaluation request should be rejected",
+            )
+        self.assertEqual(cm.exception.status_code, 409)
 
     def test_institute_submission_uses_institute_instructor_with_sa_fallback(self):
         module = self._build_writing_module()

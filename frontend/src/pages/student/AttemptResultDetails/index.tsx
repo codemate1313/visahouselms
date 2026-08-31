@@ -33,8 +33,8 @@ export function AttemptResultDetails() {
   const reviewable = ["grading", "graded"].includes(attempt.status);
   const profile = attempt.cefr_profile;
   const metrics = getAttemptMetrics(attempt);
-  const hasOpenReevaluation = attempt.reevaluation?.status === "pending" || attempt.reevaluation?.status === "in_review";
-  const canRequestReevaluation = reviewable && attempt.parts.some((part) => !part.auto_marked) && !hasOpenReevaluation;
+  const hasRequestedReevaluation = Boolean(attempt.reevaluation);
+  const canRequestReevaluation = reviewable && attempt.parts.some((part) => !part.auto_marked) && !hasRequestedReevaluation;
   const statusLabels = strings.statusLabels;
 
   async function requestReevaluation(event: FormEvent) {

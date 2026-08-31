@@ -8521,3 +8521,495 @@ html[data-theme="dark"] body .dashboard .test-runner-option:has(input:checked) {
     justify-content: center;
   }
 }
+
+/* ==========================================================================
+   Instructor Re-Evaluation & Result Review Card
+   ========================================================================== */
+
+.reeval-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface, #ffffff);
+  margin-bottom: 24px;
+  box-shadow: 0 6px 24px -4px rgba(0, 0, 0, 0.06), 0 2px 8px -2px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+.reeval-card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+}
+
+.reeval-card.is-resolved .reeval-card-glow {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.reeval-card.is-in-review .reeval-card-glow {
+  background: linear-gradient(90deg, #0284c7, #3b82f6);
+}
+
+.reeval-card.is-pending .reeval-card-glow {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.reeval-card.is-rejected .reeval-card-glow {
+  background: linear-gradient(90deg, #ef4444, #e11d48);
+}
+
+.reeval-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 18px;
+  border-bottom: 1px solid var(--border-subtle, #f0f0f2);
+  flex-wrap: wrap;
+}
+
+.reeval-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.reeval-icon-orb {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reeval-card.is-resolved .reeval-icon-orb {
+  background: color-mix(in srgb, #10b981 12%, var(--surface, #ffffff));
+  color: #059669;
+  border: 1px solid color-mix(in srgb, #10b981 25%, transparent);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
+}
+
+.reeval-card.is-in-review .reeval-icon-orb {
+  background: color-mix(in srgb, #0284c7 12%, var(--surface, #ffffff));
+  color: #0284c7;
+  border: 1px solid color-mix(in srgb, #0284c7 25%, transparent);
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.15);
+}
+
+.reeval-card.is-pending .reeval-icon-orb {
+  background: color-mix(in srgb, #f59e0b 12%, var(--surface, #ffffff));
+  color: #d97706;
+  border: 1px solid color-mix(in srgb, #f59e0b 25%, transparent);
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.15);
+}
+
+.reeval-card.is-rejected .reeval-icon-orb {
+  background: color-mix(in srgb, #ef4444 12%, var(--surface, #ffffff));
+  color: #dc2626;
+  border: 1px solid color-mix(in srgb, #ef4444 25%, transparent);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.15);
+}
+
+.reeval-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.reeval-eyebrow-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reeval-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--institute-primary, var(--primary, #0284c7));
+}
+
+.reeval-meta-date {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted, #71717a);
+}
+
+.reeval-heading {
+  font-size: 19px;
+  font-weight: 750;
+  color: var(--text, #0f172a);
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.reeval-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.reeval-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+
+.reeval-status-pill.is-resolved {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.reeval-status-pill.is-in-review {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.reeval-status-pill.is-pending {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.reeval-status-pill.is-rejected {
+  background: #fff1f2;
+  color: #9f1239;
+  border: 1px solid #fecdd3;
+}
+
+.reeval-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.reeval-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.reeval-request-box {
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reeval-sub-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #64748b);
+}
+
+.reeval-request-text {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text, #1e293b);
+  margin: 0;
+  font-weight: 500;
+}
+
+.reeval-resolution-panel {
+  background: color-mix(in srgb, #10b981 4%, var(--surface, #ffffff));
+  border: 1px solid color-mix(in srgb, #10b981 22%, var(--border, #e2e8f0));
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 12px -2px rgba(16, 185, 129, 0.06);
+}
+
+.reeval-card.is-rejected .reeval-resolution-panel {
+  background: color-mix(in srgb, #ef4444 4%, var(--surface, #ffffff));
+  border-color: color-mix(in srgb, #ef4444 22%, var(--border, #e2e8f0));
+  box-shadow: 0 2px 12px -2px rgba(239, 68, 68, 0.06);
+}
+
+.reeval-resolution-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reeval-reviewer-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reeval-reviewer-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  flex-shrink: 0;
+}
+
+.reeval-card.is-rejected .reeval-reviewer-avatar {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+}
+
+.reeval-reviewer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reeval-reviewer-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reeval-reviewer-name {
+  font-size: 14.5px;
+  font-weight: 750;
+  color: var(--text, #0f172a);
+}
+
+.reeval-reviewer-badge {
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: color-mix(in srgb, #10b981 12%, transparent);
+  color: #047857;
+}
+
+.reeval-card.is-rejected .reeval-reviewer-badge {
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+  color: #b91c1c;
+}
+
+.reeval-reviewer-sub {
+  font-size: 12px;
+  color: var(--text-muted, #64748b);
+}
+
+.reeval-resolution-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reeval-sub-heading.is-resolution {
+  color: #047857;
+}
+
+.reeval-card.is-rejected .reeval-sub-heading.is-resolution {
+  color: #b91c1c;
+}
+
+.reeval-resolution-message {
+  background: var(--surface, #ffffff);
+  border: 1px solid color-mix(in srgb, #10b981 20%, var(--border-subtle, #e2e8f0));
+  border-radius: 10px;
+  padding: 14px 18px;
+}
+
+.reeval-card.is-rejected .reeval-resolution-message {
+  border-color: color-mix(in srgb, #ef4444 20%, var(--border-subtle, #e2e8f0));
+}
+
+.reeval-resolution-text {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text, #0f172a);
+  font-weight: 550;
+  margin: 0;
+  word-break: break-word;
+}
+
+.reeval-pending-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: var(--surface-muted, #f8fafc);
+  border: 1px dashed var(--border, #cbd5e1);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-muted, #475569);
+}
+
+.reeval-pending-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  animation: reevalPulse 1.8s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes reevalPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+/* Dark Mode Styles */
+[data-theme="dark"] .reeval-card {
+  background: #16181d;
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .reeval-card-header {
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+[data-theme="dark"] .reeval-heading {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .reeval-meta-date {
+  color: #a1a1aa;
+}
+
+[data-theme="dark"] .reeval-status-pill.is-resolved {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .reeval-status-pill.is-in-review {
+  background: rgba(2, 132, 199, 0.15);
+  color: #38bdf8;
+  border-color: rgba(2, 132, 199, 0.3);
+}
+
+[data-theme="dark"] .reeval-status-pill.is-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="dark"] .reeval-status-pill.is-rejected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="dark"] .reeval-request-box {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .reeval-request-text {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .reeval-resolution-panel {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+[data-theme="dark"] .reeval-card.is-rejected .reeval-resolution-panel {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+[data-theme="dark"] .reeval-reviewer-name {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .reeval-reviewer-sub {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .reeval-reviewer-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+[data-theme="dark"] .reeval-sub-heading.is-resolution {
+  color: #34d399;
+}
+
+[data-theme="dark"] .reeval-resolution-message {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .reeval-card.is-rejected .reeval-resolution-message {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="dark"] .reeval-resolution-text {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .reeval-pending-notice {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+@media (max-width: 640px) {
+  .reeval-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .reeval-card-body {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .reeval-resolution-panel {
+    padding: 14px 16px;
+  }
+}
+

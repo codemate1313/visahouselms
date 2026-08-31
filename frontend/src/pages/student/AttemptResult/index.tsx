@@ -201,8 +201,8 @@ export function AttemptResult() {
   if (!attempt || !metrics) return <p>{strings.loading}</p>;
 
   const hasInstructorReviewablePart = attempt.parts.some((part) => !part.auto_marked);
-  const hasOpenReevaluation = attempt.reevaluation?.status === "pending" || attempt.reevaluation?.status === "in_review";
-  const canRequestReview = ["grading", "graded"].includes(attempt.status) && hasInstructorReviewablePart && !hasOpenReevaluation;
+  const hasRequestedReview = Boolean(attempt.reevaluation);
+  const canRequestReview = ["grading", "graded"].includes(attempt.status) && hasInstructorReviewablePart && !hasRequestedReview;
   
   const canRequestRetake =
     !attempt.is_final &&

@@ -392,8 +392,14 @@ def request_reevaluation(db: Session, student: User, attempt: TestAttempt, reaso
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
     if attempt.status not in (ATTEMPT_GRADING, ATTEMPT_GRADED) or not attempt.part_grades:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only submitted instructor-reviewable results can be sent for review")
-    if latest_open_reevaluation(db, attempt.id):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A reevaluation request is already open for this result")
+    prior = latest_reevaluation(db, attempt.id)
+    if prior is not None:
+        if prior.status in OPEN_REEVALUATION_STATUSES:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A reevaluation request is already open for this result")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This test has already been evaluated by an instructor. Re-evaluation cannot be requested again.",
+        )
     request = ReevaluationRequest(attempt_id=attempt.id, student_id=student.id, reason=reason.strip())
     db.add(request)
     entry = ensure_queue_entry(db, attempt, routing_reason="reevaluation")
