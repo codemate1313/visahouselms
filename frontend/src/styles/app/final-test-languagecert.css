@@ -811,28 +811,10 @@
   display: flex;
   flex-direction: column;
   margin: 21px 0 0;
-  padding: 0 0 0 42px;
-  gap: 14px;
+  padding: 0;
+  gap: 12px;
   grid-column: 1 / -1;
   counter-reset: lcopt;
-}
-
-.lc-exam .test-runner-option {
-  display: flex;
-  align-items: stretch;
-  min-height: 32px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  color: var(--lc-ink);
-  counter-increment: lcopt;
-  font-size: var(--lc-text);
-  font-weight: 400;
-  gap: 4px;
-  text-align: left;
 }
 
 /* The engine draws a radio; the exam client's control is the row itself, with
@@ -853,37 +835,44 @@
   white-space: nowrap;
 }
 
-/* `.test-runner-option` wraps a bare text node, so the answer field has to be
-   the element's own box - painting it with a positioned pseudo-element would
-   stack the box on top of the very text it is meant to hold. Only the letter
-   cell, which has no text of its own to cover, is drawn as one. */
+/* `.test-runner-option` is a single contiguous bar with the letter cell on the left
+   and the answer text on the right - matching the official exam design. */
 .lc-exam .test-runner-option {
   position: relative;
-  display: block;
-  margin-left: 40px;
-  padding: 7px 12px;
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+  margin: 0;
+  padding: 6px 14px 6px 44px;
   border: 1px solid #dcdcdc;
+  border-radius: 0;
   background: var(--lc-field);
+  color: var(--lc-ink);
+  counter-increment: lcopt;
+  font-size: var(--lc-text);
+  font-weight: 400;
   line-height: 1.4;
+  cursor: pointer;
+  box-shadow: none;
 }
 
 .lc-exam .test-runner-option::before {
   position: absolute;
-  top: -1px;
-  bottom: -1px;
-  left: -40px;
+  top: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
-  width: 36px;
-  min-width: 36px;
+  width: 34px;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid #dcdcdc;
+  border: 0;
+  border-right: 1px solid #dcdcdc;
   border-radius: 0;
   background: var(--lc-cell);
   color: var(--lc-ink);
   content: counter(lcopt, upper-alpha);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 400;
 }
 
@@ -892,36 +881,35 @@
   background: #fbfbfb;
 }
 
-/* Selection is a filled letter cell and a tinted field -- seamless unified row */
-.lc-exam .test-runner-option:has(input:checked)::before {
-  left: -40px;
-  width: 40px;
-  border: 1px solid var(--lc-red);
-  border-right: 0;
-  background: var(--lc-red);
-  color: #ffffff;
+.lc-exam .test-runner-option:hover::before {
+  border-right-color: #b5b5b5;
 }
 
+/* Selection is a filled letter cell and a tinted field -- seamless unified row */
 .lc-exam .test-runner-option:has(input:checked) {
-  border-color: var(--lc-red);
-  border-left: 0;
-  background: var(--lc-peach-mute);
-  color: var(--lc-ink);
-  /* The base sheet bolds a chosen answer; the exam client does not. Weight is
-     not a readout here - the filled letter cell and the tint already are. */
+  border-color: var(--lc-red) !important;
+  background: var(--lc-peach-mute) !important;
+  color: var(--lc-ink) !important;
   font-weight: 400;
 }
 
+.lc-exam .test-runner-option:has(input:checked)::before {
+  border: 0 !important;
+  border-right: 1px solid var(--lc-red) !important;
+  background: var(--lc-red) !important;
+  color: #ffffff !important;
+}
+
 .lc-exam .test-runner-option:has(input:checked):hover {
-  border-color: var(--lc-red);
-  border-left: 0;
-  background: var(--lc-peach-mute);
+  border-color: var(--lc-red) !important;
+  background: var(--lc-peach-mute) !important;
 }
 
 .lc-exam .test-runner-option:has(input:checked):hover::before {
-  border-color: var(--lc-red);
-  border-right: 0;
-  background: var(--lc-red);
+  border: 0 !important;
+  border-right: 1px solid var(--lc-red) !important;
+  background: var(--lc-red) !important;
+  color: #ffffff !important;
 }
 
 .lc-exam .test-runner-option:has(input:focus-visible) {
