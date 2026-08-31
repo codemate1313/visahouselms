@@ -24,6 +24,7 @@ interface PreExamOnboardingProps {
   securityStarting: boolean;
   concurrentTab: boolean;
   mediaState?: unknown;
+  focusSection?: "speaking";
   onStartSecureSession: () => void;
   onCancel: () => void;
 }
@@ -59,6 +60,7 @@ export function PreExamOnboarding({
   securityError,
   securityStarting,
   concurrentTab,
+  focusSection,
   onStartSecureSession,
   onCancel,
 }: PreExamOnboardingProps) {
@@ -101,16 +103,24 @@ export function PreExamOnboarding({
 
   // Calculate dynamic metadata
   const displayParts = useMemo(
-    () => isSplitCompositeModule(attempt.module_type)
+    () => focusSection === "speaking"
+      ? attempt.parts.filter((part) => part.section_type === "speaking")
+      : isSplitCompositeModule(attempt.module_type)
       ? attempt.parts.filter((part) => part.section_type !== "speaking")
       : attempt.parts,
-    [attempt.module_type, attempt.parts],
+    [attempt.module_type, attempt.parts, focusSection],
   );
   const totalQuestions = useMemo(() => {
     return displayParts.reduce((sum, p) => sum + (p.questions?.length || p.question_count || 0), 0);
   }, [displayParts]);
 
   const totalDurationMinutes = useMemo(() => {
+    if (focusSection === "speaking") {
+      const speakingTotal = attempt.parts
+        .filter((part) => part.section_type === "speaking")
+        .reduce((acc, p) => acc + (p.duration_minutes || 0), 0);
+      return speakingTotal > 0 ? speakingTotal : 14;
+    }
     if (isSplitCompositeModule(attempt.module_type)) {
       return mainTestDurationMinutes(attempt.parts);
     }
@@ -128,11 +138,11 @@ export function PreExamOnboarding({
     }
     if (secondsLeft > 0) return Math.ceil(secondsLeft / 60);
     return 15;
-  }, [attempt.duration_minutes, attempt.expires_at, attempt.module_type, attempt.parts, attempt.started_at, secondsLeft]);
+  }, [attempt.duration_minutes, attempt.expires_at, attempt.module_type, attempt.parts, attempt.started_at, focusSection, secondsLeft]);
 
   // Skill theme styling
   const skillMeta = useMemo(() => {
-    const type: ExamModuleType = attempt.module_type || "speaking";
+    const type: ExamModuleType = focusSection === "speaking" ? "speaking" : attempt.module_type || "speaking";
     switch (type) {
       case "writing":
         return {
@@ -172,7 +182,7 @@ export function PreExamOnboarding({
           gradient: "var(--pre-exam-hero-gradient)",
         };
     }
-  }, [attempt.module_type]);
+  }, [attempt.module_type, focusSection]);
 
   const handleTestMic = async () => {
     try {
@@ -701,7 +711,9 @@ export function PreExamOnboarding({
 
                 <h2 className="onboarding-ready-heading">Candidate Authorization & Exam Launch</h2>
                 <p className="onboarding-ready-desc">
-                  You are authorized to commence <strong>{attempt.module_title}</strong>. Upon confirmation below, your official examination session will initiate.
+                  {focusSection === "speaking"
+                    ? <>You are authorized to continue the Speaking interview for <strong>{attempt.module_title}</strong>. Confirm below after permissions and diagnostics are ready.</>
+                    : <>You are authorized to commence <strong>{attempt.module_title}</strong>. Upon confirmation below, your official examination session will initiate.</>}
                 </p>
 
                 <div className="onboarding-stat-summary-row">
@@ -739,7 +751,9 @@ export function PreExamOnboarding({
                     onChange={(e) => setConfirmed(e.target.checked)}
                   />
                   <span>
-                    I verify that I have reviewed the examination guidelines, completed hardware diagnostics, and am prepared to commence. I acknowledge that the timed session begins immediately upon clicking "Commence Assessment" and I cannot pause or halt the timer.
+                    {focusSection === "speaking"
+                      ? "I verify that I have reviewed the Speaking guidelines, completed hardware diagnostics, and am ready to continue the interview with camera and microphone permissions enabled."
+                      : "I verify that I have reviewed the examination guidelines, completed hardware diagnostics, and am prepared to commence. I acknowledge that the timed session begins immediately upon clicking \"Commence Assessment\" and I cannot pause or halt the timer."}
                   </span>
                 </label>
 
@@ -756,7 +770,11 @@ export function PreExamOnboarding({
                     isLoading={securityStarting}
                     className="onboarding-start-exam-btn"
                   >
-                    {securityStarting ? "Initializing Examination..." : "Commence Assessment →"}
+                    {securityStarting
+                      ? "Initializing Examination..."
+                      : focusSection === "speaking"
+                        ? "Continue Speaking Interview →"
+                        : "Commence Assessment →"}
                   </Button>
                 </div>
 

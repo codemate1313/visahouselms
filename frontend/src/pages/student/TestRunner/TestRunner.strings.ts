@@ -72,6 +72,7 @@ export const testRunnerStrings = {
       cameraMicRequired: "Both a working camera and microphone are required.",
       screenShareRequired: "Screen sharing is required. Share your entire screen before continuing.",
       mediaMustRemainActive: "Camera, microphone, and screen share must remain active.",
+      fullscreenAfterCameraMic: "Camera and microphone are active. Enter full screen to continue the Speaking interview.",
       fullscreenAfterMedia: "Camera, microphone, and screen share are active. Click Enter full screen and continue to finish the security check.",
       generic: "The security check could not be completed.",
       sessionRestoreNeeded: "The secure attempt session needs to be restored.",

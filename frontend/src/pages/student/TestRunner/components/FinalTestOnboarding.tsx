@@ -12,6 +12,7 @@ interface FinalTestOnboardingProps {
   securityError: string | null;
   securityStarting: boolean;
   concurrentTab: boolean;
+  focusSection?: "speaking";
   onStartSecureSession: () => void;
   onCancel: () => void;
 }
@@ -32,6 +33,16 @@ const DEFAULT_INSTRUCTIONS = [
   "When you have completed the exam, you should click End Exam.",
 ];
 
+const SPEAKING_INSTRUCTIONS = [
+  "Welcome to the LanguageCert Academic Speaking interview.",
+  "The Speaking interview is completed separately from the Listening, Reading and Writing paper.",
+  "Please check that your camera and microphone are working before you start.",
+  "When prompted by the browser, allow camera, microphone and screen sharing permissions.",
+  "Share your entire screen, not a browser tab or a single window.",
+  "Answer each examiner prompt clearly. Your responses are recorded and submitted securely.",
+  "Once you click Start Speaking, the interview screen will open and the examiner prompts will begin.",
+];
+
 /**
  * The Final Test's pre-exam sequence: verify details, read the brief, start.
  *
@@ -46,6 +57,7 @@ export function FinalTestOnboarding({
   securityError,
   securityStarting,
   concurrentTab,
+  focusSection,
   onStartSecureSession,
   onCancel,
 }: FinalTestOnboardingProps) {
@@ -66,8 +78,13 @@ export function FinalTestOnboarding({
   const authored = (attempt.onboarding_instructions ?? [])
     .map((item) => item.description?.trim())
     .filter((line): line is string => Boolean(line));
-  const instructions = authored.length > 0 ? authored : DEFAULT_INSTRUCTIONS;
-  const minutes = mainTestDurationMinutes(attempt.parts);
+  const speakingMode = focusSection === "speaking";
+  const instructions = speakingMode ? SPEAKING_INSTRUCTIONS : authored.length > 0 ? authored : DEFAULT_INSTRUCTIONS;
+  const minutes = speakingMode
+    ? attempt.parts
+      .filter((part) => part.section_type === "speaking")
+      .reduce((total, part) => total + (part.duration_minutes || 0), 0) || 14
+    : mainTestDurationMinutes(attempt.parts);
 
   const fields: Array<{ label: string; hint?: string; value: string }> = [
     { label: "First / Middle Name(s)", hint: "(Latin)", value: user?.first_name || "—" },
@@ -145,7 +162,9 @@ export function FinalTestOnboarding({
           <section className="lc-onb-block" aria-labelledby="lc-onb-title-2">
             <h2 className="lc-onb-heading" id="lc-onb-title-2">Exam Instructions</h2>
             <div className="lc-onb-panel">
-              <p className="lc-onb-strong lc-onb-panel-title">{attempt.module_title}</p>
+              <p className="lc-onb-strong lc-onb-panel-title">
+                {speakingMode ? `${attempt.module_title} - Speaking` : attempt.module_title}
+              </p>
               {instructions.map((line, index) => (
                 <p className="lc-onb-line" key={index}>{line}</p>
               ))}
@@ -156,12 +175,23 @@ export function FinalTestOnboarding({
 
         {step === 3 && (
           <section className="lc-onb-block" aria-labelledby="lc-onb-title-3">
-            <h2 className="lc-onb-heading" id="lc-onb-title-3">Ready for the Exam</h2>
+            <h2 className="lc-onb-heading" id="lc-onb-title-3">{speakingMode ? "Ready for Speaking" : "Ready for the Exam"}</h2>
             <div className="lc-onb-panel">
-              <p className="lc-onb-line">
-                You have approximately <strong>{minutes}</strong> minutes to complete the Listening, Reading and Writing paper.
-              </p>
-              <p className="lc-onb-line">Once you click &lsquo;Start Exam&rsquo; the exam time will start.</p>
+              {speakingMode ? (
+                <>
+                  <p className="lc-onb-line">
+                    You have approximately <strong>{minutes}</strong> minutes to complete the Speaking interview.
+                  </p>
+                  <p className="lc-onb-line">Once you click &lsquo;Start Speaking&rsquo;, permissions will be checked again and the interview will continue.</p>
+                </>
+              ) : (
+                <>
+                  <p className="lc-onb-line">
+                    You have approximately <strong>{minutes}</strong> minutes to complete the Listening, Reading and Writing paper.
+                  </p>
+                  <p className="lc-onb-line">Once you click &lsquo;Start Exam&rsquo; the exam time will start.</p>
+                </>
+              )}
             </div>
             {concurrentTab && (
               <p className="lc-onb-error" role="alert">Close the other Final Test tab before continuing.</p>
@@ -173,7 +203,7 @@ export function FinalTestOnboarding({
               disabled={securityStarting || concurrentTab}
               onClick={onStartSecureSession}
             >
-              {securityStarting ? "Starting…" : "Start Exam"}
+              {securityStarting ? "Starting…" : speakingMode ? "Start Speaking" : "Start Exam"}
             </Button>
           </section>
         )}

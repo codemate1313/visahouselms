@@ -178,6 +178,7 @@ export function TestRunner() {
   const [fullscreenActive, setFullscreenActive] = useState(() => Boolean(document.fullscreenElement));
   const [securityAuthorized, setSecurityAuthorized] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [speakingSetupCompleted, setSpeakingSetupCompleted] = useState(false);
   const [securityStarting, setSecurityStarting] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [mediaState, setMediaState] = useState<SecurityMediaState>(EMPTY_MEDIA_STATE);
@@ -269,6 +270,7 @@ export function TestRunner() {
 
   useEffect(() => {
     setOnboardingCompleted(sessionStorage.getItem(`onboarding_completed_${id}`) === "true");
+    setSpeakingSetupCompleted(sessionStorage.getItem(securityStorageKey(id, "speaking-setup-completed")) === "true");
     setSecurityAuthorized(false);
   }, [id]);
 
@@ -800,6 +802,85 @@ export function TestRunner() {
     setMediaState(EMPTY_MEDIA_STATE);
   }
 
+  async function startSpeakingResumeSetup() {
+    try {
+      const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
+      audio.play().catch(() => {});
+      unlockSharedAudioContext();
+    } catch (e) {
+      console.warn("Audio unlock failed:", e);
+    }
+    if (securityStarting) return;
+    setSecurityStarting(true);
+    setSecurityError(null);
+    let stream: MediaStream | null = null;
+
+    const requestExamFullscreen = async () => {
+      if (document.fullscreenElement) return true;
+      try {
+        await document.documentElement.requestFullscreen();
+      } catch {
+        return false;
+      }
+      return Boolean(document.fullscreenElement);
+    };
+
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error(strings.security.errors.browserUnsupported);
+      }
+
+      await requestExamFullscreen();
+      stopSecurityMedia();
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      const cameraTrack = stream.getVideoTracks()[0];
+      const microphoneTrack = stream.getAudioTracks()[0];
+      if (!cameraTrack || !microphoneTrack) {
+        throw new Error(strings.security.errors.cameraMicRequired);
+      }
+
+      cameraStreamRef.current = stream;
+      cameraTrack.onended = () => onRequiredTrackEnded("camera");
+      cameraTrack.onmute = () => onRequiredTrackEnded("camera");
+      microphoneTrack.onended = () => onRequiredTrackEnded("microphone");
+      microphoneTrack.onmute = () => onRequiredTrackEnded("microphone");
+      if (cameraPreviewRef.current) {
+        cameraPreviewRef.current.srcObject = stream;
+        cameraPreviewRef.current.play().catch(() => {});
+      }
+      setLiveCameraStream(stream);
+      updateSecurityMedia({
+        camera: cameraTrack.readyState === "live" && cameraTrack.enabled,
+        microphone: microphoneTrack.readyState === "live" && microphoneTrack.enabled,
+        screenShare: false,
+        fullscreen: Boolean(document.fullscreenElement),
+      });
+      const fullscreenOnHandover = await requestExamFullscreen();
+      if (!fullscreenOnHandover) {
+        throw new Error(strings.security.errors.fullscreenAfterCameraMic);
+      }
+      setFullscreenActive(true);
+      updateSecurityMedia({ fullscreen: true });
+      sessionStorage.setItem(`onboarding_completed_${id}`, "true");
+      sessionStorage.setItem(securityStorageKey(id, "speaking-setup-completed"), "true");
+      setOnboardingCompleted(true);
+      setSpeakingSetupCompleted(true);
+      setSecurityAuthorized(true);
+    } catch (err: unknown) {
+      stream?.getTracks().forEach((track) => track.stop());
+      stopSecurityMedia();
+      setSecurityAuthorized(false);
+      setSpeakingSetupCompleted(false);
+      sessionStorage.removeItem(securityStorageKey(id, "speaking-setup-completed"));
+      setSecurityError(extractErrorMessage(err, err instanceof Error ? err.message : strings.security.errors.generic));
+    } finally {
+      setSecurityStarting(false);
+    }
+  }
+
   async function startSecureSession() {
     try {
       const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA");
@@ -809,6 +890,10 @@ export function TestRunner() {
       console.warn("Audio unlock failed:", e);
     }
     if (securityStarting) return;
+    if (!attempt?.is_final && attempt?.status === "in_progress" && isSpeakingPhase) {
+      await startSpeakingResumeSetup();
+      return;
+    }
     if (!attempt?.is_final) {
       try {
         setSecurityStarting(true);
@@ -976,6 +1061,10 @@ export function TestRunner() {
       setAttempt(data);
       sessionStorage.setItem(`onboarding_completed_${id}`, "true");
       setOnboardingCompleted(true);
+      if (isSpeakingPhase) {
+        sessionStorage.setItem(securityStorageKey(id, "speaking-setup-completed"), "true");
+        setSpeakingSetupCompleted(true);
+      }
       setSecurityAuthorized(true);
       /* Re-checked, not asserted. Preflight and begin are two network round
          trips, and full screen can be lost while they are in flight - the old
@@ -1525,6 +1614,13 @@ export function TestRunner() {
       );
       sessionStorage.setItem(securityStorageKey(id, "speaking-started"), "true");
       sessionStorage.setItem(`test-runner-part:${id}`, String(targetIndex));
+      if (startNow) {
+        sessionStorage.setItem(securityStorageKey(id, "speaking-setup-completed"), "true");
+        setSpeakingSetupCompleted(true);
+      } else {
+        sessionStorage.removeItem(securityStorageKey(id, "speaking-setup-completed"));
+        setSpeakingSetupCompleted(false);
+      }
       setAttempt(data);
       setPartIndex(targetIndex);
       setConfirmSubmit(false);
@@ -1602,6 +1698,25 @@ export function TestRunner() {
     attempt.security_required
     && attempt.status === "in_progress"
     && (!securityAuthorized || missingSecurityControls.length > 0);
+  const speakingResumeControls: string[] = isSplitCompositeAttempt && isSpeakingPhase && attempt.status === "in_progress" && !attempt.is_final
+    ? [
+      !mediaState.camera ? strings.security.camera : null,
+      !mediaState.microphone ? strings.security.microphone : null,
+      !fullscreenActive ? strings.security.fullScreen : null,
+    ].filter((item): item is NonNullable<typeof item> => Boolean(item))
+    : [];
+  const shouldShowSpeakingResumeOnboarding =
+    isSplitCompositeAttempt
+    && isSpeakingPhase
+    && attempt.status === "in_progress"
+    && !speakingSetupCompleted;
+  const shouldRestoreSpeakingResumeControls =
+    isSplitCompositeAttempt
+    && isSpeakingPhase
+    && attempt.status === "in_progress"
+    && !attempt.is_final
+    && speakingSetupCompleted
+    && (!securityAuthorized || speakingResumeControls.length > 0);
   const hasSavedResponses = attempt.parts.some((part) => part.answered_count > 0);
   const isFreshAttempt = !onboardingCompleted && !hasSavedResponses && sessionStorage.getItem(`onboarding_completed_${id}`) !== "true";
   const shouldShowPreExamOnboarding =
@@ -1618,6 +1733,23 @@ export function TestRunner() {
      whenever the session is not yet authorised, regardless of the module's
      `show_onboarding_instructions` setting. */
   if (languageCertSkin && (attempt.status === "ready" || !securityAuthorized)) {
+    if (shouldShowSpeakingResumeOnboarding) {
+      return (
+        <div className="test-runner-route-frame">
+          <FinalTestOnboarding
+            attempt={attempt}
+            user={user}
+            securityError={securityError}
+            securityStarting={securityStarting}
+            concurrentTab={concurrentTab}
+            focusSection="speaking"
+            onStartSecureSession={startSecureSession}
+            onCancel={() => navigate("/student/my-courses")}
+          />
+          {violationModal}
+        </div>
+      );
+    }
     if (shouldRestoreSecurityControls) {
       return (
         <div className="test-runner-route-frame">
@@ -1666,6 +1798,27 @@ export function TestRunner() {
     );
   }
 
+  if (shouldShowSpeakingResumeOnboarding) {
+    return (
+      <div className="test-runner-route-frame">
+        <PreExamOnboarding
+          attempt={attempt}
+          secondsLeft={secondsLeft}
+          brandMark={brandMark}
+          testContext={testContext}
+          securityError={securityError}
+          securityStarting={securityStarting}
+          concurrentTab={concurrentTab}
+          mediaState={mediaState}
+          focusSection="speaking"
+          onStartSecureSession={startSpeakingResumeSetup}
+          onCancel={() => navigate("/student/my-courses")}
+        />
+        {violationModal}
+      </div>
+    );
+  }
+
   if (shouldShowPreExamOnboarding) {
     return (
       <div className="test-runner-route-frame">
@@ -1696,6 +1849,27 @@ export function TestRunner() {
   }
 
   if (!currentPart) return <div className="test-runner-loading">{strings.loading}</div>;
+
+  if (shouldRestoreSpeakingResumeControls) {
+    return (
+      <div className={`test-runner-shell${brandedTestClass}`}>
+        <FullscreenGate
+          isFinal={attempt.is_final}
+          secondsLeft={secondsLeft}
+          onEnterFullscreen={speakingResumeControls.length === 1 && speakingResumeControls[0] === strings.security.fullScreen ? enterFullscreen : startSpeakingResumeSetup}
+          timerVisible={timerVisible}
+          securityError={securityError}
+          missingControls={speakingResumeControls.length ? speakingResumeControls : [
+            strings.security.camera,
+            strings.security.microphone,
+            strings.security.fullScreen,
+          ]}
+          restoring={securityStarting}
+        />
+        {violationModal}
+      </div>
+    );
+  }
 
   if (shouldRestoreSecurityControls) {
     return (
