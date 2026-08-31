@@ -89,14 +89,18 @@ OPENAI_EVALUATION_MODEL_PREFIXES = (
 
 def _ai_timeout_for_payload(total_audio_bytes: int) -> float:
     """Choose a provider timeout from the cumulative Speaking audio payload."""
-    mb = max(0, total_audio_bytes) / 1024 / 1024
-    if mb <= 5:
+    if total_audio_bytes <= 0:
         return AI_TIMEOUT_SMALL_SECONDS
-    if mb <= 10:
-        return AI_TIMEOUT_MEDIUM_SECONDS
-    if mb <= 15:
-        return AI_TIMEOUT_LARGE_SECONDS
-    return AI_TIMEOUT_EXTRA_LARGE_SECONDS
+
+    # Transcribing and evaluating speaking audio files (e.g. 13+ minutes of audio)
+    # takes significant processing time by the AI model. Use larger timeouts.
+    mb = total_audio_bytes / 1024 / 1024
+    if mb <= 2:
+        return AI_TIMEOUT_EXTRA_LARGE_SECONDS  # 180s (3 minutes)
+    if mb <= 5:
+        return 240.0  # 4 minutes
+    return 300.0  # 5 minutes
+
 
 
 def _now() -> datetime:

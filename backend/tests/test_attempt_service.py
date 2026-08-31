@@ -899,7 +899,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(self.db.query(AiEvaluation).filter_by(status="completed").count(), 1)
         record = self.db.query(AiEvaluation).filter_by(status="completed").one()
         self.assertEqual(record.request_summary["audio_kb_total"], round(expected_audio_bytes / 1024))
-        self.assertEqual(record.request_summary["timeout_seconds"], 45.0)
+        self.assertEqual(record.request_summary["timeout_seconds"], 180.0)
         self.assertEqual(self.db.query(AiEvaluationLimit).one().used_count, 1)
         self.db.refresh(attempt)
         grades = {grade.part_id: grade for grade in attempt.part_grades}
@@ -907,10 +907,10 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in grades.values()))
 
     def test_ai_evaluation_timeout_scales_with_cumulative_audio_size(self):
-        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(5 * 1024 * 1024), 45.0)
-        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(10 * 1024 * 1024), 90.0)
-        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(15 * 1024 * 1024), 120.0)
-        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(16 * 1024 * 1024), 180.0)
+        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(5 * 1024 * 1024), 240.0)
+        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(10 * 1024 * 1024), 300.0)
+        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(15 * 1024 * 1024), 300.0)
+        self.assertEqual(ai_evaluation_service._ai_timeout_for_payload(16 * 1024 * 1024), 300.0)
 
     def test_pre_submit_speaking_evaluation_is_not_sent_per_part(self):
         self._enable_ai_evaluation()
