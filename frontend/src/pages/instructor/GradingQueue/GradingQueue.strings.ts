@@ -37,6 +37,7 @@ export const gradingQueueStrings = {
     unclaimed: "Unclaimed",
     reevaluationBadge: "Reevaluation",
     gradeSubmission: "Grade submission",
+    viewSubmission: "View submission",
     evaluating: "In evaluation",
     gradingNow: "Grading now",
     youAreGrading: "You are grading",

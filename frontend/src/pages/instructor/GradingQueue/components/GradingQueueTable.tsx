@@ -64,6 +64,9 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
     const claimedByMe =
       item.queue.status === "claimed" &&
       item.queue.assigned_to_id === userId;
+    const isBeingManuallyGraded =
+      item.queue.status !== "completed" &&
+      (item.parts_to_grade > 0 || item.is_reevaluation || item.status === "grading");
 
     const issuedAt = item.submitted_at || item.queue.created_at;
 
@@ -107,9 +110,23 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
               <Icon name="lock" />
               {t.gradingNow}
             </Badge>
-          ) : (
-            <Link to={`${gradingBase}/${item.id}`} aria-label={t.gradeSubmission} data-tooltip={t.gradeSubmission}>
+          ) : isBeingManuallyGraded ? (
+            <Link
+              to={`${gradingBase}/${item.id}`}
+              aria-label={t.gradeSubmission}
+              data-tooltip={t.gradeSubmission}
+              className="table-action-btn is-grade"
+            >
               <Icon name="grading" />
+            </Link>
+          ) : (
+            <Link
+              to={`${gradingBase}/${item.id}`}
+              aria-label={t.viewSubmission}
+              data-tooltip={t.viewSubmission}
+              className="table-action-btn is-view"
+            >
+              <Icon name="eye" />
             </Link>
           )}
         </td>
