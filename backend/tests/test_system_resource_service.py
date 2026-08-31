@@ -20,6 +20,10 @@ class SystemResourceServiceTestCase(unittest.TestCase):
 
         self.assertIn("host_label", reading)
         self.assertIn("server_label", reading)
+        self.assertIn("load_average", reading)
+        self.assertIn("uptime_seconds", reading)
+        self.assertIn("disk", reading)
+        self.assertIn("storage", reading)
         if reading.get("app"):
             self.assertIn("label", reading["app"])
             self.assertIn("usage_label", reading["app"])

@@ -45,6 +45,31 @@ interface QuotaSummary {
     rate_limited_today: number;
     not_sent_today: number;
   };
+  queue?: {
+    pending: number;
+    running: number;
+    failed_today: number;
+  };
+  performance?: {
+    average_duration_ms: number | null;
+    slowest_duration_ms: number | null;
+    timeout_failures_today: number;
+    last_success: {
+      provider?: string | null;
+      model?: string | null;
+      created_at: string;
+      duration_ms?: number | null;
+      key?: string;
+    } | null;
+    last_error: {
+      message?: string | null;
+      provider?: string | null;
+      model?: string | null;
+      created_at: string;
+      duration_ms?: number | null;
+      key?: string;
+    } | null;
+  };
   series: { hour: string; requests: number; tokens: number; failed: number }[];
   day_started_at: string;
   day_resets_at: string;
@@ -83,6 +108,21 @@ function compact(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
   return String(value);
+}
+
+function formatDuration(ms: number | null | undefined): string {
+  if (ms === null || ms === undefined) return "—";
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = ms / 1000;
+  if (seconds < 60) return `${seconds.toFixed(seconds < 10 ? 1 : 0)}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = Math.round(seconds % 60);
+  return `${minutes}m ${remainder}s`;
+}
+
+function shortTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
 function toneFor(percent: number | null): string {
@@ -207,6 +247,18 @@ export function AiQuotaCard() {
   const rawPercent = totalRpdLimit > 0 ? (totalRequestsToday / totalRpdLimit) * 100 : null;
   const dailyUsedPercent = rawPercent !== null ? Math.min(100, Math.round(rawPercent)) : null;
   const remainingToday = totalRpdLimit > 0 ? Math.max(0, totalRpdLimit - totalRequestsToday) : null;
+  const queue = data.queue ?? { pending: 0, running: 0, failed_today: 0 };
+  const performance = data.performance ?? {
+    average_duration_ms: null,
+    slowest_duration_ms: null,
+    timeout_failures_today: 0,
+    last_success: null,
+    last_error: null,
+  };
+  const recentSeries = data.series.slice(-12);
+  const seriesPeak = Math.max(1, ...recentSeries.map((point) => Math.max(point.requests, point.tokens ? Math.ceil(point.tokens / 1000) : 0)));
+  const successToday = Math.max(0, data.totals.requests_today - data.totals.failed_today);
+  const failurePercent = data.totals.requests_today > 0 ? Math.round(data.totals.failed_today / data.totals.requests_today * 100) : 0;
 
   const arcLength = 235.62;
   const effectivePct =
@@ -248,7 +300,7 @@ export function AiQuotaCard() {
         role="button"
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && setOpen(true)}
-        title="Click to view detailed AI quota breakdown"
+        aria-label="Open detailed AI quota breakdown"
       >
         <section className="chart-card reference-styled-chart ai-quota-card">
           <div className="chart-toolbar">
@@ -288,7 +340,7 @@ export function AiQuotaCard() {
                 type="button"
                 className="chart-toggle-btn is-active"
                 onClick={() => setOpen(true)}
-                title="Open full quota breakdown"
+                aria-label="Open full quota breakdown"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -380,6 +432,53 @@ export function AiQuotaCard() {
                 {totalRpdLimit > 0 ? `${compact(totalRpdLimit)}` : "100%"}
               </text>
             </svg>
+          </div>
+
+          <div className="ai-quota-ops-grid">
+            <div className="ai-quota-ops-card">
+              <span>Queue</span>
+              <strong>{queue.pending + queue.running}</strong>
+              <small>{queue.pending} pending · {queue.running} running</small>
+            </div>
+            <div className="ai-quota-ops-card">
+              <span>Avg eval</span>
+              <strong>{formatDuration(performance.average_duration_ms)}</strong>
+              <small>slowest {formatDuration(performance.slowest_duration_ms)}</small>
+            </div>
+            <div className={`ai-quota-ops-card ${performance.timeout_failures_today ? "is-alert" : ""}`}>
+              <span>Timeouts</span>
+              <strong>{performance.timeout_failures_today}</strong>
+              <small>{data.totals.failed_today} failed today</small>
+            </div>
+          </div>
+
+          <div className="ai-quota-trend-panel">
+            <div className="ai-quota-trend-head">
+              <span>Last 12 hours</span>
+              <b>{successToday} ok · {failurePercent}% failed</b>
+            </div>
+            <div className="ai-quota-trend-bars" aria-label="AI request trend for the last 12 hours">
+              {recentSeries.length ? (
+                recentSeries.map((point) => {
+                  const requestsHeight = Math.max(5, Math.round(point.requests / seriesPeak * 100));
+                  const failedHeight = point.failed ? Math.max(5, Math.round(point.failed / seriesPeak * 100)) : 0;
+                  const hourLabel = shortTime(point.hour);
+                  return (
+                    <span className="ai-quota-trend-bar" key={point.hour} aria-label={`${point.requests} requests at ${hourLabel}`}>
+                      <i style={{ height: `${requestsHeight}%` }} />
+                      {failedHeight > 0 && <em style={{ height: `${failedHeight}%` }} />}
+                    </span>
+                  );
+                })
+              ) : (
+                <span className="ai-quota-empty-trend">No provider calls in this window</span>
+              )}
+            </div>
+          </div>
+
+          <div className="ai-quota-status-row">
+            <span>Last success: {performance.last_success ? shortTime(performance.last_success.created_at) : "none today"}</span>
+            <span>Last error: {performance.last_error?.message ? performance.last_error.message : "none today"}</span>
           </div>
         </section>
       </div>

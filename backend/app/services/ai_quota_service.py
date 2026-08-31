@@ -17,6 +17,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.models.attempt import AiEvaluation
+from app.models.job import JOB_FAILED, JOB_PENDING, JOB_RUNNING, Job
 from app.services import ai_evaluation_service
 from app.services.settings_service import get_setting, set_setting
 
@@ -70,6 +71,11 @@ def _record_model(record: AiEvaluation) -> Optional[str]:
     summary = record.request_summary or {}
     model = summary.get("model")
     return str(model) if model else None
+
+
+def _is_timeout_error(error: Optional[str]) -> bool:
+    text = (error or "").lower()
+    return "timeout" in text or "timed out" in text or "read timed out" in text
 
 
 def get_declared_limits(db: Session) -> dict:
@@ -208,6 +214,62 @@ def usage_summary(db: Session) -> dict:
         for slot, values in sorted(hourly.items())
     ]
 
+    provider_rows_today = [
+        row
+        for row in rows
+        if row.created_at
+        and row.created_at >= day_start
+        and row.status not in NON_PROVIDER_STATUSES
+    ]
+    completed_durations = [
+        row.duration_ms
+        for row in provider_rows_today
+        if row.status == "completed" and row.duration_ms is not None
+    ]
+    failed_rows_today = [row for row in provider_rows_today if row.status == "failed"]
+    last_error = next(
+        (
+            {
+                "message": row.error,
+                "provider": row.provider,
+                "model": row.model,
+                "created_at": row.created_at,
+                "duration_ms": row.duration_ms,
+                "key": _quota_limit_key(_record_key_label(row), _record_model(row)),
+            }
+            for row in sorted(failed_rows_today, key=lambda item: item.created_at or datetime.min, reverse=True)
+            if row.error
+        ),
+        None,
+    )
+    last_success = next(
+        (
+            {
+                "provider": row.provider,
+                "model": row.model,
+                "created_at": row.created_at,
+                "duration_ms": row.duration_ms,
+                "key": _quota_limit_key(_record_key_label(row), _record_model(row)),
+            }
+            for row in sorted(provider_rows_today, key=lambda item: item.created_at or datetime.min, reverse=True)
+            if row.status == "completed"
+        ),
+        None,
+    )
+    ai_jobs = db.query(Job).filter(Job.type == "ai_auto_grade").all()
+    queue = {
+        "pending": sum(1 for job in ai_jobs if job.status == JOB_PENDING),
+        "running": sum(1 for job in ai_jobs if job.status == JOB_RUNNING),
+        "failed_today": sum(1 for job in ai_jobs if job.status == JOB_FAILED and job.created_at and job.created_at >= day_start),
+    }
+    performance = {
+        "average_duration_ms": round(sum(completed_durations) / len(completed_durations)) if completed_durations else None,
+        "slowest_duration_ms": max(completed_durations) if completed_durations else None,
+        "timeout_failures_today": sum(1 for row in failed_rows_today if _is_timeout_error(row.error)),
+        "last_success": last_success,
+        "last_error": last_error,
+    }
+
     status = ai_evaluation_service.config_status(db)
     totals = {
         "requests_last_minute": sum(item["requests_last_minute"] for item in keys),
@@ -223,6 +285,8 @@ def usage_summary(db: Session) -> dict:
         "configured": bool(status.get("configured")),
         "keys": keys,
         "totals": totals,
+        "queue": queue,
+        "performance": performance,
         "series": series,
         "day_started_at": day_start,
         # So the screen can say when the daily allowance comes back rather than

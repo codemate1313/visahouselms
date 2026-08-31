@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Badge } from "@/components/ui";
@@ -22,6 +23,27 @@ interface ServerMemory {
   server_label?: string;
   note?: string;
   cpu_count?: number | null;
+  load_average?: {
+    one: number;
+    five: number;
+    fifteen: number;
+    cpu_count: number;
+    one_percent: number;
+  } | null;
+  uptime_seconds?: number | null;
+  disk?: {
+    path: string;
+    total_bytes: number;
+    used_bytes: number;
+    free_bytes: number;
+    used_percent: number | null;
+  } | null;
+  storage?: {
+    path: string;
+    bytes: number;
+    file_count: number;
+    truncated: boolean;
+  } | null;
   approximate?: boolean;
   total_bytes?: number;
   used_bytes?: number;
@@ -46,6 +68,29 @@ function gb(bytes: number | undefined): string {
   const value = bytes / 1024 ** 3;
   if (value < 1) return `${Math.round(bytes / 1024 ** 2)} MB`;
   return `${value.toFixed(value < 10 ? 2 : 1)} GB`;
+}
+
+function formatBytes(bytes: number | undefined): string {
+  if (bytes === undefined) return "—";
+  if (bytes >= 1024 ** 3) return gb(bytes);
+  if (bytes >= 1024 ** 2) return `${Math.round(bytes / 1024 ** 2)} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
+}
+
+function formatUptime(seconds: number | null | undefined): string {
+  if (seconds === null || seconds === undefined) return "—";
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+function shortTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
 function toneFor(percent: number | null | undefined): string {
@@ -102,6 +147,8 @@ export function ServerMemoryCard() {
   const hostLabel = data.host_label || data.hostname || "current server";
   const serverLabel = data.server_label || hostLabel;
   const appUsageLabel = data.app?.usage_label || (data.app?.scope === "process" ? "held by this worker" : "held by this app");
+  const cpuPercent = data.load_average?.one_percent ?? null;
+  const diskPercent = data.disk?.used_percent ?? null;
 
   return (
     <section className="chart-card reference-styled-chart server-memory-card">
@@ -174,6 +221,30 @@ export function ServerMemoryCard() {
             </div>
           </div>
 
+          <div className="server-health-strip">
+            <div
+              className="server-health-ring"
+              style={{ "--pct": `${Math.min(100, cpuPercent ?? 0)}%` } as CSSProperties & Record<"--pct", string>}
+            >
+              <span>CPU</span>
+              <b>{cpuPercent !== null ? `${Math.round(cpuPercent)}%` : "—"}</b>
+            </div>
+            <div className="server-health-metrics">
+              <div>
+                <span>Load avg</span>
+                <b>{data.load_average ? `${data.load_average.one} / ${data.load_average.five} / ${data.load_average.fifteen}` : "—"}</b>
+              </div>
+              <div>
+                <span>Uptime</span>
+                <b>{formatUptime(data.uptime_seconds)}</b>
+              </div>
+              <div>
+                <span>Refreshed</span>
+                <b>{shortTime(data.generated_at)}</b>
+              </div>
+            </div>
+          </div>
+
           <div className="ai-quota-keys">
             <div className="ai-quota-key-row">
               <span className="ai-quota-key-name">{serverLabel}</span>
@@ -201,6 +272,26 @@ export function ServerMemoryCard() {
                 <UsageBar percent={data.swap.used_percent} />
               </div>
             )}
+          </div>
+
+          {data.disk && (
+            <div className="server-disk-panel">
+              <div className="server-disk-head">
+                <span>Root disk</span>
+                <b>{diskPercent ?? "?"}% used</b>
+              </div>
+              <UsageBar percent={diskPercent} />
+              <div className="server-disk-foot">
+                <span>{gb(data.disk.free_bytes)} free</span>
+                <span>{gb(data.disk.used_bytes)} of {gb(data.disk.total_bytes)}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="server-storage-row">
+            <span>Public storage</span>
+            <b>{data.storage ? formatBytes(data.storage.bytes) : "—"}</b>
+            {data.storage?.truncated ? <small>partial scan</small> : <small>{data.storage?.file_count ?? 0} files</small>}
           </div>
 
           <p className="ai-quota-note">

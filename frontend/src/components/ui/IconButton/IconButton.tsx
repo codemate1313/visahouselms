@@ -36,6 +36,7 @@ export function IconButton({
   showTooltip = true,
   className = "",
   type = "button",
+  title: _nativeTitle,
   ...rest
 }: IconButtonProps) {
   const classes = ["ui-icon-btn", `ui-icon-btn-${variant}`, `ui-icon-btn-${size}`, className]

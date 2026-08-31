@@ -11,10 +11,13 @@ from __future__ import annotations
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+from app.config import settings
 
 MEMINFO = "/proc/meminfo"
 
@@ -169,6 +172,90 @@ def _self_rss_bytes() -> int | None:
     return None
 
 
+def _load_average() -> dict | None:
+    try:
+        one, five, fifteen = os.getloadavg()
+    except (AttributeError, OSError):
+        return None
+    cpu_count = os.cpu_count() or 1
+    return {
+        "one": round(one, 2),
+        "five": round(five, 2),
+        "fifteen": round(fifteen, 2),
+        "cpu_count": cpu_count,
+        "one_percent": round(min(999.0, one / cpu_count * 100), 1),
+    }
+
+
+def _uptime_seconds() -> int | None:
+    try:
+        with open("/proc/uptime", "r") as handle:
+            return int(float(handle.read().split()[0]))
+    except (OSError, ValueError, IndexError):
+        pass
+
+    if platform.system() == "Darwin":
+        try:
+            boot_raw = subprocess.run(
+                ["sysctl", "-n", "kern.boottime"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+            ).stdout
+            match = re.search(r"sec = (\d+)", boot_raw)
+            if match:
+                return max(0, int(datetime.now(timezone.utc).timestamp()) - int(match.group(1)))
+        except (OSError, ValueError, subprocess.SubprocessError):
+            return None
+    return None
+
+
+def _disk_usage(path: Path) -> dict | None:
+    try:
+        usage = shutil.disk_usage(path)
+    except OSError:
+        return None
+    return {
+        "path": str(path),
+        "total_bytes": usage.total,
+        "used_bytes": usage.used,
+        "free_bytes": usage.free,
+        "used_percent": round(usage.used / usage.total * 100, 1) if usage.total else None,
+    }
+
+
+def _directory_size(path: Path, *, max_entries: int = 5000) -> dict | None:
+    try:
+        root = path.resolve()
+    except OSError:
+        return None
+    if not root.exists():
+        return None
+
+    total = 0
+    entries = 0
+    truncated = False
+    try:
+        for current, dirs, files in os.walk(root):
+            dirs[:] = [item for item in dirs if not item.startswith(".")]
+            for filename in files:
+                if filename.startswith("."):
+                    continue
+                entries += 1
+                if entries > max_entries:
+                    truncated = True
+                    break
+                try:
+                    total += (Path(current) / filename).stat().st_size
+                except OSError:
+                    continue
+            if truncated:
+                break
+    except OSError:
+        return None
+    return {"path": str(root), "bytes": total, "file_count": entries, "truncated": truncated}
+
+
 def _app_usage() -> dict | None:
     cgroup = _cgroup_info()
     if cgroup is not None:
@@ -213,12 +300,19 @@ def memory() -> dict:
             "hostname": hostname,
             "host_label": hostname or "current server",
             "server_label": "Host memory",
+            "cpu_count": os.cpu_count(),
+            "load_average": _load_average(),
+            "uptime_seconds": _uptime_seconds(),
+            "disk": _disk_usage(Path("/")),
+            "storage": _directory_size(settings.storage_path),
             "note": "This host does not expose a memory reading we can read.",
         }
 
     app = _app_usage()
     total = reading["total_bytes"]
     hostname = platform.node()
+    root_disk = _disk_usage(Path("/"))
+    storage_size = _directory_size(settings.storage_path)
     return {
         "available": True,
         "generated_at": now,
@@ -226,6 +320,10 @@ def memory() -> dict:
         "host_label": hostname or "current server",
         "server_label": f"{hostname} host" if hostname else "Host memory",
         "cpu_count": os.cpu_count(),
+        "load_average": _load_average(),
+        "uptime_seconds": _uptime_seconds(),
+        "disk": root_disk,
+        "storage": storage_size,
         "approximate": reading["source"] == "darwin",
         **{key: value for key, value in reading.items() if key != "source"},
         "app": (

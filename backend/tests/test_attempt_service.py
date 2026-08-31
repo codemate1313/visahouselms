@@ -1333,6 +1333,9 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         self.assertEqual(by_key["Primary API Key · gemini-2.5-flash"]["requests_today"], 1)
         self.assertEqual(by_key["Primary API Key · gemini-3.5-flash"]["requests_today"], 1)
+        self.assertIn("queue", summary)
+        self.assertIn("performance", summary)
+        self.assertEqual(summary["performance"]["timeout_failures_today"], 0)
 
     def test_ai_auto_evaluation_stops_current_pass_after_rate_limit(self):
         self._enable_ai_evaluation()

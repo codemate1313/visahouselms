@@ -64,7 +64,7 @@ export function PlanDetailsModal({ plan, onClose }: PlanDetailsModalProps) {
 
             </div>
           </div>
-          <IconButton className="plan-dialog-close" onClick={onClose} title={t.closeModalTitle} label={t.closeModalTitle} icon={<Icon name="x" />} />
+          <IconButton className="plan-dialog-close" onClick={onClose} label={t.closeModalTitle} icon={<Icon name="x" />} />
         </div>
 
         <div className="plan-dialog-body">
