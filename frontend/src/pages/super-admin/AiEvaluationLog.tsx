@@ -4,7 +4,20 @@ import { extractErrorMessage } from "@/api/errors";
 import { Modal, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/Button/Button";
-import { formatDateTime } from "@/utils/date";
+
+function formatLogDateTime(value: string | number | Date | null | undefined, fallback = "—"): string {
+  if (value == null || value === "") return fallback;
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return fallback;
+  return d.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Kolkata",
+  });
+}
 
 /**
  * The AI marking trail, written for a reader who does not work on the code.
@@ -217,7 +230,7 @@ export function AiEvaluationLog({ onCountChange }: { onCountChange?: (count: num
                       {formatDuration(row.duration_ms)}
                     </span>
                   </td>
-                  <td className="col-log-time">{formatDateTime(row.created_at)}</td>
+                  <td className="col-log-time">{formatLogDateTime(row.created_at)}</td>
                   <td className="col-log-action">
                     <Button
                       type="button"
@@ -262,7 +275,7 @@ export function AiEvaluationLog({ onCountChange }: { onCountChange?: (count: num
               </div>
               <div className="log-detail-summary-pill">
                 <span className="summary-pill-label">When</span>
-                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{formatDateTime(selected.created_at)}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{formatLogDateTime(selected.created_at)}</span>
               </div>
             </div>
 

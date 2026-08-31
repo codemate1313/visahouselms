@@ -4687,10 +4687,21 @@ button.danger-text:hover,
   font-size: 16px;
 }
 
+.ai-quota-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
 .ai-quota-figures {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface-muted, rgba(0, 0, 0, 0.025));
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
 .ai-quota-figures div {
@@ -4712,36 +4723,45 @@ button.danger-text:hover,
   color: var(--text-muted);
 }
 
-.ai-quota-spark {
+.ai-quota-gauge-container {
   display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  height: 60px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+  padding: 12px 0 6px;
+  min-height: 220px;
 }
 
-.ai-quota-spark-col {
-  display: flex;
-  flex: 1 1 0;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-width: 4px;
-  height: 100%;
-  background: rgba(120, 120, 120, 0.08);
-  border-radius: 3px 3px 0 0;
-  overflow: hidden;
+.ai-quota-gauge-svg {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  overflow: visible;
 }
 
-.ai-quota-spark-ok {
-  display: block;
-  background: #10b981;
-  min-height: 1px;
+.ai-gauge-bg-track {
+  color: rgba(148, 163, 184, 0.18);
 }
 
-.ai-quota-spark-failed {
-  display: block;
-  background: #ef4444;
+.ai-gauge-center-value {
+  font-size: 32px;
+  font-weight: 800;
+  fill: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-gauge-center-subtitle {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text-muted);
+  letter-spacing: 0.2px;
+}
+
+.ai-gauge-tick-label {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--text-muted);
 }
 
 .ai-quota-keys {
@@ -4975,11 +4995,18 @@ button.danger-text:hover,
 [data-theme="dark"] .ai-quota-bar.is-warning span { background: #fbbf24; }
 [data-theme="dark"] .ai-quota-bar.is-critical span { background: #fca5a5; }
 
-[data-theme="dark"] .ai-quota-spark-col {
-  background: rgba(255, 255, 255, 0.05);
+[data-theme="dark"] .ai-gauge-bg-track {
+  color: rgba(255, 255, 255, 0.08);
 }
-[data-theme="dark"] .ai-quota-spark-ok { background: #34d399; }
-[data-theme="dark"] .ai-quota-spark-failed { background: #f87171; }
+
+[data-theme="dark"] .ai-gauge-center-value {
+  fill: #f8fafc;
+}
+
+[data-theme="dark"] .ai-gauge-center-subtitle,
+[data-theme="dark"] .ai-gauge-tick-label {
+  fill: #94a3b8;
+}
 
 [data-theme="dark"] .ai-quota-switch-row,
 [data-theme="dark"] .ai-quota-key-card {

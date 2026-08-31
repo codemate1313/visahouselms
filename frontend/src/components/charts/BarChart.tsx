@@ -28,6 +28,38 @@ function safeValue(value: number): number {
 
 const BAR_PALETTE = Array.from({ length: 8 }, (_, index) => `var(--series-${index + 1})`);
 
+export function calculateIntegerTicks(maximum: number): { gridMax: number; ticks: number[] } {
+  if (maximum <= 0) {
+    return { gridMax: 4, ticks: [0, 1, 2, 3, 4] };
+  }
+  if (maximum <= 4) {
+    return { gridMax: 4, ticks: [0, 1, 2, 3, 4] };
+  }
+
+  const targetIntervals = 4;
+  const roughStep = maximum / targetIntervals;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const normalized = roughStep / magnitude;
+
+  let multiplier = 1;
+  if (normalized > 5) {
+    multiplier = 10;
+  } else if (normalized > 2.5) {
+    multiplier = 5;
+  } else if (normalized > 2) {
+    multiplier = magnitude >= 10 ? 2.5 : 5;
+  } else if (normalized > 1) {
+    multiplier = 2;
+  }
+
+  const step = Math.max(1, Math.round(multiplier * magnitude));
+  const intervals = Math.max(2, Math.ceil(maximum / step));
+  const gridMax = intervals * step;
+  const ticks = Array.from({ length: intervals + 1 }, (_, i) => i * step);
+
+  return { gridMax, ticks };
+}
+
 export function BarChart({
   data,
   title,
@@ -47,7 +79,7 @@ export function BarChart({
   }));
 
   const maximum = Math.max(0, ...rows.map((item) => item.value));
-  const gridMax = maximum < 10 ? Math.max(1, maximum) : Math.ceil(maximum * 1.2);
+  const { gridMax, ticks } = calculateIntegerTicks(maximum);
 
   if (!rows.length || maximum === 0) {
     return null;
@@ -72,9 +104,6 @@ export function BarChart({
   const totalBarsWidth = barWidth * count;
   const remainingSpace = chartWidth - totalBarsWidth;
   const gap = count > 1 ? remainingSpace / (count + 1) : remainingSpace / 2;
-
-  const tickCount = 5;
-  const ticks = Array.from({ length: tickCount }, (_, i) => (gridMax / (tickCount - 1)) * i);
 
   return (
     <section className="chart-card reference-styled-chart" aria-label={ariaLabel}>

@@ -598,7 +598,9 @@ def build_pdf(path: Path, title: str, sections: list[dict[str, object]]) -> None
         story.append(Paragraph(f"Part: {section['part']}", heading_style))
         if section.get("heading"):
             story.append(Paragraph(str(section["heading"]), body_style))
-        if section.get("passage"):
+        norm_part = str(section.get("part") or "").lower().replace("-", "_").replace(" ", "_")
+        is_passage_part = any(p in norm_part for p in ("reading_1b", "reading_2", "reading_3", "reading_4", "listening_3"))
+        if section.get("passage") and is_passage_part:
             story.append(Paragraph("Reading Passage:", body_style))
             escaped_passage = str(section["passage"]).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br/>")
             story.append(Paragraph(escaped_passage, body_style))

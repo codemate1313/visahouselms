@@ -232,6 +232,7 @@ export function ModuleEditor() {
         part.question_limit ? part.questions.length >= part.question_limit : part.questions.length > 0
       )
   );
+  const isMockSourceModule = Boolean(module && MOCK_SOURCE_TYPES.has(module.module_type));
   const [partTitle, setPartTitle] = useState("");
 
   /* Keyed on the part's id and its saved values rather than the object itself.
@@ -356,7 +357,7 @@ export function ModuleEditor() {
     const sourceModuleIds = usesMockSources
       ? SOURCE_SECTIONS.map((section) => Number(selectedSources[section])).filter(Boolean)
       : [];
-    if (usesMockSources && !moduleImportFile && sourceModuleIds.length !== SOURCE_SECTIONS.length) {
+    if (usesMockSources && sourceModuleIds.length !== SOURCE_SECTIONS.length) {
       setError(strings.newModule.validation);
       return;
     }
@@ -370,9 +371,9 @@ export function ModuleEditor() {
         ...(DERIVED_DURATION_MODULE_TYPES.has(requestedType) ? {} : { duration_minutes: details.duration_minutes }),
         show_onboarding_instructions: details.show_onboarding_instructions ?? true,
         onboarding_instructions: details.onboarding_instructions || null,
-        source_module_ids: isComposite && !moduleImportFile ? sourceModuleIds : [],
+        source_module_ids: isComposite ? sourceModuleIds : [],
       });
-      if (moduleImportFile) {
+      if (moduleImportFile && !usesMockSources) {
         const form = new FormData();
         form.append("file", moduleImportFile);
         const { data: importPreview } = await apiClient.post<ModuleImportPreview>(
@@ -608,7 +609,7 @@ export function ModuleEditor() {
 
   async function previewModuleImport(event: FormEvent) {
     event.preventDefault();
-    if (!module || !moduleImportFile) return;
+    if (!module || !moduleImportFile || isMockSourceModule) return;
     setBusy(true); setError(null); setModulePreview(null);
     try {
       const form = new FormData();
@@ -1114,7 +1115,7 @@ export function ModuleEditor() {
               />
             )}
           </Modal>
-          {isEditable && !allPartsComplete && (
+          {isEditable && !allPartsComplete && !isMockSourceModule && (
             <section className="authoring-panel" style={{ marginBottom: 24 }}>
               <div className="panel-title">
                 <div>

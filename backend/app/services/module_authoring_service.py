@@ -1114,10 +1114,13 @@ def _normalize_import_question_for_part(part: ExamModulePart, question: dict, in
         data["warnings"] = [w for w in data.get("warnings", []) if "Correct answer was not detected" not in w]
 
     data["instructions"] = None
+    turn_type_hint = (data.get("interaction") or {}).get("turn_type") or _default_turn_type(part, index)
+    is_read_aloud_turn = part.section_type == "speaking" and (turn_type_hint == "read_aloud" or (part.part_code == "speaking_3" and index == 0))
     uses_passage = bool(
         constraints.get("passage_required")
         or constraints.get("shared_passage")
         or constraints.get("layout") in {"shared_cloze", "notepad_gaps", "inline_matching_blanks", "source_text_matching"}
+        or is_read_aloud_turn
     )
     if not uses_passage:
         data["passage"] = None
@@ -1164,11 +1167,15 @@ def _normalize_import_question_for_part(part: ExamModulePart, question: dict, in
         interaction["adaptive_follow_up"] = bool(interaction.get("adaptive_follow_up", turn_type == "follow_up"))
         if part.part_code == "speaking_3" and turn_type == "read_aloud" and not (data.get("passage") or "").strip():
             prompt = str(data.get("prompt") or "").strip()
-            read_aloud_match = re.match(r"^\s*read\s+(?:the\s+)?(?:short\s+|given\s+)?text\s+aloud\s*:?\s*(.*)$", prompt, re.IGNORECASE | re.DOTALL)
+            read_aloud_match = re.match(
+                r"^\s*read\s+(?:the\s+)?(?:short\s+|given\s+)?text\s+aloud[\s.:-]+\s*(.+)$",
+                prompt,
+                re.IGNORECASE | re.DOTALL,
+            )
             if read_aloud_match and read_aloud_match.group(1).strip():
                 data["prompt"] = "Read the given text aloud."
                 data["passage"] = read_aloud_match.group(1).strip()
-            else:
+            elif prompt and prompt.strip().rstrip(".") not in {"Read the given text aloud", "Read the short text aloud"}:
                 data["passage"] = prompt
 
     data["interaction"] = interaction
