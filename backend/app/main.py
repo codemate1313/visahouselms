@@ -362,37 +362,3 @@ def database_health():
     finally:
         db.close()
 
-
-@app.get("/health/errors")
-def get_recent_errors():
-    from app.database import SessionLocal
-    from app.models.error_log import ErrorLog
-    db = SessionLocal()
-    try:
-        errors = db.query(ErrorLog).order_by(ErrorLog.created_at.desc()).limit(10).all()
-        return [
-            {
-                "id": err.id,
-                "message": err.message,
-                "stack_trace": err.stack_trace,
-                "path": err.path,
-                "method": err.method,
-                "created_at": err.created_at.isoformat() if err.created_at else None
-            }
-            for err in errors
-        ]
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        db.close()
-
-
-@app.get("/health/logs")
-def get_system_logs():
-    import subprocess
-    try:
-        res = subprocess.run(["journalctl", "-u", "visahouse-backend", "-n", "150", "--no-pager"], capture_output=True, text=True)
-        return {"stdout": res.stdout, "stderr": res.stderr}
-    except Exception as e:
-        return {"error": str(e)}
-
