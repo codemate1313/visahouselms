@@ -961,7 +961,7 @@ def test_configured_key(
             "supported": False,
             "message": detected["reason"],
         }
-    effective_model = model or (stored or {}).get("model")
+    effective_model = (model if model and model != "auto" else None) or (stored or {}).get("model") or DEFAULT_GEMINI_MODEL
     effective_endpoint = endpoint_url or (stored or {}).get("endpoint_url")
     # Ask the key what it can actually run before testing it. A model saved in
     # settings months ago (or retired by the provider) answers 404, and testing
