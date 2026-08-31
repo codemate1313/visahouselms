@@ -363,39 +363,5 @@ def database_health():
         db.close()
 
 
-@app.get("/health/check-final-test-1")
-def check_final_test_1():
-    from app.database import SessionLocal
-    from app.models.exam_module import ExamModule
-    db = SessionLocal()
-    try:
-        modules = db.query(ExamModule).filter(ExamModule.title.like("%Final test%")).all()
-        if not modules:
-            modules = db.query(ExamModule).filter(ExamModule.module_type == "final_test").all()
-        
-        result = []
-        for m in modules:
-            parts_info = []
-            for p in m.parts:
-                parts_info.append({
-                    "id": p.id,
-                    "title": p.title,
-                    "section_type": p.section_type,
-                    "auto_marked": p.auto_marked,
-                    "ai_evaluation_enabled": p.ai_evaluation_enabled,
-                })
-            result.append({
-                "module_id": m.id,
-                "title": m.title,
-                "module_type": m.module_type,
-                "parts": parts_info,
-            })
-        return {"status": "ok", "modules": result}
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        db.close()
-
-
 
 
