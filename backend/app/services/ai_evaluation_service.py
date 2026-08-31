@@ -703,6 +703,13 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
         model_options = item.get("model_options") if isinstance(item.get("model_options"), list) else []
         if model_options:
             model = _choose_model_from_options(provider, model, model_options)
+        existing = existing_by_id.get(key_id, {})
+        settings_changed = (
+            existing.get("provider") != provider
+            or existing.get("model") != model
+            or existing.get("endpoint_url") != endpoint_url
+            or existing.get("api_key") != api_key
+        )
         normalized.append({
             "id": key_id,
             "label": str(item.get("label") or f"API Key {index + 1}").strip()[:80],
@@ -712,9 +719,9 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
             "api_key": api_key,
             "enabled": bool(item.get("enabled", True)),
             "priority": index + 1,
-            "last_status": item.get("last_status"),
-            "last_checked_at": item.get("last_checked_at"),
-            "info": item.get("info"),
+            "last_status": None if settings_changed else item.get("last_status"),
+            "last_checked_at": None if settings_changed else item.get("last_checked_at"),
+            "info": None if settings_changed else item.get("info"),
             "model_options": model_options,
         })
     set_setting(db, "ai.api_keys", json.dumps(normalized) if normalized else None)

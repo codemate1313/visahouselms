@@ -2053,6 +2053,36 @@ class AttemptServiceTestCase(unittest.TestCase):
         [saved] = ai_evaluation_service._configured_keys(self.db, mask=False)
         self.assertEqual(saved["model"], "gemini-2.5-flash")
 
+    def test_saved_ai_key_clears_stale_test_status_when_model_changes(self):
+        ai_evaluation_service.save_configured_keys(self.db, [{
+            "id": "gemini-1",
+            "label": "Gemini key",
+            "provider": "gemini",
+            "model": "gemini-2.0-flash",
+            "api_key": "AIza-secret",
+            "enabled": True,
+            "priority": 1,
+            "last_status": "failed",
+            "last_checked_at": "2026-08-31T17:49:00",
+            "info": "Google Gemini: 404 for gemini-2.0-flash",
+        }])
+
+        ai_evaluation_service.save_configured_keys(self.db, [{
+            "id": "gemini-1",
+            "label": "Gemini key",
+            "provider": "gemini",
+            "model": "gemini-2.5-flash",
+            "api_key": "********",
+            "enabled": True,
+            "priority": 1,
+        }])
+
+        [saved] = ai_evaluation_service._configured_keys(self.db, mask=False)
+        self.assertEqual(saved["model"], "gemini-2.5-flash")
+        self.assertIsNone(saved["last_status"])
+        self.assertIsNone(saved["last_checked_at"])
+        self.assertIsNone(saved["info"])
+
     def test_saved_ai_key_preserves_masked_secret_and_model_options(self):
         ai_evaluation_service.save_configured_keys(self.db, [{
             "id": "openai-1",
