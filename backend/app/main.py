@@ -363,22 +363,4 @@ def database_health():
         db.close()
 
 
-@app.get("/health/retry-attempt-139")
-def retry_attempt_139():
-    from app.database import SessionLocal
-    from app.models.attempt import TestAttempt
-    from app.services import ai_evaluation_service
-    db = SessionLocal()
-    try:
-        attempt = db.query(TestAttempt).filter(TestAttempt.id == 139).first()
-        if not attempt:
-            return {"error": "Attempt 139 not found"}
-        res = ai_evaluation_service.retry_attempt_evaluation(db, attempt)
-        return {"status": "ok", "result": res}
-    except Exception as e:
-        return {"error": str(e)}
-    finally:
-        db.close()
-
-
 
