@@ -690,18 +690,28 @@ class AttemptServiceTestCase(unittest.TestCase):
         attempt = self._submit_writing_attempt(module)
         self.assertEqual(self._grading_alerts(), [])
 
-        # Quota ran out before any part was marked - no failure rows, nothing
-        # graded. A person has to pick this up, so a person has to hear about it.
-        with patch.object(ai_evaluation_service, "auto_evaluate_submission", return_value=True):
-            job_service._auto_grade_attempt(self.db, {"attempt_id": attempt.id})
+        def run_the_job():
+            # Quota exhausted: nothing marked, and no failure row to show for it.
+            with patch.object(ai_evaluation_service, "auto_evaluate_submission", return_value=True):
+                job_service._auto_grade_attempt(self.db, {"attempt_id": attempt.id})
 
+        # The first runs stay quiet - the scheduler still has retries left, and
+        # a paper the AI marks on the second go should never have reached a
+        # grader's queue at all.
+        run_the_job()
+        self.assertEqual(self._grading_alerts(), [])
+
+        for _ in range(job_service.AI_MAX_AUTOMATIC_ATTEMPTS - 1):
+            self.db.add(Job(type="ai_auto_grade", payload={"attempt_id": attempt.id}, status="running"))
+            self.db.commit()
+            run_the_job()
+
+        # Out of automatic tries: now a person owns it, and hears about it.
         self.assertEqual(len(self._grading_alerts()), 1)
 
-        # Running the job again - an AI retry, or a recovered job - must not
+        # A further run - a student pressing "try AI marking again" - must not
         # announce the same submission a second time.
-        with patch.object(ai_evaluation_service, "auto_evaluate_submission", return_value=True):
-            job_service._auto_grade_attempt(self.db, {"attempt_id": attempt.id})
-
+        run_the_job()
         self.assertEqual(len(self._grading_alerts()), 1)
 
     def test_submission_without_ai_marking_alerts_the_grader_at_submit(self):
@@ -777,11 +787,22 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(queued, 1)
         self.assertEqual(self.db.query(Job).filter_by(type="ai_auto_grade").count(), 1)
         self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 0)
+
+        # A run that finished but left the part unmarked - a rate limit on one
+        # part of two reports success - is worth repeating once the provider
+        # has had a moment, but not before.
         job = self.db.query(Job).filter_by(type="ai_auto_grade").one()
         job.status = "done"
+        job.finished_at = datetime.now(timezone.utc)
         self.db.add(job)
         self.db.commit()
         self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 0)
+
+        job.finished_at = datetime.now(timezone.utc) - timedelta(
+            seconds=job_service.AI_FIRST_RETRY_AFTER_SECONDS + 30
+        )
+        self.db.commit()
+        self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 1)
 
     def test_recovery_retries_an_attempt_whose_ai_job_failed(self):
         """A provider blip used to park an attempt in the instructor queue for good.
@@ -817,22 +838,84 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 1)
 
         # And it gives up rather than looping on an attempt that keeps failing.
+        # The budget is spent in runs: one run writes a failed evaluation row
+        # per part and per configured key, so counting those gave a two-part
+        # paper no retries at all.
         for row in self.db.query(Job).filter_by(type="ai_auto_grade").all():
             row.status = "failed"
             row.finished_at = datetime.now(_tz.utc) - timedelta(
                 seconds=job_service.AI_RETRY_AFTER_SECONDS + 60
             )
-        for _ in range(job_service.AI_MAX_AUTOMATIC_ATTEMPTS):
-            self.db.add(AiEvaluation(
-                attempt_id=attempt.id,
-                part_id=attempt.module.parts[0].id,
-                requested_by_id=self.student.id,
-                provider="gemini",
-                status="failed",
-                error="boom",
-            ))
         self.db.commit()
+        while (
+            self.db.query(Job).filter_by(type="ai_auto_grade").count()
+            < job_service.AI_MAX_AUTOMATIC_ATTEMPTS
+        ):
+            self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 1)
+            for row in self.db.query(Job).filter_by(type="ai_auto_grade").all():
+                row.status = "failed"
+                row.finished_at = datetime.now(_tz.utc) - timedelta(
+                    seconds=job_service.AI_RETRY_AFTER_SECONDS + 60
+                )
+            self.db.commit()
+
         self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 0)
+
+    def test_a_part_lost_to_a_rate_limit_is_retried_instead_of_going_manual(self):
+        """The commonest way AI marking "just did not work" for one student.
+
+        A per-minute rate limit takes one part of a two-part paper. The run
+        reports "AI-graded 1/2" and is recorded as done, which used to end the
+        matter: recovery only ever repeated *failed* jobs, so that part stayed
+        unmarked and an instructor was told to grade it by hand.
+        """
+        self._enable_ai_evaluation()
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt = self._submit_writing_attempt(module)
+
+        calls = {"count": 0}
+
+        def rate_limited_on_the_second_part(_config, payload):
+            calls["count"] += 1
+            if calls["count"] == 2:
+                raise HTTPException(status_code=429, detail="Rate limit reached (5 RPM free tier).")
+            return self._ai_suggestion(payload)
+
+        with patch.object(
+            ai_evaluation_service, "_remote_evaluator", side_effect=rate_limited_on_the_second_part
+        ):
+            job_service._auto_grade_attempt(self.db, {"attempt_id": attempt.id})
+
+        self.db.refresh(attempt)
+        self.assertEqual(
+            len([grade for grade in attempt.part_grades if grade.status == PART_GRADE_PENDING]), 1
+        )
+        # Nobody is told it needs marking by hand while a retry is still coming.
+        self.assertEqual(self._grading_alerts(), [])
+
+        # What the worker records for that run: it finished, and it reported
+        # marking a part, so the job itself is "done".
+        for row in self.db.query(Job).filter_by(type="ai_auto_grade").all():
+            row.status = "done"
+            row.finished_at = datetime.now(timezone.utc) - timedelta(
+                seconds=job_service.AI_FIRST_RETRY_AFTER_SECONDS + 30
+            )
+        self.db.commit()
+
+        self.assertEqual(job_service.recover_missing_ai_auto_grade_jobs(self.db), 1)
+
+        with patch.object(
+            ai_evaluation_service,
+            "_remote_evaluator",
+            side_effect=lambda _config, payload: self._ai_suggestion(payload),
+        ):
+            job_service._auto_grade_attempt(self.db, {"attempt_id": attempt.id})
+
+        self.db.refresh(attempt)
+        self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in attempt.part_grades))
+        self.assertEqual(self._grading_alerts(), [])
 
     def test_student_can_request_human_review_after_ai_grade(self):
         module = self._build_writing_module()

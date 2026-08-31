@@ -25,6 +25,11 @@ SCHEDULER_INTERVAL_SECONDS = 60
 # two bound the second chance: wait for the blip to pass, and give up after a
 # few tries so a genuinely unmarkable part cannot loop.
 AI_RETRY_AFTER_SECONDS = 15 * 60
+# The commonest reason a part goes unmarked is a per-minute rate limit, and
+# that window clears in about a minute - waiting a quarter of an hour to find
+# that out leaves the student staring at "awaiting examiner marking" for no
+# reason. Wait briefly after the first run, then back off for the rest.
+AI_FIRST_RETRY_AFTER_SECONDS = 2 * 60
 AI_MAX_AUTOMATIC_ATTEMPTS = 3
 
 _worker_thread: Optional[threading.Thread] = None
@@ -49,6 +54,22 @@ def _ai_grade_job_exists(db: Session, attempt_id: int, statuses: Optional[set[st
     if statuses is not None:
         rows = [row for row in rows if row.status in statuses]
     return any((row.payload or {}).get("attempt_id") == attempt_id for row in rows)
+
+
+def _ai_grade_runs(db: Session, attempt_id: int) -> int:
+    """How many times AI marking has been started for this attempt.
+
+    Counted in job rows, one per run. It used to be counted in failed
+    AiEvaluation rows, which is a different number entirely: one run writes a
+    failed row per part *and* per configured key, so a single bad run on a
+    two-part paper - or on one part with three keys - spent the whole budget
+    and the attempt was never retried at all.
+    """
+    return sum(
+        1
+        for row in db.query(Job).filter(Job.type == "ai_auto_grade").all()
+        if (row.payload or {}).get("attempt_id") == attempt_id
+    )
 
 
 def enqueue_ai_auto_grade(db: Session, attempt_id: int) -> Optional[Job]:
@@ -99,22 +120,23 @@ def recover_missing_ai_auto_grade_jobs(db: Session) -> int:
             continue  # already queued or running
 
         if previous:
-            # A completed run is a verdict: the AI looked at the attempt and
-            # what is left belongs to an instructor. Only a *failed* job means
-            # the run itself fell over - that is the one worth repeating.
-            latest = max(previous, key=lambda row: (row.finished_at or row.created_at))
-            if latest.status != JOB_FAILED:
-                continue
-
-            attempts_made = db.query(AiEvaluation).filter_by(attempt_id=attempt_id, status="failed").count()
-            if attempts_made >= AI_MAX_AUTOMATIC_ATTEMPTS:
+            # Reaching here means the attempt still has AI-enabled parts sitting
+            # at "pending", so whatever the last run reported, it did not mark
+            # them. The job's own status cannot be trusted for that: a run that
+            # marks one part of two and loses the other to a rate limit returns
+            # "AI-graded 1/2" and is recorded as done, which used to end the
+            # matter for good and leave half the paper permanently manual.
+            if len(previous) >= AI_MAX_AUTOMATIC_ATTEMPTS:
                 continue  # stop trying; an instructor owns it now
-            finished = [row.finished_at for row in previous if row.finished_at]
-            if finished:
-                last = max(finished)
+            # A run with no finish time never reported back; date the backoff
+            # from when it started rather than retrying it on the spot.
+            stamps = [row.finished_at or row.created_at for row in previous if (row.finished_at or row.created_at)]
+            if stamps:
+                last = max(stamps)
                 if last.tzinfo is None:
                     last = last.replace(tzinfo=timezone.utc)
-                if (now - last).total_seconds() < AI_RETRY_AFTER_SECONDS:
+                wait = AI_FIRST_RETRY_AFTER_SECONDS if len(previous) < 2 else AI_RETRY_AFTER_SECONDS
+                if (now - last).total_seconds() < wait:
                     continue  # too soon - let the provider settle
 
         if enqueue_ai_auto_grade(db, attempt_id) is not None:
@@ -155,6 +177,17 @@ def _purge_logs(db: Session, payload: Optional[dict]) -> str:
 
     deleted = log_service.purge_request_logs(db)
     return f"Purged {deleted} request log rows past retention."
+
+
+def _pending_ai_part_count(db: Session, attempt, eligible_part_ids: set) -> int:
+    """AI-enabled parts on this attempt that still carry no grade."""
+    db.refresh(attempt)
+    graded_part_ids = {
+        grade.part_id
+        for grade in attempt.part_grades
+        if grade.status != PART_GRADE_PENDING
+    }
+    return len(eligible_part_ids - graded_part_ids)
 
 
 def _notify_grading_routed_after_ai(db: Session, attempt) -> None:
@@ -203,7 +236,17 @@ def _auto_grade_attempt(db: Session, payload: Optional[dict]) -> str:
     from app.services import notification_service
 
     ai_failed = total > 0 and graded < total and failed_after > failed_before
-    if ai_failed:
+    still_pending = _pending_ai_part_count(db, attempt, eligible_part_ids)
+    # The scheduler will come back for anything still unmarked, so nobody is
+    # told about it yet. Announcing "manual review required" after the first
+    # rate limit is how an attempt the AI marks two minutes later still ends up
+    # in an instructor's queue - and how the student sees a failure that was
+    # never final.
+    retry_coming = still_pending > 0 and _ai_grade_runs(db, attempt.id) < AI_MAX_AUTOMATIC_ATTEMPTS
+
+    if retry_coming:
+        pass
+    elif ai_failed:
         notification_service.notify_ai_evaluation_failed(db, attempt)
     else:
         # Submission held this back until the AI had finished, so that a paper
@@ -217,6 +260,8 @@ def _auto_grade_attempt(db: Session, payload: Optional[dict]) -> str:
     if total > 0 and graded == 0 and failed_after > failed_before:
         raise RuntimeError(f"AI evaluator failed for attempt {attempt.id}; see ai_evaluations for details.")
     suffix = " (quota exhausted for the rest)" if quota_exhausted else ""
+    if retry_coming:
+        suffix += f"; {still_pending} part(s) still unmarked, retrying automatically"
     return f"AI-graded {graded}/{total} part(s) for attempt {attempt.id}{suffix}."
 
 

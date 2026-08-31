@@ -2341,11 +2341,25 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
             suggestion = request_suggestion(db, attempt.user, attempt, part)
         except HTTPException as exc:
             if exc.status_code == 429:
+                logger.info(
+                    "AI evaluation rate-limited for attempt %s part %s; the scheduler will retry the rest",
+                    attempt.id,
+                    part.id,
+                )
                 quota_exhausted = True
                 # The next part would land in the same closed window. Speaking
                 # parts are large, so one rate-limited part used to take the
                 # rest of the paper down with it.
                 break
+            # Swallowed silently until now: the failed row was written, but
+            # nothing said which part had gone missing or why.
+            logger.warning(
+                "AI evaluation refused for attempt %s part %s (%s): %s",
+                attempt.id,
+                part.id,
+                exc.status_code,
+                _redact_secrets(exc.detail)[:200],
+            )
             continue
         except Exception:
             logger.exception(
