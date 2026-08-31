@@ -1154,14 +1154,17 @@
 }
 
 .searchable-select-container.grading-filter-select,
-.grading-filter-select {
+.grading-filter-select,
+.searchable-select-container.attempts-filter-select,
+.attempts-filter-select {
   width: 250px !important;
   max-width: 250px !important;
   min-width: 220px !important;
   flex: 0 0 250px !important;
 }
 
-.grading-filter-select .searchable-select-dropdown {
+.grading-filter-select .searchable-select-dropdown,
+.attempts-filter-select .searchable-select-dropdown {
   min-width: 260px !important;
   width: max-content !important;
   max-width: 340px !important;

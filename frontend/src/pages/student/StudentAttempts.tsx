@@ -35,8 +35,7 @@ export function StudentAttempts() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedGradingType, setSelectedGradingType] = useState<string>("all");
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const requestIdRef = useRef(0);
 
   const loadAttempts = useCallback(async (showInitialLoading = false) => {
@@ -91,24 +90,13 @@ export function StudentAttempts() {
   if (loading) return <p>{strings.loading}</p>;
 
   const filteredAttempts = attempts.filter((attempt) => {
-    if (selectedStatus !== "all" && attempt.status !== selectedStatus) {
-      return false;
-    }
-    if (selectedGradingType === "all") {
-      return true;
-    }
-    if (selectedGradingType === "ai_graded") {
-      return Boolean(attempt.is_ai_graded);
-    }
-    if (selectedGradingType === "instructor_requested") {
-      return Boolean(attempt.instructor_requested);
-    }
-    if (selectedGradingType === "pending_grading") {
-      return Boolean(attempt.is_pending_grading);
-    }
-    if (selectedGradingType === "instructor_graded") {
-      return Boolean(attempt.is_instructor_graded);
-    }
+    if (selectedFilter === "all") return true;
+    if (selectedFilter === "ai_graded") return Boolean(attempt.is_ai_graded);
+    if (selectedFilter === "instructor_graded") return Boolean(attempt.is_instructor_graded);
+    if (selectedFilter === "instructor_requested") return Boolean(attempt.instructor_requested);
+    if (selectedFilter === "pending_grading") return Boolean(attempt.is_pending_grading);
+    if (selectedFilter === "in_progress") return attempt.status === "in_progress" || attempt.status === "ready";
+    if (selectedFilter === "expired") return attempt.status === "expired";
     return true;
   });
 
@@ -202,36 +190,22 @@ export function StudentAttempts() {
         </div>
       )}
 
-      <div className="filter-bar" style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
+      <div className="filter-bar" style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: 20 }}>
         <SearchableSelect
           options={[
-            { value: "all", label: "All Statuses" },
-            { value: "ready", label: strings.statusLabels.ready },
-            { value: "in_progress", label: strings.statusLabels.in_progress },
-            { value: "submitted", label: strings.statusLabels.submitted },
-            { value: "grading", label: strings.statusLabels.grading },
-            { value: "graded", label: strings.statusLabels.graded },
-            { value: "expired", label: strings.statusLabels.expired },
+            { value: "all", label: strings.filterLabels.all },
+            { value: "ai_graded", label: strings.filterLabels.ai_graded },
+            { value: "instructor_graded", label: strings.filterLabels.instructor_graded },
+            { value: "instructor_requested", label: strings.filterLabels.instructor_requested },
+            { value: "pending_grading", label: strings.filterLabels.pending_grading },
+            { value: "in_progress", label: strings.filterLabels.in_progress },
+            { value: "expired", label: strings.filterLabels.expired },
           ]}
-          value={selectedStatus}
-          onChange={(val) => setSelectedStatus(String(val))}
-          placeholder="Filter by status"
+          value={selectedFilter}
+          onChange={(val) => setSelectedFilter(String(val))}
+          placeholder={strings.filterPlaceholder}
           searchable={false}
-          className="status-filter-select"
-        />
-        <SearchableSelect
-          options={[
-            { value: "all", label: strings.gradingFilterLabels.all },
-            { value: "ai_graded", label: strings.gradingFilterLabels.ai_graded },
-            { value: "instructor_requested", label: strings.gradingFilterLabels.instructor_requested },
-            { value: "pending_grading", label: strings.gradingFilterLabels.pending_grading },
-            { value: "instructor_graded", label: strings.gradingFilterLabels.instructor_graded },
-          ]}
-          value={selectedGradingType}
-          onChange={(val) => setSelectedGradingType(String(val))}
-          placeholder={strings.gradingPlaceholder}
-          searchable={false}
-          className="grading-filter-select"
+          className="attempts-filter-select"
         />
         {refreshing && <span className="text-secondary text-sm">{strings.refreshing}</span>}
       </div>

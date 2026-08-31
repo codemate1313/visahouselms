@@ -29,13 +29,16 @@ export const studentAttemptsStrings = {
   },
   resumeTest: "Resume test",
   viewResult: "View result",
-  gradingFilterLabels: {
-    all: "All Grading Types",
+  filterLabels: {
+    all: "All Tests",
     ai_graded: "Graded by AI",
+    instructor_graded: "Graded by Instructor",
     instructor_requested: "Requested for Instructor Grading",
     pending_grading: "Pending Grading",
-    instructor_graded: "Graded by Instructor",
+    in_progress: "In Progress",
+    expired: "Expired",
   },
+  filterPlaceholder: "Filter tests",
   gradingBadges: {
     ai_graded: "AI Graded",
     instructor_requested: "Instructor Review Requested",
@@ -43,9 +46,8 @@ export const studentAttemptsStrings = {
     instructor_graded: "Instructor Graded",
     auto_marked: "Auto Marked",
   },
-  gradingPlaceholder: "Filter by grading",
   emptyFiltered: {
     title: "No attempts found",
-    description: "Try adjusting your status or grading filters.",
+    description: "Try selecting a different filter option.",
   },
 } as const;
