@@ -85,18 +85,51 @@ DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 MASKED_SECRET = "********"
 SUPPORTED_KEY_PROVIDERS = {"gemini", "custom_json", "openai"}
+# Which Gemini models are suitable for marking. This is a filter over what
+# Google actually offers - never a claim that these exist. Google retires model
+# names on its own schedule, and a name hardcoded as a fallback becomes a
+# disconnected number: every request to it fails, so no paper gets marked until
+# somebody notices and edits the code.
 GEMINI_EVALUATION_MODELS = {
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-8b",
-    "gemini-1.5-pro",
     "gemini-2.0-flash",
     "gemini-2.0-flash-lite",
     "gemini-2.5-flash",
     "gemini-2.5-flash-lite",
     "gemini-2.5-pro",
-    "gemini-flash-latest",
-    "gemini-pro-latest",
 }
+# Preference order when a model has to be chosen for us - the configured one is
+# gone, or it just came back rate-limited. Every candidate is checked against
+# the live directory before it is used, so an entry Google switches off simply
+# stops being picked instead of taking AI marking down with it.
+GEMINI_FLASH_PREFERENCE = (
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash-lite",
+)
+# A paper set to a "pro" model was chosen for marking quality. Falling back to
+# flash is a real downgrade, so pro falls to pro first and only drops to flash
+# when there is no pro model left to call.
+GEMINI_PRO_PREFERENCE = (
+    "gemini-2.5-pro",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+)
+# Names Google has already retired, mapped to the family they belonged to.
+GEMINI_RETIRED_MODELS = {
+    "gemini-1.5": "flash",
+    "gemini-1.5-flash": "flash",
+    "gemini-1.5-flash-8b": "flash",
+    "gemini-flash-latest": "flash",
+    "gemini-1.5-pro": "pro",
+    "gemini-pro-latest": "pro",
+}
+# The live directory, cached so marking a paper does not cost an extra call to
+# Google's model list every time.
+LIVE_MODELS_SETTING = "ai.live_gemini_models"
+LIVE_MODELS_TTL_SECONDS = 24 * 60 * 60
+MODEL_CHECK_SETTING = "ai.models_checked_at"
+MODEL_CHECK_INTERVAL_SECONDS = 7 * 24 * 60 * 60
 OPENAI_EVALUATION_MODEL_PREFIXES = (
     "gpt-5",
     "gpt-4.1",
@@ -317,6 +350,97 @@ def _resolve_model_for_provider(provider: str, model: Optional[str]) -> str:
     return value if _model_matches_provider(provider, value) else _default_model(provider)
 
 
+def _fetch_gemini_model_ids(api_key: str) -> list[str]:
+    """Ask Google which models this key can actually call today."""
+    with httpx.Client(timeout=15.0) as client:
+        response = client.get(f"{GEMINI_API_ROOT}/models", headers=_gemini_headers(api_key))
+        response.raise_for_status()
+        data = response.json()
+    return [
+        str(item.get("name") or "").removeprefix("models/")
+        for item in data.get("models", [])
+        if "generateContent" in set(item.get("supportedGenerationMethods") or [])
+        and str(item.get("name") or "")
+    ]
+
+
+def live_gemini_models(db: Session, api_key: str, *, force: bool = False) -> list[str]:
+    """The live directory, cached for a day.
+
+    An empty list means "we do not know" - never "nothing works". The caller
+    must treat it that way, or a blip on Google's model endpoint would stop
+    every evaluation instead of just leaving the fallback unverified.
+    """
+    from app.services.settings_service import get_setting, set_setting
+
+    cached: dict = {}
+    raw = get_setting(db, LIVE_MODELS_SETTING)
+    if raw:
+        try:
+            cached = json.loads(raw)
+        except (TypeError, ValueError):
+            cached = {}
+
+    if not force and cached.get("checked_at"):
+        try:
+            checked_at = datetime.fromisoformat(cached["checked_at"])
+            if (_now() - checked_at).total_seconds() < LIVE_MODELS_TTL_SECONDS:
+                return list(cached.get("models") or [])
+        except (TypeError, ValueError):
+            pass
+
+    try:
+        models = _fetch_gemini_model_ids(api_key)
+    except Exception as exc:
+        logger.warning("Could not refresh the Gemini model directory: %s", _redact_secrets(exc)[:200])
+        # Stale beats nothing: yesterday's directory is still a better guide
+        # than a hardcoded guess.
+        return list(cached.get("models") or [])
+
+    if models:
+        set_setting(
+            db,
+            LIVE_MODELS_SETTING,
+            json.dumps({"checked_at": _now().isoformat(), "models": models}),
+        )
+    return models
+
+
+def _gemini_model_family(model: str) -> str:
+    return "pro" if "pro" in (model or "").lower() else "flash"
+
+
+def gemini_model_chain(model: Optional[str], live_models: Optional[list[str]] = None) -> list[str]:
+    """The model to call, then what to try if it will not answer.
+
+    The configured model leads unless it is one Google has already retired, or
+    the live directory says it is gone. Everything after it is a preference
+    order filtered by that same directory, so the chain only ever contains
+    numbers that were connected the last time we looked.
+    """
+    requested = (model or "").replace("–", "-").replace("—", "-").strip().removeprefix("models/")
+    known_live = set(live_models or [])
+    family = _gemini_model_family(requested or DEFAULT_GEMINI_MODEL)
+    preference = GEMINI_PRO_PREFERENCE if family == "pro" else GEMINI_FLASH_PREFERENCE
+
+    chain: list[str] = []
+    retired = requested in GEMINI_RETIRED_MODELS
+    gone_from_directory = bool(known_live) and requested not in known_live
+    if requested and not retired and not gone_from_directory:
+        chain.append(requested)
+
+    for candidate in preference:
+        # With no directory to check against, the preference order is all we
+        # have; with one, only what it lists is worth dialling.
+        if known_live and candidate not in known_live:
+            continue
+        chain.append(candidate)
+
+    if not chain:
+        chain.append(requested or DEFAULT_GEMINI_MODEL)
+    return list(dict.fromkeys(chain))
+
+
 def _default_model_options(provider: str, model: Optional[str] = None) -> list[dict]:
     if provider == "gemini":
         selected = _resolve_model_for_provider(provider, model)
@@ -400,8 +524,19 @@ def list_evaluation_models(
         options.append(_model_option(model_id, item.get("displayName")))
 
     selected = (model or DEFAULT_GEMINI_MODEL).removeprefix("models/")
-    if selected in GEMINI_EVALUATION_MODELS and not any(option["value"] == selected for option in options):
-        options.insert(0, _model_option(selected))
+    if selected and not any(option["value"] == selected for option in options):
+        # Google did not list this model for this key. Dropping it silently
+        # makes the settings screen look like it never saved; offering it as a
+        # normal choice is how a retired model gets picked again. Show it, and
+        # say what is wrong with it.
+        options.insert(
+            0,
+            {
+                "value": selected,
+                "label": f"{_model_label(selected)} - no longer available",
+                "available": False,
+            },
+        )
     return options or _default_model_options(provider, model)
 
 
@@ -570,6 +705,112 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
     set_setting(db, "ai.api_keys", json.dumps(normalized) if normalized else None)
 
 
+def check_configured_models(db: Session, *, force: bool = False) -> list[dict]:
+    """Compare every configured Gemini key's model against the live directory.
+
+    Google announces retirements well in advance, so this is the difference
+    between hearing about it a month early and hearing about it from a student
+    whose paper was not marked. Runs weekly from the scheduler.
+    """
+    from app.services.settings_service import get_setting, set_setting
+
+    if not force:
+        last = get_setting(db, MODEL_CHECK_SETTING)
+        if last:
+            try:
+                if (_now() - datetime.fromisoformat(last)).total_seconds() < MODEL_CHECK_INTERVAL_SECONDS:
+                    return []
+            except (TypeError, ValueError):
+                pass
+
+    problems: list[dict] = []
+    for item in _configured_keys(db, mask=False):
+        if (item.get("provider") or "gemini") != "gemini" or not item.get("api_key"):
+            continue
+        model = (item.get("model") or "").removeprefix("models/")
+        live = live_gemini_models(db, item["api_key"], force=True)
+        if not live or not model or model in live:
+            continue  # no directory to judge against, or the model is fine
+
+        replacement = gemini_model_chain(model, live)[0]
+        problems.append({"key_label": item.get("label"), "model": model, "replacement": replacement})
+
+    set_setting(db, MODEL_CHECK_SETTING, _now().isoformat())
+
+    for problem in problems:
+        try:
+            from app.services import notification_service
+
+            notification_service.notify_api_key_down(
+                db,
+                "Google Gemini",
+                (
+                    f"Model '{problem['model']}' is no longer offered to "
+                    f"{problem['key_label'] or 'your Gemini key'}. AI marking will use "
+                    f"'{problem['replacement']}' until you change it in Platform Settings."
+                ),
+            )
+        except Exception:
+            logger.exception("Could not send the model availability notification")
+    return problems
+
+
+def _persist_key_model_choice(db: Session, key_id: Optional[str], model: str) -> bool:
+    """Point the stored key at a model that answers. Returns True if it moved."""
+    from app.services.settings_service import set_setting
+
+    if not key_id or key_id == "legacy":
+        return False
+    stored = _configured_keys(db, mask=False)
+    changed = False
+    for item in stored:
+        if item.get("id") == key_id and item.get("model") != model:
+            item["model"] = model
+            changed = True
+    if changed:
+        set_setting(db, "ai.api_keys", json.dumps(stored))
+    return changed
+
+
+def _record_model_substitution(db: Session, config: dict, substitution: dict, record: AiEvaluation) -> None:
+    """A retired model was dialled around. Make that visible everywhere.
+
+    The evaluation log gets the model that actually marked the paper, the
+    stored setting stops naming a dead one, and the super admins are told
+    once - by correcting the setting first, the next call goes straight to
+    the working model and never lands here again.
+    """
+    requested = substitution.get("requested")
+    used = substitution.get("used")
+    if not used or used == requested:
+        return
+
+    record.model = used
+    logger.warning(
+        "Gemini model %s was unavailable for key %s; marked with %s instead",
+        requested,
+        config.get("key_label") or "Primary API Key",
+        used,
+    )
+    if not _persist_key_model_choice(db, config.get("key_id"), used):
+        return
+
+    try:
+        from app.services import notification_service
+
+        notification_service.notify_api_key_down(
+            db,
+            "Google Gemini",
+            (
+                f"The configured model '{requested}' is no longer available to "
+                f"{config.get('key_label') or 'your Gemini key'}. AI marking has switched to "
+                f"'{used}' and the setting has been updated - no papers were left unmarked."
+            ),
+        )
+    except Exception:
+        logger.exception("Could not send the retired-model notification")
+
+
 def _candidate_configs(db: Session) -> list[dict]:
     base = _config(db)
     candidates = []
@@ -587,10 +828,16 @@ def _candidate_configs(db: Session) -> list[dict]:
             "api_key": item["api_key"],
             "key_id": item.get("id"),
             "key_label": item.get("label"),
+            # Which models this key can actually call, so a retired one is
+            # never dialled and the fallback is a number we know is connected.
+            "live_models": live_gemini_models(db, item["api_key"]) if provider == "gemini" else [],
         })
     if candidates:
         return candidates
-    return [{**base, "key_id": "legacy", "key_label": "Primary API Key"}]
+    legacy = {**base, "key_id": "legacy", "key_label": "Primary API Key"}
+    if legacy.get("provider") == "gemini" and legacy.get("api_key"):
+        legacy["live_models"] = live_gemini_models(db, legacy["api_key"])
+    return [legacy]
 
 
 def test_connection(
@@ -1407,14 +1654,31 @@ def _batch_evaluation_prompt(payload: dict) -> str:
     )
 
 
+def _model_is_gone(response: httpx.Response) -> bool:
+    """Google's way of saying the number is disconnected.
+
+    A retired model answers 404, and sometimes 400 with the reason in the body.
+    Either way it is the model that is wrong, not the request - so the fix is
+    to dial a different one, not to fail the paper.
+    """
+    if response.status_code == 404:
+        return True
+    if response.status_code not in (400, 403):
+        return False
+    body = (response.text or "").lower()
+    return any(
+        phrase in body
+        for phrase in ("not found", "is not supported", "does not exist", "has been deprecated", "no longer available")
+    )
+
+
 def _gemini_evaluator(config: dict, payload: dict) -> dict:
     api_key = config["api_key"]
-    model = config.get("model") or DEFAULT_GEMINI_MODEL
-    if model in ("gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5", "gemini-flash-latest", "gemini-pro-latest"):
-        model = "gemini-2.0-flash"
-    if model.startswith("models/"):
-        model = model[len("models/"):]
-    url = f"{GEMINI_API_ROOT}/models/{model}:generateContent"
+    requested_model = (config.get("model") or DEFAULT_GEMINI_MODEL).replace("–", "-").replace("—", "-").strip().removeprefix("models/")
+    # What to call, and what to call instead if it will not answer. Checked
+    # against Google's live directory rather than a name pinned in this file.
+    model_chain = gemini_model_chain(requested_model, config.get("live_models"))
+    model = model_chain[0]
 
     parts = []
     if payload.get("task") == "cefr_rubric_evaluation_batch":
@@ -1495,28 +1759,41 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
 
     timeout = _timeout_for_request(payload)
     with httpx.Client(timeout=timeout) as client:
-        res = client.post(url, headers=headers, json=gemini_payload)
-
-        # A schema this endpoint will not accept must not cost the student
-        # their evaluation - drop it and ask again in the original shape.
-        if res.status_code == 400 and "responseSchema" in generation_config:
-            logger.info("Gemini rejected the response schema; retrying without it")
-            generation_config.pop("responseSchema")
+        res = None
+        for index, candidate in enumerate(model_chain):
+            model = candidate
+            url = f"{GEMINI_API_ROOT}/models/{candidate}:generateContent"
             res = client.post(url, headers=headers, json=gemini_payload)
 
-        if res.status_code == 429 and model != "gemini-2.0-flash":
-            logger.info("Primary Gemini model %s returned 429, falling back to gemini-2.0-flash", model)
-            # Retrying inside the same minute spends another request; use gemini-2.0-flash.
-            time.sleep(RATE_LIMIT_RETRY_SECONDS)
-            fallback_url = f"{GEMINI_API_ROOT}/models/gemini-2.0-flash:generateContent"
-            res = client.post(fallback_url, headers=headers, json=gemini_payload)
+            # A schema this endpoint will not accept must not cost the student
+            # their evaluation - drop it and ask again in the original shape.
+            if res.status_code == 400 and "responseSchema" in generation_config:
+                logger.info("Gemini rejected the response schema; retrying without it")
+                generation_config.pop("responseSchema")
+                res = client.post(url, headers=headers, json=gemini_payload)
+
+            last_candidate = index == len(model_chain) - 1
+            if _model_is_gone(res) and not last_candidate:
+                logger.warning(
+                    "Gemini model %s is no longer available; trying %s",
+                    candidate,
+                    model_chain[index + 1],
+                )
+                continue
+            if res.status_code == 429 and not last_candidate:
+                logger.info("Gemini model %s returned 429, falling back to %s", candidate, model_chain[index + 1])
+                # Retrying inside the same minute just spends another request
+                # into a window that is already closed.
+                time.sleep(RATE_LIMIT_RETRY_SECONDS)
+                continue
+            break
 
         if res.status_code == 429:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Google Gemini API rate limit reached (15 RPM free tier limit). Please wait a moment and try again.",
             )
-        
+
         res.raise_for_status()
         data = res.json()
 
@@ -1528,6 +1805,10 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
         usage = (data.get("usageMetadata") or {}).get("totalTokenCount")
         if isinstance(parsed, dict) and usage is not None:
             parsed["_usage_tokens"] = usage
+        # Carried back so the caller can correct the stored setting and say so,
+        # rather than substituting silently on every call for ever.
+        if isinstance(parsed, dict) and model != requested_model:
+            parsed["_model_substituted"] = {"requested": requested_model, "used": model}
         return parsed
     except (KeyError, IndexError, json.JSONDecodeError) as exc:
         logger.error("Failed to parse Gemini response: %s | Raw: %s", exc, data)
@@ -2075,6 +2356,9 @@ def request_suggestion(
             record.duration_ms = int((time.monotonic() - started) * 1000)
             if isinstance(raw, dict):
                 record.tokens_used = raw.pop("_usage_tokens", None)
+                substitution = raw.pop("_model_substituted", None)
+                if substitution:
+                    _record_model_substitution(db, config, substitution, record)
             record.response_raw = _readable_response(raw)
             suggestion = _normalize(raw, part)
             record.status = "completed"
@@ -2175,6 +2459,9 @@ def request_speaking_suggestions(
             record.duration_ms = int((time.monotonic() - started) * 1000)
             if isinstance(raw, dict):
                 record.tokens_used = raw.pop("_usage_tokens", None)
+                substitution = raw.pop("_model_substituted", None)
+                if substitution:
+                    _record_model_substitution(db, config, substitution, record)
             record.response_raw = _readable_response(raw)
             suggestions = _normalize_batch(raw, speaking_parts)
             record.status = "completed"

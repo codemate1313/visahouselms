@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -1898,6 +1899,141 @@ class AttemptServiceTestCase(unittest.TestCase):
                 {"value": "gpt-5-mini", "label": "gpt-5-mini"},
             ],
         )
+
+    def test_a_retired_model_is_dialled_around_instead_of_failing_the_paper(self):
+        """The outage this is here to stop.
+
+        Google retires a model; every request to it comes back 404, and before
+        this the whole evaluation failed - so no paper was marked until someone
+        edited the fallback in the source. The model here is one we have no
+        reason to distrust yet, which is exactly the case that used to break:
+        a name still listed as good that Google has quietly switched off.
+        """
+        ai_evaluation_service.save_configured_keys(self.db, [{
+            "id": "gemini-1",
+            "label": "Primary",
+            "provider": "gemini",
+            "model": "gemini-2.0-flash",
+            "api_key": "AIza-secret",
+            "enabled": True,
+            "priority": 1,
+        }])
+        self.db.commit()
+
+        dialled = []
+
+        class FakeResponse:
+            def __init__(self, url):
+                self.url = url
+                self.status_code = 404 if "gemini-2.0-flash:" in url else 200
+                self.text = "models/gemini-2.0-flash is not found for API version v1beta"
+
+            def json(self):
+                return {
+                    "candidates": [{"content": {"parts": [{"text": json.dumps({
+                        "criteria": [{"criterion": "Task", "marks_awarded": 5, "rationale": "ok"}],
+                        "comment": "Marked.",
+                        "confidence": 0.8,
+                    })}]}}],
+                    "usageMetadata": {"totalTokenCount": 100},
+                }
+
+            def raise_for_status(self):
+                if self.status_code >= 400:
+                    raise RuntimeError(f"HTTP {self.status_code}")
+
+        class FakeClient:
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *_args):
+                return False
+
+            def post(self_inner, url, **_kwargs):
+                dialled.append(url.split("/models/")[1].split(":")[0])
+                return FakeResponse(url)
+
+            def get(self_inner, *_args, **_kwargs):
+                raise RuntimeError("directory unavailable")
+
+        with patch.object(ai_evaluation_service.httpx, "Client", return_value=FakeClient()):
+            result = ai_evaluation_service._gemini_evaluator(
+                {"api_key": "AIza-secret", "model": "gemini-2.0-flash", "live_models": []},
+                {
+                    "task": "cefr_rubric_evaluation",
+                    "framework": "F",
+                    "policy_version": "1",
+                    "skill": "writing",
+                    "part": {"title": "Writing 1", "skill_focus": "task"},
+                    "rubric": [{"criterion": "Task", "max_marks": "10"}],
+                    "responses": [{"prompt": "Write.", "text": "An answer."}],
+                    "instructions": "Mark it.",
+                    "audio_bytes": 0,
+                },
+            )
+
+        # The dead number was tried, then a live one - and the paper was marked.
+        self.assertEqual(dialled[0], "gemini-2.0-flash")
+        self.assertGreater(len(dialled), 1)
+        self.assertNotEqual(dialled[1], "gemini-2.0-flash")
+        self.assertEqual(result["comment"], "Marked.")
+        self.assertEqual(result["_model_substituted"]["requested"], "gemini-2.0-flash")
+        self.assertEqual(result["_model_substituted"]["used"], dialled[1])
+
+        # A name we already know Google has retired is never dialled at all.
+        self.assertNotIn(
+            "gemini-flash-latest",
+            ai_evaluation_service.gemini_model_chain("gemini-flash-latest", []),
+        )
+
+    def test_a_retired_pro_model_is_never_quietly_swapped_for_a_cheap_one(self):
+        # Someone who chose a "pro" model chose it for marking quality. Falling
+        # back to flash without saying so changes every grade it touches.
+        chain = ai_evaluation_service.gemini_model_chain(
+            "gemini-pro-latest", ["gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash"]
+        )
+        self.assertEqual(chain[0], "gemini-2.5-pro")
+        self.assertNotIn("gemini-pro-latest", chain)
+
+    def test_the_model_chain_only_offers_numbers_the_directory_lists(self):
+        live = ["gemini-2.0-flash"]
+        chain = ai_evaluation_service.gemini_model_chain("gemini-2.5-flash", live)
+        self.assertEqual(chain, ["gemini-2.0-flash"])
+
+        # With no directory - Google's model endpoint down - the preference
+        # order still has to produce something to call.
+        self.assertTrue(ai_evaluation_service.gemini_model_chain("gemini-2.5-flash", []))
+
+    def test_a_model_google_no_longer_lists_is_shown_as_unavailable(self):
+        class FakeResponse:
+            status_code = 200
+
+            def json(self):
+                return {"models": [
+                    {"name": "models/gemini-2.0-flash", "supportedGenerationMethods": ["generateContent"]},
+                ]}
+
+            def raise_for_status(self):
+                return None
+
+        class FakeClient:
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *_args):
+                return False
+
+            def get(self_inner, *_args, **_kwargs):
+                return FakeResponse()
+
+        with patch.object(ai_evaluation_service.httpx, "Client", return_value=FakeClient()):
+            options = ai_evaluation_service.list_evaluation_models(
+                provider="gemini", api_key="AIza-secret", model="gemini-flash-latest"
+            )
+
+        retired = next(option for option in options if option["value"] == "gemini-flash-latest")
+        self.assertFalse(retired["available"])
+        self.assertIn("no longer available", retired["label"])
 
     def test_saved_ai_key_preserves_masked_secret_and_model_options(self):
         ai_evaluation_service.save_configured_keys(self.db, [{

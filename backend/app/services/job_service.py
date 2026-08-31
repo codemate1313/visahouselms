@@ -379,6 +379,15 @@ def _scheduler_tick() -> None:
         # stalled until someone restarted the backend.
         recover_missing_ai_auto_grade_jobs(db)
 
+        # Weekly: is every configured model still one Google offers? Rate-
+        # limited internally, so calling it each tick costs nothing.
+        try:
+            from app.services import ai_evaluation_service
+
+            ai_evaluation_service.check_configured_models(db)
+        except Exception:
+            logger.exception("AI model availability check failed")
+
         # scheduled backups
         schedule = (get_setting(db, "backup.schedule") or "none").lower()
         if schedule in ("daily", "weekly"):
