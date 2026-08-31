@@ -37,6 +37,22 @@ interface ModelOption {
   label: string;
 }
 
+const DEFAULT_MODEL_OPTIONS_BY_PROVIDER: Record<string, ModelOption[]> = {
+  gemini: [
+    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Recommended)" },
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
+    { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite" },
+    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
+  ],
+  openai: [
+    { value: "gpt-4o", label: "GPT-4o (Recommended)" },
+    { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+    { value: "o3-mini", label: "o3-mini" },
+  ],
+};
+
 interface TestResult {
   ok: boolean;
   provider: string;
@@ -339,25 +355,31 @@ export function AiKeyPriorityManager({
               </div>
               <div>
                 <label>Model</label>
-                {key.model_options?.length ? (
-                  <select
-                    value={key.model || key.model_options[0]?.value || model}
-                    onChange={(event) => update(index, { model: event.target.value })}
-                  >
-                    {key.model_options.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    value={key.model || model}
-                    onChange={(event) => update(index, { model: event.target.value })}
-                    placeholder={providerInfo(key.provider).supported ? "Load models to list what this key supports" : "No supported evaluation models"}
-                    disabled={!providerInfo(key.provider).supported}
-                  />
-                )}
+                {(() => {
+                  const options = (key.model_options?.length ? key.model_options : DEFAULT_MODEL_OPTIONS_BY_PROVIDER[key.provider]) || [];
+                  if (options.length) {
+                    return (
+                      <select
+                        value={key.model || options[0]?.value || model}
+                        onChange={(event) => update(index, { model: event.target.value })}
+                      >
+                        {options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    );
+                  }
+                  return (
+                    <input
+                      value={key.model || model}
+                      onChange={(event) => update(index, { model: event.target.value })}
+                      placeholder={providerInfo(key.provider).supported ? "Load models to list what this key supports" : "No supported evaluation models"}
+                      disabled={!providerInfo(key.provider).supported}
+                    />
+                  );
+                })()}
                 {providerInfo(key.provider).supported && !key.model_options?.length && (
                   <p className="hint" style={{ margin: "6px 0 0" }}>
                     Paste the key, then use Load models to list what it can actually run.

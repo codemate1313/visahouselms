@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import type { AttemptSummary } from "@/api/types";
 import { DashboardButton } from "@/components/ui";
 import { studentDashboardStrings as strings } from "../StudentDashboard.strings";
-import { attemptTargetUrl, formatAttemptDate, hasSpeakingRemaining, statusLabel, statusTone } from "../helpers";
+import { attemptTargetUrl, formatAttemptDate, statusLabel, statusTone } from "../helpers";
 import { Icon } from "@/components/icons";
 
 interface RecentActivityPanelProps {
@@ -23,9 +23,7 @@ export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
       {attempts.length ? (
         <ul className="activity-list">
           {attempts.slice(0, 5).map((attempt) => {
-            const speakingRemaining = hasSpeakingRemaining(attempt);
             const hasScore =
-              !speakingRemaining &&
               attempt.raw_score !== null &&
               attempt.raw_score !== undefined &&
               attempt.max_score !== null &&
@@ -33,7 +31,7 @@ export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
               Number(attempt.max_score) > 0;
 
             return (
-              <li className="activity-item" data-tone={statusTone(attempt.status, attempt)} key={attempt.id}>
+              <li className="activity-item" data-tone={statusTone(attempt.status)} key={attempt.id}>
                 <Link
                   to={attemptTargetUrl(attempt)}
                   className="activity-item-card"
@@ -42,9 +40,9 @@ export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
                     <span className="sd-test-type">
                       {attempt.module_type.replaceAll("_", " ")}
                     </span>
-                    <span className={`status-pill is-${statusTone(attempt.status, attempt)}`}>
+                    <span className={`status-pill is-${statusTone(attempt.status)}`}>
                       <span className="status-pill-dot" />
-                      {statusLabel(attempt.status, attempt)}
+                      {statusLabel(attempt.status)}
                     </span>
                   </div>
 
@@ -53,7 +51,7 @@ export function RecentActivityPanel({ attempts }: RecentActivityPanelProps) {
                       <strong className="activity-card-title">{attempt.module_title}</strong>
                       <div className="activity-card-meta">
                         <span>{formatAttemptDate(attempt)}</span>
-                        {!speakingRemaining && attempt.band_label && (
+                        {attempt.band_label && (
                           <>
                             <span className="meta-separator">•</span>
                             <span className="activity-band-pill">{attempt.band_label}</span>

@@ -12,6 +12,22 @@ import { developerSettingsStrings as strings } from "../DeveloperSettings.string
 
 type AiProvider = "gemini" | "openai" | "custom_json";
 
+const MODEL_OPTIONS_BY_PROVIDER: Record<string, Array<{ value: string; label: string }>> = {
+  gemini: [
+    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Recommended)" },
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
+    { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite" },
+    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
+  ],
+  openai: [
+    { value: "gpt-4o", label: "GPT-4o (Recommended)" },
+    { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+    { value: "o3-mini", label: "o3-mini" },
+  ],
+};
+
 interface AiEvaluationForm {
   enabled: boolean;
   provider: AiProvider;
@@ -141,11 +157,21 @@ export function AiEvaluationTab() {
           </div>
           <div>
             <label>{t.modelLabel}</label>
-            <input
-              value={form.model}
-              onChange={(event) => setForm({ ...form, model: event.target.value })}
-              placeholder="gemini-2.0-flash"
-            />
+            {form.provider === "custom_json" ? (
+              <input
+                value={form.model}
+                onChange={(event) => setForm({ ...form, model: event.target.value })}
+                placeholder="custom-model-name"
+              />
+            ) : (
+              <SearchableSelect
+                ariaLabel={t.modelLabel}
+                options={MODEL_OPTIONS_BY_PROVIDER[form.provider] || MODEL_OPTIONS_BY_PROVIDER.gemini}
+                searchable={false}
+                value={form.model || (form.provider === "openai" ? "gpt-4o" : "gemini-2.0-flash")}
+                onChange={(value) => setForm({ ...form, model: String(value) })}
+              />
+            )}
           </div>
           {form.provider === "custom_json" && (
             <div>

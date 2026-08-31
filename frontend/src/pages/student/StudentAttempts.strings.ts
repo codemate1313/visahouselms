@@ -25,11 +25,8 @@ export const studentAttemptsStrings = {
     submitted: "Submitted",
     grading: "Awaiting grading",
     graded: "Graded",
-    speaking_remaining: "Speaking remaining",
     expired: "Expired",
   },
   resumeTest: "Resume test",
-  finishSpeaking: "Finish Speaking",
-  speakingPendingScore: "Speaking pending",
   viewResult: "View result",
 } as const;

@@ -27,8 +27,7 @@ export function moduleTone(type: string) {
   return MODULE_TONE[type as ExamModuleType] ?? "slate";
 }
 
-export function statusTone(status: string, attempt?: AttemptSummary) {
-  if (hasSpeakingRemaining(attempt)) return "warning";
+export function statusTone(status: string) {
   if (status === "graded") return "success";
   if (status === "grading" || status === "submitted") return "warning";
   if (status === "ready" || status === "in_progress") return "info";
@@ -67,12 +66,10 @@ export function progressForStatus(status?: string) {
 
 export function progressForAttempt(attempt?: AttemptSummary) {
   if (!attempt) return 0;
-  if (hasSpeakingRemaining(attempt)) return 88;
   return progressForStatus(attempt.status);
 }
 
-export function statusLabel(status: string, attempt?: AttemptSummary): string {
-  if (hasSpeakingRemaining(attempt)) return strings.statusLabels.speaking_remaining;
+export function statusLabel(status: string): string {
   const labels = strings.statusLabels;
   return labels[status as keyof typeof labels] ?? status;
 }

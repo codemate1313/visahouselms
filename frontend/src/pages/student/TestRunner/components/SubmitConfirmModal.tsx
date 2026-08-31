@@ -8,7 +8,6 @@ interface SubmitConfirmModalProps {
   submitting: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  onDeferSpeaking?: () => void;
   continueToSpeaking?: boolean;
 }
 
@@ -19,7 +18,6 @@ export function SubmitConfirmModal({
   submitting,
   onClose,
   onConfirm,
-  onDeferSpeaking,
   continueToSpeaking = false,
 }: SubmitConfirmModalProps) {
   const t = strings.submitModal;
@@ -37,11 +35,6 @@ export function SubmitConfirmModal({
           <Button variant="secondary" className="secondary-button" onClick={onClose} disabled={submitting}>
             {t.keepWorking}
           </Button>
-          {continueToSpeaking && onDeferSpeaking ? (
-            <Button variant="secondary" className="secondary-button" onClick={onDeferSpeaking} disabled={submitting}>
-              {t.doSpeakingLater}
-            </Button>
-          ) : null}
           <Button onClick={onConfirm} disabled={submitting}>
             {submitting ? strings.footer.submitting : continueToSpeaking ? t.startSpeakingNow : t.submitNow}
           </Button>

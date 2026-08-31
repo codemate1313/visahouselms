@@ -1592,7 +1592,7 @@ export function TestRunner() {
     }
   }
 
-  async function sealMainPaperForSpeaking(startNow: boolean) {
+  async function sealMainPaperForSpeaking() {
     if (!attempt || speakingTransitionRef.current) return;
     const firstSpeakingIndex = attempt.parts.findIndex((part) => part.section_type === "speaking");
     if (firstSpeakingIndex < 0) {
@@ -1605,7 +1605,7 @@ export function TestRunner() {
       await flushPendingSavesBeforeSpeakingPhase();
       const { data } = await apiClient.post<Attempt>(
         `/student/attempts/${id}/speaking-phase`,
-        { start_now: startNow },
+        { start_now: true },
         { headers: securityHeaders() },
       );
       const targetIndex = speakingEntryIndex(
@@ -1614,23 +1614,12 @@ export function TestRunner() {
       );
       sessionStorage.setItem(securityStorageKey(id, "speaking-started"), "true");
       sessionStorage.setItem(`test-runner-part:${id}`, String(targetIndex));
-      if (startNow) {
-        sessionStorage.setItem(securityStorageKey(id, "speaking-setup-completed"), "true");
-        setSpeakingSetupCompleted(true);
-      } else {
-        sessionStorage.removeItem(securityStorageKey(id, "speaking-setup-completed"));
-        setSpeakingSetupCompleted(false);
-      }
+      sessionStorage.setItem(securityStorageKey(id, "speaking-setup-completed"), "true");
+      setSpeakingSetupCompleted(true);
       setAttempt(data);
       setPartIndex(targetIndex);
       setConfirmSubmit(false);
       resetRunnerScroll();
-      if (!startNow) {
-        stopSecurityMedia();
-        if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
-        sessionStorage.removeItem(securityStorageKey(id, "token"));
-        navigate("/student/my-courses", { replace: true });
-      }
     } catch (err: unknown) {
       showError(extractErrorMessage(err, strings.errors.part), strings.errors.partTitle);
     } finally {
@@ -1640,11 +1629,7 @@ export function TestRunner() {
   }
 
   async function enterSpeakingPhase() {
-    await sealMainPaperForSpeaking(true);
-  }
-
-  async function deferSpeakingPhase() {
-    await sealMainPaperForSpeaking(false);
+    await sealMainPaperForSpeaking();
   }
 
   // Declared after every hook: this branch flips on window resize, so returning
@@ -2063,7 +2048,6 @@ export function TestRunner() {
           submitting={submitting || sealingSpeakingPhase}
           onClose={() => setConfirmSubmit(false)}
           onConfirm={isSplitCompositeAttempt && !isSpeakingPhase ? enterSpeakingPhase : submit}
-          onDeferSpeaking={isSplitCompositeAttempt && !isSpeakingPhase ? deferSpeakingPhase : undefined}
           continueToSpeaking={isSplitCompositeAttempt && !isSpeakingPhase}
         />
       )}

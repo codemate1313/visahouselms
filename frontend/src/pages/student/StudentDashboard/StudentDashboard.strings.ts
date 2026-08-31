@@ -51,7 +51,6 @@ export const studentDashboardStrings = {
     submitted: "Submitted",
     grading: "Awaiting grading",
     graded: "Graded",
-    speaking_remaining: "Speaking remaining",
     expired: "Expired",
   },
   notStarted: "Not started",
@@ -80,14 +79,6 @@ export const studentDashboardStrings = {
     description: "Your most recent attempts across all courses.",
     empty: "No test attempts yet.",
     viewFullHistory: "View full history",
-  },
-  speakingRemaining: {
-    heading: "Speaking remaining",
-    description: "These full mock or final tests are waiting only for the Speaking paper.",
-    empty: "No deferred Speaking tests.",
-    action: "Finish Speaking",
-    pending: "Security check will run again before Speaking starts.",
-    active: "Speaking phase is active.",
   },
   validity: {
     directActiveEyebrow: "Active Plan Subscription",

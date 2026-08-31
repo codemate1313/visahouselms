@@ -2256,72 +2256,17 @@ class AttemptServiceTestCase(unittest.TestCase):
             attempt_service.save_answer(self.db, attempt, question.id, {"selected": "A"})
 
         sealed = attempt_service.seal_main_paper_for_speaking(self.db, attempt, start_now=False)
-        self.assertEqual(sealed.content_snapshot["phase"], "speaking_pending")
+        self.assertEqual(sealed.content_snapshot["phase"], "speaking")
+        self.assertGreater(sealed.expires_at.replace(tzinfo=None), datetime.now(timezone.utc).replace(tzinfo=None))
 
         resumed = attempt_service.get_student_view(self.db, sealed, security_authorized=True)
-        self.assertEqual(resumed["phase"], "speaking_pending")
+        self.assertEqual(resumed["phase"], "speaking")
         self.assertTrue(resumed["parts"][-1]["questions"])
         self.assertTrue(all(not part["questions"] for part in resumed["parts"][:-1]))
 
-        sealed.expires_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=1)
-        sealed.security_last_heartbeat_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=5)
-        self.db.add(sealed)
-        self.db.commit()
-        sealed = attempt_service.get_attempt_or_404(self.db, self.student, sealed.id)
-        pending_view = attempt_service.get_student_view(self.db, sealed, security_authorized=False)
-        self.assertEqual(pending_view["status"], ATTEMPT_IN_PROGRESS)
-        self.assertEqual(pending_view["phase"], "speaking_pending")
         [summary] = attempt_service.list_my_attempts(self.db, self.student)
-        self.assertEqual(summary["phase"], "speaking_pending")
+        self.assertEqual(summary["phase"], "speaking")
         self.assertEqual(summary["resume_part_id"], speaking_part.id)
-
-        sealed.status = ATTEMPT_GRADED
-        sealed.submitted_at = datetime.now(timezone.utc).replace(tzinfo=None)
-        sealed.graded_at = datetime.now(timezone.utc).replace(tzinfo=None)
-        sealed.raw_score = Decimal("19")
-        sealed.max_score = Decimal("164")
-        sealed.band_label = "A1"
-        self.db.add(
-            AttemptPartGrade(
-                attempt_id=sealed.id,
-                part_id=speaking_part.id,
-                criteria=[],
-                status=PART_GRADE_AI_GRADED,
-                total_marks=Decimal("0"),
-            )
-        )
-        self.db.add(sealed)
-        self.db.commit()
-
-        [repaired_summary] = attempt_service.list_my_attempts(self.db, self.student)
-        self.assertEqual(repaired_summary["status"], ATTEMPT_IN_PROGRESS)
-        self.assertEqual(repaired_summary["phase"], "speaking_pending")
-        self.assertIsNone(repaired_summary["submitted_at"])
-        self.assertIsNone(repaired_summary["raw_score"])
-        self.assertEqual(
-            self.db.query(AttemptPartGrade).filter_by(attempt_id=sealed.id, part_id=speaking_part.id).count(),
-            0,
-        )
-        sealed = attempt_service.get_attempt_or_404(self.db, self.student, sealed.id)
-
-        resume_token = attempt_service.secure_preflight(
-            self.db,
-            sealed,
-            session,
-            {
-                "client_id": "test-client-identifier-0006-resume",
-                "rules_consent": True,
-                "camera_active": True,
-                "microphone_active": True,
-                "screen_share_active": True,
-                "fullscreen_active": True,
-                "display_surface": "monitor",
-            },
-            "127.0.0.1",
-        )["attempt_token"]
-        resumed_start = attempt_service.begin_secure_attempt(self.db, sealed, session, resume_token)
-        self.assertEqual(resumed_start["phase"], "speaking")
-        self.assertGreater(resumed_start["expires_at"].replace(tzinfo=None), datetime.now(timezone.utc).replace(tzinfo=None))
 
         with self.assertRaises(HTTPException) as save_ctx:
             attempt_service.save_answer(self.db, sealed, main_questions[0].id, {"selected": "B"})
