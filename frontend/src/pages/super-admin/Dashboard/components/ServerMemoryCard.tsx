@@ -18,6 +18,8 @@ interface ServerMemory {
   available: boolean;
   generated_at: string;
   hostname: string;
+  host_label?: string;
+  server_label?: string;
   note?: string;
   cpu_count?: number | null;
   approximate?: boolean;
@@ -27,7 +29,14 @@ interface ServerMemory {
   cached_bytes?: number;
   used_percent?: number;
   swap: { total_bytes: number; used_bytes: number; used_percent: number } | null;
-  app: { bytes: number; scope: string; label: string; percent_of_total: number | null } | null;
+  app: {
+    bytes: number;
+    scope: string;
+    label: string;
+    usage_label?: string;
+    cgroup_path?: string;
+    percent_of_total: number | null;
+  } | null;
 }
 
 const REFRESH_MS = 30_000;
@@ -90,13 +99,16 @@ export function ServerMemoryCard() {
 
   const usedPercent = data.used_percent ?? null;
   const appPercent = data.app?.percent_of_total ?? null;
+  const hostLabel = data.host_label || data.hostname || "current server";
+  const serverLabel = data.server_label || hostLabel;
+  const appUsageLabel = data.app?.usage_label || (data.app?.scope === "process" ? "held by this worker" : "held by this app");
 
   return (
     <section className="chart-card reference-styled-chart server-memory-card">
       <div className="ai-quota-head">
         <div>
           <span className="page-eyebrow">Server</span>
-          <h3>Memory on {data.hostname}</h3>
+          <h3>Memory on {hostLabel}</h3>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <IconButton
@@ -158,13 +170,13 @@ export function ServerMemoryCard() {
             </div>
             <div>
               <b>{data.app ? gb(data.app.bytes) : "—"}</b>
-              <span>held by this site</span>
+              <span>{appUsageLabel}</span>
             </div>
           </div>
 
           <div className="ai-quota-keys">
             <div className="ai-quota-key-row">
-              <span className="ai-quota-key-name">Whole server</span>
+              <span className="ai-quota-key-name">{serverLabel}</span>
               <span className="ai-quota-key-figure">{usedPercent ?? "?"}% used</span>
               <UsageBar percent={usedPercent} />
             </div>

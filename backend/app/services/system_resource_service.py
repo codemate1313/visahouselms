@@ -12,7 +12,9 @@ import os
 import platform
 import re
 import subprocess
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 MEMINFO = "/proc/meminfo"
 
@@ -113,8 +115,21 @@ def _darwin_memory() -> dict | None:
     }
 
 
-def _cgroup_bytes() -> int | None:
-    """Memory charged to the backend's own systemd unit, both workers included."""
+def _systemd_unit_from_cgroup(path: str) -> str | None:
+    for segment in reversed([item for item in path.split("/") if item]):
+        if segment.endswith((".service", ".scope", ".slice")):
+            return segment.replace("\\x2d", "-")
+    return None
+
+
+def _readable_unit_label(unit: str) -> str:
+    name = re.sub(r"\.(service|scope|slice)$", "", unit)
+    name = re.sub(r"[_@.-]+", " ", name).strip()
+    return name.title() if name else unit
+
+
+def _cgroup_info() -> tuple[int, str] | None:
+    """Memory charged to the backend's cgroup, where the host exposes it."""
     try:
         with open("/proc/self/cgroup", "r") as handle:
             # cgroup v2 writes a single "0::/system.slice/<unit>" line.
@@ -128,7 +143,7 @@ def _cgroup_bytes() -> int | None:
         candidate = os.path.join("/sys/fs/cgroup", path.lstrip("/"), filename)
         try:
             with open(candidate, "r") as handle:
-                return int(handle.read().strip())
+                return int(handle.read().strip()), path
         except (OSError, ValueError):
             continue
     return None
@@ -155,13 +170,33 @@ def _self_rss_bytes() -> int | None:
 
 
 def _app_usage() -> dict | None:
-    cgroup = _cgroup_bytes()
+    cgroup = _cgroup_info()
     if cgroup is not None:
-        return {"bytes": cgroup, "scope": "service", "label": "Backend service (all workers)"}
+        used_bytes, path = cgroup
+        unit = _systemd_unit_from_cgroup(path)
+        if unit:
+            label = f"{_readable_unit_label(unit)} service"
+            usage_label = f"held by {unit}"
+        else:
+            label = "Application cgroup"
+            usage_label = "held by application cgroup"
+        return {
+            "bytes": used_bytes,
+            "scope": "service",
+            "label": label,
+            "usage_label": usage_label,
+            "cgroup_path": path,
+        }
 
     rss = _self_rss_bytes()
     if rss is not None:
-        return {"bytes": rss, "scope": "process", "label": "This backend worker"}
+        process_name = Path(sys.argv[0] or "backend").name or "backend"
+        return {
+            "bytes": rss,
+            "scope": "process",
+            "label": f"{process_name} process",
+            "usage_label": f"held by {process_name}",
+        }
     return None
 
 
@@ -171,19 +206,25 @@ def memory() -> dict:
     now = datetime.now(timezone.utc).isoformat()
 
     if reading is None:
+        hostname = platform.node()
         return {
             "available": False,
             "generated_at": now,
-            "hostname": platform.node(),
+            "hostname": hostname,
+            "host_label": hostname or "current server",
+            "server_label": "Host memory",
             "note": "This host does not expose a memory reading we can read.",
         }
 
     app = _app_usage()
     total = reading["total_bytes"]
+    hostname = platform.node()
     return {
         "available": True,
         "generated_at": now,
-        "hostname": platform.node(),
+        "hostname": hostname,
+        "host_label": hostname or "current server",
+        "server_label": f"{hostname} host" if hostname else "Host memory",
         "cpu_count": os.cpu_count(),
         "approximate": reading["source"] == "darwin",
         **{key: value for key, value in reading.items() if key != "source"},

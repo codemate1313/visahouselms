@@ -4237,12 +4237,69 @@ button.danger-text:hover,
 
 
 /* ---------- Frameless Chart Panes ---------- */
+.dashboard-card-groups {
+  width: fit-content;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 20px 0 18px;
+  padding: 4px;
+  border: 1px solid var(--border, rgba(17, 17, 19, 0.1));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 8px 22px rgba(17, 17, 19, 0.045);
+}
+
+.dashboard-card-groups button {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.dashboard-card-groups button:hover {
+  color: var(--text-primary);
+}
+
+.dashboard-card-groups button.is-active {
+  color: #ffffff;
+  background: var(--primary, #d0162f);
+  box-shadow: 0 8px 18px rgba(208, 22, 47, 0.24);
+}
+
+[data-theme="dark"] .dashboard-card-groups {
+  background: rgba(24, 24, 29, 0.88);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+}
+
+[data-theme="dark"] .dashboard-card-groups button {
+  color: rgba(244, 244, 245, 0.68);
+}
+
+[data-theme="dark"] .dashboard-card-groups button:hover {
+  color: #ffffff;
+}
+
 .dashboard-charts-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
   margin-top: 8px;
   align-items: stretch;
+}
+
+.dashboard-charts-grid--technical {
+  margin-top: 0;
 }
 
 .dashboard-charts-grid>div,
@@ -4633,6 +4690,15 @@ button.danger-text:hover,
 }
 
 @media (max-width: 620px) {
+  .dashboard-card-groups {
+    width: 100%;
+  }
+
+  .dashboard-card-groups button {
+    flex: 1;
+    padding: 0 10px;
+  }
+
   .chart-card {
     min-height: 260px;
     padding: 14px;

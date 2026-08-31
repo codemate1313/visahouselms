@@ -14,10 +14,13 @@ import { NoLivePlanAlert } from "./components/NoLivePlanAlert";
 import { AiQuotaCard } from "./components/AiQuotaCard";
 import { ServerMemoryCard } from "./components/ServerMemoryCard";
 
+type DashboardCardGroup = "institute" | "technical";
+
 export function Dashboard() {
   const user = useAuthStore((state) => state.user);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeGroup, setActiveGroup] = useState<DashboardCardGroup>("institute");
   const [selectedMetric, setSelectedMetric] = useState<MetricKey | null>(null);
   const [metricDetail, setMetricDetail] = useState<MetricDetail | null>(null);
   const [metricLoading, setMetricLoading] = useState(false);
@@ -89,14 +92,41 @@ export function Dashboard() {
         <PendingSignupsAlert count={summary.counts.institute_signups_pending} />
       )}
       {summary.counts.plans_live === 0 && <NoLivePlanAlert />}
-      <ExecutiveMetricGrid summary={summary} revenueTrend={revenueTrend} onOpen={openMetric} />
-      <div className="dashboard-charts-grid">
-        <AiQuotaCard />
-        <ServerMemoryCard />
-        {summary.permissions.can_view_monetary_analytics && summary.revenue && (
-          <DashboardCharts summary={summary} />
-        )}
+
+      <div className="dashboard-card-groups" aria-label="Dashboard card groups">
+        <button
+          type="button"
+          className={activeGroup === "institute" ? "is-active" : ""}
+          onClick={() => setActiveGroup("institute")}
+          aria-pressed={activeGroup === "institute"}
+        >
+          Institute Info
+        </button>
+        <button
+          type="button"
+          className={activeGroup === "technical" ? "is-active" : ""}
+          onClick={() => setActiveGroup("technical")}
+          aria-pressed={activeGroup === "technical"}
+        >
+          Technical Info
+        </button>
       </div>
+
+      {activeGroup === "institute" ? (
+        <>
+          <ExecutiveMetricGrid summary={summary} revenueTrend={revenueTrend} onOpen={openMetric} />
+          {summary.permissions.can_view_monetary_analytics && summary.revenue && (
+            <div className="dashboard-charts-grid">
+              <DashboardCharts summary={summary} />
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="dashboard-charts-grid dashboard-charts-grid--technical">
+          <AiQuotaCard />
+          <ServerMemoryCard />
+        </div>
+      )}
 
       {selectedMetric && (
         <MetricDetailModal
