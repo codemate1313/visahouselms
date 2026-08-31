@@ -94,17 +94,6 @@
   box-shadow: none !important;
 }
 
-.lc-exam .ui-btn-primary:disabled,
-.lc-exam button.ui-btn-primary:disabled,
-.lc-exam button:disabled {
-  background: #ffd5cf !important;
-  border-color: #ffd5cf !important;
-  color: rgba(255, 255, 255, 0.85) !important;
-  opacity: 0.65 !important;
-  cursor: not-allowed !important;
-  box-shadow: none !important;
-}
-
 /* The exam client is one fixed light surface, so the Final Test never renders
    dark. That is enforced in `useExamLightTheme`, which holds `data-theme` at
    light for the length of the attempt - the runner's dark rules are `!important`
