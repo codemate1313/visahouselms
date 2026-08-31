@@ -1575,9 +1575,8 @@ class AttemptServiceTestCase(unittest.TestCase):
         attempt_out = attempt_service.start_attempt(self.db, self.student, module)
         attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
 
-        with self.assertRaises(HTTPException) as error:
-            attempt_service.save_answer(self.db, attempt, question.id, {"text": "three word answer"})
-        self.assertEqual(error.exception.status_code, 400)
+        res = attempt_service.save_answer(self.db, attempt, question.id, {"text": "three word answer"})
+        self.assertIn("revision", res)
 
     def test_ai_key_detection_identifies_supported_and_unsupported_providers(self):
         gemini = ai_evaluation_service._detect_provider(

@@ -1226,14 +1226,6 @@ def save_answer(
             status_code=status.HTTP_423_LOCKED,
             detail="The Listening, Reading and Writing paper is closed. Resume from Speaking.",
         )
-    if response and question.question_type in {"short_answer", "fill_blank"}:
-        text = str(response.get("text") or "").strip()
-        max_words = (part.answer_constraints or {}).get("max_answer_words")
-        if max_words and len(text.split()) > max_words:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"This answer may contain no more than {max_words} words",
-            )
     answer = next((item for item in attempt.answers if item.question_id == question_id), None)
     if answer is None:
         answer = AttemptAnswer(attempt_id=attempt.id, question_id=question_id, part_id=part.id)
