@@ -97,7 +97,7 @@ jobs:
               -p "$TARGET_PORT" \
               root@"$VPS_HOST" 'bash -s' << 'DEPLOYMENT_SCRIPT'
           set -Eeuo pipefail
-          trap 'echo "❌ Deployment failed at line $LINENO. Exiting..."" >&2' ERR
+          trap 'echo "❌ Deployment failed at line $LINENO. Exiting..." >&2' ERR
 
           echo "🚀 Starting automatic deployment on VPS..."
 
