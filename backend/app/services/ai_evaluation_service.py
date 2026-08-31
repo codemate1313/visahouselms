@@ -124,10 +124,9 @@ GEMINI_RETIRED_MODELS = {
     "gemini-1.5-pro": "pro",
     "gemini-pro-latest": "pro",
 }
-# The live directory, cached so marking a paper does not cost an extra call to
-# Google's model list every time.
+# The live directory, cached so marking a paper never waits on Google's model
+# list - the scheduler refreshes it in the background instead.
 LIVE_MODELS_SETTING = "ai.live_gemini_models"
-LIVE_MODELS_TTL_SECONDS = 24 * 60 * 60
 MODEL_CHECK_SETTING = "ai.models_checked_at"
 MODEL_CHECK_INTERVAL_SECONDS = 7 * 24 * 60 * 60
 OPENAI_EVALUATION_MODEL_PREFIXES = (
@@ -364,44 +363,51 @@ def _fetch_gemini_model_ids(api_key: str) -> list[str]:
     ]
 
 
-def live_gemini_models(db: Session, api_key: str, *, force: bool = False) -> list[str]:
-    """The live directory, cached for a day.
+def _read_model_directory(db: Session) -> dict:
+    from app.services.settings_service import get_setting
 
-    An empty list means "we do not know" - never "nothing works". The caller
-    must treat it that way, or a blip on Google's model endpoint would stop
-    every evaluation instead of just leaving the fallback unverified.
-    """
-    from app.services.settings_service import get_setting, set_setting
-
-    cached: dict = {}
     raw = get_setting(db, LIVE_MODELS_SETTING)
-    if raw:
-        try:
-            cached = json.loads(raw)
-        except (TypeError, ValueError):
-            cached = {}
+    if not raw:
+        return {}
+    try:
+        return json.loads(raw) or {}
+    except (TypeError, ValueError):
+        return {}
 
-    if not force and cached.get("checked_at"):
-        try:
-            checked_at = datetime.fromisoformat(cached["checked_at"])
-            if (_now() - checked_at).total_seconds() < LIVE_MODELS_TTL_SECONDS:
-                return list(cached.get("models") or [])
-        except (TypeError, ValueError):
-            pass
 
+def cached_gemini_models(db: Session, key_id: Optional[str]) -> list[str]:
+    """What the directory said last time, for this key. Never calls Google.
+
+    Marking a paper must not wait on Google's model list: the scheduler keeps
+    this fresh in the background, and an empty result means "we do not know",
+    never "nothing works" - the chain then falls back to its preference order
+    and lets the call itself settle the question.
+    """
+    directory = _read_model_directory(db)
+    by_key = directory.get("keys") or {}
+    return list(by_key.get(str(key_id)) or [])
+
+
+def refresh_gemini_models(db: Session, key_id: Optional[str], api_key: str) -> list[str]:
+    """Ask Google what this key can call, and remember the answer."""
+    from app.services.settings_service import set_setting
+
+    directory = _read_model_directory(db)
+    by_key = dict(directory.get("keys") or {})
     try:
         models = _fetch_gemini_model_ids(api_key)
     except Exception as exc:
         logger.warning("Could not refresh the Gemini model directory: %s", _redact_secrets(exc)[:200])
         # Stale beats nothing: yesterday's directory is still a better guide
-        # than a hardcoded guess.
-        return list(cached.get("models") or [])
+        # than a name hardcoded a year ago.
+        return list(by_key.get(str(key_id)) or [])
 
     if models:
+        by_key[str(key_id)] = models
         set_setting(
             db,
             LIVE_MODELS_SETTING,
-            json.dumps({"checked_at": _now().isoformat(), "models": models}),
+            json.dumps({"checked_at": _now().isoformat(), "keys": by_key}),
         )
     return models
 
@@ -728,7 +734,7 @@ def check_configured_models(db: Session, *, force: bool = False) -> list[dict]:
         if (item.get("provider") or "gemini") != "gemini" or not item.get("api_key"):
             continue
         model = (item.get("model") or "").removeprefix("models/")
-        live = live_gemini_models(db, item["api_key"], force=True)
+        live = refresh_gemini_models(db, item.get("id"), item["api_key"])
         if not live or not model or model in live:
             continue  # no directory to judge against, or the model is fine
 
@@ -830,13 +836,13 @@ def _candidate_configs(db: Session) -> list[dict]:
             "key_label": item.get("label"),
             # Which models this key can actually call, so a retired one is
             # never dialled and the fallback is a number we know is connected.
-            "live_models": live_gemini_models(db, item["api_key"]) if provider == "gemini" else [],
+            "live_models": cached_gemini_models(db, item.get("id")) if provider == "gemini" else [],
         })
     if candidates:
         return candidates
     legacy = {**base, "key_id": "legacy", "key_label": "Primary API Key"}
     if legacy.get("provider") == "gemini" and legacy.get("api_key"):
-        legacy["live_models"] = live_gemini_models(db, legacy["api_key"])
+        legacy["live_models"] = cached_gemini_models(db, "legacy")
     return [legacy]
 
 
