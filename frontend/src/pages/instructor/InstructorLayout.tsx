@@ -4,14 +4,12 @@ import { logoutAndRedirectHome } from "../../auth/logout";
 import { GsapRouteAnimator } from "../../components/GsapRouteAnimator";
 import { PortalTopBar } from "../../components/PortalTopBar";
 import { Sidebar, type MenuSection } from "../../components/Sidebar";
-import { useThemeStore } from "@/store/themeStore";
 import { instructorLayoutStrings as strings } from "./InstructorLayout.strings";
 
 const COLLAPSE_STORAGE_KEY = "instructor-lms-sidebar-collapsed";
 const MODULE_WORKSPACE_PATH = "/super-admin/instructor/modules";
 
 export function InstructorLayout() {
-  const theme = useThemeStore((state) => state.theme);
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1"
   );
