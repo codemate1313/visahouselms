@@ -15,8 +15,22 @@
    ========================================================================= */
 
 .lc-exam {
-  --lc-red: #ee3124;
-  --lc-red-hover: #d3261a;
+  --primary: #FF3200 !important;
+  --primary-hover: #e02c00 !important;
+  --primary-soft: rgba(255, 50, 0, 0.15) !important;
+  --portal-primary: #FF3200 !important;
+  --portal-primary-hover: #e02c00 !important;
+  --portal-primary-soft: rgba(255, 50, 0, 0.15) !important;
+  --institute-primary: #FF3200 !important;
+  --accent: #FF3200 !important;
+  --accent-hover: #e02c00 !important;
+  --test-accent: #FF3200 !important;
+  --danger-fill: #FF3200 !important;
+  --danger-fill-hover: #e02c00 !important;
+  --focus-ring: 0 0 0 3px rgba(255, 50, 0, 0.25) !important;
+
+  --lc-red: #FF3200;
+  --lc-red-hover: #e02c00;
   --lc-ink: #231f20;
   --lc-title: #4d4d4d;
   --lc-muted: #6d6e71;
@@ -47,6 +61,37 @@
   background: #ffffff;
   color: var(--lc-ink);
   font-family: var(--lc-font);
+}
+
+/* Enforce #FF3200 for all primary buttons within the Final Test regardless of role */
+.lc-exam .ui-btn-primary,
+.lc-exam button.ui-btn-primary,
+.lc-exam a.ui-btn-primary,
+.lc-exam .lc-onb-button,
+.lc-exam button.lc-onb-button,
+.lc-exam .lc-pager-button,
+.lc-exam button.lc-pager-button,
+.lc-exam .lc-end-exam,
+.lc-exam button.lc-end-exam {
+  background: #FF3200 !important;
+  border-color: #FF3200 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.lc-exam .ui-btn-primary:hover:not(:disabled),
+.lc-exam button.ui-btn-primary:hover:not(:disabled),
+.lc-exam a.ui-btn-primary:hover,
+.lc-exam .lc-onb-button:hover:not(:disabled),
+.lc-exam button.lc-onb-button:hover:not(:disabled),
+.lc-exam .lc-pager-button:hover:not(:disabled),
+.lc-exam button.lc-pager-button:hover:not(:disabled),
+.lc-exam .lc-end-exam:hover:not(:disabled),
+.lc-exam button.lc-end-exam:hover:not(:disabled) {
+  background: #e02c00 !important;
+  border-color: #e02c00 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
 }
 
 /* The exam client is one fixed light surface, so the Final Test never renders
@@ -2210,11 +2255,11 @@
   max-width: 1.5px;
   max-height: 50px;
   height: 3px;
-  background: rgba(238, 49, 36, 0.38);
+  background: rgba(255, 50, 0, 0.38);
 }
 
 .lc-exam .speaking-voice-dots.is-active span {
-  background: rgba(238, 49, 36, 0.72);
+  background: rgba(255, 50, 0, 0.72);
 }
 
 .lc-exam .speaking-interview-actions {
@@ -2358,7 +2403,7 @@
   padding: 5px 18px;
   border: 0;
   border-radius: 2px;
-  background: #ff3d0f;
+  background: var(--lc-red);
   box-shadow: none;
   color: #ffffff;
   font-size: 13px;
@@ -2366,7 +2411,7 @@
 }
 
 .lc-exam .lc-onb-button:hover:not(:disabled) {
-  background: #e83507;
+  background: var(--lc-red-hover);
   box-shadow: none;
   color: #ffffff;
   transform: none;
@@ -2377,23 +2422,26 @@
   opacity: 0.6;
 }
 
-.lc-onb-exit {
-  display: block;
-  margin-top: 16px;
-  font-weight: 400;
-  padding: 0;
-  border: 0;
-  background: none;
-  box-shadow: none;
-  color: var(--lc-muted);
-  font-size: 12px;
-  text-decoration: underline;
+.lc-onb-exit,
+.lc-exam .lc-onb-exit,
+.lc-exam button.lc-onb-exit {
+  display: block !important;
+  margin-top: 16px !important;
+  font-weight: 400 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--lc-muted) !important;
+  font-size: 12px !important;
+  text-decoration: underline !important;
 }
 
-.lc-exam .lc-onb-exit:hover:not(:disabled) {
-  background: none;
-  box-shadow: none;
-  color: var(--lc-ink);
+.lc-exam .lc-onb-exit:hover:not(:disabled),
+.lc-exam button.lc-onb-exit:hover:not(:disabled) {
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--lc-ink) !important;
 }
 
 .lc-onb-error {
@@ -2714,6 +2762,22 @@
    which this scopes against - see the effect next to `useExamLightTheme` in
    TestRunner/index.tsx. */
 
+body.lc-final-test-active {
+  --primary: #FF3200 !important;
+  --primary-hover: #e02c00 !important;
+  --primary-soft: rgba(255, 50, 0, 0.15) !important;
+  --portal-primary: #FF3200 !important;
+  --portal-primary-hover: #e02c00 !important;
+  --portal-primary-soft: rgba(255, 50, 0, 0.15) !important;
+  --institute-primary: #FF3200 !important;
+  --accent: #FF3200 !important;
+  --accent-hover: #e02c00 !important;
+  --test-accent: #FF3200 !important;
+  --danger-fill: #FF3200 !important;
+  --danger-fill-hover: #e02c00 !important;
+  --focus-ring: 0 0 0 3px rgba(255, 50, 0, 0.25) !important;
+}
+
 body.lc-final-test-active .snackbar-item {
   border-radius: 4px;
   border: 1px solid var(--lc-line, #cfcfcf);
@@ -2728,12 +2792,12 @@ body.lc-final-test-active .snackbar-icon-badge {
 }
 
 body.lc-final-test-active .snackbar-type-error .snackbar-icon-badge {
-  background: var(--lc-red, #ee3124);
+  background: var(--lc-red, #FF3200);
   color: #ffffff;
 }
 
 body.lc-final-test-active .snackbar-type-error .snackbar-progress-bar {
-  background: var(--lc-red, #ee3124);
+  background: var(--lc-red, #FF3200);
 }
 
 body.lc-final-test-active .snackbar-title {
