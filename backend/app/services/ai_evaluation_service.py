@@ -1506,8 +1506,7 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
 
         if res.status_code == 429 and model != "gemini-2.0-flash":
             logger.info("Primary Gemini model %s returned 429, falling back to gemini-2.0-flash", model)
-            # Retrying inside the same minute just spends another request into
-            # a window that is already closed.
+            # Retrying inside the same minute spends another request; use gemini-2.0-flash.
             time.sleep(RATE_LIMIT_RETRY_SECONDS)
             fallback_url = f"{GEMINI_API_ROOT}/models/gemini-2.0-flash:generateContent"
             res = client.post(fallback_url, headers=headers, json=gemini_payload)
