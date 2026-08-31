@@ -29,9 +29,13 @@ from app.models.attempt import (
     PART_GRADE_GRADED,
     PART_GRADE_PENDING,
     QUEUE_COMPLETED,
+    REEVALUATION_IN_REVIEW,
+    REEVALUATION_PENDING,
+    REEVALUATION_RESOLVED,
     AttemptAnswer,
     AttemptFlag,
     AttemptPartGrade,
+    ReevaluationRequest,
     TestAttempt,
 )
 from app.models.exam_module import ExamModule, ExamModuleAsset, ExamModulePart, ExamModuleQuestion
@@ -1832,8 +1836,53 @@ def list_my_attempts(db: Session, user: User) -> list[dict]:
             .order_by(TestAttempt.started_at.desc())
             .all()
         )
-    return [
-        {
+    attempt_ids = [attempt.id for attempt in attempts]
+    reevaluations = (
+        db.query(ReevaluationRequest)
+        .filter(ReevaluationRequest.attempt_id.in_(attempt_ids))
+        .all()
+    ) if attempt_ids else []
+    reeval_by_attempt: dict[int, ReevaluationRequest] = {}
+    for r in reevaluations:
+        existing = reeval_by_attempt.get(r.attempt_id)
+        if not existing or r.id > existing.id:
+            reeval_by_attempt[r.attempt_id] = r
+
+    result = []
+    for attempt in attempts:
+        reeval = reeval_by_attempt.get(attempt.id)
+        has_requested_instructor = reeval is not None
+        reeval_status = reeval.status if reeval else None
+
+        part_grades = attempt.part_grades or []
+        has_ai_grade = any(g.status == PART_GRADE_AI_GRADED for g in part_grades)
+        has_instructor_grade = any(
+            g.status == PART_GRADE_GRADED and g.grader_id is not None for g in part_grades
+        ) or any(g.status == PART_GRADE_GRADED for g in part_grades) or (
+            reeval is not None and reeval.status == REEVALUATION_RESOLVED
+        )
+
+        is_open_reeval = reeval is not None and reeval.status in (REEVALUATION_PENDING, REEVALUATION_IN_REVIEW)
+        is_pending_grading = (
+            attempt.status in (ATTEMPT_SUBMITTED, ATTEMPT_GRADING)
+            or any(g.status in (PART_GRADE_PENDING, PART_GRADE_DRAFT) for g in part_grades)
+            or is_open_reeval
+        )
+
+        if is_open_reeval:
+            grading_type = "instructor_requested"
+        elif is_pending_grading:
+            grading_type = "pending_grading"
+        elif has_instructor_grade:
+            grading_type = "instructor_graded"
+        elif has_ai_grade:
+            grading_type = "ai_graded"
+        elif attempt.status == ATTEMPT_GRADED:
+            grading_type = "auto_marked"
+        else:
+            grading_type = None
+
+        result.append({
             "id": attempt.id,
             "module_id": attempt.module_id,
             "module_type": attempt.module.module_type,
@@ -1850,6 +1899,11 @@ def list_my_attempts(db: Session, user: User) -> list[dict]:
             "band_label": attempt.band_label,
             "cefr_level": attempt.cefr_level,
             "cefr_profile": attempt.cefr_profile,
-        }
-        for attempt in attempts
-    ]
+            "is_ai_graded": has_ai_grade,
+            "is_instructor_graded": has_instructor_grade,
+            "instructor_requested": has_requested_instructor,
+            "is_pending_grading": is_pending_grading,
+            "grading_type": grading_type,
+            "reevaluation_status": reeval_status,
+        })
+    return result

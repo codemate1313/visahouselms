@@ -955,6 +955,12 @@ export interface AttemptSummary {
   band_label: string | null;
   cefr_level: CefrLevel | null;
   cefr_profile: CefrProfile | null;
+  is_ai_graded?: boolean;
+  is_instructor_graded?: boolean;
+  instructor_requested?: boolean;
+  is_pending_grading?: boolean;
+  grading_type?: "ai_graded" | "instructor_graded" | "instructor_requested" | "pending_grading" | "auto_marked" | null;
+  reevaluation_status?: "pending" | "in_review" | "resolved" | "rejected" | null;
 }
 
 export type StudentNotificationKind =

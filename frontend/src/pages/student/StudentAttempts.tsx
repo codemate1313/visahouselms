@@ -36,6 +36,7 @@ export function StudentAttempts() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedGradingType, setSelectedGradingType] = useState<string>("all");
   const requestIdRef = useRef(0);
 
   const loadAttempts = useCallback(async (showInitialLoading = false) => {
@@ -90,8 +91,25 @@ export function StudentAttempts() {
   if (loading) return <p>{strings.loading}</p>;
 
   const filteredAttempts = attempts.filter((attempt) => {
-    if (selectedStatus === "all") return true;
-    return attempt.status === selectedStatus;
+    if (selectedStatus !== "all" && attempt.status !== selectedStatus) {
+      return false;
+    }
+    if (selectedGradingType === "all") {
+      return true;
+    }
+    if (selectedGradingType === "ai_graded") {
+      return Boolean(attempt.is_ai_graded);
+    }
+    if (selectedGradingType === "instructor_requested") {
+      return Boolean(attempt.instructor_requested);
+    }
+    if (selectedGradingType === "pending_grading") {
+      return Boolean(attempt.is_pending_grading);
+    }
+    if (selectedGradingType === "instructor_graded") {
+      return Boolean(attempt.is_instructor_graded);
+    }
+    return true;
   });
 
   const today: AttemptSummary[] = [];
@@ -121,9 +139,26 @@ export function StudentAttempts() {
     <tr key={attempt.id} className="clickable">
       <td>{attempt.module_title}</td>
       <td>
-        <Badge tone={attemptStatusTone(attempt)}>
-          {attemptStatusLabel(attempt)}
-        </Badge>
+        <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-start", gap: "4px" }}>
+          <Badge tone={attemptStatusTone(attempt)}>
+            {attemptStatusLabel(attempt)}
+          </Badge>
+          {attempt.instructor_requested && (!attempt.reevaluation_status || ["pending", "in_review"].includes(attempt.reevaluation_status)) && (
+            <Badge tone="purple" title="Re-evaluation requested from instructor">
+              {strings.gradingBadges.instructor_requested}
+            </Badge>
+          )}
+          {attempt.is_instructor_graded && (
+            <Badge tone="green" title="Evaluated by instructor">
+              {strings.gradingBadges.instructor_graded}
+            </Badge>
+          )}
+          {!attempt.is_instructor_graded && attempt.is_ai_graded && (
+            <Badge tone="blue" title="Evaluated by AI">
+              {strings.gradingBadges.ai_graded}
+            </Badge>
+          )}
+        </div>
       </td>
       <td>{formatDateTime(attempt.started_at)}</td>
       <td>
@@ -167,7 +202,7 @@ export function StudentAttempts() {
         </div>
       )}
 
-      <div className="filter-bar" style={{ marginBottom: 20 }}>
+      <div className="filter-bar" style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
         <SearchableSelect
           options={[
             { value: "all", label: "All Statuses" },
@@ -184,6 +219,20 @@ export function StudentAttempts() {
           searchable={false}
           className="status-filter-select"
         />
+        <SearchableSelect
+          options={[
+            { value: "all", label: strings.gradingFilterLabels.all },
+            { value: "ai_graded", label: strings.gradingFilterLabels.ai_graded },
+            { value: "instructor_requested", label: strings.gradingFilterLabels.instructor_requested },
+            { value: "pending_grading", label: strings.gradingFilterLabels.pending_grading },
+            { value: "instructor_graded", label: strings.gradingFilterLabels.instructor_graded },
+          ]}
+          value={selectedGradingType}
+          onChange={(val) => setSelectedGradingType(String(val))}
+          placeholder={strings.gradingPlaceholder}
+          searchable={false}
+          className="grading-filter-select"
+        />
         {refreshing && <span className="text-secondary text-sm">{strings.refreshing}</span>}
       </div>
 
@@ -194,8 +243,8 @@ export function StudentAttempts() {
         </div>
       ) : filteredAttempts.length === 0 ? (
         <div className="empty-state">
-          <h2>No attempts found</h2>
-          <p>Try selecting a different status filter.</p>
+          <h2>{strings.emptyFiltered.title}</h2>
+          <p>{strings.emptyFiltered.description}</p>
         </div>
       ) : (
         <div className="table-wrap">

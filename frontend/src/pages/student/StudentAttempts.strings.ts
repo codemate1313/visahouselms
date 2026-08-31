@@ -29,4 +29,23 @@ export const studentAttemptsStrings = {
   },
   resumeTest: "Resume test",
   viewResult: "View result",
+  gradingFilterLabels: {
+    all: "All Grading Types",
+    ai_graded: "Graded by AI",
+    instructor_requested: "Requested for Instructor Grading",
+    pending_grading: "Pending Grading",
+    instructor_graded: "Graded by Instructor",
+  },
+  gradingBadges: {
+    ai_graded: "AI Graded",
+    instructor_requested: "Instructor Review Requested",
+    pending_grading: "Pending Grading",
+    instructor_graded: "Instructor Graded",
+    auto_marked: "Auto Marked",
+  },
+  gradingPlaceholder: "Filter by grading",
+  emptyFiltered: {
+    title: "No attempts found",
+    description: "Try adjusting your status or grading filters.",
+  },
 } as const;
