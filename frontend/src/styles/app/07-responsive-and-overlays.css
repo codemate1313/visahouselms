@@ -1250,9 +1250,18 @@ body {
 }
 
 @media (min-width: 769px) {
+  html:has(.dashboard),
+  body:has(.dashboard),
+  #root:has(.dashboard) {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
   .dashboard {
     height: 100dvh;
     min-height: 100dvh;
+    max-height: 100dvh;
     overflow: hidden !important;
   }
 
@@ -1267,6 +1276,7 @@ body {
 
   .dashboard > .dashboard-content {
     height: 100dvh;
+    max-height: 100dvh;
     min-height: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
