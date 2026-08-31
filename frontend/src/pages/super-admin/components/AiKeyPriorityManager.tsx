@@ -346,6 +346,7 @@ export function AiKeyPriorityManager({
                     provider: event.target.value as AiKeyConfig["provider"],
                     model_options: [],
                     last_status: null,
+                    last_checked_at: null,
                     info: null,
                   })}
                 >
@@ -369,10 +370,15 @@ export function AiKeyPriorityManager({
                     return (
                       <select
                         value={key.model || options[0]?.value || model}
-                        onChange={(event) => update(index, { model: event.target.value })}
+                        onChange={(event) => update(index, {
+                          model: event.target.value,
+                          last_status: null,
+                          last_checked_at: null,
+                          info: null,
+                        })}
                       >
                         {options.map((option) => (
-                          <option key={option.value} value={option.value}>
+                          <option key={option.value} value={option.value} disabled={option.available === false}>
                             {option.label}
                           </option>
                         ))}
@@ -382,7 +388,12 @@ export function AiKeyPriorityManager({
                   return (
                     <input
                       value={key.model || model}
-                      onChange={(event) => update(index, { model: event.target.value })}
+                      onChange={(event) => update(index, {
+                        model: event.target.value,
+                        last_status: null,
+                        last_checked_at: null,
+                        info: null,
+                      })}
                       placeholder={providerInfo(key.provider).supported ? "Load models to list what this key supports" : "No supported evaluation models"}
                       disabled={!providerInfo(key.provider).supported}
                     />
@@ -421,6 +432,7 @@ export function AiKeyPriorityManager({
                       : key.model,
                     model_options: [],
                     last_status: null,
+                    last_checked_at: null,
                     info: detectedProvider && !providerInfo(detectedProvider).supported
                       ? `Detected ${providerInfo(detectedProvider).label.replace(" (detected, unsupported)", "")}. This evaluator currently supports Google Gemini, OpenAI, and Custom JSON evaluator endpoints.`
                       : null,
