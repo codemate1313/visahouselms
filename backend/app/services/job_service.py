@@ -157,6 +157,24 @@ def _purge_logs(db: Session, payload: Optional[dict]) -> str:
     return f"Purged {deleted} request log rows past retention."
 
 
+def _notify_grading_routed_after_ai(db: Session, attempt) -> None:
+    """Announce the submission now that the AI's verdict is in.
+
+    Never raises: a notification that cannot be delivered must not fail the
+    grading job that has already done its work.
+    """
+    from app.models.attempt import GradingQueueEntry
+    from app.services import notification_service
+
+    try:
+        entry = db.query(GradingQueueEntry).filter(GradingQueueEntry.attempt_id == attempt.id).first()
+        notification_service.notify_grading_queue_routed(
+            db, attempt, entry.routing_reason if entry else None
+        )
+    except Exception:
+        logger.exception("Failed to notify grading queue routing for attempt %s", attempt.id)
+
+
 def _auto_grade_attempt(db: Session, payload: Optional[dict]) -> str:
     """Runs automatic AI grading for a just-submitted attempt off the request
     thread - a Gemini/custom-provider call can take tens of seconds per part,
@@ -182,10 +200,20 @@ def _auto_grade_attempt(db: Session, payload: Optional[dict]) -> str:
     )
     total = len(eligible_part_ids)
     failed_after = db.query(AiEvaluation).filter_by(attempt_id=attempt.id, status="failed").count()
-    if total > 0 and graded < total and failed_after > failed_before:
-        from app.services import notification_service
+    from app.services import notification_service
 
+    ai_failed = total > 0 and graded < total and failed_after > failed_before
+    if ai_failed:
         notification_service.notify_ai_evaluation_failed(db, attempt)
+    else:
+        # Submission held this back until the AI had finished, so that a paper
+        # the AI marks itself never lands in anyone's queue as work to do.
+        # The notification skips the grading roles on its own when nothing is
+        # left for a person, so an institute still hears that its student sat
+        # the test either way. The failure branch above already carries a
+        # clearer version of the same message.
+        _notify_grading_routed_after_ai(db, attempt)
+
     if total > 0 and graded == 0 and failed_after > failed_before:
         raise RuntimeError(f"AI evaluator failed for attempt {attempt.id}; see ai_evaluations for details.")
     suffix = " (quota exhausted for the rest)" if quota_exhausted else ""

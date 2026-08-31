@@ -1532,7 +1532,10 @@ def submit_attempt(
         from app.services import job_service
 
         job_service.enqueue_ai_auto_grade(db, attempt_id)
-    if needs_grading:
+    # While the AI still has the attempt, nobody knows yet whether a person is
+    # needed - so nobody is told. The ai_auto_grade job sends this once the
+    # outcome is known, and skips the graders if the AI marked everything.
+    if needs_grading and not ai_evaluation_pending:
         from app.services import notification_service
 
         try:

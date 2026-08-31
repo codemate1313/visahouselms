@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core import actor_context
-from app.models.attempt import ATTEMPT_GRADED, AttemptPartGrade, RetakeRequest, TestAttempt
+from app.models.attempt import ATTEMPT_GRADED, AttemptPartGrade, PART_GRADE_PENDING, RetakeRequest, TestAttempt
 from app.models.notification import (
     AI_EVALUATION_FAILED,
     API_KEY_DOWN,
@@ -157,11 +157,16 @@ def create_notification(
             created_at=_now(),
         )
     if attempt_id is not None:
+        # One notification of a kind per attempt per person. The recipient has
+        # to be part of the match: without it the first grader to be notified
+        # about a submission would silently swallow everyone else's copy, so
+        # this could only ever be used for the student's own notifications.
         existing = (
             db.query(StudentNotification)
             .filter(
                 StudentNotification.attempt_id == attempt_id,
                 StudentNotification.kind == kind,
+                StudentNotification.user_id == user_id,
             )
             .first()
         )
@@ -279,11 +284,37 @@ def _attempt_audience(event: str, attempt: TestAttempt, routing_reason: Optional
     return policy["direct"], None
 
 
+# Roles this notification hands actual grading work to. An institute admin is
+# not one of them - their copy reports that a student sat a test, which stays
+# true however the paper was marked.
+GRADING_TASK_ROLES = {SUPER_ADMIN, SA_INSTRUCTOR, INST_INSTRUCTOR}
+
+
+def _parts_awaiting_human(attempt: TestAttempt) -> int:
+    """Subjective parts with no grade on them yet.
+
+    An AI-graded part carries a real grade, so it is not waiting for anybody.
+    """
+    grades = {grade.part_id: grade for grade in attempt.part_grades}
+    return sum(
+        1
+        for part in attempt.module.parts
+        if not part.auto_marked
+        and (grades.get(part.id) is None or grades[part.id].status == PART_GRADE_PENDING)
+    )
+
+
 def notify_grading_queue_routed(db: Session, attempt: TestAttempt, routing_reason: Optional[str]) -> None:
     title = f"New submission needs grading: {attempt.module.title}"
     message = f"{_student_name(attempt)} submitted {attempt.module.title} for instructor review."
     roles, institute_id = _attempt_audience("grading_queue_routed", attempt, routing_reason)
+    # Nothing is left for a person to mark - the AI graded every subjective
+    # part, or they were settled at submission. Telling a grader to grade it
+    # anyway is the alert that teaches everyone to ignore the rest.
+    ai_settled = _parts_awaiting_human(attempt) == 0
     for role_name in roles:
+        if ai_settled and role_name in GRADING_TASK_ROLES:
+            continue
         notify_roles(
             db,
             {role_name},
@@ -292,6 +323,9 @@ def notify_grading_queue_routed(db: Session, attempt: TestAttempt, routing_reaso
             message=message,
             link_url=_grading_link_for_role(role_name),
             institute_id=institute_id,
+            # An AI retry or a recovered job runs this again for the same
+            # attempt; nobody should hear about one submission twice.
+            attempt_id=attempt.id,
         )
 
 

@@ -506,8 +506,13 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(Decimal(final["max_score"]), Decimal("64"))
         self.assertEqual(final["cefr_level"], "C1")
         self.assertEqual(final["cefr_profile"]["skills"][0]["level"], "C1")
-        notification = self.db.query(StudentNotification).filter_by(attempt_id=attempt.id).one()
-        self.assertEqual(notification.user_id, self.student.id)
+        # The grader's "needs grading" alert carries this attempt id too, so
+        # that a re-run of the AI job cannot announce the same paper twice.
+        notification = (
+            self.db.query(StudentNotification)
+            .filter_by(attempt_id=attempt.id, user_id=self.student.id)
+            .one()
+        )
         self.assertEqual(notification.kind, "grade_released")
         updates = notification_service.list_student_notifications(self.db, self.student)
         self.assertEqual(updates[0]["attempt_id"], attempt.id)
@@ -620,6 +625,94 @@ class AttemptServiceTestCase(unittest.TestCase):
         attempt_service.submit_attempt(self.db, attempt)
 
         self.assertIsNone(attempt_service.get_student_view(self.db, attempt)["ai_evaluation_progress"])
+
+    def _grading_alerts(self):
+        """"Needs grading" notifications sitting in the SA instructor's inbox."""
+        return (
+            self.db.query(StudentNotification)
+            .filter_by(user_id=self.instructor.id, kind="grading_queue_routed")
+            .all()
+        )
+
+    def _submit_writing_attempt(self, module):
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "My essay response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        return attempt
+
+    def _ai_suggestion(self, payload):
+        return {
+            "criteria": [
+                {
+                    "criterion": item["criterion"],
+                    "max_marks": str(item["max_marks"]),
+                    "marks_awarded": "6",
+                    "cefr_level": "C1",
+                    "rationale": "AI-scored evidence.",
+                }
+                for item in payload["rubric"]
+            ],
+            "comment": "AI evaluation comment.",
+            "confidence": 0.9,
+        }
+
+    def test_ai_graded_submission_is_never_announced_as_work_for_a_grader(self):
+        self._enable_ai_evaluation()
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+
+        attempt = self._submit_writing_attempt(module)
+
+        # Held back while the AI has it: nobody knows yet whether a person is
+        # needed, so nobody is told one is.
+        self.assertEqual(self._grading_alerts(), [])
+
+        with patch.object(
+            ai_evaluation_service, "_remote_evaluator", side_effect=lambda _config, payload: self._ai_suggestion(payload)
+        ):
+            job_service._auto_grade_attempt(self.db, {"attempt_id": attempt.id})
+
+        self.db.refresh(attempt)
+        self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in attempt.part_grades))
+        # The AI marked every part, so the alert is never sent at all.
+        self.assertEqual(self._grading_alerts(), [])
+
+    def test_submission_the_ai_could_not_mark_still_reaches_the_grader(self):
+        self._enable_ai_evaluation()
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+
+        attempt = self._submit_writing_attempt(module)
+        self.assertEqual(self._grading_alerts(), [])
+
+        # Quota ran out before any part was marked - no failure rows, nothing
+        # graded. A person has to pick this up, so a person has to hear about it.
+        with patch.object(ai_evaluation_service, "auto_evaluate_submission", return_value=True):
+            job_service._auto_grade_attempt(self.db, {"attempt_id": attempt.id})
+
+        self.assertEqual(len(self._grading_alerts()), 1)
+
+        # Running the job again - an AI retry, or a recovered job - must not
+        # announce the same submission a second time.
+        with patch.object(ai_evaluation_service, "auto_evaluate_submission", return_value=True):
+            job_service._auto_grade_attempt(self.db, {"attempt_id": attempt.id})
+
+        self.assertEqual(len(self._grading_alerts()), 1)
+
+    def test_submission_without_ai_marking_alerts_the_grader_at_submit(self):
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+
+        self._submit_writing_attempt(module)
+
+        # No AI configured, so the paper is a person's job from the moment it
+        # arrives and the alert goes out with the submission as it always did.
+        self.assertEqual(len(self._grading_alerts()), 1)
 
     def test_writing_submit_does_not_enqueue_ai_when_part_toggle_disabled(self):
         self._enable_ai_evaluation()
