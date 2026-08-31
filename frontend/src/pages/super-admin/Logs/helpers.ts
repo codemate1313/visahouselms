@@ -1,6 +1,21 @@
-import { formatDateTime } from "@/utils/date";
 import { logsStrings as strings } from "./Logs.strings";
 import type { LogRow, LogType } from "./types";
+
+/** Format a timestamp strictly in IST (Asia/Kolkata) for the Logs screen only. */
+const IST_FORMAT: Intl.DateTimeFormatOptions = {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Asia/Kolkata",
+};
+
+function formatDateTimeIST(value: string | number | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const d = new Date(value as string | number);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString("en-GB", IST_FORMAT);
+}
 
 export const TAB_LABELS: Record<LogType, string> = {
   error: strings.tabs.error,
@@ -46,7 +61,7 @@ export function cellValue(row: LogRow, key: string): string {
   const value = row[key];
   if (value == null) return "—";
   if (key === "created_at" || key === "detected_at") {
-    return formatDateTime(String(value));
+    return formatDateTimeIST(String(value));
   }
   if (key === "latency_ms") return `${value} ms`;
   const text = String(value);
