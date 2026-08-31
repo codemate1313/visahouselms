@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
@@ -270,16 +270,27 @@ export function AiKeyPriorityManager({
     onChange(reorder(next));
   }
 
-  async function loadModels(index: number) {
+  /**
+   * `silent` is the refresh that runs when the screen opens: it brings the
+   * lists up to date with what the provider offers *now* without shouting
+   * about it, because a saved model list goes stale the moment the provider
+   * retires something and a dropdown of models that no longer exist is how a
+   * dead one gets picked.
+   */
+  async function loadModels(index: number, { silent = false }: { silent?: boolean } = {}) {
     const key = rows[index];
-    setLoadingModelsId(key.id);
-    setError(null);
+    if (!silent) setLoadingModelsId(key.id);
+    if (!silent) setError(null);
     try {
       const { data } = await apiClient.post<ModelListResult>(modelsPath, {
         key_id: key.id,
         provider: "auto",
         preferred_provider: key.provider || provider,
         model: key.model || model,
+        // What is selected on screen right now, saved or not - otherwise the
+        // server answers about the stored key and overwrites the choice.
+        writing_model: key.writing_model || undefined,
+        speaking_model: key.speaking_model || undefined,
         endpoint_url: key.endpoint_url || endpointUrl || undefined,
         api_key: key.api_key,
       });
@@ -297,19 +308,39 @@ export function AiKeyPriorityManager({
         speaking_models: data.speaking_models || [],
         // The server picks a working model per skill, so a key that can mark
         // is never left needing a decision before it will.
-        writing_model: data.writing_model || selectableModelValue(key.writing_model, data.writing_models) || "",
-        speaking_model: data.speaking_model || selectableModelValue(key.speaking_model, data.speaking_models) || "",
-        info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}`,
+        writing_model: selectableModelValue(key.writing_model, data.writing_models) || data.writing_model || "",
+        speaking_model: selectableModelValue(key.speaking_model, data.speaking_models) || data.speaking_model || "",
+        // A background refresh leaves the last real result on screen.
+        ...(silent ? {} : { info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}` }),
       });
-      if (!data.ok) setError(data.message);
+      if (!data.ok && !silent) setError(data.message);
     } catch (err: unknown) {
+      if (silent) return;
       const message = extractErrorMessage(err, "Could not load models for this key.");
       update(index, { info: message });
       setError(message);
     } finally {
-      setLoadingModelsId(null);
+      if (!silent) setLoadingModelsId(null);
     }
   }
+
+  /* One refresh per key per visit. Without it the dropdowns show whatever the
+     provider offered the last time someone pressed a button, which may be
+     months and one model retirement ago. */
+  const refreshedRef = useRef<Set<string>>(new Set());
+  const refreshLists = useCallback(() => {
+    rows.forEach((key, index) => {
+      // A row with no key yet has nothing to ask with.
+      if (!key.api_key || refreshedRef.current.has(key.id)) return;
+      refreshedRef.current.add(key.id);
+      void loadModels(index, { silent: true });
+    });
+    // `loadModels` is redeclared each render; the ref above is what stops this
+    // from running twice for the same key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
+
+  useEffect(refreshLists, [refreshLists]);
 
   async function testKey(index: number) {
     const key = rows[index];
@@ -321,6 +352,8 @@ export function AiKeyPriorityManager({
         provider: "auto",
         preferred_provider: key.provider || provider,
         model: key.model || model,
+        writing_model: key.writing_model || undefined,
+        speaking_model: key.speaking_model || undefined,
         endpoint_url: key.endpoint_url || endpointUrl || undefined,
         api_key: key.api_key,
       });
@@ -334,8 +367,10 @@ export function AiKeyPriorityManager({
         model_options: data.model_options || [],
         writing_models: data.writing_models || [],
         speaking_models: data.speaking_models || [],
-        writing_model: data.writing_model || selectableModelValue(key.writing_model, data.writing_models) || "",
-        speaking_model: data.speaking_model || selectableModelValue(key.speaking_model, data.speaking_models) || "",
+        // The admin's own choice survives a check, as long as the provider
+        // still offers it - a test must not quietly re-pick their model.
+        writing_model: selectableModelValue(key.writing_model, data.writing_models) || data.writing_model || "",
+        speaking_model: selectableModelValue(key.speaking_model, data.speaking_models) || data.speaking_model || "",
         last_status: data.ok ? "ok" : "failed",
         last_checked_at: new Date().toISOString(),
         info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}${data.detection_message ? ` ${data.detection_message}` : ""}${data.latency_ms ? ` (${data.latency_ms} ms)` : ""}`,

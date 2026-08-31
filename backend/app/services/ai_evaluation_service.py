@@ -723,6 +723,8 @@ def list_configured_key_models(
     model: Optional[str] = None,
     endpoint_url: Optional[str] = None,
     preferred_provider: Optional[str] = None,
+    writing_model: Optional[str] = None,
+    speaking_model: Optional[str] = None,
 ) -> dict:
     secret = (api_key or "").strip()
     stored = None
@@ -792,9 +794,9 @@ def list_configured_key_models(
 
     writing_options = models_for_skill(options, SKILL_WRITING)
     speaking_options = models_for_skill(options, SKILL_SPEAKING)
-    stored_writing = (stored or {}).get("writing_model") or effective_model
-    stored_speaking = (stored or {}).get("speaking_model") or effective_model
-    # Pick for them when their saved choice is not on offer, so a key that
+    stored_writing = writing_model or (stored or {}).get("writing_model") or effective_model
+    stored_speaking = speaking_model or (stored or {}).get("speaking_model") or effective_model
+    # Pick for them only when their choice is not on offer, so a key that
     # works never sits there needing a decision before it can mark anything.
     writing_model = _choose_model_from_options(detected["provider"], stored_writing, writing_options)
     speaking_model = (
@@ -1167,6 +1169,8 @@ def test_configured_key(
     model: Optional[str] = None,
     endpoint_url: Optional[str] = None,
     preferred_provider: Optional[str] = None,
+    writing_model: Optional[str] = None,
+    speaking_model: Optional[str] = None,
 ) -> dict:
     secret = (api_key or "").strip()
     stored = None
@@ -1240,8 +1244,11 @@ def test_configured_key(
 
     writing_options = models_for_skill(discovered, SKILL_WRITING)
     speaking_options = models_for_skill(discovered, SKILL_SPEAKING)
-    stored_writing = (stored or {}).get("writing_model") or effective_model
-    stored_speaking = (stored or {}).get("speaking_model") or effective_model
+    # The form's choice wins over the stored one: the admin may have just
+    # picked a different model and not saved it yet, and answering about the
+    # old one silently undoes their selection.
+    stored_writing = writing_model or (stored or {}).get("writing_model") or effective_model
+    stored_speaking = speaking_model or (stored or {}).get("speaking_model") or effective_model
     writing_model = _choose_model_from_options(detected["provider"], stored_writing, writing_options or discovered)
     speaking_model = (
         _choose_model_from_options(detected["provider"], stored_speaking, speaking_options)

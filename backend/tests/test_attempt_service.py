@@ -1999,6 +1999,41 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertTrue(result["writing_model"])
         self.assertTrue(result["speaking_model"])
 
+    def test_a_check_keeps_the_model_the_admin_just_chose(self):
+        """Detect & test kept resetting the dropdowns to its own pick.
+
+        The choice on screen was never sent, so the server answered about the
+        stored key and handed back the first model on the list - overwriting
+        an unsaved selection every time.
+        """
+        self._save_gemini_key(writing_model="gemini-2.5-flash", speaking_model="gemini-2.5-flash")
+        client = self._fake_gemini_models(["gemini-2.5-flash", "gemini-2.5-pro"])
+
+        with patch.object(ai_evaluation_service.httpx, "Client", client):
+            result = ai_evaluation_service.list_configured_key_models(
+                self.db,
+                key_id="gemini-1",
+                provider="gemini",
+                api_key="AIza-secret",
+                writing_model="gemini-2.5-pro",
+                speaking_model="gemini-2.5-pro",
+            )
+
+        self.assertEqual(result["writing_model"], "gemini-2.5-pro")
+        self.assertEqual(result["speaking_model"], "gemini-2.5-pro")
+
+        # And a choice the provider no longer offers is corrected rather than
+        # kept, because keeping it would fail the next paper.
+        with patch.object(ai_evaluation_service.httpx, "Client", client):
+            corrected = ai_evaluation_service.list_configured_key_models(
+                self.db,
+                key_id="gemini-1",
+                provider="gemini",
+                api_key="AIza-secret",
+                writing_model="gemini-1.5-pro",
+            )
+        self.assertIn(corrected["writing_model"], {"gemini-2.5-flash", "gemini-2.5-pro"})
+
     def test_a_key_that_cannot_list_models_says_why_instead_of_a_404(self):
         """What the super admin actually saw: a 404 naming a model they never
         chose, because the app guessed model names and reported the last one."""

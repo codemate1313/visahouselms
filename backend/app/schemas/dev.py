@@ -39,6 +39,11 @@ class AiEvaluationKeyTestIn(BaseModel):
     endpoint_url: Optional[str] = None
     api_key: Optional[str] = None
     model: Optional[str] = None
+    # The choices sitting in the form, which may not be saved yet. Without
+    # these the check answers about the stored key and hands back its own
+    # pick, silently undoing what the admin just selected.
+    writing_model: Optional[str] = None
+    speaking_model: Optional[str] = None
 
 
 class AiEvaluationModelListIn(BaseModel):
@@ -48,6 +53,8 @@ class AiEvaluationModelListIn(BaseModel):
     endpoint_url: Optional[str] = None
     api_key: Optional[str] = None
     model: Optional[str] = None
+    writing_model: Optional[str] = None
+    speaking_model: Optional[str] = None
 
 
 class AiQuotaLimitsIn(BaseModel):

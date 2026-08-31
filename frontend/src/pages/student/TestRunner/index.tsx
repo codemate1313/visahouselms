@@ -148,6 +148,7 @@ export function TestRunner() {
   const [sealingSpeakingPhase, setSealingSpeakingPhase] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [isListeningLocked, setIsListeningLocked] = useState(false);
+  const [isListeningHandoverLocked, setIsListeningHandoverLocked] = useState(false);
   const hasSpeakingPart = attempt?.parts.some((part) => part.section_type === "speaking") ?? false;
 
   const [savingIds, setSavingIds] = useState<Set<number>>(new Set());
@@ -264,7 +265,7 @@ export function TestRunner() {
      an earlier section reopened mid-interview would leave the examiner waiting
      - so every navigation control is locked for its duration. */
   const isSpeakingPart = currentPart?.section_type === "speaking";
-  const isNavigationLocked = isListeningLocked || isSpeakingPart;
+  const isNavigationLocked = isListeningLocked || isListeningHandoverLocked || isSpeakingPart;
   const currentPartRef = useRef(currentPart);
   useEffect(() => {
     currentPartRef.current = currentPart;
@@ -1513,8 +1514,13 @@ export function TestRunner() {
      five-second timer keyed on this callback, and a fresh identity on every
      render would restart that timer forever and never advance the candidate. */
   const totalParts = attempt?.parts.length ?? 0;
-  const handleListeningPartComplete = useCallback(() => {
-    if (partIndex < totalParts - 1) void selectPart(partIndex + 1, true);
+  const handleListeningPartComplete = useCallback(async () => {
+    if (partIndex >= totalParts - 1) return;
+    setIsListeningHandoverLocked(true);
+    await selectPart(partIndex + 1, true);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setIsListeningHandoverLocked(false));
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [partIndex, totalParts]);
 

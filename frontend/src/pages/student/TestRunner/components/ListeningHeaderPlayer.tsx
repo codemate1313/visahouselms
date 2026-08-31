@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE_URL } from "@/api/client";
 import type { Attempt } from "@/api/types";
 import { useAuthStore } from "@/store/authStore";
@@ -9,7 +9,7 @@ interface ListeningHeaderPlayerProps {
   currentPart: Attempt["parts"][number];
   onAudioLockChange?: (isLocked: boolean) => void;
   /** Called once the recording has finished and the settling delay has passed. */
-  onAudioComplete?: () => void;
+  onAudioComplete?: () => void | Promise<void>;
   /** Whether finishing this part moves the candidate on by itself. */
   autoAdvance?: boolean;
   /** Final Test only: the compact PeopleCert transport replaces the wide bar. */
@@ -183,6 +183,14 @@ export function ListeningHeaderPlayer({
      another five seconds of reading time. */
   const waitsBeforeStart = playlistIndex === 0 && resumeFrom === 0;
 
+  const releaseAfterComplete = useCallback(async () => {
+    try {
+      await onAudioComplete?.();
+    } finally {
+      onAudioLockChange?.(false);
+    }
+  }, [onAudioComplete, onAudioLockChange]);
+
   const handleSkipAudio = () => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -190,8 +198,7 @@ export function ListeningHeaderPlayer({
     removeStorage(getSessionStorage(), storageKey);
     writeStorage(getLocalStorage(), completedKey, "true");
     setPhase("finished");
-    onAudioLockChange?.(false);
-    onAudioComplete?.();
+    void releaseAfterComplete();
   };
 
   /* The countdown holds the part locked before a note is played, then starts
@@ -324,11 +331,10 @@ export function ListeningHeaderPlayer({
       return;
     }
     const timer = window.setTimeout(() => {
-      onAudioLockChange?.(false);
-      onAudioComplete?.();
+      void releaseAfterComplete();
     }, END_DELAY_SECONDS * 1000);
     return () => window.clearTimeout(timer);
-  }, [phase, onAudioComplete, onAudioLockChange]);
+  }, [phase, releaseAfterComplete, onAudioLockChange]);
 
   if (!currentAudioUrl) return null;
 
