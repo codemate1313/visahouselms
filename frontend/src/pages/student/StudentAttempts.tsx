@@ -19,12 +19,44 @@ const STATUS_CLASS: Record<string, BadgeTone> = {
   expired: "red",
 };
 
-function attemptStatusLabel(attempt: AttemptSummary) {
-  return strings.statusLabels[attempt.status as keyof typeof strings.statusLabels] ?? attempt.status;
-}
+function getAttemptBadge(attempt: AttemptSummary): { label: string; tone: BadgeTone } {
+  if (
+    attempt.instructor_requested &&
+    (!attempt.reevaluation_status || ["pending", "in_review"].includes(attempt.reevaluation_status))
+  ) {
+    return { label: strings.gradingBadges.instructor_requested, tone: "purple" };
+  }
 
-function attemptStatusTone(attempt: AttemptSummary): BadgeTone {
-  return STATUS_CLASS[attempt.status] ?? "gray";
+  if (attempt.status === "graded") {
+    if (attempt.is_instructor_graded) {
+      return { label: strings.gradingBadges.instructor_graded, tone: "green" };
+    }
+    if (attempt.is_ai_graded) {
+      return { label: strings.gradingBadges.ai_graded, tone: "blue" };
+    }
+    return { label: strings.statusLabels.graded, tone: "green" };
+  }
+
+  if (attempt.status === "grading" || attempt.status === "submitted") {
+    return { label: strings.statusLabels.grading, tone: "amber" };
+  }
+
+  if (attempt.status === "in_progress") {
+    return { label: strings.statusLabels.in_progress, tone: "amber" };
+  }
+
+  if (attempt.status === "ready") {
+    return { label: strings.statusLabels.ready, tone: "blue" };
+  }
+
+  if (attempt.status === "expired") {
+    return { label: strings.statusLabels.expired, tone: "red" };
+  }
+
+  return {
+    label: strings.statusLabels[attempt.status as keyof typeof strings.statusLabels] ?? attempt.status,
+    tone: STATUS_CLASS[attempt.status] ?? "gray",
+  };
 }
 
 const ATTEMPTS_REQUEST_TIMEOUT_MS = 15000;
@@ -123,59 +155,45 @@ export function StudentAttempts() {
     }
   });
 
-  const renderRow = (attempt: AttemptSummary) => (
-    <tr key={attempt.id} className="clickable">
-      <td>{attempt.module_title}</td>
-      <td>
-        <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-start", gap: "4px" }}>
-          <Badge tone={attemptStatusTone(attempt)}>
-            {attemptStatusLabel(attempt)}
+  const renderRow = (attempt: AttemptSummary) => {
+    const badge = getAttemptBadge(attempt);
+    return (
+      <tr key={attempt.id} className="clickable">
+        <td>{attempt.module_title}</td>
+        <td>
+          <Badge tone={badge.tone}>
+            {badge.label}
           </Badge>
-          {attempt.instructor_requested && (!attempt.reevaluation_status || ["pending", "in_review"].includes(attempt.reevaluation_status)) && (
-            <Badge tone="purple" title="Re-evaluation requested from instructor">
-              {strings.gradingBadges.instructor_requested}
-            </Badge>
+        </td>
+        <td>{formatDateTime(attempt.started_at)}</td>
+        <td>
+          {attempt.raw_score && attempt.max_score
+            ? `${attempt.raw_score} / ${attempt.max_score}`
+            : "—"}
+        </td>
+        <td>{attempt.band_label ?? "—"}</td>
+        <td className="table-actions">
+          {attempt.status === "ready" || attempt.status === "in_progress" ? (
+            <Link
+              to={attemptTargetUrl(attempt)}
+              aria-label={strings.resumeTest}
+              data-tooltip={strings.resumeTest}
+            >
+              <Icon name="module" />
+            </Link>
+          ) : (
+            <Link
+              to={`/student/attempts/${attempt.id}/result`}
+              aria-label={strings.viewResult}
+              data-tooltip={strings.viewResult}
+            >
+              <Icon name="overview" />
+            </Link>
           )}
-          {attempt.is_instructor_graded && (
-            <Badge tone="green" title="Evaluated by instructor">
-              {strings.gradingBadges.instructor_graded}
-            </Badge>
-          )}
-          {!attempt.is_instructor_graded && attempt.is_ai_graded && (
-            <Badge tone="blue" title="Evaluated by AI">
-              {strings.gradingBadges.ai_graded}
-            </Badge>
-          )}
-        </div>
-      </td>
-      <td>{formatDateTime(attempt.started_at)}</td>
-      <td>
-        {attempt.raw_score && attempt.max_score
-          ? `${attempt.raw_score} / ${attempt.max_score}`
-          : "—"}
-      </td>
-      <td>{attempt.band_label ?? "—"}</td>
-      <td className="table-actions">
-        {attempt.status === "ready" || attempt.status === "in_progress" ? (
-          <Link
-            to={attemptTargetUrl(attempt)}
-            aria-label={strings.resumeTest}
-            data-tooltip={strings.resumeTest}
-          >
-            <Icon name="module" />
-          </Link>
-        ) : (
-          <Link
-            to={`/student/attempts/${attempt.id}/result`}
-            aria-label={strings.viewResult}
-            data-tooltip={strings.viewResult}
-          >
-            <Icon name="overview" />
-          </Link>
-        )}
-      </td>
-    </tr>
-  );
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <div>

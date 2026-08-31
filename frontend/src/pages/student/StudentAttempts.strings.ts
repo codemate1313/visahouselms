@@ -41,10 +41,10 @@ export const studentAttemptsStrings = {
   filterPlaceholder: "Filter tests",
   gradingBadges: {
     ai_graded: "AI Graded",
-    instructor_requested: "Instructor Review Requested",
-    pending_grading: "Pending Grading",
+    instructor_requested: "Review Requested",
+    pending_grading: "Awaiting grading",
     instructor_graded: "Instructor Graded",
-    auto_marked: "Auto Marked",
+    auto_marked: "Graded",
   },
   emptyFiltered: {
     title: "No attempts found",
