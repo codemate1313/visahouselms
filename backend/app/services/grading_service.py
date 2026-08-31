@@ -10,6 +10,7 @@ from app.models.attempt import (
     ATTEMPT_GRADED,
     ATTEMPT_GRADING,
     AiEvaluationLimit,
+    AttemptPartGrade,
     GradingQueueEntry,
     QUEUE_CLAIMED,
     QUEUE_COMPLETED,
@@ -73,7 +74,12 @@ def ensure_queue_entry(
     *,
     routing_reason: Optional[str] = None,
 ) -> GradingQueueEntry:
-    entry = db.query(GradingQueueEntry).filter(GradingQueueEntry.attempt_id == attempt.id).first()
+    entry = (
+        db.query(GradingQueueEntry)
+        .options(joinedload(GradingQueueEntry.assigned_to))
+        .filter(GradingQueueEntry.attempt_id == attempt.id)
+        .first()
+    )
     if entry is None:
         reason = routing_reason or (
             "direct_student"
@@ -302,7 +308,10 @@ def list_queue(db: Session, actor: User, status_filter: Optional[str] = None) ->
         # Eager-load what the permission filter and the row builder below read,
         # so the queue does not lazy-load `attempt.user` and `attempt.part_grades`
         # once per attempt (the N+1 this list used to issue).
-        .options(joinedload(TestAttempt.user), selectinload(TestAttempt.part_grades))
+        .options(
+            joinedload(TestAttempt.user),
+            selectinload(TestAttempt.part_grades).joinedload(AttemptPartGrade.grader),
+        )
     )
     if actor.role.name == INST_INSTRUCTOR:
         query = query.filter(User.institute_id == actor.institute_id)
@@ -324,6 +333,38 @@ def list_queue(db: Session, actor: User, status_filter: Optional[str] = None) ->
         if status_filter and entry.status != status_filter:
             continue
         reevaluation = latest_open_reevaluation(db, attempt.id)
+
+        # Resolve grader if test was graded/completed
+        grader_name = None
+        if entry.assigned_to:
+            grader_name = f"{entry.assigned_to.first_name} {entry.assigned_to.last_name}".strip()
+        if not grader_name:
+            for g in attempt.part_grades:
+                if g.grader:
+                    grader_name = f"{g.grader.first_name} {g.grader.last_name}".strip()
+                    break
+                elif g.grader_id:
+                    grader_user = db.query(User).filter(User.id == g.grader_id).first()
+                    if grader_user:
+                        grader_name = f"{grader_user.first_name} {grader_user.last_name}".strip()
+                        break
+        if not grader_name:
+            resolved_reeval = (
+                db.query(ReevaluationRequest)
+                .options(joinedload(ReevaluationRequest.assigned_to))
+                .filter(ReevaluationRequest.attempt_id == attempt.id, ReevaluationRequest.assigned_to_id.isnot(None))
+                .order_by(ReevaluationRequest.resolved_at.desc())
+                .first()
+            )
+            if resolved_reeval and resolved_reeval.assigned_to:
+                grader_name = f"{resolved_reeval.assigned_to.first_name} {resolved_reeval.assigned_to.last_name}".strip()
+        if not grader_name and any(g.status == "ai_graded" for g in attempt.part_grades):
+            grader_name = "AI Evaluator"
+
+        queue_data = _entry_out(entry)
+        if queue_data and not queue_data.get("assigned_to_name") and grader_name:
+            queue_data["assigned_to_name"] = grader_name
+
         rows.append({
             "id": attempt.id,
             "user_id": attempt.user_id,
@@ -335,8 +376,9 @@ def list_queue(db: Session, actor: User, status_filter: Optional[str] = None) ->
             "submitted_at": attempt.submitted_at,
             "flag_count": len(attempt.flags),
             "parts_to_grade": sum(1 for grade in attempt.part_grades if grade.status in ("pending", "draft")),
-            "queue": _entry_out(entry),
+            "queue": queue_data,
             "is_reevaluation": reevaluation is not None,
+            "graded_by_name": grader_name,
         })
     db.commit()
     return sorted(rows, key=lambda item: (-item["queue"]["priority"], item["submitted_at"] or _now()))

@@ -67,6 +67,8 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
     const isBeingManuallyGraded =
       item.queue.status !== "completed" &&
       (item.parts_to_grade > 0 || item.is_reevaluation || item.status === "grading");
+    const isCompleted = item.queue.status === "completed" || item.status === "graded";
+    const graderName = item.graded_by_name || item.queue.assigned_to_name;
 
     const issuedAt = item.submitted_at || item.queue.created_at;
 
@@ -91,11 +93,15 @@ export function GradingQueueTable({ items, gradingBase }: GradingQueueTableProps
         </td>
         <td><Badge tone={STATUS_CLASS[item.queue.status] ?? "gray"}>{item.queue.status}</Badge></td>
         <td>
-          {claimedByMe
-            ? t.youAreGrading
-            : claimedByOther
-              ? t.gradingBy(item.queue.assigned_to_name ?? t.anotherInstructor)
-              : t.unclaimed}
+          {isCompleted && graderName
+            ? t.gradedBy(graderName)
+            : isCompleted
+              ? t.gradedBy(t.anotherInstructor)
+              : claimedByMe
+                ? t.youAreGrading
+                : claimedByOther
+                  ? t.gradingBy(item.queue.assigned_to_name ?? t.anotherInstructor)
+                  : t.unclaimed}
         </td>
         <td>{formatDateTime(issuedAt)}</td>
         <td>{item.queue.due_at ? formatDate(item.queue.due_at) : "—"}</td>

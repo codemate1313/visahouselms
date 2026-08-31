@@ -485,26 +485,76 @@ export function GradingDetail() {
       {/* Submit lives at the bottom: publishing is the last thing an instructor
           does, after every part above has a complete draft. */}
       {detail.status === "grading" && subjectiveParts.length > 0 && (
-        <section className="workspace-panel submit-full-test-panel">
-          <div className="panel-heading">
-            <div>
-              <h2>{strings.submitFullTest.title}</h2>
-              <p>{strings.submitFullTest.description}</p>
+        <section className={`workspace-panel submit-full-test-panel ${allPartsReady ? "is-ready" : "is-incomplete"}`}>
+          <div className="submit-test-header">
+            <div className="submit-test-info">
+              <div className="submit-test-icon-orb" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <path d="m9 15 2 2 4-4" />
+                </svg>
+              </div>
+              <div className="submit-test-titles">
+                <h2>{strings.submitFullTest.title}</h2>
+                <p>{strings.submitFullTest.description}</p>
+              </div>
             </div>
-            <Button
-              type="button"
-              variant="secondary"
-              className="parts-scored-chip"
-              onClick={() => setMissingPartsOpen(true)}
-              aria-label={strings.submitFullTest.openMissingDialog}
-            >
-              <span aria-hidden="true" />
-              {strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}
-            </Button>
+
+            <div className="submit-test-header-right">
+              <button
+                type="button"
+                className={`parts-scored-pill ${allPartsReady ? "is-ready" : "is-incomplete"}`}
+                onClick={() => setMissingPartsOpen(true)}
+                aria-label={strings.submitFullTest.openMissingDialog}
+              >
+                <span className="parts-scored-dot" aria-hidden="true" />
+                <span className="parts-scored-text">
+                  {strings.submitFullTest.readyCount(readyPartsCount, subjectiveParts.length)}
+                </span>
+                {!allPartsReady && (
+                  <svg className="parts-scored-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
+
+          {/* Progress Bar & Subtitle */}
+          <div className="submit-test-progress-bar-wrap">
+            <div className="submit-test-progress-track">
+              <div
+                className="submit-test-progress-fill"
+                style={{ width: `${Math.round((readyPartsCount / subjectiveParts.length) * 100)}%` }}
+              />
+            </div>
+            <div className="submit-test-progress-meta">
+              <span className="submit-test-progress-hint">
+                {allPartsReady
+                  ? strings.submitFullTest.allReady
+                  : `${subjectiveParts.length - readyPartsCount} subjective part${subjectiveParts.length - readyPartsCount === 1 ? "" : "s"} remaining to score before release.`}
+              </span>
+              <span className="submit-test-progress-pct">
+                {Math.round((readyPartsCount / subjectiveParts.length) * 100)}% Scored
+              </span>
+            </div>
+          </div>
+
           {canEdit && (
-            <div className="form-actions">
-              <Button disabled={busy || !allPartsReady} onClick={submitFullTest}>
+            <div className="submit-test-actions-row">
+              <Button
+                variant={allPartsReady ? "primary" : "secondary"}
+                disabled={busy || !allPartsReady}
+                onClick={submitFullTest}
+                className="submit-full-test-btn"
+                leftIcon={
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
+                }
+              >
                 {busy ? strings.submitFullTest.submitting : strings.submitFullTest.action}
               </Button>
             </div>

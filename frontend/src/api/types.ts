@@ -1053,6 +1053,7 @@ export interface GradingQueueItem {
   parts_to_grade: number;
   queue: GradingQueueMetadata;
   is_reevaluation: boolean;
+  graded_by_name?: string | null;
 }
 
 export interface GradingDetail extends Attempt {
