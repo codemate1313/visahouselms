@@ -8,9 +8,11 @@ export function hasSpeakingRemaining(attempt?: AttemptSummary | null) {
   return Boolean(
     attempt &&
       (attempt.module_type === "full_mock" || attempt.module_type === "final_test") &&
+      (attempt.status === "ready" || attempt.status === "in_progress") &&
       (attempt.phase === "speaking_pending" || attempt.phase === "speaking")
   );
 }
+
 
 const MODULE_TONE: Record<ExamModuleType, string> = {
   reading: "blue",
