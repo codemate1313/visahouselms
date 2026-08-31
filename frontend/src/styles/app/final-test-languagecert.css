@@ -892,21 +892,36 @@
   background: #fbfbfb;
 }
 
-/* Selection is a filled letter cell and a tinted field -- the same two-part
-   readout the exam client gives, so a candidate can scan answered rows. */
+/* Selection is a filled letter cell and a tinted field -- seamless unified row */
 .lc-exam .test-runner-option:has(input:checked)::before {
-  border-color: var(--lc-red);
+  left: -40px;
+  width: 40px;
+  border: 1px solid var(--lc-red);
+  border-right: 0;
   background: var(--lc-red);
   color: #ffffff;
 }
 
 .lc-exam .test-runner-option:has(input:checked) {
   border-color: var(--lc-red);
+  border-left: 0;
   background: var(--lc-peach-mute);
   color: var(--lc-ink);
   /* The base sheet bolds a chosen answer; the exam client does not. Weight is
      not a readout here - the filled letter cell and the tint already are. */
   font-weight: 400;
+}
+
+.lc-exam .test-runner-option:has(input:checked):hover {
+  border-color: var(--lc-red);
+  border-left: 0;
+  background: var(--lc-peach-mute);
+}
+
+.lc-exam .test-runner-option:has(input:checked):hover::before {
+  border-color: var(--lc-red);
+  border-right: 0;
+  background: var(--lc-red);
 }
 
 .lc-exam .test-runner-option:has(input:focus-visible) {
