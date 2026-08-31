@@ -72,6 +72,8 @@ interface ViolationNotice {
   autoSubmitted: boolean;
 }
 
+const FINAL_TEST_CLOSED_ERROR = "This Final Test can no longer be resumed";
+
 /** Where a candidate resumes when the part they are pointed at is a speaking
     part. Speaking is sat in order, so any speaking target - a saved index, a
     hand-edited `?part=` - resolves to the first speaking part still owed a
@@ -181,6 +183,15 @@ export function TestRunner() {
   const [speakingSetupCompleted, setSpeakingSetupCompleted] = useState(false);
   const [securityStarting, setSecurityStarting] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
+  const handleSecurityError = useCallback((err: unknown, fallback: string) => {
+    const message = extractErrorMessage(err, fallback);
+    if (message.includes(FINAL_TEST_CLOSED_ERROR)) {
+      setSecurityError(null);
+      navigate("/student/attempts", { replace: true });
+      return;
+    }
+    setSecurityError(message);
+  }, [navigate]);
   const [mediaState, setMediaState] = useState<SecurityMediaState>(EMPTY_MEDIA_STATE);
   const [liveCameraStream, setLiveCameraStream] = useState<MediaStream | null>(null);
   const [concurrentTab, setConcurrentTab] = useState(false);
@@ -1090,7 +1101,7 @@ export function TestRunner() {
         });
       }
       setSecurityAuthorized(false);
-      setSecurityError(extractErrorMessage(err, err instanceof Error ? err.message : strings.security.errors.generic));
+      handleSecurityError(err, err instanceof Error ? err.message : strings.security.errors.generic);
     } finally {
       /* Closed on both routes. The settle window that actually arms proctoring
          is set by the `securityAuthorized` effect, so a failed handshake leaves
@@ -1152,7 +1163,7 @@ export function TestRunner() {
         const status = (err as { response?: { status?: number } })?.response?.status;
         if (status === 403 || status === 409) {
           setSecurityAuthorized(false);
-          setSecurityError(extractErrorMessage(err, strings.security.errors.sessionRestoreNeeded));
+          handleSecurityError(err, strings.security.errors.sessionRestoreNeeded);
         }
       } finally {
         heartbeatBusyRef.current = false;
@@ -1164,7 +1175,7 @@ export function TestRunner() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [attempt?.id, attempt?.is_final, attempt?.status, activeHeartbeatPartId, handleViolationPolicy, proctorArmed, securityAuthorized, id, securityHeaders]);
+  }, [attempt?.id, attempt?.is_final, attempt?.status, activeHeartbeatPartId, handleSecurityError, handleViolationPolicy, proctorArmed, securityAuthorized, id, securityHeaders]);
 
   useEffect(() => {
     if (!attempt?.is_final || attempt.status !== "in_progress") return;
@@ -2044,7 +2055,6 @@ export function TestRunner() {
         <SubmitConfirmModal
           answeredCount={answeredCount}
           totalQuestions={totalQuestions}
-          isFinal={attempt.is_final}
           submitting={submitting || sealingSpeakingPhase}
           onClose={() => setConfirmSubmit(false)}
           onConfirm={isSplitCompositeAttempt && !isSpeakingPhase ? enterSpeakingPhase : submit}

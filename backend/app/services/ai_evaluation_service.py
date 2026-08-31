@@ -349,6 +349,57 @@ def _resolve_model_for_provider(provider: str, model: Optional[str]) -> str:
     return value if _model_matches_provider(provider, value) else _default_model(provider)
 
 
+SKILL_WRITING = "writing"
+SKILL_SPEAKING = "speaking"
+# Models that cannot mark a paper at all, whatever the skill: embeddings,
+# image and video generators, text-to-speech, the retrieval-only endpoints.
+NON_EVALUATION_MARKERS = (
+    "embedding",
+    "aqa",
+    "imagen",
+    "veo",
+    "tts",
+    "image-generation",
+    "-live",
+    "realtime",
+    "guard",
+)
+
+
+def model_skills(provider: str, model_id: str) -> set[str]:
+    """Which papers this model can be trusted with.
+
+    Google's model list says which *methods* a model supports, never which
+    *inputs* it accepts, so audio has to be judged from the family. Getting it
+    wrong costs one fallback hop rather than a failed paper - but a Speaking
+    recording sent to a model that cannot hear is a guaranteed zero, so the
+    rule errs towards leaving a model out of the Speaking list.
+    """
+    name = (model_id or "").lower().removeprefix("models/")
+    if not name or any(marker in name for marker in NON_EVALUATION_MARKERS):
+        return set()
+
+    if provider == "gemini":
+        # Every current Gemini model reads text. Gemma is served through the
+        # same API but is text and image only, so it never hears a recording.
+        skills = {SKILL_WRITING}
+        if name.startswith("gemini-") and "gemma" not in name:
+            skills.add(SKILL_SPEAKING)
+        return skills
+
+    if provider == "openai":
+        skills = {SKILL_WRITING}
+        # Only the audio variants accept `input_audio`; the plain chat models
+        # reject it, so they must never appear in the Speaking list.
+        if "audio" in name:
+            skills.add(SKILL_SPEAKING)
+        return skills
+
+    # A custom endpoint is whatever its owner built - assume it does both,
+    # because nothing here can tell otherwise.
+    return {SKILL_WRITING, SKILL_SPEAKING}
+
+
 def _fetch_gemini_model_ids(api_key: str) -> list[str]:
     """Ask Google which models this key can actually call today."""
     with httpx.Client(timeout=15.0) as client:
@@ -416,29 +467,41 @@ def _gemini_model_family(model: str) -> str:
     return "pro" if "pro" in (model or "").lower() else "flash"
 
 
-def gemini_model_chain(model: Optional[str], live_models: Optional[list[str]] = None) -> list[str]:
+def gemini_model_chain(
+    model: Optional[str],
+    live_models: Optional[list[str]] = None,
+    skill: str = SKILL_WRITING,
+) -> list[str]:
     """The model to call, then what to try if it will not answer.
 
     The configured model leads unless it is one Google has already retired, or
     the live directory says it is gone. Everything after it is a preference
     order filtered by that same directory, so the chain only ever contains
-    numbers that were connected the last time we looked.
+    numbers that were connected the last time we looked - and, for Speaking,
+    only models that can actually hear a recording.
     """
     requested = (model or "").replace("–", "-").replace("—", "-").strip().removeprefix("models/")
     known_live = set(live_models or [])
     family = _gemini_model_family(requested or DEFAULT_GEMINI_MODEL)
     preference = GEMINI_PRO_PREFERENCE if family == "pro" else GEMINI_FLASH_PREFERENCE
 
+    def usable(candidate: str) -> bool:
+        return skill in model_skills("gemini", candidate)
+
     chain: list[str] = []
     retired = requested in GEMINI_RETIRED_MODELS
     gone_from_directory = bool(known_live) and requested not in known_live
-    if requested and not retired and not gone_from_directory:
+    if requested and not retired and not gone_from_directory and usable(requested):
         chain.append(requested)
 
     for candidate in preference:
         # With no directory to check against, the preference order is all we
         # have; with one, only what it lists is worth dialling.
         if known_live and candidate not in known_live:
+            continue
+        # A Speaking recording sent to a model that cannot hear is a
+        # guaranteed zero, so the chain never leaves the skill.
+        if not usable(candidate):
             continue
         chain.append(candidate)
 
@@ -476,40 +539,59 @@ def _choose_model_from_options(provider: str, preferred: Optional[str], options:
     return _resolve_model_for_provider(provider, preferred)
 
 
-def list_evaluation_models(
+def _model_entry(provider: str, model_id: str, display_name: Optional[str] = None) -> Optional[dict]:
+    skills = model_skills(provider, model_id)
+    if not skills:
+        return None
+    return {**_model_option(model_id, display_name), "skills": sorted(skills), "available": True}
+
+
+def discover_models(
     *,
     provider: str,
     api_key: str,
-    model: Optional[str] = None,
     endpoint_url: Optional[str] = None,
-) -> list[dict]:
-    if provider != "gemini":
-        if provider == "openai":
-            try:
-                with httpx.Client(timeout=15.0) as client:
-                    response = client.get(
-                        "https://api.openai.com/v1/models",
-                        headers={"Authorization": f"Bearer {api_key}"},
-                    )
-                    response.raise_for_status()
-                    data = response.json()
-            except Exception as exc:
-                logger.warning("Could not list OpenAI models for AI evaluation: %s", exc)
-                return _default_model_options(provider, model)
+) -> dict:
+    """Ask the key what it can run, and say plainly when it cannot say.
 
-            options = []
-            for item in data.get("data", []):
-                model_id = str(item.get("id") or "")
-                if not model_id.startswith(OPENAI_EVALUATION_MODEL_PREFIXES):
-                    continue
-                if any(skip in model_id for skip in ("audio", "realtime", "transcribe", "tts", "image")):
-                    continue
-                options.append(_model_option(model_id))
-            selected = _resolve_model_for_provider(provider, model)
-            if selected and not any(option["value"] == selected for option in options):
-                options.insert(0, _model_option(selected))
-            return options or _default_model_options(provider, model)
-        return _default_model_options(provider, model)
+    Returns {"ok", "message", "models"}. A failure here used to be swallowed
+    and replaced with a hardcoded guess, which is how a key that cannot reach
+    the provider at all ended up reporting a 404 about a model nobody chose:
+    the guess was tried, and the guess was wrong.
+    """
+    if provider == "custom_json":
+        return {
+            "ok": True,
+            "message": "Custom endpoints declare their own model.",
+            "models": [],
+        }
+
+    if provider == "openai":
+        try:
+            with httpx.Client(timeout=15.0) as client:
+                response = client.get(
+                    "https://api.openai.com/v1/models",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                )
+                response.raise_for_status()
+                data = response.json()
+        except Exception as exc:
+            return {
+                "ok": False,
+                "message": _key_cannot_list_message("OpenAI", exc),
+                "models": [],
+            }
+        models = []
+        for item in data.get("data", []):
+            model_id = str(item.get("id") or "")
+            if not model_id.startswith(OPENAI_EVALUATION_MODEL_PREFIXES):
+                continue
+            if any(skip in model_id for skip in ("transcribe", "tts", "image")):
+                continue
+            entry = _model_entry(provider, model_id)
+            if entry:
+                models.append(entry)
+        return {"ok": True, "message": f"{len(models)} model(s) available to this key.", "models": models}
 
     try:
         with httpx.Client(timeout=15.0) as client:
@@ -517,42 +599,103 @@ def list_evaluation_models(
             response.raise_for_status()
             data = response.json()
     except Exception as exc:
-        logger.warning("Could not list Gemini models for AI evaluation: %s", exc)
-        return _default_model_options(provider, model)
+        return {"ok": False, "message": _key_cannot_list_message("Google Gemini", exc), "models": []}
 
-    options = []
+    models = []
     for item in data.get("models", []):
-        name = str(item.get("name") or "")
-        model_id = name.removeprefix("models/")
+        model_id = str(item.get("name") or "").removeprefix("models/")
         methods = set(item.get("supportedGenerationMethods") or [])
         if not model_id or "generateContent" not in methods:
-            continue
-        if model_id in GEMINI_RETIRED_MODELS:
             continue
         if model_id not in GEMINI_EVALUATION_MODELS and not (
             model_id.startswith("gemini-") and ("flash" in model_id or "pro" in model_id)
         ):
             continue
-        options.append(_model_option(model_id, item.get("displayName")))
+        entry = _model_entry(provider, model_id, item.get("displayName"))
+        if entry:
+            models.append(entry)
 
-    selected = (model or DEFAULT_GEMINI_MODEL).removeprefix("models/")
+    if not models:
+        return {
+            "ok": False,
+            "message": (
+                "This key reached Google, but no model it offers can mark a paper. "
+                "The project may not have the Generative Language API enabled."
+            ),
+            "models": [],
+        }
+    return {"ok": True, "message": f"{len(models)} model(s) available to this key.", "models": models}
+
+
+def _key_cannot_list_message(provider_label: str, exc: Exception) -> str:
+    """Why the key could not be used, in words a super admin can act on."""
+    status_code = None
+    if isinstance(exc, httpx.HTTPStatusError):
+        status_code = exc.response.status_code
+
+    if status_code in (401, 403):
+        return (
+            f"{provider_label} rejected this key. Check that it is active and that any "
+            "API or referrer restrictions on it allow calls from this server."
+        )
+    if status_code in (400, 404):
+        return (
+            f"{provider_label} does not recognise this key for AI marking. It is most often a "
+            "Vertex AI / Google Cloud key rather than an AI Studio one, or the Generative Language "
+            "API is not enabled on its project. Create a key at aistudio.google.com/apikey."
+        )
+    if isinstance(exc, (httpx.TimeoutException, httpx.TransportError)):
+        return f"Could not reach {provider_label} to check this key. Try again in a moment."
+    return f"{provider_label} could not list models for this key: {_redact_secrets(exc)[:200]}"
+
+
+def models_for_skill(models: list[dict], skill: str) -> list[dict]:
+    return [entry for entry in models if skill in (entry.get("skills") or [])]
+
+
+def list_evaluation_models(
+    *,
+    provider: str,
+    api_key: str,
+    model: Optional[str] = None,
+    endpoint_url: Optional[str] = None,
+) -> list[dict]:
+    """Selectable models for one key, newest information first."""
+    found = discover_models(provider=provider, api_key=api_key, endpoint_url=endpoint_url)
+    options = found["models"]
+    if not options:
+        return _default_model_options(provider, model)
+
+    # Resolved through the provider first: a model name belonging to a
+    # different provider is a mismatch to correct, not a retirement to report.
+    selected = _resolve_model_for_provider(provider, model)
     if selected and not any(option["value"] == selected for option in options):
-        # Google did not list this model for this key. Dropping it silently
-        # makes the settings screen look like it never saved; offering it as a
-        # normal choice is how a retired model gets picked again. Show it, and
-        # say what is wrong with it.
+        # The provider did not list this model for this key. Dropping it
+        # silently makes the settings screen look like it never saved;
+        # offering it as a normal choice is how a retired model gets picked
+        # again. Show it, and say what is wrong with it.
         options.insert(
             0,
             {
                 "value": selected,
                 "label": f"{_model_label(selected)} - no longer available",
                 "available": False,
+                "skills": sorted(model_skills(provider, selected)),
             },
         )
-    return options or _default_model_options(provider, model)
+    return options
 
 
-def _persist_key_model(db: Session, *, key_id: str, provider: str, model: str, options: list[dict]) -> None:
+def _persist_key_model(
+    db: Session,
+    *,
+    key_id: str,
+    provider: str,
+    model: str,
+    options: list[dict],
+    writing_model: Optional[str] = None,
+    speaking_model: Optional[str] = None,
+) -> None:
     from app.services.settings_service import set_setting
 
     stored = _configured_keys(db, mask=False)
@@ -562,6 +705,10 @@ def _persist_key_model(db: Session, *, key_id: str, provider: str, model: str, o
             item["provider"] = provider
             item["model"] = model
             item["model_options"] = options
+            if writing_model is not None:
+                item["writing_model"] = writing_model
+            if speaking_model is not None:
+                item["speaking_model"] = speaking_model
             changed = True
     if changed:
         set_setting(db, "ai.api_keys", json.dumps(stored))
@@ -617,30 +764,79 @@ def list_configured_key_models(
             "message": detected["reason"],
         }
 
-    options = list_evaluation_models(
+    found = discover_models(
         provider=detected["provider"],
         api_key=secret,
-        model=effective_model,
         endpoint_url=effective_endpoint,
+    )
+    options = found["models"]
+    if not options:
+        # Nothing to offer and nothing to guess at: say why, rather than
+        # handing back a hardcoded list that will fail on the first paper.
+        return {
+            "ok": False,
+            "provider": detected["provider"],
+            "provider_label": detected["provider_label"],
+            "detected_provider": detected["provider"],
+            "model": _resolve_model_for_provider(detected["provider"], effective_model),
+            "model_options": [],
+            "writing_models": [],
+            "speaking_models": [],
+            "writing_model": "",
+            "speaking_model": "",
+            "key_preview": _mask_key(secret),
+            "supported": True,
+            "message": found["message"],
+            "detection_message": detected["reason"],
+        }
+
+    writing_options = models_for_skill(options, SKILL_WRITING)
+    speaking_options = models_for_skill(options, SKILL_SPEAKING)
+    stored_writing = (stored or {}).get("writing_model") or effective_model
+    stored_speaking = (stored or {}).get("speaking_model") or effective_model
+    # Pick for them when their saved choice is not on offer, so a key that
+    # works never sits there needing a decision before it can mark anything.
+    writing_model = _choose_model_from_options(detected["provider"], stored_writing, writing_options)
+    speaking_model = (
+        _choose_model_from_options(detected["provider"], stored_speaking, speaking_options)
+        if speaking_options
+        else ""
     )
     selected = _choose_model_from_options(detected["provider"], effective_model, options)
 
-    # Write the discovered model straight back onto the saved key. Loading
+    # Write the discovered models straight back onto the saved key. Loading
     # models used to leave the choice sitting in the form, so a reload before
     # "Save AI settings" quietly restored the model that was failing.
-    if stored and options:
-        _persist_key_model(db, key_id=stored["id"], provider=detected["provider"], model=selected, options=options)
+    if stored:
+        _persist_key_model(
+            db,
+            key_id=stored["id"],
+            provider=detected["provider"],
+            model=selected,
+            options=options,
+            writing_model=writing_model,
+            speaking_model=speaking_model,
+        )
 
+    speaking_note = (
+        ""
+        if speaking_options
+        else " No model on this key can mark Speaking recordings - Speaking will go to an instructor."
+    )
     return {
-        "ok": bool(options),
+        "ok": True,
         "provider": detected["provider"],
         "provider_label": detected["provider_label"],
         "detected_provider": detected["provider"],
         "model": selected,
         "model_options": options,
+        "writing_models": writing_options,
+        "speaking_models": speaking_options,
+        "writing_model": writing_model,
+        "speaking_model": speaking_model,
         "key_preview": _mask_key(secret),
         "supported": True,
-        "message": "Models loaded for this key." if options else "No supported evaluation models were found for this key.",
+        "message": f"{found['message']}{speaking_note}",
         "detection_message": detected["reason"],
     }
 
@@ -663,6 +859,13 @@ def _configured_keys(db: Session, *, mask: bool) -> list[dict]:
                         "label": str(item.get("label") or f"API Key {index + 1}"),
                         "provider": str(item.get("provider") or "gemini"),
                         "model": str(item.get("model") or ""),
+                        # Writing and Speaking are marked by different models:
+                        # only some can hear a recording, and a paper of essays
+                        # does not need to pay for one that can. Both fall back
+                        # to the single legacy `model` for keys saved before
+                        # the split.
+                        "writing_model": str(item.get("writing_model") or item.get("model") or ""),
+                        "speaking_model": str(item.get("speaking_model") or item.get("model") or ""),
                         "endpoint_url": str(item.get("endpoint_url") or ""),
                         "api_key": MASKED_SECRET if mask else api_key,
                         "enabled": bool(item.get("enabled", True)),
@@ -703,10 +906,27 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
         model_options = item.get("model_options") if isinstance(item.get("model_options"), list) else []
         if model_options:
             model = _choose_model_from_options(provider, model, model_options)
+
+        def _skill_model(field: str, skill: str) -> str:
+            chosen = str(item.get(field) or "").strip()[:120]
+            chosen = _resolve_model_for_provider(provider, chosen or model)
+            if model_options:
+                allowed = [
+                    option for option in model_options
+                    if skill in (option.get("skills") or [skill]) and option.get("available") is not False
+                ]
+                if allowed:
+                    chosen = _choose_model_from_options(provider, chosen, allowed)
+            return chosen
+
+        writing_model = _skill_model("writing_model", SKILL_WRITING)
+        speaking_model = _skill_model("speaking_model", SKILL_SPEAKING)
         existing = existing_by_id.get(key_id, {})
         settings_changed = (
             existing.get("provider") != provider
             or existing.get("model") != model
+            or existing.get("writing_model") != writing_model
+            or existing.get("speaking_model") != speaking_model
             or existing.get("endpoint_url") != endpoint_url
             or existing.get("api_key") != api_key
         )
@@ -715,6 +935,8 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
             "label": str(item.get("label") or f"API Key {index + 1}").strip()[:80],
             "provider": provider,
             "model": model,
+            "writing_model": writing_model,
+            "speaking_model": speaking_model,
             "endpoint_url": endpoint_url,
             "api_key": api_key,
             "enabled": bool(item.get("enabled", True)),
@@ -775,6 +997,12 @@ def check_configured_models(db: Session, *, force: bool = False) -> list[dict]:
         except Exception:
             logger.exception("Could not send the model availability notification")
     return problems
+
+
+def config_for_skill(config: dict, skill: str) -> dict:
+    """The same key, pointed at the model chosen for this kind of paper."""
+    model = config.get("speaking_model" if skill == SKILL_SPEAKING else "writing_model")
+    return {**config, "model": model or config.get("model")}
 
 
 def _persist_key_model_choice(db: Session, key_id: Optional[str], model: str) -> bool:
@@ -850,6 +1078,8 @@ def _candidate_configs(db: Session) -> list[dict]:
             "api_key": item["api_key"],
             "key_id": item.get("id"),
             "key_label": item.get("label"),
+            "writing_model": item.get("writing_model") or item.get("model") or base.get("model"),
+            "speaking_model": item.get("speaking_model") or item.get("model") or base.get("model"),
             # Which models this key can actually call, so a retired one is
             # never dialled and the fallback is a number we know is connected.
             "live_models": cached_gemini_models(db, item.get("id")) if provider == "gemini" else [],
@@ -981,23 +1211,71 @@ def test_configured_key(
     # settings months ago (or retired by the provider) answers 404, and testing
     # with it used to fail the whole check - taking the model list down with
     # it, so the screen could never offer a working model to switch to.
-    discovered = list_evaluation_models(
+    found = discover_models(
         provider=detected["provider"],
         api_key=secret,
-        model=effective_model,
         endpoint_url=effective_endpoint,
     )
-    chosen = _choose_model_from_options(detected["provider"], effective_model, discovered)
+    discovered = found["models"]
+    if not discovered and detected["provider"] != "custom_json":
+        # There is nothing this key can be tested with. Marching through a
+        # list of guessed model names and reporting the 404 from the last one
+        # told the super admin about a model they had never chosen, and said
+        # nothing about the real problem.
+        return {
+            "ok": False,
+            "provider": detected["provider"],
+            "provider_label": detected["provider_label"],
+            "detected_provider": detected["provider"],
+            "model": _resolve_model_for_provider(detected["provider"], effective_model),
+            "model_options": [],
+            "writing_models": [],
+            "speaking_models": [],
+            "key_preview": _mask_key(secret),
+            "latency_ms": 0,
+            "supported": True,
+            "message": found["message"],
+            "detection_message": detected["reason"],
+        }
+
+    writing_options = models_for_skill(discovered, SKILL_WRITING)
+    speaking_options = models_for_skill(discovered, SKILL_SPEAKING)
+    stored_writing = (stored or {}).get("writing_model") or effective_model
+    stored_speaking = (stored or {}).get("speaking_model") or effective_model
+    writing_model = _choose_model_from_options(detected["provider"], stored_writing, writing_options or discovered)
+    speaking_model = (
+        _choose_model_from_options(detected["provider"], stored_speaking, speaking_options)
+        if speaking_options
+        else ""
+    )
+
+    # Tested with the model that marks essays: it is the cheaper of the two and
+    # proves the same thing - that this key can run a real evaluation.
     result = test_connection(
         provider=detected["provider"],
         api_key=secret,
-        model=chosen,
+        model=writing_model,
         endpoint_url=effective_endpoint,
     )
-    if not result.get("model_options"):
-        result["model_options"] = discovered
+    result["model_options"] = discovered
+    result["writing_models"] = writing_options
+    result["speaking_models"] = speaking_options
+    result["writing_model"] = writing_model
+    result["speaking_model"] = speaking_model
+    if result.get("ok") and not speaking_options:
+        result["message"] += (
+            " No model on this key can mark Speaking recordings - Speaking will go to an instructor."
+        )
     if stored and discovered:
-        _persist_key_model(db, key_id=stored["id"], provider=detected["provider"], model=chosen, options=discovered)
+        _persist_key_model(
+            db,
+            key_id=stored["id"],
+            provider=detected["provider"],
+            model=writing_model,
+            options=discovered,
+            writing_model=writing_model,
+            speaking_model=speaking_model,
+        )
     return result | {
         "detected_provider": detected["provider"],
         "provider_label": detected["provider_label"],
@@ -1699,7 +1977,9 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
     requested_model = (config.get("model") or DEFAULT_GEMINI_MODEL).replace("–", "-").replace("—", "-").strip().removeprefix("models/")
     # What to call, and what to call instead if it will not answer. Checked
     # against Google's live directory rather than a name pinned in this file.
-    model_chain = gemini_model_chain(requested_model, config.get("live_models"))
+    model_chain = gemini_model_chain(
+        requested_model, config.get("live_models"), skill=payload.get("skill") or SKILL_WRITING
+    )
     model = model_chain[0]
 
     parts = []
@@ -2345,6 +2625,8 @@ def request_suggestion(
     failed_records: list[AiEvaluation] = []
 
     for index, config in enumerate(configs_to_try):
+        # Writing and Speaking are marked by different models on the same key.
+        config = config_for_skill(config, part.section_type)
         if evaluator is None:
             _throttle_provider_quota(db, config)
         record = AiEvaluation(
@@ -2460,6 +2742,7 @@ def request_speaking_suggestions(
     last_error: Optional[Exception] = None
     failed_records: list[AiEvaluation] = []
     for index, config in enumerate(configs_to_try):
+        config = config_for_skill(config, SKILL_SPEAKING)
         if evaluator is None:
             _throttle_provider_quota(db, config)
         record = AiEvaluation(

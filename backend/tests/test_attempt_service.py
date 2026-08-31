@@ -1855,7 +1855,17 @@ class AttemptServiceTestCase(unittest.TestCase):
                 model="gemini-2.0-flash",
             )
 
-        self.assertEqual(models, [{"value": "gemini-2.0-flash", "label": "Gemini 2.0 Flash"}])
+        # Each option now carries what it can mark, so the settings screen can
+        # offer a Speaking list and a Writing list that are actually different.
+        self.assertEqual(
+            models,
+            [{
+                "value": "gemini-2.0-flash",
+                "label": "Gemini 2.0 Flash",
+                "skills": ["speaking", "writing"],
+                "available": True,
+            }],
+        )
 
     def test_openai_model_listing_filters_to_evaluation_models(self):
         class Response:
@@ -1892,13 +1902,144 @@ class AttemptServiceTestCase(unittest.TestCase):
                 model="gemini-2.0-flash",
             )
 
+        # Embeddings are dropped, and each model carries what it can mark: the
+        # plain chat models reject `input_audio`, so only the audio variant is
+        # offered for Speaking.
         self.assertEqual(
             models,
             [
-                {"value": "gpt-4o-mini", "label": "gpt-4o-mini"},
-                {"value": "gpt-5-mini", "label": "gpt-5-mini"},
+                {"value": "gpt-4o-mini", "label": "gpt-4o-mini", "skills": ["writing"], "available": True},
+                {
+                    "value": "gpt-4o-audio-preview",
+                    "label": "gpt-4o-audio-preview",
+                    "skills": ["speaking", "writing"],
+                    "available": True,
+                },
+                {"value": "gpt-5-mini", "label": "gpt-5-mini", "skills": ["writing"], "available": True},
             ],
         )
+        self.assertEqual(
+            [option["value"] for option in ai_evaluation_service.models_for_skill(models, "speaking")],
+            ["gpt-4o-audio-preview"],
+        )
+
+    @staticmethod
+    def _fake_gemini_models(model_ids, *, list_ok=True):
+        """Stands in for Google's model directory."""
+        class Response:
+            status_code = 200 if list_ok else 404
+
+            def raise_for_status(self):
+                if not list_ok:
+                    import httpx as _httpx
+
+                    request = _httpx.Request("GET", "https://generativelanguage.googleapis.com/v1beta/models")
+                    raise _httpx.HTTPStatusError(
+                        "404 Not Found", request=request, response=_httpx.Response(404, request=request)
+                    )
+
+            def json(self):
+                return {"models": [
+                    {"name": f"models/{model_id}", "displayName": model_id,
+                     "supportedGenerationMethods": ["generateContent"]}
+                    for model_id in model_ids
+                ]}
+
+        class Client:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return None
+
+            def get(self, *args, **kwargs):
+                return Response()
+
+        return Client
+
+    def _save_gemini_key(self, **overrides):
+        key = {
+            "id": "gemini-1",
+            "label": "Primary",
+            "provider": "gemini",
+            "model": "gemini-2.5-flash",
+            "api_key": "AIza-secret",
+            "enabled": True,
+            "priority": 1,
+        }
+        key.update(overrides)
+        ai_evaluation_service.save_configured_keys(self.db, [key])
+        self.db.commit()
+
+    def test_each_skill_gets_its_own_model_list(self):
+        self._save_gemini_key()
+        client = self._fake_gemini_models([
+            "gemini-2.5-flash", "gemini-2.5-pro", "gemma-3-27b-it", "text-embedding-004",
+        ])
+
+        with patch.object(ai_evaluation_service.httpx, "Client", client):
+            result = ai_evaluation_service.list_configured_key_models(
+                self.db, key_id="gemini-1", provider="gemini", api_key="AIza-secret",
+            )
+
+        self.assertTrue(result["ok"])
+        # Embeddings cannot mark anything; Gemma reads but cannot hear.
+        self.assertEqual(
+            [option["value"] for option in result["writing_models"]],
+            ["gemini-2.5-flash", "gemini-2.5-pro"],
+        )
+        self.assertEqual(
+            [option["value"] for option in result["speaking_models"]],
+            ["gemini-2.5-flash", "gemini-2.5-pro"],
+        )
+        # A working key is never left needing a decision before it can mark.
+        self.assertTrue(result["writing_model"])
+        self.assertTrue(result["speaking_model"])
+
+    def test_a_key_that_cannot_list_models_says_why_instead_of_a_404(self):
+        """What the super admin actually saw: a 404 naming a model they never
+        chose, because the app guessed model names and reported the last one."""
+        self._save_gemini_key()
+        client = self._fake_gemini_models([], list_ok=False)
+
+        with patch.object(ai_evaluation_service.httpx, "Client", client):
+            result = ai_evaluation_service.test_configured_key(
+                self.db, key_id="gemini-1", provider="gemini", api_key="AIza-secret",
+            )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["model_options"], [])
+        self.assertNotIn("404", result["message"])
+        self.assertNotIn("generativelanguage.googleapis.com", result["message"])
+        self.assertIn("aistudio.google.com", result["message"])
+
+    def test_speaking_and_writing_are_marked_by_their_own_models(self):
+        self._save_gemini_key(writing_model="gemini-2.5-flash", speaking_model="gemini-2.5-pro")
+        stored = ai_evaluation_service._configured_keys(self.db, mask=False)[0]
+        self.assertEqual(stored["writing_model"], "gemini-2.5-flash")
+        self.assertEqual(stored["speaking_model"], "gemini-2.5-pro")
+
+        config = {**stored, "live_models": []}
+        self.assertEqual(
+            ai_evaluation_service.config_for_skill(config, "writing")["model"], "gemini-2.5-flash"
+        )
+        self.assertEqual(
+            ai_evaluation_service.config_for_skill(config, "speaking")["model"], "gemini-2.5-pro"
+        )
+
+    def test_a_speaking_paper_never_falls_back_to_a_model_that_cannot_hear(self):
+        # Gemma reads but cannot hear, so it must not appear anywhere in a
+        # Speaking chain - a recording sent there is a guaranteed zero.
+        live = ["gemma-3-27b-it", "gemini-2.0-flash"]
+        speaking = ai_evaluation_service.gemini_model_chain("gemma-3-27b-it", live, skill="speaking")
+        self.assertNotIn("gemma-3-27b-it", speaking)
+        self.assertEqual(speaking, ["gemini-2.0-flash"])
+
+        writing = ai_evaluation_service.gemini_model_chain("gemma-3-27b-it", live, skill="writing")
+        self.assertEqual(writing[0], "gemma-3-27b-it")
 
     def test_a_retired_model_is_dialled_around_instead_of_failing_the_paper(self):
         """The outage this is here to stop.

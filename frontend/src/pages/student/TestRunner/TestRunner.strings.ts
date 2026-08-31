@@ -148,9 +148,8 @@ export const testRunnerStrings = {
   },
   submitModal: {
     heading: "Submit this test?",
-    speakingHeading: "Start Speaking now or later?",
+    speakingHeading: "Start Speaking now?",
     summary: (answered: number, total: number) => `You've answered ${answered} of ${total} questions.`,
-    finalWarning: "The Final Test cannot be resumed once left.",
     standardWarning: "You won't be able to change your answers after submitting.",
     speakingWarning: "The Listening, Reading and Writing paper will close now. Speaking will start immediately.",
     keepWorking: "Keep working",

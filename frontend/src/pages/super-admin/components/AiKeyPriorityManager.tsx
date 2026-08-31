@@ -10,7 +10,12 @@ export interface AiKeyConfig {
   id: string;
   label: string;
   provider: AiDetectedProvider;
+  /** Legacy single model, kept so keys saved before the split still load. */
   model: string;
+  /** Writing and Speaking are marked by different models: only some can hear
+   *  a recording, and a paper of essays should not pay for one that can. */
+  writing_model?: string;
+  speaking_model?: string;
   endpoint_url: string;
   api_key: string;
   enabled: boolean;
@@ -19,6 +24,8 @@ export interface AiKeyConfig {
   last_checked_at?: string | null;
   info?: string | null;
   model_options?: ModelOption[];
+  writing_models?: ModelOption[];
+  speaking_models?: ModelOption[];
 }
 
 type AiProviderSelection = "gemini" | "openai" | "custom_json" | "disabled";
@@ -39,20 +46,18 @@ interface ModelOption {
   value: string;
   label: string;
   available?: boolean;
+  /** Which papers this model can mark - "writing", "speaking", or both. */
+  skills?: string[];
 }
 
-const DEFAULT_MODEL_OPTIONS_BY_PROVIDER: Record<string, ModelOption[]> = {
-  gemini: [
-    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (Recommended)" },
-    { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
-    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-  ],
-  openai: [
-    { value: "gpt-4o-mini", label: "GPT-4o Mini (Recommended)" },
-    { value: "gpt-4o", label: "GPT-4o" },
-    { value: "o3-mini", label: "o3-mini" },
-  ],
-};
+/** Which papers a model can mark, when the server has not said yet. */
+function modelSkills(option: ModelOption): string[] {
+  return option.skills?.length ? option.skills : ["writing", "speaking"];
+}
+
+function optionsForSkill(options: ModelOption[], skill: string): ModelOption[] {
+  return options.filter((option) => modelSkills(option).includes(skill));
+}
 
 interface TestResult {
   ok: boolean;
@@ -61,6 +66,10 @@ interface TestResult {
   detected_provider?: string;
   model: string;
   model_options?: ModelOption[];
+  writing_models?: ModelOption[];
+  speaking_models?: ModelOption[];
+  writing_model?: string;
+  speaking_model?: string;
   key_preview: string | null;
   latency_ms: number;
   supported?: boolean;
@@ -75,6 +84,10 @@ interface ModelListResult {
   detected_provider?: string;
   model: string;
   model_options?: ModelOption[];
+  writing_models?: ModelOption[];
+  speaking_models?: ModelOption[];
+  writing_model?: string;
+  speaking_model?: string;
   supported?: boolean;
   message: string;
   detection_message?: string;
@@ -97,6 +110,8 @@ function newKey(index: number, provider: AiProviderSelection, model: string, end
     label: `API Key ${index + 1}`,
     provider: provider === "disabled" ? "gemini" : provider,
     model,
+    writing_model: "",
+    speaking_model: "",
     endpoint_url: endpointUrl,
     api_key: "",
     enabled: true,
@@ -166,6 +181,59 @@ function selectableModelValue(preferred?: string, options?: ModelOption[]) {
   return options?.find((option) => option.available !== false)?.value;
 }
 
+interface ModelPickerProps {
+  skill: "writing" | "speaking";
+  keyConfig: AiKeyConfig;
+  fallbackModel: string;
+  onPick: (value: string) => void;
+}
+
+/**
+ * One skill's model list for one key.
+ *
+ * The options are whatever the provider said this key can run, filtered to the
+ * models that can mark this kind of paper - a Speaking recording sent to a
+ * model that cannot hear is a guaranteed zero, so those models are not offered
+ * here at all. Nothing is hardcoded: until the key has been checked there is
+ * no list to choose from, which is the honest state to show.
+ */
+function ModelPicker({ skill, keyConfig, fallbackModel, onPick }: ModelPickerProps) {
+  const supported = providerInfo(keyConfig.provider).supported;
+  const listed = skill === "speaking" ? keyConfig.speaking_models : keyConfig.writing_models;
+  const options = listed?.length
+    ? listed
+    : optionsForSkill(keyConfig.model_options ?? [], skill);
+  const selected =
+    (skill === "speaking" ? keyConfig.speaking_model : keyConfig.writing_model) || keyConfig.model || fallbackModel;
+
+  if (!supported) {
+    return <input value="" disabled placeholder="No supported evaluation models" />;
+  }
+
+  if (!options.length) {
+    return (
+      <>
+        <input value={selected} disabled placeholder="Load models to list what this key supports" />
+        <p className="hint" style={{ margin: "6px 0 0" }}>
+          {keyConfig.model_options?.length
+            ? `No model on this key can mark ${skill === "speaking" ? "Speaking recordings" : "Writing"}.`
+            : "Paste the key, then use Load models."}
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <select value={selected} onChange={(event) => onPick(event.target.value)}>
+      {options.map((option) => (
+        <option key={option.value} value={option.value} disabled={option.available === false}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function AiKeyPriorityManager({
   keys,
   onChange,
@@ -225,6 +293,12 @@ export function AiKeyPriorityManager({
         // a retired model is exactly what this button exists to replace.
         model: selectableModelValue(data.model, data.model_options) || key.model || model,
         model_options: data.model_options || [],
+        writing_models: data.writing_models || [],
+        speaking_models: data.speaking_models || [],
+        // The server picks a working model per skill, so a key that can mark
+        // is never left needing a decision before it will.
+        writing_model: data.writing_model || selectableModelValue(key.writing_model, data.writing_models) || "",
+        speaking_model: data.speaking_model || selectableModelValue(key.speaking_model, data.speaking_models) || "",
         info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}`,
       });
       if (!data.ok) setError(data.message);
@@ -258,6 +332,10 @@ export function AiKeyPriorityManager({
         ...providerPatch,
         model: selectableModelValue(data.model, data.model_options) || key.model || model,
         model_options: data.model_options || [],
+        writing_models: data.writing_models || [],
+        speaking_models: data.speaking_models || [],
+        writing_model: data.writing_model || selectableModelValue(key.writing_model, data.writing_models) || "",
+        speaking_model: data.speaking_model || selectableModelValue(key.speaking_model, data.speaking_models) || "",
         last_status: data.ok ? "ok" : "failed",
         last_checked_at: new Date().toISOString(),
         info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}${data.detection_message ? ` ${data.detection_message}` : ""}${data.latency_ms ? ` (${data.latency_ms} ms)` : ""}`,
@@ -363,47 +441,22 @@ export function AiKeyPriorityManager({
                 )}
               </div>
               <div>
-                <label>Model</label>
-                {(() => {
-                  const options = (key.model_options?.length ? key.model_options : DEFAULT_MODEL_OPTIONS_BY_PROVIDER[key.provider]) || [];
-                  if (options.length) {
-                    return (
-                      <select
-                        value={key.model || options[0]?.value || model}
-                        onChange={(event) => update(index, {
-                          model: event.target.value,
-                          last_status: null,
-                          last_checked_at: null,
-                          info: null,
-                        })}
-                      >
-                        {options.map((option) => (
-                          <option key={option.value} value={option.value} disabled={option.available === false}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    );
-                  }
-                  return (
-                    <input
-                      value={key.model || model}
-                      onChange={(event) => update(index, {
-                        model: event.target.value,
-                        last_status: null,
-                        last_checked_at: null,
-                        info: null,
-                      })}
-                      placeholder={providerInfo(key.provider).supported ? "Load models to list what this key supports" : "No supported evaluation models"}
-                      disabled={!providerInfo(key.provider).supported}
-                    />
-                  );
-                })()}
-                {providerInfo(key.provider).supported && !key.model_options?.length && (
-                  <p className="hint" style={{ margin: "6px 0 0" }}>
-                    Paste the key, then use Load models to list what it can actually run.
-                  </p>
-                )}
+                <label>Writing model</label>
+                <ModelPicker
+                  skill="writing"
+                  keyConfig={key}
+                  fallbackModel={model}
+                  onPick={(value) => update(index, { writing_model: value, last_status: null, last_checked_at: null, info: null })}
+                />
+              </div>
+              <div>
+                <label>Speaking model</label>
+                <ModelPicker
+                  skill="speaking"
+                  keyConfig={key}
+                  fallbackModel={model}
+                  onPick={(value) => update(index, { speaking_model: value, last_status: null, last_checked_at: null, info: null })}
+                />
               </div>
             </div>
 
