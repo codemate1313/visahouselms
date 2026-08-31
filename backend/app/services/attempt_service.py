@@ -171,9 +171,21 @@ def _set_attempt_phase(attempt: TestAttempt, phase: str) -> None:
 
 
 def _restore_deferred_speaking_attempt(db: Session, attempt: TestAttempt) -> bool:
+    if not attempt.module:
+        return False
     if _attempt_phase(attempt) != SPEAKING_PHASE_PENDING:
         return False
     if attempt.status == ATTEMPT_IN_PROGRESS:
+        return False
+
+    # Prevent unique constraint violation if another attempt of the same module is already in_progress
+    active_exists = db.query(TestAttempt).filter(
+        TestAttempt.user_id == attempt.user_id,
+        TestAttempt.module_id == attempt.module_id,
+        TestAttempt.status == ATTEMPT_IN_PROGRESS,
+        TestAttempt.id != attempt.id,
+    ).first() is not None
+    if active_exists:
         return False
 
     speaking_part_ids = {part.id for part in attempt.module.parts if part.section_type == "speaking"}
