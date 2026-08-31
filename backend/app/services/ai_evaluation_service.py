@@ -359,7 +359,7 @@ def _fetch_gemini_model_ids(api_key: str) -> list[str]:
         str(item.get("name") or "").removeprefix("models/")
         for item in data.get("models", [])
         if "generateContent" in set(item.get("supportedGenerationMethods") or [])
-        and str(item.get("name") or "")
+        and str(item.get("name") or "").removeprefix("models/") not in GEMINI_RETIRED_MODELS
     ]
 
 
@@ -522,6 +522,8 @@ def list_evaluation_models(
         model_id = name.removeprefix("models/")
         methods = set(item.get("supportedGenerationMethods") or [])
         if not model_id or "generateContent" not in methods:
+            continue
+        if model_id in GEMINI_RETIRED_MODELS:
             continue
         if model_id not in GEMINI_EVALUATION_MODELS and not (
             model_id.startswith("gemini-") and ("flash" in model_id or "pro" in model_id)
