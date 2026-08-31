@@ -471,7 +471,32 @@ function RubricMatrixTable({ criteria }: { criteria: NonNullable<StudentResultAn
                 Score: {hoveredCell.item.marks} ({trim(hoveredCell.item.percentage)}%)
               </span>
             </div>
-            {hoveredCell.item.action ? (
+            {hoveredCell.item.rationale && hoveredCell.item.recommendation && hoveredCell.item.rationale !== hoveredCell.item.recommendation ? (
+              <div className="rubric-tooltip-body-stacked">
+                <div className="rubric-tooltip-body">
+                  <div className="rubric-tooltip-quote-icon" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                    </svg>
+                  </div>
+                  <div className="rubric-tooltip-text-wrap">
+                    <span className="rubric-tooltip-section-badge">Examiner Observation</span>
+                    <p className="rubric-tooltip-text">{hoveredCell.item.rationale}</p>
+                  </div>
+                </div>
+                <div className="rubric-tooltip-body is-recommendation">
+                  <div className="rubric-tooltip-rec-icon" aria-hidden="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </div>
+                  <div className="rubric-tooltip-text-wrap">
+                    <span className="rubric-tooltip-section-badge is-rec">Actionable Recommendation</span>
+                    <p className="rubric-tooltip-text">{hoveredCell.item.recommendation}</p>
+                  </div>
+                </div>
+              </div>
+            ) : hoveredCell.item.action ? (
               <div className="rubric-tooltip-body">
                 <div className="rubric-tooltip-quote-icon" aria-hidden="true">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">

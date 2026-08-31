@@ -154,7 +154,7 @@ export function AiEvaluationProgress({ progress, variant = "panel", statusNote }
     );
   }
 
-  const RADIUS = 37;
+  const RADIUS = 46;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
   return (
@@ -162,35 +162,49 @@ export function AiEvaluationProgress({ progress, variant = "panel", statusNote }
       {/* Decorative Radial Dial */}
       <div className="ai-progress-dial" role="timer">
         <div className="ai-progress-dial-backdrop" aria-hidden="true" />
-        <svg viewBox="0 0 92 92" aria-hidden="true">
+        <div className="ai-progress-dial-disc" aria-hidden="true" />
+        <svg viewBox="0 0 116 116" aria-hidden="true">
           <defs>
             <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
               {overtime ? (
                 <>
                   <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="50%" stopColor="#f97316" />
                   <stop offset="100%" stopColor="#ef4444" />
                 </>
               ) : (
                 <>
                   <stop offset="0%" stopColor="var(--institute-primary, var(--primary, #0284c7))" />
-                  <stop offset="100%" stopColor="color-mix(in srgb, var(--institute-primary, var(--primary, #0284c7)) 65%, #38bdf8)" />
+                  <stop offset="55%" stopColor="color-mix(in srgb, var(--institute-primary, var(--primary, #0284c7)) 60%, #00d2ff)" />
+                  <stop offset="100%" stopColor="#38bdf8" />
                 </>
               )}
             </linearGradient>
             <filter id={glowFilterId} x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
+              <feGaussianBlur stdDeviation="3" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
 
           {/* Dial Track */}
-          <circle className="ai-progress-track" cx="46" cy="46" r={RADIUS} />
+          <circle className="ai-progress-track" cx="58" cy="58" r={RADIUS} />
+
+          {/* Halo Glow Layer */}
+          <circle
+            className="ai-progress-sweep-halo"
+            cx="58"
+            cy="58"
+            r={RADIUS}
+            stroke={`url(#${gradientId})`}
+            strokeDasharray={CIRCUMFERENCE}
+            strokeDashoffset={CIRCUMFERENCE * (1 - percent / 100)}
+          />
 
           {/* Active Sweep with Dynamic Gradient */}
           <circle
             className="ai-progress-sweep"
-            cx="46"
-            cy="46"
+            cx="58"
+            cy="58"
             r={RADIUS}
             stroke={`url(#${gradientId})`}
             strokeDasharray={CIRCUMFERENCE}
@@ -234,30 +248,8 @@ export function AiEvaluationProgress({ progress, variant = "panel", statusNote }
           </p>
         </div>
 
-        {/* Visual Segmented Progress Bar (when multiple parts) */}
-        {progress.parts_total > 1 ? (
-          <div className="ai-progress-segments-wrap">
-            <div className="ai-progress-segments-bar" role="progressbar" aria-valuenow={progress.parts_done} aria-valuemin={0} aria-valuemax={progress.parts_total}>
-              {Array.from({ length: progress.parts_total }, (_, idx) => {
-                const isDone = idx < progress.parts_done;
-                const isCurrent = idx === progress.parts_done;
-                return (
-                  <span
-                    key={idx}
-                    className={`ai-progress-seg ${isDone ? "is-done" : isCurrent ? "is-active" : "is-pending"}`}
-                    title={`Section ${idx + 1} of ${progress.parts_total}`}
-                  />
-                );
-              })}
-            </div>
-            <div className="ai-progress-meta-row">
-              <span className="ai-progress-workload-text">{t.workload(progress)}</span>
-              <span className="ai-progress-percent-text">{Math.round(percent)}%</span>
-            </div>
-          </div>
-        ) : (
-          <p className="ai-progress-meta">{t.workload(progress)}</p>
-        )}
+        {/* Workload Meta Line */}
+        <p className="ai-progress-meta">{t.workload(progress)}</p>
 
         {/* Status / Auto-update Notification Footnote */}
         {statusNote && (

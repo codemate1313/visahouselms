@@ -1728,14 +1728,16 @@ def save_part_draft(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail=f"{name} must be between 0 and {max_marks}"
             )
-        normalized.append(
-            {
-                "criterion": name,
-                "max_marks": str(max_marks),
-                "marks_awarded": str(awarded),
-                "cefr_level": cefr_service.criterion_level(awarded, max_marks),
-            }
-        )
+        crit_dict = {
+            "criterion": name,
+            "max_marks": str(max_marks),
+            "marks_awarded": str(awarded),
+            "cefr_level": cefr_service.criterion_level(awarded, max_marks),
+        }
+        rat = entry.get("rationale") or entry.get("comment") or entry.get("feedback")
+        if rat:
+            crit_dict["rationale"] = str(rat)[:2000]
+        normalized.append(crit_dict)
     # First-pass drafts may be partial; a reevaluation correction still has to
     # cover every criterion since it publishes immediately below.
     if is_correction and seen != set(rubric_by_criterion):

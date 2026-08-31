@@ -82,15 +82,151 @@ DIFFICULTY_ORDER = {"easy": 0, "medium": 1, "hard": 2}
 
 # Rubric criteria are authored per part, so match on the words examiners
 # actually use rather than on a fixed criterion id.
-CRITERION_COACHING = (
-    (("grammar", "accuracy", "range"), "Draft one paragraph, then reread it once for verb tense and once for agreement - separating the passes catches far more than a single reread."),
-    (("vocab", "lexis", "lexical"), "Keep a list of the words you reached for twice in this attempt and learn one precise alternative for each."),
-    (("cohesion", "coherence", "organisation", "structure", "discourse"), "Give every paragraph one job, state it in the first sentence, and link paragraphs with reference words rather than 'firstly / secondly'."),
-    (("task", "content", "relevance", "response"), "Re-read the prompt after writing and check each bullet of the task is actually answered, with an example, not just mentioned."),
-    (("fluency",), "Record a two-minute answer and count your pauses - aim to replace hesitation with a filler phrase you have rehearsed."),
-    (("pronunciation", "intelligib"), "Read aloud for five minutes daily and record it; play it back listening only for word stress."),
-    (("interaction", "communication"), "Practise answering, then extending: give the answer, one reason, and one example before you stop."),
-)
+# Structured by (criterion_keywords) -> performance band -> skill -> dynamic action.
+DYNAMIC_CRITERION_COACHING = {
+    ("grammar", "accuracy", "range"): {
+        "zero": {
+            "writing": "No grammatical structures were evidenced. Focus on writing complete, grammatically sound simple sentences (subject + verb + object) to establish baseline marks.",
+            "speaking": "Speak in complete grammatical units rather than single words to allow the examiner to assess sentence structure.",
+            "default": "Ensure you submit a complete response with full sentences to establish grammatical range.",
+        },
+        "emerging": {  # < 50%
+            "writing": "Draft your response, then reread it once specifically for verb tense consistency and once for subject-verb agreement - separating the passes catches far more errors.",
+            "speaking": "Focus on clean sentence endings without trailing off; use simple past and present tenses accurately when describing events.",
+            "default": "Work on fundamental grammatical accuracy in simple and compound sentences before attempting multi-clause complexity.",
+        },
+        "developing": {  # 50% - 74%
+            "writing": "Incorporate compound and complex sentence structures using subordinate clauses ('although', 'whereas', 'which') while maintaining accurate comma punctuation.",
+            "speaking": "Vary your grammatical structures with conditionals and passive forms rather than relying solely on simple coordinate linkers.",
+            "default": "Expand your grammatical range with a mix of complex structures and varied clause types.",
+        },
+        "mastery": {  # >= 75%
+            "writing": "Maintain advanced grammatical precision with inversion, cleft sentences, and complex participial phrases while keeping error frequency near zero.",
+            "speaking": "Demonstrate effortless grammatical flexibility with nuanced modal verbs and natural sentence flow.",
+            "default": "Demonstrate sophisticated grammatical control across varied sentence structures.",
+        },
+    },
+    ("vocab", "lexis", "lexical"): {
+        "zero": {
+            "writing": "No lexical range demonstrated. Respond using key topic words from the prompt to demonstrate basic comprehension and vocabulary usage.",
+            "speaking": "Use topic-related vocabulary directly related to the question prompt to establish a lexical baseline.",
+            "default": "Provide a complete response to demonstrate lexical control.",
+        },
+        "emerging": {
+            "writing": "Keep a list of common words repeated across your text (e.g., 'good', 'bad', 'big', 'things') and substitute them with precise, context-specific nouns and adjectives.",
+            "speaking": "Expand your descriptive vocabulary to describe feelings, places, and reasons beyond basic high-frequency adjectives.",
+            "default": "Build your active vocabulary with precise topic-specific words rather than repeating general terms.",
+        },
+        "developing": {
+            "writing": "Use natural topic collocations and academic phrasing ('substantial increase', 'readily apparent') instead of uncommon words used out of context.",
+            "speaking": "Incorporate natural phrasal verbs, idioms, and collocations suited to authentic conversational register.",
+            "default": "Aim for natural collocations and accurate word combinations suitable to the context.",
+        },
+        "mastery": {
+            "writing": "Showcase sophisticated register control, precise connotations, and rare lexical items deployed with natural academic flair.",
+            "speaking": "Use nuanced idiom and subtle expressions that convey exact shades of meaning effortlessly.",
+            "default": "Demonstrate wide lexical resource with sophisticated precision and natural register control.",
+        },
+    },
+    ("cohesion", "coherence", "organisation", "structure", "discourse"): {
+        "zero": {
+            "writing": "Structure your writing into at least two distinct paragraphs (an introductory statement and a supporting body paragraph) to establish organization.",
+            "speaking": "Organise your response with a clear beginning, middle, and brief concluding thought.",
+            "default": "Divide your response into clear, structured sections.",
+        },
+        "emerging": {
+            "writing": "Give every paragraph one job, state it in the first sentence, and link paragraphs with reference words ('this', 'such') rather than mechanical lists.",
+            "speaking": "Connect your points using simple, clear transitions ('for example', 'in addition') rather than jumping between unrelated thoughts.",
+            "default": "Organize your response with clear paragraphing and logical transitions.",
+        },
+        "developing": {
+            "writing": "Vary your cohesive devices beyond mechanical linkers ('firstly / secondly') using parallel structures, lexical cohesion, and logical paragraph progression.",
+            "speaking": "Ensure smooth topic progression across ideas with natural discourse markers and clear signposting.",
+            "default": "Ensure logical progression and varied cohesive devices throughout your response.",
+        },
+        "mastery": {
+            "writing": "Achieve seamless thematic cohesion where paragraph transitions feel effortless and the logical hierarchy is immediately transparent.",
+            "speaking": "Structure extended turns logically with smooth thematic bridges and balanced perspective shifts.",
+            "default": "Demonstrate effortless logical cohesion and sophisticated structural balance.",
+        },
+    },
+    ("task", "content", "relevance", "response"): {
+        "zero": {
+            "writing": "Read the prompt carefully and answer every single bullet point or instruction to meet the minimum task requirements.",
+            "speaking": "Ensure you directly answer the examiner's prompt before elaborating with background details.",
+            "default": "Address all required aspects of the prompt directly.",
+        },
+        "emerging": {
+            "writing": "Re-read the prompt after writing and check that each required bullet is fully answered with an explanation and an example, not just mentioned.",
+            "speaking": "Expand your answers using the 'Point + Reason + Example' structure instead of brief one-sentence replies.",
+            "default": "Ensure every part of the question is clearly answered with supporting details.",
+        },
+        "developing": {
+            "writing": "Fully develop each main point with relevant evidence and explore counter-arguments or implications to add depth to your argument.",
+            "speaking": "Provide rich, detailed elaboration on all parts of the question, sustaining your reasoning throughout the turn.",
+            "default": "Develop your arguments in depth with relevant, realistic examples.",
+        },
+        "mastery": {
+            "writing": "Deliver a thoroughly developed response that addresses all nuances of the prompt with depth, insight, and persuasive clarity.",
+            "speaking": "Speak comprehensively on all aspects of the topic with compelling depth and mature critical perspective.",
+            "default": "Deliver a complete, nuanced response that addresses all dimensions of the task.",
+        },
+    },
+    ("fluency",): {
+        "zero": {
+            "speaking": "Practise speaking continuously for 30 to 45 seconds without long pauses to establish fluency.",
+            "default": "Focus on speaking continuously with minimal pauses.",
+        },
+        "emerging": {
+            "speaking": "Record a two-minute answer and count your pauses - aim to replace hesitation with a filler phrase you have rehearsed.",
+            "default": "Aim to reduce hesitations and maintain a steady rhythm.",
+        },
+        "developing": {
+            "speaking": "Minimise mid-sentence pauses by using natural discourse markers ('well', 'in my view') to maintain momentum across extended turns.",
+            "default": "Maintain consistent tempo and smooth speech flow across turns.",
+        },
+        "mastery": {
+            "speaking": "Maintain an easy, natural speaking tempo with smooth rhythm and minimal hesitation even during complex explanation.",
+            "default": "Demonstrate effortless fluency and natural speech rhythm.",
+        },
+    },
+    ("pronunciation", "intelligib"): {
+        "zero": {
+            "speaking": "Practise clear articulation of basic words and record yourself reading aloud for 5 minutes daily.",
+            "default": "Focus on clear enunciation of basic sounds and word endings.",
+        },
+        "emerging": {
+            "speaking": "Read aloud for five minutes daily and record it; play it back listening only for word stress and clear consonant clusters.",
+            "default": "Work on word stress and clear articulation of syllable endings.",
+        },
+        "developing": {
+            "speaking": "Focus on sentence-level intonation, pausing at natural thought groups, and correct stress on multi-syllable academic words.",
+            "default": "Focus on natural sentence stress and clear intonation contours.",
+        },
+        "mastery": {
+            "speaking": "Employ a full range of phonological features including connected speech, weak forms, and expressive intonation without strain.",
+            "default": "Demonstrate precise, natural pronunciation and flexible intonation.",
+        },
+    },
+    ("interaction", "communication"): {
+        "zero": {
+            "speaking": "Practise responding directly to questions with at least two complete sentences.",
+            "default": "Respond clearly and directly to each prompt.",
+        },
+        "emerging": {
+            "speaking": "Practise answering, then extending: give the answer, one reason, and one example before you stop.",
+            "default": "Extend your answers with relevant reasons and examples.",
+        },
+        "developing": {
+            "speaking": "Engage naturally with conversational cues, actively developing the topic and asking clarifying questions where appropriate.",
+            "default": "Maintain active, responsive communication throughout the interaction.",
+        },
+        "mastery": {
+            "speaking": "Navigate complex interaction effortlessly, initiating discussion points and negotiating nuances with persuasive ease.",
+            "default": "Demonstrate sophisticated communicative resource and natural interactive poise.",
+        },
+    },
+}
 
 def _has_response(answer: Optional[AttemptAnswer]) -> bool:
     if answer is None:
@@ -204,12 +340,42 @@ def _part_label(part) -> str:
     return " ".join(words)
 
 
-def _criterion_action(criterion: str) -> str:
+def _criterion_action(
+    criterion: str,
+    percentage: float = 0.0,
+    skill: str = "writing",
+    part_label: str = "",
+) -> str:
     lowered = (criterion or "").lower()
-    for keywords, action in CRITERION_COACHING:
+    skill_key = (skill or "writing").lower()
+
+    if percentage < 10:
+        band = "zero"
+    elif percentage < 50:
+        band = "emerging"
+    elif percentage < 75:
+        band = "developing"
+    else:
+        band = "mastery"
+
+    for keywords, bands in DYNAMIC_CRITERION_COACHING.items():
         if any(keyword in lowered for keyword in keywords):
-            return action
-    return "Ask your instructor which single change to this criterion would move the mark, and rewrite one response applying only that."
+            band_dict = bands.get(band) or bands.get("emerging", {})
+            return (
+                band_dict.get(skill_key)
+                or band_dict.get("default")
+                or next(iter(band_dict.values()))
+            )
+
+    # Dynamic contextual fallback based on performance band
+    if band == "zero":
+        return f"Submit a complete response addressing {criterion} to establish an initial score for this section."
+    elif band == "emerging":
+        return f"Review foundational requirements for {criterion} and ask your instructor which single change would move the mark."
+    elif band == "developing":
+        return f"Refine your control of {criterion} by applying model high-band techniques in your next practice attempt."
+    else:
+        return f"Maintain your high-band mastery of {criterion} across timed test conditions."
 
 
 def _evidence(attempt: TestAttempt) -> dict:
@@ -261,22 +427,16 @@ def _evidence(attempt: TestAttempt) -> dict:
                 elif answered:
                     row["incorrect"] += 1
 
-                if answer is None or answer.is_correct is None:
-                    # Not auto-scored (or never opened): it cannot say anything
-                    # about a format or a difficulty band.
-                    if not answered:
-                        bucket = by_type.setdefault(
-                            question.question_type, {"type": question.question_type, "correct": 0, "total": 0, "unanswered": 0}
-                        )
-                        bucket["total"] += 1
-                        bucket["unanswered"] += 1
-                    continue
-
-                bucket = by_type.setdefault(
-                    question.question_type, {"type": question.question_type, "correct": 0, "total": 0, "unanswered": 0}
+                q_type = (question.question_type or "multiple_choice").lower()
+                profile = by_type.setdefault(
+                    q_type,
+                    {"type": q_type, "correct": 0, "total": 0, "unanswered": 0},
                 )
-                bucket["total"] += 1
-                bucket["correct"] += 1 if answer.is_correct else 0
+                profile["total"] += 1
+                if answered:
+                    profile["correct"] += 1 if answer.is_correct else 0
+                else:
+                    profile["unanswered"] += 1
 
                 difficulty = (question.difficulty or "medium").lower()
                 band = by_difficulty.setdefault(difficulty, {"difficulty": difficulty, "correct": 0, "total": 0})
@@ -314,6 +474,8 @@ def _evidence(attempt: TestAttempt) -> dict:
                     maximum += ceiling
                     if ceiling > 0:
                         percentage = float(marks * 100 / ceiling)
+                        dynamic_rationale = str(item.get("rationale") or item.get("feedback") or item.get("comment") or "").strip()
+                        dynamic_action = _criterion_action(name, percentage, part.section_type, row["label"])
                         criteria.append(
                             {
                                 "part_label": row["label"],
@@ -322,7 +484,9 @@ def _evidence(attempt: TestAttempt) -> dict:
                                 "marks": f"{_trim(marks)} / {_trim(ceiling)}",
                                 "percentage": _round1(percentage),
                                 "status": _band_status(percentage),
-                                "action": _criterion_action(name),
+                                "rationale": dynamic_rationale or None,
+                                "action": dynamic_rationale or dynamic_action,
+                                "recommendation": dynamic_action,
                             }
                         )
                 if maximum > 0:
@@ -782,7 +946,7 @@ def result_analysis(
             return fallback
 
     cache_key = (
-        f"student-result-analysis:{attempt.id}:{attempt.status}:{attempt.raw_score}:"
+        f"student-result-analysis-v2:{attempt.id}:{attempt.status}:{attempt.raw_score}:"
         f"{attempt.graded_at.isoformat() if attempt.graded_at else 'pending'}:"
         f"{_analysis_cache_revision(attempt)}"
     )

@@ -913,6 +913,8 @@ export interface StudentResultAnalysis {
     percentage: string;
     status: AnalysisBandStatus;
     action: string;
+    rationale?: string | null;
+    recommendation?: string | null;
   }>;
   focus_areas?: Array<{
     title: string;
