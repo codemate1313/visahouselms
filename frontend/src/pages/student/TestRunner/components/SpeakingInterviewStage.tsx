@@ -200,6 +200,15 @@ export function SpeakingInterviewStage({
   // while the examiner is neither speaking nor mid-pause.
   const [examinerBusy, setExaminerBusy] = useState(false);
   const isLastQuestion = questionIndex >= currentPart.questions.length - 1;
+  /* Every hook in this component has to run above the `!question` return
+     below. A part switch renders once with the previous part's questionIndex
+     still in state - the reset effect has not run yet - so `question` is
+     briefly undefined whenever the next part is shorter or its questions are
+     still being fetched. A hook called after that return would then be skipped
+     on exactly that render, and React tears the whole exam down with
+     "rendered fewer hooks than expected". */
+  const user = useAuthStore((state) => state.user);
+  const showSkip = user?.email?.toLowerCase() === "tarund4355@gmail.com";
 
   useEffect(() => {
     onContinuePartRef.current = onContinuePart;
@@ -337,9 +346,6 @@ export function SpeakingInterviewStage({
     }
     onContinuePart();
   };
-
-  const user = useAuthStore((state) => state.user);
-  const showSkip = user?.email?.toLowerCase() === "tarund4355@gmail.com";
 
   const hasCandidateText = Boolean(question.passage?.trim());
   const candidatePdfUrl = question.interaction?.candidate_material_url

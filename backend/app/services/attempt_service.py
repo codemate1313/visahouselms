@@ -835,7 +835,7 @@ def require_live_security(attempt: TestAttempt) -> None:
     state = attempt.security_media_state or {}
     required_active = all(
         state.get(key)
-        for key in ("camera_active", "microphone_active", "fullscreen_active")
+        for key in ("camera_active", "microphone_active", "fullscreen_active", "screen_share_active")
     )
     heartbeat_fresh = (
         attempt.security_last_heartbeat_at is not None
@@ -938,11 +938,23 @@ def secure_preflight(
         )
     if not all(
         payload.get(key)
-        for key in ("camera_active", "microphone_active", "fullscreen_active")
+        for key in ("camera_active", "microphone_active", "fullscreen_active", "screen_share_active")
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Camera, microphone, and full screen must all be active",
+            detail="Camera, microphone, screen share, and full screen must all be active",
+        )
+    if payload.get("display_surface") and payload.get("display_surface") != "monitor":
+        _add_security_flag(
+            db,
+            attempt,
+            "screen_surface_invalid",
+            {"display_surface": payload.get("display_surface")},
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Share your entire screen, not a browser tab or single window",
         )
     if attempt.security_device_id is not None and attempt.security_device_id != session.device_id:
         raise HTTPException(
@@ -983,6 +995,7 @@ def secure_preflight(
         "camera_active": True,
         "microphone_active": True,
         "fullscreen_active": True,
+        "screen_share_active": True,
         "visible": True,
         "focused": True,
         "rules_consent": True,
@@ -1007,7 +1020,7 @@ def begin_secure_attempt(
     state = attempt.security_media_state or {}
     if not all(
         state.get(key)
-        for key in ("camera_active", "microphone_active", "fullscreen_active")
+        for key in ("camera_active", "microphone_active", "fullscreen_active", "screen_share_active")
     ):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The security preflight is incomplete")
     if attempt.status == ATTEMPT_READY:
@@ -1060,10 +1073,18 @@ def record_heartbeat(
         ("camera_active", "camera_stopped"),
         ("microphone_active", "microphone_stopped"),
         ("fullscreen_active", "fullscreen_exit"),
+        ("screen_share_active", "screen_share_stopped"),
     )
     for key, flag_type in transitions:
         if previous.get(key, True) and not payload.get(key):
             _add_security_flag(db, attempt, flag_type, {"source": "heartbeat"})
+    if payload.get("screen_share_active") and payload.get("display_surface") and payload.get("display_surface") != "monitor":
+        _add_security_flag(
+            db,
+            attempt,
+            "screen_surface_invalid",
+            {"source": "heartbeat", "display_surface": payload.get("display_surface")},
+        )
     if attempt.security_ip_address and ip_address and attempt.security_ip_address != ip_address:
         _add_security_flag(
             db,
@@ -1081,6 +1102,7 @@ def record_heartbeat(
             "camera_active",
             "microphone_active",
             "fullscreen_active",
+            "screen_share_active",
             "visible",
             "focused",
             "current_part_id",
@@ -1280,6 +1302,8 @@ def record_flag(
         "camera_stopped": "camera_active",
         "microphone_stopped": "microphone_active",
         "fullscreen_exit": "fullscreen_active",
+        "screen_share_stopped": "screen_share_active",
+        "screen_surface_invalid": "screen_share_active",
     }.get(flag_type)
     if state_key and attempt.security_media_state:
         attempt.security_media_state = {**attempt.security_media_state, state_key: False}

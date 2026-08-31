@@ -31,6 +31,8 @@ class FinalTestPreflightRequest(BaseModel):
     camera_active: bool
     microphone_active: bool
     fullscreen_active: bool
+    screen_share_active: bool = False
+    display_surface: Optional[str] = Field(default=None, max_length=30)
 
 
 class FinalTestHeartbeatRequest(BaseModel):
@@ -39,6 +41,8 @@ class FinalTestHeartbeatRequest(BaseModel):
     camera_active: bool
     microphone_active: bool
     fullscreen_active: bool
+    screen_share_active: bool = False
+    display_surface: Optional[str] = Field(default=None, max_length=30)
     visible: bool
     focused: bool
     current_part_id: Optional[int] = None

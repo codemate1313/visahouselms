@@ -59,6 +59,14 @@ export default defineConfig({
     // xlsx is an optional, lazy-loaded export dependency; application chunks stay below this.
     chunkSizeWarningLimit: 750,
     sourcemap: false,
+    // Do NOT wipe the previous build. Chunk filenames are content-hashed, so a
+    // deployment that clears dist/ takes every already-open tab down with it:
+    // the next route a student opens - the result page they land on after
+    // submitting, say - asks for a hash that no longer exists and the app
+    // shows an error mid-exam. Leaving the old files in place lets those
+    // sessions finish on the build they started with. The deploy workflow
+    // prunes assets left behind by older builds.
+    emptyOutDir: false,
   },
   server: {
     allowedHosts: ['.trycloudflare.com'],

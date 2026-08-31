@@ -55,6 +55,10 @@ import {
   releaseSpeakingMicrophone,
 } from "@/media/speakingMicrophone";
 
+type DisplayMediaTrackSettings = MediaTrackSettings & {
+  displaySurface?: "application" | "browser" | "monitor" | "window";
+};
+
 interface ViolationPolicyResponse {
   risk_score: number;
   violation_count: number;
@@ -188,6 +192,7 @@ export function TestRunner() {
   const sourcePaneRef = useRef<HTMLElement | null>(null);
   const questionPaneRef = useRef<HTMLElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
   const cameraPreviewRef = useRef<HTMLVideoElement | null>(null);
   const attemptTokenRef = useRef(sessionStorage.getItem(securityStorageKey(id, "token")));
   const securityClientIdRef = useRef(storedClientId(id));
@@ -309,8 +314,6 @@ export function TestRunner() {
           heartbeatSequenceRef.current,
           data.security_heartbeat_sequence,
         );
-        setSecurityAuthorized(data.status === "in_progress" ? data.security_authorized : false);
-
         // Restore active part from URL or sessionStorage
         const savedPartParam = searchParams.get("part");
         const savedPartStorage = sessionStorage.getItem(`test-runner-part:${id}`);
@@ -319,6 +322,11 @@ export function TestRunner() {
         const splitComposite = isSplitCompositeModule(data.module_type)
           && data.parts.some((part) => part.section_type === "speaking");
         const serverSpeakingPhase = data.phase === "speaking" || data.phase === "speaking_pending";
+        setSecurityAuthorized(
+          data.status === "in_progress"
+            ? Boolean(data.security_authorized && !data.security_required)
+            : false,
+        );
         const speakingStarted = serverSpeakingPhase
           || sessionStorage.getItem(securityStorageKey(id, "speaking-started")) === "true"
           || data.parts.some((part) => part.section_type === "speaking" && part.answered_count > 0);
@@ -631,9 +639,14 @@ export function TestRunner() {
     [],
   );
 
-  const onRequiredTrackEnded = useCallback((kind: "camera" | "microphone") => {
+  const onRequiredTrackEnded = useCallback((kind: "camera" | "microphone" | "screenShare") => {
     updateSecurityMedia({ [kind]: false });
-    const flag: ProctorFlagType = kind === "camera" ? "camera_stopped" : "microphone_stopped";
+    const flag: ProctorFlagType =
+      kind === "camera"
+        ? "camera_stopped"
+        : kind === "microphone"
+          ? "microphone_stopped"
+          : "screen_share_stopped";
     recordFlag(flag, { ready_state: "ended" });
   }, [recordFlag, updateSecurityMedia]);
 
@@ -775,6 +788,12 @@ export function TestRunner() {
       track.stop();
     });
     cameraStreamRef.current = null;
+    screenStreamRef.current?.getTracks().forEach((track) => {
+      track.onended = null;
+      track.onmute = null;
+      track.stop();
+    });
+    screenStreamRef.current = null;
     setLiveCameraStream(null);
     if (cameraPreviewRef.current) cameraPreviewRef.current.srcObject = null;
     mediaStateRef.current = EMPTY_MEDIA_STATE;
@@ -830,6 +849,7 @@ export function TestRunner() {
     }
 
     let cameraStream = cameraStreamRef.current;
+    let screenStream = screenStreamRef.current;
     let keepMediaActive = false;
 
     /* `requestFullscreen` needs transient user activation, and the camera
@@ -857,8 +877,11 @@ export function TestRunner() {
 
       let cameraTrack = cameraStream?.getVideoTracks()[0];
       let microphoneTrack = cameraStream?.getAudioTracks()[0];
+      let screenTrack = screenStream?.getVideoTracks()[0];
+      let displaySurface = (screenTrack?.getSettings() as DisplayMediaTrackSettings | undefined)?.displaySurface;
       const existingMediaActive = cameraTrack?.readyState === "live"
-        && microphoneTrack?.readyState === "live";
+        && microphoneTrack?.readyState === "live"
+        && screenTrack?.readyState === "live";
 
       if (!existingMediaActive) {
         stopSecurityMedia();
@@ -866,20 +889,40 @@ export function TestRunner() {
           video: { facingMode: "user" },
           audio: { echoCancellation: true, noiseSuppression: true },
         });
+        if (!navigator.mediaDevices.getDisplayMedia) {
+          throw new Error(strings.security.errors.screenShareRequired);
+        }
+        screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: false,
+        });
         cameraTrack = cameraStream.getVideoTracks()[0];
         microphoneTrack = cameraStream.getAudioTracks()[0];
+        screenTrack = screenStream.getVideoTracks()[0];
+        displaySurface = (screenTrack.getSettings() as DisplayMediaTrackSettings).displaySurface;
         if (!cameraTrack || !microphoneTrack) {
           throw new Error(strings.security.errors.cameraMicRequired);
         }
+        if (!screenTrack) {
+          throw new Error(strings.security.errors.screenShareRequired);
+        }
+        if (displaySurface && displaySurface !== "monitor") {
+          screenStream.getTracks().forEach((track) => track.stop());
+          screenStreamRef.current = null;
+          throw new Error(strings.security.errors.screenShareRequired);
+        }
 
         cameraStreamRef.current = cameraStream;
+        screenStreamRef.current = screenStream;
         cameraTrack.onended = () => onRequiredTrackEnded("camera");
         cameraTrack.onmute = () => onRequiredTrackEnded("camera");
         microphoneTrack.onended = () => onRequiredTrackEnded("microphone");
         microphoneTrack.onmute = () => onRequiredTrackEnded("microphone");
+        screenTrack.onended = () => onRequiredTrackEnded("screenShare");
+        screenTrack.onmute = () => onRequiredTrackEnded("screenShare");
       }
 
-      if (!cameraStream || !cameraTrack || !microphoneTrack) {
+      if (!cameraStream || !cameraTrack || !microphoneTrack || !screenTrack) {
         throw new Error(strings.security.errors.mediaMustRemainActive);
       }
 
@@ -892,6 +935,7 @@ export function TestRunner() {
       updateSecurityMedia({
         camera: cameraTrack.readyState === "live" && cameraTrack.enabled,
         microphone: microphoneTrack.readyState === "live" && microphoneTrack.enabled,
+        screenShare: screenTrack.readyState === "live" && screenTrack.enabled,
         fullscreen: Boolean(document.fullscreenElement),
       });
 
@@ -911,6 +955,8 @@ export function TestRunner() {
           rules_consent: true,
           camera_active: true,
           microphone_active: true,
+          screen_share_active: true,
+          display_surface: displaySurface ?? null,
           fullscreen_active: true,
         },
         { headers: { "X-Skip-Loader": "1" } },
@@ -946,9 +992,11 @@ export function TestRunner() {
       } else {
         const cameraTrack = cameraStreamRef.current?.getVideoTracks()[0];
         const microphoneTrack = cameraStreamRef.current?.getAudioTracks()[0];
+        const screenTrack = screenStreamRef.current?.getVideoTracks()[0];
         updateSecurityMedia({
           camera: cameraTrack?.readyState === "live" && cameraTrack.enabled,
           microphone: microphoneTrack?.readyState === "live" && microphoneTrack.enabled,
+          screenShare: screenTrack?.readyState === "live" && screenTrack.enabled,
           fullscreen: Boolean(document.fullscreenElement),
         });
       }
@@ -980,7 +1028,17 @@ export function TestRunner() {
       if (cancelled || heartbeatBusyRef.current) return;
       heartbeatBusyRef.current = true;
       heartbeatSequenceRef.current += 1;
-      const state = mediaStateRef.current;
+      const cameraTrack = cameraStreamRef.current?.getVideoTracks()[0];
+      const microphoneTrack = cameraStreamRef.current?.getAudioTracks()[0];
+      const screenTrack = screenStreamRef.current?.getVideoTracks()[0];
+      const displaySurface = (screenTrack?.getSettings() as DisplayMediaTrackSettings | undefined)?.displaySurface;
+      const state: SecurityMediaState = {
+        camera: cameraTrack?.readyState === "live" && cameraTrack.enabled,
+        microphone: microphoneTrack?.readyState === "live" && microphoneTrack.enabled,
+        screenShare: screenTrack?.readyState === "live" && screenTrack.enabled,
+        fullscreen: Boolean(document.fullscreenElement),
+      };
+      updateSecurityMedia(state);
       try {
         const isArmed = proctorArmed();
         const { data } = await apiClient.post<ViolationPolicyResponse>(
@@ -990,6 +1048,8 @@ export function TestRunner() {
             client_id: securityClientIdRef.current,
             camera_active: isArmed ? state.camera : true,
             microphone_active: isArmed ? state.microphone : true,
+            screen_share_active: isArmed ? state.screenShare : true,
+            display_surface: displaySurface ?? null,
             fullscreen_active: isArmed ? Boolean(document.fullscreenElement) : true,
             visible: isArmed ? !document.hidden : true,
             focused: isArmed ? document.hasFocus() : true,
@@ -1530,6 +1590,18 @@ export function TestRunner() {
   const cameraPreview = liveCameraStream && securityAuthorized && mediaState.camera ? (
     <DraggableCameraPreview stream={liveCameraStream} />
   ) : null;
+  const missingSecurityControls: string[] = attempt.security_required && attempt.status === "in_progress"
+    ? [
+      !mediaState.camera ? strings.security.camera : null,
+      !mediaState.microphone ? strings.security.microphone : null,
+      !mediaState.screenShare ? strings.security.screenShare : null,
+      !fullscreenActive ? strings.security.fullScreen : null,
+    ].filter((item): item is NonNullable<typeof item> => Boolean(item))
+    : [];
+  const shouldRestoreSecurityControls =
+    attempt.security_required
+    && attempt.status === "in_progress"
+    && (!securityAuthorized || missingSecurityControls.length > 0);
   const hasSavedResponses = attempt.parts.some((part) => part.answered_count > 0);
   const isFreshAttempt = !onboardingCompleted && !hasSavedResponses && sessionStorage.getItem(`onboarding_completed_${id}`) !== "true";
   const shouldShowPreExamOnboarding =
@@ -1546,6 +1618,29 @@ export function TestRunner() {
      whenever the session is not yet authorised, regardless of the module's
      `show_onboarding_instructions` setting. */
   if (languageCertSkin && (attempt.status === "ready" || !securityAuthorized)) {
+    if (shouldRestoreSecurityControls) {
+      return (
+        <div className="test-runner-route-frame">
+          <div className="test-runner-shell lc-exam">
+            <FullscreenGate
+              isFinal={attempt.is_final}
+              secondsLeft={secondsLeft}
+              onEnterFullscreen={startSecureSession}
+              timerVisible={timerVisible}
+              securityError={securityError}
+              missingControls={missingSecurityControls.length ? missingSecurityControls : [
+                strings.security.camera,
+                strings.security.microphone,
+                strings.security.screenShare,
+                strings.security.fullScreen,
+              ]}
+              restoring={securityStarting}
+            />
+          </div>
+          {violationModal}
+        </div>
+      );
+    }
     return (
       <div className="test-runner-route-frame">
         <FinalTestOnboarding
@@ -1601,6 +1696,28 @@ export function TestRunner() {
   }
 
   if (!currentPart) return <div className="test-runner-loading">{strings.loading}</div>;
+
+  if (shouldRestoreSecurityControls) {
+    return (
+      <div className={`test-runner-shell${brandedTestClass}${languageCertSkin ? " lc-exam" : ""}`}>
+        <FullscreenGate
+          isFinal={attempt.is_final}
+          secondsLeft={secondsLeft}
+          onEnterFullscreen={missingSecurityControls.length === 1 && missingSecurityControls[0] === strings.security.fullScreen ? enterFullscreen : startSecureSession}
+          timerVisible={timerVisible}
+          securityError={securityError}
+          missingControls={missingSecurityControls.length ? missingSecurityControls : [
+            strings.security.camera,
+            strings.security.microphone,
+            strings.security.screenShare,
+            strings.security.fullScreen,
+          ]}
+          restoring={securityStarting}
+        />
+        {violationModal}
+      </div>
+    );
+  }
 
 
   const speakingParts = attempt.parts.filter((part) => part.section_type === "speaking");

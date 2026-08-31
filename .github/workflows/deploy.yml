@@ -172,6 +172,15 @@ jobs:
           rm -rf node_modules
           npm ci || (rm -rf node_modules && npm install)
           npm run build
+
+          # The build deliberately leaves the previous build's hashed chunks in
+          # place so tabs that were already open - a student mid-exam - can
+          # still fetch the files they were built against. Drop the ones old
+          # enough that no session can still be holding them.
+          if [ -d dist/assets ]; then
+            find dist/assets -type f -mtime +14 -delete
+            echo "Pruned build assets older than 14 days."
+          fi
           cd ..
 
           # 4. Service definition & permissions

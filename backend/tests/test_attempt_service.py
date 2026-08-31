@@ -2157,6 +2157,29 @@ class AttemptServiceTestCase(unittest.TestCase):
         with self.assertRaises(Exception):
             attempt_service.require_live_security(attempt)
 
+        attempt.security_media_state = {
+            **(attempt.security_media_state or {}),
+            "camera_active": True,
+            "microphone_active": True,
+            "screen_share_active": True,
+            "fullscreen_active": True,
+        }
+        self.db.add(attempt)
+        self.db.commit()
+        screen_loss = {
+            **heartbeat,
+            "sequence": 2,
+            "camera_active": True,
+            "screen_share_active": False,
+        }
+        attempt_service.record_heartbeat(
+            self.db, attempt, session, preflight["attempt_token"], screen_loss, "127.0.0.1"
+        )
+        self.assertEqual(
+            self.db.query(AttemptFlag).filter_by(attempt_id=attempt.id, flag_type="screen_share_stopped").count(),
+            1,
+        )
+
     def test_final_test_requires_consent_and_auto_submits_after_three_violations(self):
         module = self._build_reading_module()
         module.module_type = "final_test"

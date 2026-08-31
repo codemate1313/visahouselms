@@ -106,6 +106,14 @@ npm cache clean --force
 rm -rf node_modules
 npm install --include=dev
 ./node_modules/.bin/tsc -b && ./node_modules/.bin/vite build
+
+# The build keeps the previous build's hashed chunks so tabs that were already
+# open - a student mid-exam - can still fetch what they were built against.
+# Prune the ones no live session can still be holding.
+if [ -d dist/assets ]; then
+  find dist/assets -type f -mtime +14 -delete
+  echo "🧹 Pruned build assets older than 14 days."
+fi
 cd ..
 
 # 5. Sync systemd service, fix writable directories, and restart

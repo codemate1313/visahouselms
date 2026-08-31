@@ -436,6 +436,27 @@ body.test-runner-route-active #root {
   line-height: 1.55;
 }
 
+.test-runner-gate-checks {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 0;
+}
+
+.test-runner-gate-checks span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--danger, #ef4444) 28%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--danger, #ef4444) 9%, transparent);
+  color: var(--danger, #ef4444);
+  font-size: 12px;
+  font-weight: 750;
+}
+
 .test-runner-gate-timer {
   margin: 22px 0;
   color: var(--text);

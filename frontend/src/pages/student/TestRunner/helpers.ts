@@ -25,12 +25,14 @@ export type SecurityMediaState = {
   camera: boolean;
   microphone: boolean;
   fullscreen: boolean;
+  screenShare: boolean;
 };
 
 export const EMPTY_MEDIA_STATE: SecurityMediaState = {
   camera: false,
   microphone: false,
   fullscreen: false,
+  screenShare: false,
 };
 
 export function randomId(): string {

@@ -2519,6 +2519,26 @@
   line-height: 1.55;
 }
 
+.lc-exam .test-runner-gate-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 2px;
+}
+
+.lc-exam .test-runner-gate-checks span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--lc-red) 28%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lc-red) 8%, transparent);
+  color: var(--lc-red);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 /* Out-specifies the generic `p` rule above - this one has to read as an
    error, not as the gate's ordinary muted copy. */
 .lc-exam .test-runner-fullscreen-gate .test-runner-gate-error {

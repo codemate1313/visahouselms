@@ -80,7 +80,9 @@ export function AiEvaluationProgress({ progress, variant = "panel" }: AiEvaluati
     if (overtime) return t.overtimePhases[overtimeIndex];
     const share = estimate > 0 ? elapsed / estimate : 0;
     const key = PHASES.find((entry) => share < entry.until)?.key ?? "feedback";
-    const listening = progress.skills.includes("speaking");
+    // The result page is the first thing a student sees after submitting, so
+    // it must not depend on a field being present to render at all.
+    const listening = (progress.skills ?? []).includes("speaking");
     if (key === "reading") return listening ? t.phases.listening : t.phases.reading;
     return t.phases[key];
   }, [progress, overtime, overtimeIndex, elapsed, estimate]);

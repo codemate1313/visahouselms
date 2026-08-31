@@ -205,7 +205,7 @@ export function DashboardLayout() {
       <Sidebar
         brandTitle={strings.brandTitle}
         brandSubtitle={strings.brandSubtitle}
-        brandLogoUrl={theme === "dark" ? "/brand/vh-mark-dark-96.png" : "/brand/vh-mark-96.png"}
+        brandLogoUrl="/brand/vh-mark-dark-96.png"
         sections={sections}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
