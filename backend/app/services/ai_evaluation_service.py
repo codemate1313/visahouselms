@@ -320,7 +320,7 @@ def _resolve_model_for_provider(provider: str, model: Optional[str]) -> str:
 def _default_model_options(provider: str, model: Optional[str] = None) -> list[dict]:
     if provider == "gemini":
         selected = _resolve_model_for_provider(provider, model)
-        values = [selected, DEFAULT_GEMINI_MODEL, "gemini-flash-latest"]
+        values = [selected, DEFAULT_GEMINI_MODEL, "gemini-1.5-flash"]
         return [_model_option(value) for value in dict.fromkeys(value for value in values if value)]
     if provider == "openai":
         selected = _resolve_model_for_provider(provider, model)
@@ -1410,7 +1410,7 @@ def _batch_evaluation_prompt(payload: dict) -> str:
 def _gemini_evaluator(config: dict, payload: dict) -> dict:
     api_key = config["api_key"]
     model = config.get("model") or DEFAULT_GEMINI_MODEL
-    if model in ("gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5"):
+    if model in ("gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5", "gemini-flash-latest", "gemini-pro-latest"):
         model = "gemini-2.0-flash"
     if model.startswith("models/"):
         model = model[len("models/"):]
@@ -1504,12 +1504,12 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
             generation_config.pop("responseSchema")
             res = client.post(url, headers=headers, json=gemini_payload)
 
-        if res.status_code == 429 and model != "gemini-flash-latest":
-            logger.info("Primary Gemini model %s returned 429, falling back to gemini-flash-latest", model)
+        if res.status_code == 429 and model != "gemini-2.0-flash":
+            logger.info("Primary Gemini model %s returned 429, falling back to gemini-2.0-flash", model)
             # Retrying inside the same minute just spends another request into
             # a window that is already closed.
             time.sleep(RATE_LIMIT_RETRY_SECONDS)
-            fallback_url = f"{GEMINI_API_ROOT}/models/gemini-flash-latest:generateContent"
+            fallback_url = f"{GEMINI_API_ROOT}/models/gemini-2.0-flash:generateContent"
             res = client.post(fallback_url, headers=headers, json=gemini_payload)
 
         if res.status_code == 429:
