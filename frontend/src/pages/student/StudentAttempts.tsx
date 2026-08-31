@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { formatDateTime } from "@/utils/date";
 import { studentAttemptsStrings as strings } from "./StudentAttempts.strings";
 import type { BadgeTone } from "@/components/ui";
+import { attemptTargetUrl, hasSpeakingRemaining } from "./StudentDashboard/helpers";
 
 const STATUS_CLASS: Record<string, BadgeTone> = {
   ready: "blue",
@@ -17,6 +18,16 @@ const STATUS_CLASS: Record<string, BadgeTone> = {
   graded: "green",
   expired: "red",
 };
+
+function attemptStatusLabel(attempt: AttemptSummary) {
+  if (hasSpeakingRemaining(attempt)) return strings.statusLabels.speaking_remaining;
+  return strings.statusLabels[attempt.status as keyof typeof strings.statusLabels] ?? attempt.status;
+}
+
+function attemptStatusTone(attempt: AttemptSummary): BadgeTone {
+  if (hasSpeakingRemaining(attempt)) return "amber";
+  return STATUS_CLASS[attempt.status] ?? "gray";
+}
 
 const ATTEMPTS_REQUEST_TIMEOUT_MS = 15000;
 const GRADING_REFRESH_INTERVAL_MS = 8000;
@@ -80,10 +91,9 @@ export function StudentAttempts() {
 
   if (loading) return <p>{strings.loading}</p>;
 
-  const statusLabels = strings.statusLabels;
-
   const filteredAttempts = attempts.filter((attempt) => {
     if (selectedStatus === "all") return true;
+    if (selectedStatus === "speaking_remaining") return hasSpeakingRemaining(attempt);
     return attempt.status === selectedStatus;
   });
 
@@ -114,23 +124,25 @@ export function StudentAttempts() {
     <tr key={attempt.id} className="clickable">
       <td>{attempt.module_title}</td>
       <td>
-        <Badge tone={STATUS_CLASS[attempt.status] ?? "gray"}>
-          {statusLabels[attempt.status as keyof typeof statusLabels] ?? attempt.status}
+        <Badge tone={attemptStatusTone(attempt)}>
+          {attemptStatusLabel(attempt)}
         </Badge>
       </td>
       <td>{formatDateTime(attempt.started_at)}</td>
       <td>
-        {attempt.raw_score && attempt.max_score
+        {hasSpeakingRemaining(attempt)
+          ? strings.speakingPendingScore
+          : attempt.raw_score && attempt.max_score
           ? `${attempt.raw_score} / ${attempt.max_score}`
           : "—"}
       </td>
-      <td>{attempt.band_label ?? "—"}</td>
+      <td>{hasSpeakingRemaining(attempt) ? "—" : attempt.band_label ?? "—"}</td>
       <td className="table-actions">
-        {attempt.status === "ready" || attempt.status === "in_progress" ? (
+        {hasSpeakingRemaining(attempt) || attempt.status === "ready" || attempt.status === "in_progress" ? (
           <Link
-            to={`/student/attempts/${attempt.id}/take`}
-            aria-label={strings.resumeTest}
-            data-tooltip={strings.resumeTest}
+            to={attemptTargetUrl(attempt)}
+            aria-label={hasSpeakingRemaining(attempt) ? strings.finishSpeaking : strings.resumeTest}
+            data-tooltip={hasSpeakingRemaining(attempt) ? strings.finishSpeaking : strings.resumeTest}
           >
             <Icon name="module" />
           </Link>
@@ -169,6 +181,7 @@ export function StudentAttempts() {
             { value: "submitted", label: strings.statusLabels.submitted },
             { value: "grading", label: strings.statusLabels.grading },
             { value: "graded", label: strings.statusLabels.graded },
+            { value: "speaking_remaining", label: strings.statusLabels.speaking_remaining },
             { value: "expired", label: strings.statusLabels.expired },
           ]}
           value={selectedStatus}

@@ -256,7 +256,7 @@ export function AiQuotaCard() {
     last_error: null,
   };
   const recentSeries = data.series.slice(-12);
-  const seriesPeak = Math.max(1, ...recentSeries.map((point) => Math.max(point.requests, point.tokens ? Math.ceil(point.tokens / 1000) : 0)));
+  const seriesPeak = Math.max(1, ...recentSeries.map((point) => point.requests));
   const successToday = Math.max(0, data.totals.requests_today - data.totals.failed_today);
   const failurePercent = data.totals.requests_today > 0 ? Math.round(data.totals.failed_today / data.totals.requests_today * 100) : 0;
 
@@ -445,16 +445,29 @@ export function AiQuotaCard() {
               <span>Last 12 hours</span>
               <b>{successToday} ok · {failurePercent}% failed</b>
             </div>
+            <div className="ai-quota-trend-legend" aria-hidden="true">
+              <span><i className="is-success" /> successful calls</span>
+              <span><i className="is-failed" /> failed calls</span>
+            </div>
             <div className="ai-quota-trend-bars" aria-label="AI request trend for the last 12 hours">
               {recentSeries.length ? (
                 recentSeries.map((point) => {
-                  const requestsHeight = Math.max(5, Math.round(point.requests / seriesPeak * 100));
-                  const failedHeight = point.failed ? Math.max(5, Math.round(point.failed / seriesPeak * 100)) : 0;
+                  const successful = Math.max(0, point.requests - point.failed);
+                  const requestsHeight = Math.max(point.requests > 0 ? 8 : 0, Math.round(point.requests / seriesPeak * 100));
+                  const successHeight = Math.max(successful > 0 ? 8 : 0, Math.round(successful / seriesPeak * 100));
+                  const failedHeight = point.failed ? Math.max(6, Math.round(point.failed / seriesPeak * 100)) : 0;
                   const hourLabel = shortTime(point.hour);
                   return (
-                    <span className="ai-quota-trend-bar" key={point.hour} aria-label={`${point.requests} requests at ${hourLabel}`}>
-                      <i style={{ height: `${requestsHeight}%` }} />
-                      {failedHeight > 0 && <em style={{ height: `${failedHeight}%` }} />}
+                    <span className="ai-quota-trend-column" key={point.hour}>
+                      <span
+                        className="ai-quota-trend-bar"
+                        aria-label={`${point.requests} calls, ${successful} successful and ${point.failed} failed at ${hourLabel}`}
+                      >
+                        <i className="is-total" style={{ height: `${requestsHeight}%` }} />
+                        {successHeight > 0 && <i className="is-success" style={{ height: `${successHeight}%` }} />}
+                        {failedHeight > 0 && <em style={{ height: `${failedHeight}%` }} />}
+                      </span>
+                      <small>{hourLabel}</small>
                     </span>
                   );
                 })

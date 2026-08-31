@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/ui";
 import { getCachedStudentCurrentPlan } from "@/hooks/useStudentAccess";
 import { useAuthStore } from "@/store/authStore";
 import { studentDashboardStrings as strings } from "./StudentDashboard.strings";
-import { COMPLETED_STATUSES, attemptTime, progressForStatus, statusLabel } from "./helpers";
+import { COMPLETED_STATUSES, attemptTime, hasSpeakingRemaining, progressForAttempt, statusLabel } from "./helpers";
 import { useDashboardAnimations } from "./useDashboardAnimations";
 import { StatCardsGrid, type StatCard } from "./components/StatCardsGrid";
 import { StudentValidityCard } from "./components/StudentValidityCard";
@@ -13,6 +13,7 @@ import { LearningPlanPanel } from "./components/LearningPlanPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
 import type { TestProgressItem } from "./types";
 import { DailyEnglishChallenge } from "./components/DailyEnglishChallenge";
+import { SpeakingRemainingPanel } from "./components/SpeakingRemainingPanel";
 
 export function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -43,8 +44,9 @@ export function StudentDashboard() {
   if (error) return <p className="error-text">{error}</p>;
   if (!attempts || !myPlan) return <p>{strings.loading}</p>;
 
-  const inProgress = attempts.filter((a) => a.status === "ready" || a.status === "in_progress").length;
-  const graded = attempts.filter((a) => a.status === "graded").length;
+  const speakingRemaining = attempts.filter(hasSpeakingRemaining);
+  const inProgress = attempts.filter((a) => (a.status === "ready" || a.status === "in_progress") && !hasSpeakingRemaining(a)).length;
+  const graded = attempts.filter((a) => a.status === "graded" && !hasSpeakingRemaining(a)).length;
   const pendingGrading = attempts.filter((a) => a.status === "grading").length;
   const isInstituteStudent = user?.institute_id != null;
   const assignedModules = myPlan.plan?.modules ?? [];
@@ -58,16 +60,16 @@ export function StudentDashboard() {
   const testProgress: TestProgressItem[] = assignedModules.map((module) => {
     const moduleId = module.module_id ?? module.id ?? 0;
     const latestAttempt = latestAttemptByModule.get(moduleId);
-    const progress = progressForStatus(latestAttempt?.status);
+    const progress = progressForAttempt(latestAttempt);
     return {
       module,
       moduleId,
       latestAttempt,
       progress,
-      statusLabel: latestAttempt ? statusLabel(latestAttempt.status) : strings.notStarted,
+      statusLabel: latestAttempt ? statusLabel(latestAttempt.status, latestAttempt) : strings.notStarted,
     };
   });
-  const completedTests = testProgress.filter((item) => item.latestAttempt && COMPLETED_STATUSES.has(item.latestAttempt.status)).length;
+  const completedTests = testProgress.filter((item) => item.latestAttempt && COMPLETED_STATUSES.has(item.latestAttempt.status) && !hasSpeakingRemaining(item.latestAttempt)).length;
   const pendingTests = Math.max(assignedModules.length - completedTests, 0);
 
   const statCards: StatCard[] = [
@@ -94,6 +96,8 @@ export function StudentDashboard() {
       </div>
 
       <StatCardsGrid stats={statCards} />
+
+      <SpeakingRemainingPanel attempts={speakingRemaining} />
 
       <div className="sd-grid">
         <LearningPlanPanel

@@ -25,6 +25,7 @@ from app.models.attempt import (
     CourseModule,
     Enrollment,
     GradingQueueEntry,
+    AttemptPartGrade,
     PART_GRADE_AI_GRADED,
     PART_GRADE_PENDING,
     ReevaluationRequest,
@@ -2068,6 +2069,38 @@ class AttemptServiceTestCase(unittest.TestCase):
         pending_view = attempt_service.get_student_view(self.db, sealed, security_authorized=False)
         self.assertEqual(pending_view["status"], ATTEMPT_IN_PROGRESS)
         self.assertEqual(pending_view["phase"], "speaking_pending")
+        [summary] = attempt_service.list_my_attempts(self.db, self.student)
+        self.assertEqual(summary["phase"], "speaking_pending")
+        self.assertEqual(summary["resume_part_id"], speaking_part.id)
+
+        sealed.status = ATTEMPT_GRADED
+        sealed.submitted_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        sealed.graded_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        sealed.raw_score = Decimal("19")
+        sealed.max_score = Decimal("164")
+        sealed.band_label = "A1"
+        self.db.add(
+            AttemptPartGrade(
+                attempt_id=sealed.id,
+                part_id=speaking_part.id,
+                criteria=[],
+                status=PART_GRADE_AI_GRADED,
+                total_marks=Decimal("0"),
+            )
+        )
+        self.db.add(sealed)
+        self.db.commit()
+
+        [repaired_summary] = attempt_service.list_my_attempts(self.db, self.student)
+        self.assertEqual(repaired_summary["status"], ATTEMPT_IN_PROGRESS)
+        self.assertEqual(repaired_summary["phase"], "speaking_pending")
+        self.assertIsNone(repaired_summary["submitted_at"])
+        self.assertIsNone(repaired_summary["raw_score"])
+        self.assertEqual(
+            self.db.query(AttemptPartGrade).filter_by(attempt_id=sealed.id, part_id=speaking_part.id).count(),
+            0,
+        )
+        sealed = attempt_service.get_attempt_or_404(self.db, self.student, sealed.id)
 
         resume_token = attempt_service.secure_preflight(
             self.db,

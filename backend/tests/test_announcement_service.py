@@ -228,7 +228,7 @@ class AnnouncementServiceTests(unittest.TestCase):
         deleted = announcement_service.delete_admin_announcement(self.db, created["id"], institute_id=None)
 
         self.assertTrue(deleted)
-        self.assertIsNone(self.db.query(Announcement).get(created["id"]))
+        self.assertIsNone(self.db.get(Announcement, created["id"]))
         self.assertEqual(self.db.query(StudentNotification).filter_by(announcement_id=created["id"]).count(), 0)
 
     def test_target_options(self) -> None:

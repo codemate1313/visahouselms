@@ -113,6 +113,8 @@ def get_attempt_or_404(db: Session, user: User, attempt_id: int) -> TestAttempt:
     attempt = _attempt_query(db).filter(TestAttempt.id == attempt_id).first()
     if attempt is None or attempt.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
+    if _restore_deferred_speaking_attempt(db, attempt):
+        attempt = _attempt_query(db).filter(TestAttempt.id == attempt_id).first()
     return attempt
 
 
@@ -166,6 +168,34 @@ def _set_attempt_phase(attempt: TestAttempt, phase: str) -> None:
     snapshot = dict(attempt.content_snapshot or {})
     snapshot["phase"] = phase
     attempt.content_snapshot = snapshot
+
+
+def _restore_deferred_speaking_attempt(db: Session, attempt: TestAttempt) -> bool:
+    if _attempt_phase(attempt) != SPEAKING_PHASE_PENDING:
+        return False
+    if attempt.status == ATTEMPT_IN_PROGRESS:
+        return False
+
+    speaking_part_ids = {part.id for part in attempt.module.parts if part.section_type == "speaking"}
+    if speaking_part_ids:
+        db.query(AttemptPartGrade).filter(
+            AttemptPartGrade.attempt_id == attempt.id,
+            AttemptPartGrade.part_id.in_(speaking_part_ids),
+        ).delete(synchronize_session=False)
+
+    attempt.status = ATTEMPT_IN_PROGRESS
+    attempt.submitted_at = None
+    attempt.graded_at = None
+    attempt.raw_score = None
+    attempt.max_score = None
+    attempt.band_label = None
+    attempt.cefr_level = None
+    attempt.cefr_profile = None
+    attempt.cefr_policy_version = None
+    db.add(attempt)
+    db.commit()
+    db.refresh(attempt)
+    return True
 
 
 def _set_resume_part(attempt: TestAttempt, part_id: int) -> None:
@@ -1367,6 +1397,10 @@ def submit_attempt(
     *,
     require_complete_speaking: bool = True,
 ) -> dict:
+    if _restore_deferred_speaking_attempt(db, attempt):
+        return get_student_view(db, attempt)
+    if _attempt_phase(attempt) == SPEAKING_PHASE_PENDING:
+        return get_student_view(db, attempt)
     if attempt.status == ATTEMPT_READY:
         attempt.status = ATTEMPT_IN_PROGRESS
         now = _now()
@@ -1772,6 +1806,16 @@ def list_my_attempts(db: Session, user: User) -> list[dict]:
         .order_by(TestAttempt.started_at.desc())
         .all()
     )
+    restored = False
+    for attempt in attempts:
+        restored = _restore_deferred_speaking_attempt(db, attempt) or restored
+    if restored:
+        attempts = (
+            _attempt_query(db)
+            .filter(TestAttempt.user_id == user.id, TestAttempt.status != ATTEMPT_READY)
+            .order_by(TestAttempt.started_at.desc())
+            .all()
+        )
     return [
         {
             "id": attempt.id,
@@ -1781,6 +1825,8 @@ def list_my_attempts(db: Session, user: User) -> list[dict]:
             "status": attempt.status,
             "security_required": attempt.security_required,
             "security_risk_score": attempt.security_risk_score,
+            "phase": _attempt_phase(attempt),
+            "resume_part_id": _resume_part_id(attempt),
             "started_at": _utc_out(attempt.started_at),
             "submitted_at": _utc_out(attempt.submitted_at),
             "raw_score": str(attempt.raw_score) if attempt.raw_score is not None else None,

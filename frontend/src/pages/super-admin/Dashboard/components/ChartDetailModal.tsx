@@ -36,8 +36,11 @@ function currentMonthKey() {
 
 function computePresetDates(presetId: string, latestMonthStr: string = currentMonthKey()) {
   const parts = latestMonthStr.split("-");
-  const year = parseInt(parts[0], 10) || 2026;
-  const month = parseInt(parts[1], 10) || 7;
+  const currentParts = currentMonthKey().split("-");
+  const fallbackYear = parseInt(currentParts[0], 10);
+  const fallbackMonth = parseInt(currentParts[1], 10);
+  const year = parseInt(parts[0], 10) || fallbackYear;
+  const month = parseInt(parts[1], 10) || fallbackMonth;
 
   const toDate = `${year}-${String(month).padStart(2, "0")}`;
   let fromDate = toDate;

@@ -4203,6 +4203,22 @@ button.student-notification-read-all:hover * {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+[data-theme="dark"] .speaking-remaining-panel {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, transparent), transparent 42%),
+    rgba(17, 17, 19, 0.9);
+  border-color: color-mix(in srgb, var(--primary) 28%, rgba(255, 255, 255, 0.08));
+}
+
+[data-theme="dark"] .speaking-remaining-card {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: color-mix(in srgb, var(--primary) 28%, rgba(255, 255, 255, 0.08));
+}
+
+[data-theme="dark"] .speaking-remaining-body strong {
+  color: #f8fafc;
+}
+
 [data-theme="dark"] .sd-combined-hero-divider {
   background: rgba(255, 255, 255, 0.08);
 }
@@ -4293,6 +4309,121 @@ button.student-notification-read-all:hover * {
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: 32px;
+}
+
+.speaking-remaining-panel {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 28px;
+  border-color: color-mix(in srgb, var(--primary) 20%, var(--border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary) 7%, transparent), transparent 38%),
+    var(--surface);
+}
+
+.speaking-remaining-count {
+  display: inline-grid;
+  min-width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 820;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 24%, transparent);
+}
+
+.speaking-remaining-list {
+  display: grid;
+  gap: 12px;
+}
+
+.speaking-remaining-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 86%, var(--primary-soft));
+}
+
+.speaking-remaining-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.speaking-remaining-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.speaking-remaining-body {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.speaking-remaining-body span {
+  color: var(--primary);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.speaking-remaining-body strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 780;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.speaking-remaining-body small {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.speaking-remaining-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 760;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--primary) 22%, transparent);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.speaking-remaining-action:hover {
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.speaking-remaining-action svg {
+  width: 15px;
+  height: 15px;
 }
 
 .sd-progress-summary {
@@ -4498,6 +4629,15 @@ button.student-notification-read-all:hover * {
 
   .sd-grid {
     gap: 18px;
+  }
+
+  .speaking-remaining-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .speaking-remaining-action {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   /* The stats pill wraps rather than pushing itself wider than the card. */

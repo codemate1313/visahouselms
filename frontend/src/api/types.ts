@@ -944,6 +944,8 @@ export interface AttemptSummary {
   status: AttemptStatus;
   security_required: boolean;
   security_risk_score: number;
+  phase?: "main" | "speaking_pending" | "speaking";
+  resume_part_id?: number | null;
   started_at: string;
   submitted_at: string | null;
   raw_score: string | null;
