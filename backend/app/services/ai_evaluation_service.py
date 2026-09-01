@@ -367,6 +367,10 @@ NON_EVALUATION_MARKERS = (
     # Speech-to-text, not an examiner: it would return a transcript where a
     # rubric score was asked for.
     "transcribe",
+    # Image and video generation, whatever Google is calling them this month -
+    # "Nano Banana" is an image model, and it was being offered as a marker.
+    "-image",
+    "banana",
 )
 # Gemini only. An alias is not a model - it moves under you, which is exactly
 # how a working configuration turned into a 404 overnight - and a preview can
@@ -788,6 +792,7 @@ def list_configured_key_models(
     preferred_provider: Optional[str] = None,
     writing_model: Optional[str] = None,
     speaking_model: Optional[str] = None,
+    preferred_model: Optional[str] = None,
 ) -> dict:
     secret = (api_key or "").strip()
     stored = None
@@ -857,8 +862,13 @@ def list_configured_key_models(
 
     writing_options = models_for_skill(options, SKILL_WRITING)
     speaking_options = models_for_skill(options, SKILL_SPEAKING)
-    stored_writing = writing_model or (stored or {}).get("writing_model") or effective_model
-    stored_speaking = speaking_model or (stored or {}).get("speaking_model") or effective_model
+    requested_pin = preferred_model or (stored or {}).get("preferred_model") or ""
+    # Verbatim here too: the screen must show the pin the admin set, and mark
+    # it unavailable if the provider no longer offers it, rather than quietly
+    # showing a different model as though they had chosen it.
+    selected_pin = requested_pin if any(option["value"] == requested_pin for option in options) else ""
+    stored_writing = selected_pin or writing_model or (stored or {}).get("writing_model") or effective_model
+    stored_speaking = selected_pin or speaking_model or (stored or {}).get("speaking_model") or effective_model
     # Pick for them only when their choice is not on offer, so a key that
     # works never sits there needing a decision before it can mark anything.
     writing_model = _choose_model_from_options(detected["provider"], stored_writing, writing_options)
@@ -900,7 +910,7 @@ def list_configured_key_models(
         "writing_model": writing_model,
         "speaking_model": speaking_model,
         "model_order": model_order(options, detected["provider"]),
-        "preferred_model": (stored or {}).get("preferred_model") or "",
+        "preferred_model": selected_pin,
         "key_preview": _mask_key(secret),
         "supported": True,
         "message": f"{found['message']}{speaking_note}",
@@ -1331,6 +1341,7 @@ def test_configured_key(
     preferred_provider: Optional[str] = None,
     writing_model: Optional[str] = None,
     speaking_model: Optional[str] = None,
+    preferred_model: Optional[str] = None,
 ) -> dict:
     secret = (api_key or "").strip()
     stored = None
@@ -1407,14 +1418,28 @@ def test_configured_key(
     # The form's choice wins over the stored one: the admin may have just
     # picked a different model and not saved it yet, and answering about the
     # old one silently undoes their selection.
-    stored_writing = writing_model or (stored or {}).get("writing_model") or effective_model
-    stored_speaking = speaking_model or (stored or {}).get("speaking_model") or effective_model
-    writing_model = _choose_model_from_options(detected["provider"], stored_writing, writing_options or discovered)
-    speaking_model = (
-        _choose_model_from_options(detected["provider"], stored_speaking, speaking_options)
-        if speaking_options
-        else ""
-    )
+    requested_pin = preferred_model or (stored or {}).get("preferred_model") or ""
+    # Taken verbatim. Resolving a pin against the offered list quietly replaced
+    # it with the best available whenever the exact id was not on that list -
+    # so a check on the model the admin had chosen came back reporting a limit
+    # on a model they had never picked. If the pin cannot be called, the test
+    # has to say that about the pin.
+    selected_pin = requested_pin
+    if selected_pin:
+        # A pin bypasses the "choose the best on offer" step entirely. That
+        # step is what replaced it, and replacing the model under test is the
+        # one thing a test must never do.
+        writing_model = selected_pin
+        speaking_model = selected_pin if SKILL_SPEAKING in model_skills(detected["provider"], selected_pin) else ""
+    else:
+        stored_writing = writing_model or (stored or {}).get("writing_model") or effective_model
+        stored_speaking = speaking_model or (stored or {}).get("speaking_model") or effective_model
+        writing_model = _choose_model_from_options(detected["provider"], stored_writing, writing_options or discovered)
+        speaking_model = (
+            _choose_model_from_options(detected["provider"], stored_speaking, speaking_options)
+            if speaking_options
+            else ""
+        )
 
     # Tested with the model that marks essays: it is the cheaper of the two and
     # proves the same thing - that this key can run a real evaluation.
@@ -1428,7 +1453,7 @@ def test_configured_key(
     result["writing_models"] = writing_options
     result["speaking_models"] = speaking_options
     result["model_order"] = model_order(discovered, detected["provider"])
-    result["preferred_model"] = (stored or {}).get("preferred_model") or ""
+    result["preferred_model"] = selected_pin
     result["writing_model"] = writing_model
     result["speaking_model"] = speaking_model
     if result.get("ok") and not speaking_options:

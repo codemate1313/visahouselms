@@ -2207,6 +2207,43 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(card["active"]["model"], "gemini-3.7-flash")
         self.assertEqual([group["position"] for group in card["model_groups"]], [1, 2])
 
+    def test_a_pinned_model_is_the_one_actually_tested(self):
+        """A check on the pinned model reported a limit on a different one.
+
+        The pin was resolved against the offered list, and when the exact id
+        was not on it the "best available" quietly took its place - so the
+        admin was told about a model they had never chosen.
+        """
+        self._save_gemini_key(model="gemini-3.7-flash")
+        client = self._fake_gemini_models(["gemini-3.7-flash", "gemini-2.5-pro"])
+        dialled: list[str] = []
+
+        def fake_test_connection(*, provider, api_key, model, endpoint_url=None, evaluator=None):
+            dialled.append(model)
+            return {
+                "ok": True, "model": model, "message": "ok", "latency_ms": 1,
+                "key_preview": "x", "supported": True, "provider": provider,
+                "provider_label": "Google Gemini",
+            }
+
+        with patch.object(ai_evaluation_service.httpx, "Client", client), patch.object(
+            ai_evaluation_service, "test_connection", fake_test_connection
+        ):
+            ai_evaluation_service.test_configured_key(
+                self.db,
+                key_id="gemini-1",
+                provider="gemini",
+                api_key="AIza-secret",
+                # Deliberately a model the provider did not list.
+                preferred_model="gemini-3.5-flash",
+            )
+
+        self.assertEqual(dialled, ["gemini-3.5-flash"])
+
+    def test_image_models_are_never_offered_as_markers(self):
+        for rejected in ("gemini-3-pro-image-preview", "nano-banana-2", "gemini-2.5-flash-image"):
+            self.assertEqual(ai_evaluation_service.model_skills("gemini", rejected), set(), rejected)
+
     def test_aliases_previews_and_transcribers_are_not_offered_for_marking(self):
         """The routing list had grown to fifty-odd entries per skill.
 
@@ -2475,6 +2512,48 @@ class AttemptServiceTestCase(unittest.TestCase):
                 writing_model="gemini-1.5-pro",
             )
         self.assertIn(corrected["writing_model"], {"gemini-2.5-flash", "gemini-2.5-pro"})
+
+    def test_detect_and_test_uses_the_start_from_model_on_screen(self):
+        """The selector's pin was sent by the UI but ignored by the backend.
+
+        That left the row saying "Start from Gemini 2.5 Flash-Lite" while the
+        test request dialled the automatic newest model instead.
+        """
+        self._save_gemini_key(model="gemini-3.7-flash")
+        discovered = [
+            {"value": "gemini-3.7-flash", "label": "Gemini 3.7 Flash", "available": True, "skills": ["writing", "speaking"]},
+            {"value": "gemini-2.5-flash-lite", "label": "Gemini 2.5 Flash-Lite", "available": True, "skills": ["writing", "speaking"]},
+        ]
+        tested: list[str] = []
+
+        def fake_test_connection(**kwargs):
+            tested.append(kwargs["model"])
+            return {
+                "ok": True,
+                "provider": "gemini",
+                "provider_label": "Google Gemini",
+                "detected_provider": "gemini",
+                "model": kwargs["model"],
+                "model_options": [],
+                "key_preview": "AIza****",
+                "latency_ms": 1,
+                "supported": True,
+                "message": "Google Gemini accepted the key and returned valid evaluator JSON.",
+            }
+
+        with patch.object(ai_evaluation_service, "discover_models", return_value={"models": discovered, "message": "Loaded"}), \
+            patch.object(ai_evaluation_service, "test_connection", side_effect=fake_test_connection):
+            result = ai_evaluation_service.test_configured_key(
+                self.db,
+                key_id="gemini-1",
+                provider="gemini",
+                api_key="AIza-secret",
+                preferred_model="gemini-2.5-flash-lite",
+            )
+
+        self.assertEqual(tested, ["gemini-2.5-flash-lite"])
+        self.assertEqual(result["model"], "gemini-2.5-flash-lite")
+        self.assertEqual(result["preferred_model"], "gemini-2.5-flash-lite")
 
     def test_a_key_that_cannot_list_models_says_why_instead_of_a_404(self):
         """What the super admin actually saw: a 404 naming a model they never

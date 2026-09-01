@@ -181,6 +181,7 @@ def list_ai_evaluation_models(payload: AiEvaluationModelListIn, db: Session = De
         preferred_provider=payload.preferred_provider,
         writing_model=payload.writing_model,
         speaking_model=payload.speaking_model,
+        preferred_model=payload.preferred_model,
     )
 
 
@@ -196,6 +197,7 @@ def test_ai_evaluation_key(payload: AiEvaluationKeyTestIn, db: Session = Depends
         preferred_provider=payload.preferred_provider,
         writing_model=payload.writing_model,
         speaking_model=payload.speaking_model,
+        preferred_model=payload.preferred_model,
     )
 
 
