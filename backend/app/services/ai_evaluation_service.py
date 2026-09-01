@@ -643,9 +643,11 @@ def discover_models(
         methods = set(item.get("supportedGenerationMethods") or [])
         if not model_id or "generateContent" not in methods:
             continue
-        if model_id not in GEMINI_EVALUATION_MODELS and not (
-            model_id.startswith("gemini-") and ("flash" in model_id or "pro" in model_id)
-        ):
+        # Any Gemini model that can generate content is a candidate. Naming it
+        # has to be Google's business, not this file's: requiring "flash" or
+        # "pro" in the id meant a model called anything else - a future
+        # gemini-4-ultra - was discovered and then thrown away unused.
+        if not model_id.startswith("gemini-"):
             continue
         entry = _model_entry(provider, model_id, item.get("displayName"))
         if entry:
@@ -946,15 +948,21 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
             model = _choose_model_from_options(provider, model, model_options)
 
         def _skill_model(field: str, skill: str) -> str:
+            """What was chosen, kept as chosen.
+
+            This used to quietly swap in a different model when the chosen one
+            could not mark that skill, so the settings screen showed one model
+            and the stored key held another. A model that cannot mark a skill
+            is simply not offered for it at runtime - see `evaluation_plan` -
+            which is the honest version of the same behaviour.
+            """
             chosen = str(item.get(field) or "").strip()[:120]
             chosen = _resolve_model_for_provider(provider, chosen or model)
             if model_options:
-                allowed = [
-                    option for option in model_options
-                    if skill in (option.get("skills") or [skill]) and option.get("available") is not False
-                ]
-                if allowed:
-                    chosen = _choose_model_from_options(provider, chosen, allowed)
+                available = [option for option in model_options if option.get("available") is not False]
+                if available and not any(option.get("value") == chosen for option in available):
+                    # Not on offer at all any more - that is worth correcting.
+                    chosen = _choose_model_from_options(provider, chosen, available)
             return chosen
 
         writing_model = _skill_model("writing_model", SKILL_WRITING)
@@ -1083,9 +1091,12 @@ def evaluation_plan(db: Session, skill: str, configs: Optional[list[dict]] = Non
 
     key_configs = configs if configs is not None else _candidate_configs(db)
 
-    # Pass one: what each key was told to use.
+    # Pass one: what each key was told to use - unless it cannot mark this
+    # kind of paper, in which case only the fallbacks below apply to it.
     for config in key_configs:
-        add(config, config_for_skill(config, skill).get("model"))
+        chosen = config_for_skill(config, skill).get("model")
+        if chosen and skill in model_skills(config.get("provider") or "gemini", chosen):
+            add(config, chosen)
 
     # Pass two: everything else, best model across all keys before stepping
     # down to the next.
@@ -1180,6 +1191,7 @@ def _candidate_configs(db: Session) -> list[dict]:
             "key_label": item.get("label"),
             "writing_model": item.get("writing_model") or item.get("model") or base.get("model"),
             "speaking_model": item.get("speaking_model") or item.get("model") or base.get("model"),
+            "model_options": item.get("model_options") if isinstance(item.get("model_options"), list) else [],
             # Which models this key can actually call, so a retired one is
             # never dialled and the fallback is a number we know is connected.
             "live_models": cached_gemini_models(db, item.get("id")) if provider == "gemini" else [],
@@ -1923,6 +1935,12 @@ RPD_EXHAUSTED_SETTING = "ai.rpd_exhausted"
 # pairs already out of daily quota never enter the plan, so a real run is far
 # shorter than this.
 EVALUATION_PLAN_MAX_ATTEMPTS = 40
+# ...and a wall clock, because the count alone does not bound anything. Each
+# attempt carries its own timeout - up to fifteen minutes for a Final Test - so
+# a provider that stops answering rather than refusing could hold the worker
+# for hours on a single part. Whatever is left of the plan when this runs out
+# is abandoned, and the scheduler's retry picks the attempt up later.
+EVALUATION_PLAN_MAX_SECONDS = 300.0
 
 
 def _quota_day_start() -> datetime:
@@ -2187,7 +2205,15 @@ def _model_is_gone(response: httpx.Response) -> bool:
     body = (response.text or "").lower()
     return any(
         phrase in body
-        for phrase in ("not found", "is not supported", "does not exist", "has been deprecated", "no longer available")
+        for phrase in (
+            "not found",
+            "is not supported",
+            "does not support",
+            "unsupported",
+            "does not exist",
+            "has been deprecated",
+            "no longer available",
+        )
     )
 
 
@@ -2312,7 +2338,18 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
             body = (res.text or "").lower()
             # Google names the metric it refused on. "Per day" is the whole
             # day gone; anything else clears within the minute.
-            daily = any(marker in body for marker in ("perday", "per day", "daily", "requests_per_day"))
+            daily = any(
+                marker in body
+                for marker in (
+                    "perday",
+                    "per day",
+                    "per_day",
+                    "daily",
+                    "requests_per_day",
+                    "requestsperday",
+                    "free_tier_requests",
+                )
+            )
             raise RateLimited(
                 (
                     f"Google Gemini daily request limit reached for {model}."
@@ -2855,7 +2892,16 @@ def request_suggestion(
     last_error: Optional[Exception] = None
     failed_records: list[AiEvaluation] = []
 
+    plan_deadline = time.monotonic() + EVALUATION_PLAN_MAX_SECONDS
     for index, config in enumerate(configs_to_try):
+        if index and time.monotonic() >= plan_deadline:
+            logger.warning(
+                "AI evaluation plan for attempt %s part %s ran out of time after %s attempt(s)",
+                attempt.id,
+                part.id,
+                index,
+            )
+            break
         if evaluator is None:
             _throttle_provider_quota(db, config)
         record = AiEvaluation(
@@ -2999,7 +3045,15 @@ def request_batch_suggestions(
 
     last_error: Optional[Exception] = None
     failed_records: list[AiEvaluation] = []
+    plan_deadline = time.monotonic() + EVALUATION_PLAN_MAX_SECONDS
     for index, config in enumerate(configs_to_try):
+        if index and time.monotonic() >= plan_deadline:
+            logger.warning(
+                "Batch AI evaluation plan for attempt %s ran out of time after %s attempt(s)",
+                attempt.id,
+                index,
+            )
+            break
         if evaluator is None:
             _throttle_provider_quota(db, config)
         record = AiEvaluation(

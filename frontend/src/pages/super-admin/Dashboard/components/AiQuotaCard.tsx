@@ -103,6 +103,7 @@ interface QuotaSummary {
     } | null;
   };
   plan?: {
+    reading_writing?: QuotaPlan;
     writing: QuotaPlan;
     speaking: QuotaPlan;
   };
@@ -310,10 +311,10 @@ export function AiQuotaCard() {
   const seriesPeak = Math.max(1, ...recentSeries.map((point) => point.requests));
   const successToday = Math.max(0, data.totals.requests_today - data.totals.failed_today);
   const failurePercent = data.totals.requests_today > 0 ? Math.round(data.totals.failed_today / data.totals.requests_today * 100) : 0;
-  const writingPlan = data.plan?.writing;
+  const readingWritingPlan = data.plan?.reading_writing ?? data.plan?.writing;
   const speakingPlan = data.plan?.speaking;
-  const activeEntry = speakingPlan?.active ?? writingPlan?.active ?? null;
-  const nextEntry = speakingPlan?.next ?? writingPlan?.next ?? null;
+  const activeEntry = speakingPlan?.active ?? readingWritingPlan?.active ?? null;
+  const nextEntry = speakingPlan?.next ?? readingWritingPlan?.next ?? null;
 
   const arcLength = 235.62;
   const effectivePct =
@@ -597,20 +598,20 @@ export function AiQuotaCard() {
             <header>
               <div>
                 <h4>Model hierarchy</h4>
-                <span>Sorted by the server plan: configured model first, then strongest available fallback across keys.</span>
+                <span>Built from each saved API key: selected model first, then the models loaded for that key.</span>
               </div>
               <Badge tone={data.enabled && data.configured ? "green" : "gray"}>
                 {data.enabled && data.configured ? "Routing ready" : "Not routing"}
               </Badge>
             </header>
             <div className="ai-quota-route-summary">
-              <PlanPair label="Writing now" entry={writingPlan?.active} />
-              <PlanPair label="Writing next" entry={writingPlan?.next} />
+              <PlanPair label="Reading & Writing now" entry={readingWritingPlan?.active} />
+              <PlanPair label="Reading & Writing next" entry={readingWritingPlan?.next} />
               <PlanPair label="Speaking now" entry={speakingPlan?.active} />
               <PlanPair label="Speaking next" entry={speakingPlan?.next} />
             </div>
             {[
-              ["Writing", writingPlan] as const,
+              ["Reading & Writing", readingWritingPlan] as const,
               ["Speaking", speakingPlan] as const,
             ].map(([label, plan]) => (
               <div key={label} className="ai-quota-model-lane">

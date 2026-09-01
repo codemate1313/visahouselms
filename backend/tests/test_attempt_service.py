@@ -2013,6 +2013,15 @@ class AttemptServiceTestCase(unittest.TestCase):
                 "model": live_models[0],
                 "writing_model": live_models[0],
                 "speaking_model": live_models[0],
+                "model_options": [
+                    {
+                        "value": model,
+                        "label": model,
+                        "available": True,
+                        "skills": ["speaking", "writing"],
+                    }
+                    for model in live_models
+                ],
                 "api_key": f"AIza-{index}",
                 "enabled": True,
                 "priority": index,
@@ -2114,6 +2123,45 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         self.db.refresh(attempt)
         self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in attempt.part_grades))
+
+    def test_the_plan_gives_up_when_it_runs_out_of_time(self):
+        """A count alone bounds nothing.
+
+        Each attempt carries its own timeout - up to fifteen minutes for a
+        Final Test - so a provider that stops answering rather than refusing
+        could hold the worker for hours on one part.
+        """
+        self._subscribe_student_for_ai()
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in attempt.module.parts:
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed response."})
+        attempt_service.submit_attempt(self.db, attempt)
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+
+        calls = {"count": 0}
+
+        def failing(_config, _payload):
+            calls["count"] += 1
+            # A 400 is not "transient", so it is not retried inline - one call
+            # per plan entry, which is what makes the count meaningful here.
+            raise HTTPException(status_code=400, detail="provider refused")
+
+        configs = [
+            {"provider": "gemini", "model": f"gemini-2.{index}-flash", "monthly_limit": 100, "api_key": f"key-{index}"}
+            for index in range(10)
+        ]
+        with patch.object(ai_evaluation_service, "EVALUATION_PLAN_MAX_SECONDS", 0.0):
+            with self.assertRaises(HTTPException):
+                ai_evaluation_service.request_suggestion(
+                    self.db, self.instructor, attempt, part, evaluator=failing, configs=configs
+                )
+
+        # The first entry is always tried; the budget stops the rest.
+        self.assertEqual(calls["count"], 1)
 
     def test_the_best_model_is_spent_on_every_key_before_dropping_a_level(self):
         live = ["gemini-3.7-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-pro"]
@@ -2225,6 +2273,30 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(flash_group["keys"], 2)
         self.assertEqual(flash_group["remaining_today"], 6)
         self.assertNotIn("api_key", writing_plan["active"])
+
+    def test_quota_summary_uses_configured_key_model_when_no_key_model_list_is_loaded(self):
+        ai_evaluation_service.save_configured_keys(self.db, [
+            {
+                "id": "key-1",
+                "label": "Key 1",
+                "provider": "gemini",
+                "model": "gemini-2.5-flash",
+                "writing_model": "gemini-2.5-flash",
+                "speaking_model": "gemini-2.5-flash",
+                "api_key": "AIza-1",
+                "enabled": True,
+                "priority": 1,
+            }
+        ])
+        self.db.commit()
+
+        from app.services import ai_quota_service
+        summary = ai_quota_service.usage_summary(self.db)
+        reading_writing_plan = summary["plan"]["reading_writing"]
+
+        self.assertIs(summary["plan"]["writing"], reading_writing_plan)
+        self.assertEqual([entry["model"] for entry in reading_writing_plan["entries"]], ["gemini-2.5-flash"])
+        self.assertEqual(reading_writing_plan["model_groups"][0]["keys"], 1)
 
     def test_a_check_keeps_the_model_the_admin_just_chose(self):
         """Detect & test kept resetting the dropdowns to its own pick.

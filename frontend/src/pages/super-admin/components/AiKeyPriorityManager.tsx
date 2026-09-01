@@ -230,7 +230,9 @@ function ModelPicker({ keyConfig, fallbackModel, onPick }: ModelPickerProps) {
       </select>
       {selected && !speakingCapable.has(selected) && (
         <p className="hint" style={{ margin: "6px 0 0" }}>
-          This model cannot mark Speaking recordings - they will go to an instructor.
+          {speakingCapable.size
+            ? "This model cannot mark Speaking recordings. They will fall back to another model on this key, so Writing and Speaking will not share one request."
+            : "No model on this key can mark Speaking recordings - they will go to an instructor."}
         </p>
       )}
     </>

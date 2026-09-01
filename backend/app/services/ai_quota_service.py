@@ -40,10 +40,25 @@ def _now() -> datetime:
 
 
 def _pacific_day_start() -> datetime:
-    """Start of the current Gemini quota day, expressed in UTC."""
-    pacific_now = _now() + timedelta(hours=PACIFIC_OFFSET_HOURS)
-    midnight = pacific_now.replace(hour=0, minute=0, second=0, microsecond=0)
-    return midnight - timedelta(hours=PACIFIC_OFFSET_HOURS)
+    """Start of the current Gemini quota day, expressed in UTC.
+
+    Pacific is UTC-8 in winter and UTC-7 in summer, so the fixed offset this
+    used put every reset an hour out for two thirds of the year. The zone
+    database knows which is in force; the fixed offset stays as a fallback for
+    a host without one installed.
+    """
+    now = _now()
+    try:
+        from zoneinfo import ZoneInfo
+
+        pacific = ZoneInfo("America/Los_Angeles")
+        local = now.replace(tzinfo=timezone.utc).astimezone(pacific)
+        midnight = local.replace(hour=0, minute=0, second=0, microsecond=0)
+        return midnight.astimezone(timezone.utc).replace(tzinfo=None)
+    except Exception:
+        pacific_now = now + timedelta(hours=PACIFIC_OFFSET_HOURS)
+        midnight = pacific_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        return midnight - timedelta(hours=PACIFIC_OFFSET_HOURS)
 
 
 def _percent(used: int, limit: Optional[int]) -> Optional[float]:
@@ -209,10 +224,48 @@ def usage_summary(db: Session) -> dict:
         })
     keys.sort(key=lambda item: (-item["requests_today"], item["key"]))
 
+    def _models_listed_for_key(config: dict, skill: str) -> list[str]:
+        options = config.get("model_options") if isinstance(config.get("model_options"), list) else []
+        listed = [
+            str(option.get("value") or "").removeprefix("models/")
+            for option in options
+            if option.get("available", True) is not False
+            and skill in (option.get("skills") or [skill])
+        ]
+        configured = ai_evaluation_service.config_for_skill(config, skill).get("model")
+        values = [configured, *listed] if listed else [configured]
+        return list(dict.fromkeys(value for value in values if value))
+
     def quota_plan_for(skill: str) -> dict:
         plan_entries = []
         model_groups: dict[str, dict] = {}
-        for index, config in enumerate(ai_evaluation_service.evaluation_plan(db, skill), start=1):
+        configs = [
+            config for config in ai_evaluation_service._candidate_configs(db)
+            if config.get("enabled", True)
+        ]
+        raw_entries: list[dict] = []
+        seen: set[tuple] = set()
+
+        def add(config: dict, model: Optional[str]) -> None:
+            if not model:
+                return
+            pair = (config.get("key_id") or config.get("key_label"), model)
+            if pair in seen or ai_evaluation_service.is_rpd_exhausted(db, config, model):
+                return
+            seen.add(pair)
+            raw_entries.append({**config, "model": model})
+
+        for config in configs:
+            add(config, ai_evaluation_service.config_for_skill(config, skill).get("model"))
+
+        remaining: list[tuple] = []
+        for index, config in enumerate(configs):
+            for model in _models_listed_for_key(config, skill):
+                remaining.append((ai_evaluation_service.model_rank(model), index, config, model))
+        for _rank, _index, config, model in sorted(remaining, key=lambda row: (row[0], row[1])):
+            add(config, model)
+
+        for index, config in enumerate(raw_entries, start=1):
             label = config.get("key_label") or "Primary API Key"
             model = config.get("model")
             key = _quota_limit_key(label, model)
@@ -339,6 +392,9 @@ def usage_summary(db: Session) -> dict:
         "not_sent_today": sum(item["not_sent_today"] for item in keys),
     }
 
+    reading_writing_plan = quota_plan_for(ai_evaluation_service.SKILL_WRITING)
+    speaking_plan = quota_plan_for(ai_evaluation_service.SKILL_SPEAKING)
+
     return {
         "enabled": bool(status.get("enabled")),
         "configured": bool(status.get("configured")),
@@ -347,8 +403,9 @@ def usage_summary(db: Session) -> dict:
         "queue": queue,
         "performance": performance,
         "plan": {
-            "writing": quota_plan_for(ai_evaluation_service.SKILL_WRITING),
-            "speaking": quota_plan_for(ai_evaluation_service.SKILL_SPEAKING),
+            "reading_writing": reading_writing_plan,
+            "writing": reading_writing_plan,
+            "speaking": speaking_plan,
         },
         "series": series,
         "day_started_at": day_start,
