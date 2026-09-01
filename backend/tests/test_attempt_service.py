@@ -2066,6 +2066,51 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.expire_all()
         return module_authoring_service.get_module_or_404(self.db, module.id)
 
+    def test_deferring_speaking_closes_the_paper_without_starting_the_clock(self):
+        """"Later" has to mean later.
+
+        `start_now` was accepted and then ignored, so every seal started the
+        interview immediately and a candidate who wanted to come back had no
+        way to say so.
+        """
+        module = self._composite_module_with_writing_and_speaking()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        attempt_service.commence_attempt(self.db, self.student, attempt)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in sorted(attempt.module.parts, key=lambda item: item.sort_order):
+            for question in part.questions:
+                if part.section_type == "speaking":
+                    attempt_service.save_audio_answer(self.db, attempt, question.id, b"audio" * 4000, ".webm")
+                else:
+                    attempt_service.save_answer(self.db, attempt, question.id, {"text": "A response."})
+
+        expiry_before = attempt.expires_at
+
+        deferred = attempt_service.seal_main_paper_for_speaking(self.db, attempt, start_now=False)
+        self.assertEqual(attempt_service._attempt_phase(deferred), "speaking_pending")
+        # The Speaking clock has not been started.
+        self.assertEqual(deferred.expires_at, expiry_before)
+        # The written paper is closed either way.
+        with self.assertRaises(HTTPException) as ctx:
+            writing_part = next(p for p in deferred.module.parts if p.section_type == "writing")
+            attempt_service.save_answer(self.db, deferred, writing_part.questions[0].id, {"text": "late edit"})
+        self.assertEqual(ctx.exception.status_code, 423)
+
+        # An attempt waiting for its interview is not expired out from under
+        # the candidate while they are away.
+        view = attempt_service.get_student_view(self.db, deferred)
+        self.assertEqual(view["phase"], "speaking_pending")
+        self.assertEqual(view["status"], "in_progress")
+
+        started = attempt_service.seal_main_paper_for_speaking(self.db, deferred, start_now=True)
+        self.assertEqual(attempt_service._attempt_phase(started), "speaking")
+        # Starting swaps the paper's window for the Speaking one, which is its
+        # own (shorter) allowance rather than whatever was left of the paper.
+        self.assertNotEqual(started.expires_at, expiry_before)
+        self.assertGreater(started.expires_at, datetime.now(timezone.utc).replace(tzinfo=None))
+
     def test_the_speaking_handover_records_a_lapse_rather_than_refusing_it(self):
         """A candidate whose share blinked used to be stopped at the door.
 
@@ -3176,18 +3221,23 @@ class AttemptServiceTestCase(unittest.TestCase):
         for question in main_questions:
             attempt_service.save_answer(self.db, attempt, question.id, {"selected": "A"})
 
+        # "Later": the paper closes, but the interview has not begun.
         sealed = attempt_service.seal_main_paper_for_speaking(self.db, attempt, start_now=False)
-        self.assertEqual(sealed.content_snapshot["phase"], "speaking")
+        self.assertEqual(sealed.content_snapshot["phase"], "speaking_pending")
         self.assertGreater(sealed.expires_at.replace(tzinfo=None), datetime.now(timezone.utc).replace(tzinfo=None))
 
         resumed = attempt_service.get_student_view(self.db, sealed, security_authorized=True)
-        self.assertEqual(resumed["phase"], "speaking")
+        self.assertEqual(resumed["phase"], "speaking_pending")
         self.assertTrue(resumed["parts"][-1]["questions"])
         self.assertTrue(all(not part["questions"] for part in resumed["parts"][:-1]))
 
         [summary] = attempt_service.list_my_attempts(self.db, self.student)
-        self.assertEqual(summary["phase"], "speaking")
+        self.assertEqual(summary["phase"], "speaking_pending")
         self.assertEqual(summary["resume_part_id"], speaking_part.id)
+
+        # And when they come back and start it, the Speaking clock begins.
+        started = attempt_service.seal_main_paper_for_speaking(self.db, sealed, start_now=True)
+        self.assertEqual(started.content_snapshot["phase"], "speaking")
 
         with self.assertRaises(HTTPException) as save_ctx:
             attempt_service.save_answer(self.db, sealed, main_questions[0].id, {"selected": "B"})

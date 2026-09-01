@@ -1651,7 +1651,7 @@ export function TestRunner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [confirmSubmit, isSplitCompositeAttempt, isSpeakingPhase, attempt?.id]);
 
-  async function sealMainPaperForSpeaking() {
+  async function sealMainPaperForSpeaking(startNow = true) {
     if (!attempt || speakingTransitionRef.current) return;
     const firstSpeakingIndex = attempt.parts.findIndex((part) => part.section_type === "speaking");
     if (firstSpeakingIndex < 0) {
@@ -1664,13 +1664,22 @@ export function TestRunner() {
       await flushPendingSavesBeforeSpeakingPhase();
       const { data } = await apiClient.post<Attempt>(
         `/student/attempts/${id}/speaking-phase`,
-        { start_now: true },
+        { start_now: startNow },
         { headers: securityHeaders() },
       );
       const targetIndex = speakingEntryIndex(
         data.parts,
         data.parts.findIndex((part) => part.section_type === "speaking"),
       );
+      if (!startNow) {
+        // The written paper is closed and saved; the interview waits for them.
+        // Nothing to open here, so the runner is left rather than dropping the
+        // candidate into a Speaking part that has not started.
+        setConfirmSubmit(false);
+        showError(strings.submitModal.speakingDeferred, strings.submitModal.speakingHeading);
+        navigate("/student/my-courses", { replace: true });
+        return;
+      }
       sessionStorage.setItem(securityStorageKey(id, "speaking-started"), "true");
       sessionStorage.setItem(`test-runner-part:${id}`, String(targetIndex));
       sessionStorage.setItem(securityStorageKey(id, "speaking-setup-completed"), "true");
@@ -1688,7 +1697,11 @@ export function TestRunner() {
   }
 
   async function enterSpeakingPhase() {
-    await sealMainPaperForSpeaking();
+    await sealMainPaperForSpeaking(true);
+  }
+
+  async function deferSpeakingPhase() {
+    await sealMainPaperForSpeaking(false);
   }
 
   // Declared after every hook: this branch flips on window resize, so returning
@@ -1727,7 +1740,7 @@ export function TestRunner() {
       onViewResult={() => navigate(`/student/attempts/${attempt.id}/result`, { replace: true })}
     />
   ) : null;
-  const cameraPreview = liveCameraStream && securityAuthorized && mediaState.camera ? (
+  const cameraPreview = isSpeakingPart && liveCameraStream && securityAuthorized && mediaState.camera ? (
     <DraggableCameraPreview stream={liveCameraStream} />
   ) : null;
   const missingSecurityControls: string[] = attempt.security_required && attempt.status === "in_progress"
@@ -1745,10 +1758,22 @@ export function TestRunner() {
      Removing it means a candidate can now finish an exam with the camera off;
      that is a deliberate trade for not stranding people mid-paper. */
   const shouldRestoreSecurityControls = false;
-  const speakingResumeControls: string[] = isSplitCompositeAttempt && isSpeakingPhase && attempt.status === "in_progress" && !attempt.is_final
+  /* Returning for Speaking is a new sitting: the camera and microphone that
+     were granted for the written paper are long gone, and a Final Test needs
+     its screen share back as well. This gate is the one place permissions are
+     still asked for - the mid-paper restore screen was removed, but arriving
+     fresh for an interview is not the same as being interrupted during one. */
+  /* A Final Test coming back for Speaking has to go through the full secure
+     session, not the lighter camera-and-mic resume: only that path re-runs the
+     server preflight and issues a fresh attempt token, without which the
+     recording upload is refused. */
+  const startSpeakingSession = attempt.is_final ? startSecureSession : startSpeakingResumeSetup;
+
+  const speakingResumeControls: string[] = isSplitCompositeAttempt && isSpeakingPhase && attempt.status === "in_progress"
     ? [
       !mediaState.camera ? strings.security.camera : null,
       !mediaState.microphone ? strings.security.microphone : null,
+      attempt.is_final && !mediaState.screenShare ? strings.security.screenShare : null,
       !fullscreenActive ? strings.security.fullScreen : null,
     ].filter((item): item is NonNullable<typeof item> => Boolean(item))
     : [];
@@ -1761,7 +1786,6 @@ export function TestRunner() {
     isSplitCompositeAttempt
     && isSpeakingPhase
     && attempt.status === "in_progress"
-    && !attempt.is_final
     && speakingSetupCompleted
     && (!securityAuthorized || speakingResumeControls.length > 0);
   const hasSavedResponses = attempt.parts.some((part) => part.answered_count > 0);
@@ -1858,7 +1882,7 @@ export function TestRunner() {
           concurrentTab={concurrentTab}
           mediaState={mediaState}
           focusSection="speaking"
-          onStartSecureSession={startSpeakingResumeSetup}
+          onStartSecureSession={startSpeakingSession}
           onCancel={() => navigate("/student/my-courses")}
         />
         {violationModal}
@@ -1903,7 +1927,7 @@ export function TestRunner() {
         <FullscreenGate
           isFinal={attempt.is_final}
           secondsLeft={secondsLeft}
-          onEnterFullscreen={speakingResumeControls.length === 1 && speakingResumeControls[0] === strings.security.fullScreen ? enterFullscreen : startSpeakingResumeSetup}
+          onEnterFullscreen={speakingResumeControls.length === 1 && speakingResumeControls[0] === strings.security.fullScreen ? enterFullscreen : startSpeakingSession}
           timerVisible={timerVisible}
           securityError={securityError}
           missingControls={speakingResumeControls.length ? speakingResumeControls : [
@@ -2110,6 +2134,7 @@ export function TestRunner() {
           onClose={() => setConfirmSubmit(false)}
           onConfirm={isSplitCompositeAttempt && !isSpeakingPhase ? enterSpeakingPhase : submit}
           continueToSpeaking={isSplitCompositeAttempt && !isSpeakingPhase}
+          onDeferSpeaking={isSplitCompositeAttempt && !isSpeakingPhase ? deferSpeakingPhase : undefined}
         />
       )}
 

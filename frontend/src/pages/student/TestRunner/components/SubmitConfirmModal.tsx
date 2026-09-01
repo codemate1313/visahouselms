@@ -8,6 +8,9 @@ interface SubmitConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   continueToSpeaking?: boolean;
+  /** Closes the written paper without starting the interview. Absent when
+   *  there is no Speaking section to defer. */
+  onDeferSpeaking?: () => void;
 }
 
 export function SubmitConfirmModal({
@@ -17,6 +20,7 @@ export function SubmitConfirmModal({
   onClose,
   onConfirm,
   continueToSpeaking = false,
+  onDeferSpeaking,
 }: SubmitConfirmModalProps) {
   const t = strings.submitModal;
   return (
@@ -33,6 +37,11 @@ export function SubmitConfirmModal({
           <Button variant="secondary" className="secondary-button" onClick={onClose} disabled={submitting}>
             {t.keepWorking}
           </Button>
+          {continueToSpeaking && onDeferSpeaking && (
+            <Button variant="secondary" className="secondary-button" onClick={onDeferSpeaking} disabled={submitting}>
+              {t.speakingLater}
+            </Button>
+          )}
           <Button onClick={onConfirm} disabled={submitting}>
             {submitting ? strings.footer.submitting : continueToSpeaking ? t.startSpeakingNow : t.submitNow}
           </Button>

@@ -1271,16 +1271,23 @@ def seal_main_paper_for_speaking(db: Session, attempt: TestAttempt, *, start_now
             detail=f"Complete {', '.join(incomplete_parts)} before moving to Speaking",
         )
 
-    _set_attempt_phase(attempt, SPEAKING_PHASE_ACTIVE)
+    # `start_now` was accepted and then ignored - every seal started the
+    # interview immediately, so a candidate who wanted to come back to Speaking
+    # later had no way to say so. Pending is the phase for that: the main paper
+    # is closed either way, but the Speaking clock does not start, and
+    # `get_student_view` deliberately skips auto-expiry while an attempt sits
+    # in it, so the candidate can return in their own time.
+    _set_attempt_phase(attempt, SPEAKING_PHASE_ACTIVE if start_now else SPEAKING_PHASE_PENDING)
     first_speaking_part = next(
         (part for part in sorted(attempt.module.parts, key=lambda item: item.sort_order) if part.section_type == "speaking"),
         None,
     )
     if first_speaking_part:
         _set_resume_part(attempt, first_speaking_part.id)
-    attempt.expires_at = _now() + timedelta(
-        minutes=_speaking_duration_minutes(attempt) + EXPIRY_BUFFER_MINUTES
-    )
+    if start_now:
+        attempt.expires_at = _now() + timedelta(
+            minutes=_speaking_duration_minutes(attempt) + EXPIRY_BUFFER_MINUTES
+        )
     db.add(attempt)
     db.commit()
     db.refresh(attempt)
