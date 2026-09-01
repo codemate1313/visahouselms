@@ -73,6 +73,9 @@ interface ViolationNotice {
 }
 
 const FINAL_TEST_CLOSED_ERROR = "This Final Test can no longer be resumed";
+/* Blur and visibilitychange arrive within a frame or two of each other when a
+   browser tab changes; anything inside this window is the same departure. */
+const LEFT_EXAM_FLAG_WINDOW_MS = 1500;
 
 /** Where a candidate resumes when the part they are pointed at is a speaking
     part. Speaking is sat in order, so any speaking target - a saved index, a
@@ -199,6 +202,9 @@ export function TestRunner() {
   const [rulesAccepted] = useState(true);
   const [violationNotice, setViolationNotice] = useState<ViolationNotice | null>(null);
   const submittedRef = useRef(false);
+  /* One "left the exam" violation per departure, however many events the
+     browser fires for it. */
+  const lastLeftExamFlagRef = useRef(0);
   const speakingTransitionRef = useRef(false);
   const developerFullscreenBypass = useRef(false);
   const runnerBodyRef = useRef<HTMLElement | null>(null);
@@ -678,11 +684,22 @@ export function TestRunner() {
         recordFlag("fullscreen_exit");
       }
     }
+    /* Switching tab fires `blur` and `visibilitychange` together, and each was
+       recorded as its own violation - so one glance at another tab spent two
+       of the candidate's allowance and auto-submitted them at half the stated
+       limit. Leaving the exam is one event however the browser reports it. */
+    function recordLeftExam(reason: "visibility_change" | "blur") {
+      if (!isFinalAttempt || submittedRef.current || !proctorArmed()) return;
+      const now = Date.now();
+      if (now - lastLeftExamFlagRef.current < LEFT_EXAM_FLAG_WINDOW_MS) return;
+      lastLeftExamFlagRef.current = now;
+      recordFlag(reason);
+    }
     function onVisibilityChange() {
-      if (isFinalAttempt && document.hidden && !submittedRef.current && proctorArmed()) recordFlag("visibility_change");
+      if (document.hidden) recordLeftExam("visibility_change");
     }
     function onBlur() {
-      if (isFinalAttempt && !submittedRef.current && proctorArmed()) recordFlag("blur");
+      recordLeftExam("blur");
     }
     function onBeforeUnload(event: BeforeUnloadEvent) {
       // Any timed attempt in progress - not only a Final Test - loses work
@@ -1598,13 +1615,21 @@ export function TestRunner() {
   }
 
   async function flushPendingSavesBeforeSpeakingPhase() {
-    // Let any active or just-debounced Writing save finish before its editor is
-    // unmounted. The local response is already updated, but this keeps the
-    // server copy caught up before the paper becomes inaccessible.
-    await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_MS + 50));
+    // Any answer still sitting on its debounce is sent now rather than waited
+    // out: the candidate has pressed the button, and a fixed pause before
+    // every handover - usually with nothing pending at all - is the largest
+    // part of the wait they see.
+    const pending = Object.entries(debounceTimers.current);
+    for (const [questionId, entry] of pending) {
+      clearTimeout(entry.timer);
+      delete debounceTimers.current[Number(questionId)];
+      void entry.run();
+    }
+
+    // Then wait only while a save is genuinely in flight.
     const flushDeadline = Date.now() + 8000;
     while (savingIdsRef.current.size > 0 && Date.now() < flushDeadline) {
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }
 
@@ -1695,10 +1720,13 @@ export function TestRunner() {
       !fullscreenActive ? strings.security.fullScreen : null,
     ].filter((item): item is NonNullable<typeof item> => Boolean(item))
     : [];
-  const shouldRestoreSecurityControls =
-    attempt.security_required
-    && attempt.status === "in_progress"
-    && (!securityAuthorized || missingSecurityControls.length > 0);
+  /* The mid-exam "Restore exam permissions" gate is gone by request. A
+     candidate whose camera or share drops is no longer stopped and made to
+     grant it again - the drop is still recorded as a proctoring flag, and the
+     session is still bound to its device, but nothing blocks the paper.
+     Removing it means a candidate can now finish an exam with the camera off;
+     that is a deliberate trade for not stranding people mid-paper. */
+  const shouldRestoreSecurityControls = false;
   const speakingResumeControls: string[] = isSplitCompositeAttempt && isSpeakingPhase && attempt.status === "in_progress" && !attempt.is_final
     ? [
       !mediaState.camera ? strings.security.camera : null,
