@@ -299,13 +299,7 @@ def get_or_create_google_student(
     last_name: str,
     ip_address: Optional[str],
 ) -> User:
-    normalized_email = email.strip().lower()
-    user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
-    if user is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=account_service.USER_CREDENTIALS_CONFLICT_DETAIL,
-        )
+    normalized_email = account_service.ensure_user_credentials_available(db, email)
 
     role = db.query(Role).filter(Role.name == STUDENT).first()
     if role is None:

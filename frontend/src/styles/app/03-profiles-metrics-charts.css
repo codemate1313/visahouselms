@@ -5216,6 +5216,39 @@ button.danger-text:hover,
   gap: 9px;
 }
 
+/* A fallback that has never been reached is context, not news: it stays
+   readable but stops competing with the models actually doing the marking. */
+.ai-quota-model-group.is-idle .ai-quota-model-rank {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+.ai-quota-model-group.is-idle .ai-quota-model-body {
+  opacity: 0.72;
+}
+
+.ai-quota-model-group.is-idle .ai-quota-model-title strong {
+  font-weight: 600;
+}
+
+.ai-quota-model-more {
+  justify-self: start;
+  padding: 6px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.ai-quota-model-more:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
 .ai-quota-model-group {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);

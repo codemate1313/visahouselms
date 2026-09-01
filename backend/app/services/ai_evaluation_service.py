@@ -364,7 +364,16 @@ NON_EVALUATION_MARKERS = (
     "-live",
     "realtime",
     "guard",
+    # Speech-to-text, not an examiner: it would return a transcript where a
+    # rubric score was asked for.
+    "transcribe",
 )
+# Gemini only. An alias is not a model - it moves under you, which is exactly
+# how a working configuration turned into a 404 overnight - and a preview can
+# be withdrawn with no notice. OpenAI is excluded from this list because it
+# ships its audio model as a permanent "-audio-preview", where the word means
+# something different.
+GEMINI_UNSTABLE_MARKERS = ("-latest", "preview", "-exp", "experimental")
 
 
 class RateLimited(HTTPException):
@@ -416,6 +425,8 @@ def model_skills(provider: str, model_id: str) -> set[str]:
         return set()
 
     if provider == "gemini":
+        if any(marker in name for marker in GEMINI_UNSTABLE_MARKERS):
+            return set()
         # Every current Gemini model reads text. Gemma is served through the
         # same API but is text and image only, so it never hears a recording.
         skills = {SKILL_WRITING}
@@ -687,6 +698,20 @@ def _key_cannot_list_message(provider_label: str, exc: Exception) -> str:
     return f"{provider_label} could not list models for this key: {_redact_secrets(exc)[:200]}"
 
 
+def model_order(models: list[dict], provider: str = "gemini") -> list[str]:
+    """The order these models will actually be reached for, best first.
+
+    Returned to the settings screen so it can show what will happen rather
+    than asking someone to choose a number that gets corrected anyway. Only
+    Gemini is re-ranked; for any other provider the list is left as the
+    provider gave it, because the ranking reads Google's version numbers.
+    """
+    available = [str(entry.get("value")) for entry in models if entry.get("available") is not False]
+    if provider != "gemini":
+        return available
+    return sorted(available, key=model_rank)
+
+
 def models_for_skill(models: list[dict], skill: str) -> list[dict]:
     return [entry for entry in models if skill in (entry.get("skills") or [])]
 
@@ -874,6 +899,8 @@ def list_configured_key_models(
         "speaking_models": speaking_options,
         "writing_model": writing_model,
         "speaking_model": speaking_model,
+        "model_order": model_order(options, detected["provider"]),
+        "preferred_model": (stored or {}).get("preferred_model") or "",
         "key_preview": _mask_key(secret),
         "supported": True,
         "message": f"{found['message']}{speaking_note}",
@@ -906,6 +933,11 @@ def _configured_keys(db: Session, *, mask: bool) -> list[dict]:
                         # the split.
                         "writing_model": str(item.get("writing_model") or item.get("model") or ""),
                         "speaking_model": str(item.get("speaking_model") or item.get("model") or ""),
+                        # Empty means "use the best available", which is the
+                        # default and almost always the right answer. A value
+                        # here is a deliberate cap - an admin holding marking
+                        # on a cheaper model, or off a brand-new one.
+                        "preferred_model": str(item.get("preferred_model") or ""),
                         "endpoint_url": str(item.get("endpoint_url") or ""),
                         "api_key": MASKED_SECRET if mask else api_key,
                         "enabled": bool(item.get("enabled", True)),
@@ -965,14 +997,29 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
                     chosen = _choose_model_from_options(provider, chosen, available)
             return chosen
 
-        writing_model = _skill_model("writing_model", SKILL_WRITING)
-        speaking_model = _skill_model("speaking_model", SKILL_SPEAKING)
+        preferred_model = str(item.get("preferred_model") or "").strip()[:120]
+        if preferred_model:
+            preferred_model = _resolve_model_for_provider(provider, preferred_model)
+            # A pin decides everything else, so the stored key cannot drift
+            # away from what the screen says.
+            model = preferred_model
+        elif model_options and provider == "gemini":
+            # Automatic: record the model that would be reached for first, so
+            # anything reading the key still sees something real. Only for
+            # Gemini - the ranking reads Google's version numbers, and applied
+            # to another provider it would just sort names alphabetically and
+            # call the winner "best".
+            available = [option for option in model_options if option.get("available") is not False]
+            ranked = sorted(available, key=lambda option: model_rank(str(option.get("value") or "")))
+            if ranked:
+                model = str(ranked[0].get("value") or model)
+        writing_model = preferred_model or model
+        speaking_model = preferred_model or model
         existing = existing_by_id.get(key_id, {})
         settings_changed = (
             existing.get("provider") != provider
             or existing.get("model") != model
-            or existing.get("writing_model") != writing_model
-            or existing.get("speaking_model") != speaking_model
+            or existing.get("preferred_model") != preferred_model
             or existing.get("endpoint_url") != endpoint_url
             or existing.get("api_key") != api_key
         )
@@ -983,6 +1030,7 @@ def save_configured_keys(db: Session, keys: list[dict]) -> None:
             "model": model,
             "writing_model": writing_model,
             "speaking_model": speaking_model,
+            "preferred_model": preferred_model,
             "endpoint_url": endpoint_url,
             "api_key": api_key,
             "enabled": bool(item.get("enabled", True)),
@@ -1091,12 +1139,13 @@ def evaluation_plan(db: Session, skill: str, configs: Optional[list[dict]] = Non
 
     key_configs = configs if configs is not None else _candidate_configs(db)
 
-    # Pass one: what each key was told to use - unless it cannot mark this
-    # kind of paper, in which case only the fallbacks below apply to it.
+    # Pass one: only a key that has been deliberately pinned to a model. With
+    # nothing pinned - the default - the run starts at the newest and most
+    # capable model the keys actually offer, which is what pass two orders.
     for config in key_configs:
-        chosen = config_for_skill(config, skill).get("model")
-        if chosen and skill in model_skills(config.get("provider") or "gemini", chosen):
-            add(config, chosen)
+        pinned = (config.get("preferred_model") or "").strip()
+        if pinned and skill in model_skills(config.get("provider") or "gemini", pinned):
+            add(config, pinned)
 
     # Pass two: everything else, best model across all keys before stepping
     # down to the next.
@@ -1191,6 +1240,7 @@ def _candidate_configs(db: Session) -> list[dict]:
             "key_label": item.get("label"),
             "writing_model": item.get("writing_model") or item.get("model") or base.get("model"),
             "speaking_model": item.get("speaking_model") or item.get("model") or base.get("model"),
+            "preferred_model": item.get("preferred_model") or "",
             "model_options": item.get("model_options") if isinstance(item.get("model_options"), list) else [],
             # Which models this key can actually call, so a retired one is
             # never dialled and the fallback is a number we know is connected.
@@ -1377,6 +1427,8 @@ def test_configured_key(
     result["model_options"] = discovered
     result["writing_models"] = writing_options
     result["speaking_models"] = speaking_options
+    result["model_order"] = model_order(discovered, detected["provider"])
+    result["preferred_model"] = (stored or {}).get("preferred_model") or ""
     result["writing_model"] = writing_model
     result["speaking_model"] = speaking_model
     if result.get("ok") and not speaking_options:

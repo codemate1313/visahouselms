@@ -259,13 +259,27 @@ export function TestRunner() {
   const activeHeartbeatPartId = attempt?.parts[partIndex]?.id ?? null;
   const currentPart = attempt?.parts[partIndex];
   const isListeningPart = currentPart?.section_type === "listening";
+  const isSplitCompositeAttempt = Boolean(
+    attempt
+      && isSplitCompositeModule(attempt.module_type)
+      && attempt.parts.some((part) => part.section_type === "speaking"),
+  );
+  const isListeningSectionIncomplete = Boolean(
+    isSplitCompositeAttempt
+      && isListeningPart
+      && attempt?.parts.some(
+        (part) => part.section_type === "listening"
+          && part.question_count > 0
+          && part.answered_count < part.question_count,
+      ),
+  );
   /* Speaking runs as an interview: the parts are sat in order, one at a time,
      and the stage itself hands over when a part is finished. Once it starts
      there is nothing to navigate back to - a recording cannot be retaken, and
      an earlier section reopened mid-interview would leave the examiner waiting
      - so every navigation control is locked for its duration. */
   const isSpeakingPart = currentPart?.section_type === "speaking";
-  const isNavigationLocked = isListeningLocked || isListeningHandoverLocked || isSpeakingPart;
+  const isNavigationLocked = isListeningLocked || isListeningHandoverLocked || isListeningSectionIncomplete || isSpeakingPart;
   const currentPartRef = useRef(currentPart);
   useEffect(() => {
     currentPartRef.current = currentPart;
@@ -475,22 +489,7 @@ export function TestRunner() {
     return minutes === null ? null : minutes * 60;
   }, [attempt]);
 
-  const isSplitCompositeAttempt = Boolean(
-    attempt
-      && isSplitCompositeModule(attempt.module_type)
-      && attempt.parts.some((part) => part.section_type === "speaking"),
-  );
   const isSpeakingPhase = isSplitCompositeAttempt && currentPart?.section_type === "speaking";
-
-  const lastNonSpeakingIndex = useMemo(() => {
-    if (!attempt) return -1;
-    for (let i = attempt.parts.length - 1; i >= 0; i--) {
-      if (attempt.parts[i].section_type !== "speaking") {
-        return i;
-      }
-    }
-    return -1;
-  }, [attempt]);
 
   // Countdown timer. The server's expires_at is the outer bound - it rejects
   // writes past its own clock independently - and the block allowance, where
@@ -2053,7 +2052,7 @@ export function TestRunner() {
           onRequestSubmit={() => setConfirmSubmit(true)}
           continueToSpeaking={isSplitCompositeAttempt}
           languageCertSkin={languageCertSkin}
-          hideSubmit={isSplitCompositeAttempt && partIndex !== lastNonSpeakingIndex}
+          hideSubmit={isSplitCompositeAttempt}
         />
       )}
 

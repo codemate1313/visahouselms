@@ -1427,6 +1427,9 @@ class AttemptServiceTestCase(unittest.TestCase):
         attempt_service.submit_attempt(self.db, attempt)
         part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
 
+        # Which model leads is the plan's business - it starts at the newest
+        # the key offers - so the window is filled for whichever that is.
+        leading_model = ai_evaluation_service.evaluation_plan(self.db, part.section_type)[0]["model"]
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         for index in range(ai_evaluation_service.DEFAULT_GEMINI_FLASH_RPM):
             self.db.add(
@@ -1435,7 +1438,7 @@ class AttemptServiceTestCase(unittest.TestCase):
                     part_id=part.id,
                     requested_by_id=self.student.id,
                     provider="gemini",
-                    model="gemini-2.0-flash",
+                    model=leading_model,
                     status="completed",
                     key_label="Primary API Key",
                     created_at=now - timedelta(seconds=index),
@@ -2124,6 +2127,61 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.refresh(attempt)
         self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in attempt.part_grades))
 
+    def test_aliases_previews_and_transcribers_are_not_offered_for_marking(self):
+        """The routing list had grown to fifty-odd entries per skill.
+
+        An alias moves under you - which is how a working configuration turned
+        into a 404 overnight - a preview can be withdrawn without notice, and a
+        transcriber returns a transcript where a rubric score was asked for.
+        None of them belong in automatic marking.
+        """
+        for rejected in (
+            "gemini-3.5-transcribe",
+            "gemini-flash-lite-latest",
+            "gemini-3.1-flash-lite-preview",
+            "gemini-2.0-flash-exp",
+        ):
+            self.assertEqual(ai_evaluation_service.model_skills("gemini", rejected), set(), rejected)
+
+        for accepted in ("gemini-3.7-flash", "gemini-2.5-pro", "gemini-3.5-flash-lite"):
+            self.assertIn("writing", ai_evaluation_service.model_skills("gemini", accepted), accepted)
+
+    def test_by_default_the_newest_model_leads_whatever_was_saved(self):
+        """No pin means no opinion: the run starts at the best model the keys
+        actually offer, not at whatever was stored months ago."""
+        live = ["gemini-3.7-flash", "gemini-3.5-flash", "gemini-2.5-flash-lite"]
+        self._save_keys_with_models(live, count=2)
+        # Saved pointing at the weakest model, with nothing pinned.
+        ai_evaluation_service.save_configured_keys(self.db, [
+            {
+                "id": f"key-{index}", "label": f"Key {index}", "provider": "gemini",
+                "model": "gemini-2.5-flash-lite", "api_key": f"AIza-{index}",
+                "enabled": True, "priority": index,
+                "model_options": [
+                    {"value": value, "label": value, "skills": ["writing", "speaking"], "available": True}
+                    for value in live
+                ],
+            }
+            for index in (1, 2)
+        ])
+        self.db.commit()
+
+        plan = ai_evaluation_service.evaluation_plan(self.db, "writing")
+        self.assertEqual(plan[0]["model"], "gemini-3.7-flash")
+        self.assertEqual(plan[1]["model"], "gemini-3.7-flash")
+
+        # A pin is still honoured, and leads.
+        ai_evaluation_service.save_configured_keys(self.db, [
+            {
+                "id": "key-1", "label": "Key 1", "provider": "gemini",
+                "model": "gemini-3.7-flash", "preferred_model": "gemini-3.5-flash",
+                "api_key": "AIza-1", "enabled": True, "priority": 1,
+            }
+        ])
+        self.db.commit()
+        pinned_plan = ai_evaluation_service.evaluation_plan(self.db, "writing")
+        self.assertEqual(pinned_plan[0]["model"], "gemini-3.5-flash")
+
     def test_the_plan_gives_up_when_it_runs_out_of_time(self):
         """A count alone bounds nothing.
 
@@ -2350,19 +2408,22 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertNotIn("generativelanguage.googleapis.com", result["message"])
         self.assertIn("aistudio.google.com", result["message"])
 
-    def test_speaking_and_writing_are_marked_by_their_own_models(self):
-        self._save_gemini_key(writing_model="gemini-2.5-flash", speaking_model="gemini-2.5-pro")
+    def test_one_model_marks_both_skills_so_a_paper_fits_in_one_request(self):
+        """Writing and Speaking share a model deliberately.
+
+        Two models cannot go in one request, and one request is what keeps a
+        Final Test to a single call against the daily limit.
+        """
+        self._save_gemini_key(preferred_model="gemini-2.5-pro")
         stored = ai_evaluation_service._configured_keys(self.db, mask=False)[0]
-        self.assertEqual(stored["writing_model"], "gemini-2.5-flash")
+        self.assertEqual(stored["writing_model"], "gemini-2.5-pro")
         self.assertEqual(stored["speaking_model"], "gemini-2.5-pro")
 
         config = {**stored, "live_models": []}
-        self.assertEqual(
-            ai_evaluation_service.config_for_skill(config, "writing")["model"], "gemini-2.5-flash"
-        )
-        self.assertEqual(
-            ai_evaluation_service.config_for_skill(config, "speaking")["model"], "gemini-2.5-pro"
-        )
+        for skill in ("writing", "speaking"):
+            self.assertEqual(
+                ai_evaluation_service.config_for_skill(config, skill)["model"], "gemini-2.5-pro"
+            )
 
     def test_a_speaking_paper_never_falls_back_to_a_model_that_cannot_hear(self):
         # Gemma reads but cannot hear, so it must not appear anywhere in a

@@ -310,6 +310,11 @@ def usage_summary(db: Session) -> dict:
                 group["unknown_limits"] += 1
 
         groups = sorted(model_groups.values(), key=lambda item: item["first_rank"])
+        for position, group in enumerate(groups, start=1):
+            # Where this model sits in the hierarchy - 1st, 2nd, 3rd choice.
+            # `first_rank` counts key/model routes, so with two keys it reads
+            # 1, 3, 5, 7 and looks like a bug.
+            group["position"] = position
         for group in groups:
             if group["unknown_limits"] == group["keys"]:
                 group["rpd_limit"] = None

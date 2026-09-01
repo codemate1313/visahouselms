@@ -44,6 +44,7 @@ class AiEvaluationKeyTestIn(BaseModel):
     # pick, silently undoing what the admin just selected.
     writing_model: Optional[str] = None
     speaking_model: Optional[str] = None
+    preferred_model: Optional[str] = None
 
 
 class AiEvaluationModelListIn(BaseModel):
@@ -55,6 +56,7 @@ class AiEvaluationModelListIn(BaseModel):
     model: Optional[str] = None
     writing_model: Optional[str] = None
     speaking_model: Optional[str] = None
+    preferred_model: Optional[str] = None
 
 
 class AiQuotaLimitsIn(BaseModel):

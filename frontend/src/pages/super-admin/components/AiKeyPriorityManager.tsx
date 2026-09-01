@@ -16,6 +16,9 @@ export interface AiKeyConfig {
    *  a recording, and a paper of essays should not pay for one that can. */
   writing_model?: string;
   speaking_model?: string;
+  /** Empty means "use the best available", which is the default. A value is a
+   *  deliberate cap - holding marking on a cheaper model, or off a new one. */
+  preferred_model?: string;
   endpoint_url: string;
   api_key: string;
   enabled: boolean;
@@ -26,6 +29,8 @@ export interface AiKeyConfig {
   model_options?: ModelOption[];
   writing_models?: ModelOption[];
   speaking_models?: ModelOption[];
+  /** The order these models will actually be reached for, best first. */
+  model_order?: string[];
 }
 
 type AiProviderSelection = "gemini" | "openai" | "custom_json" | "disabled";
@@ -70,6 +75,9 @@ interface TestResult {
   speaking_models?: ModelOption[];
   writing_model?: string;
   speaking_model?: string;
+  /** The order these models will actually be reached for, best first. */
+  model_order?: string[];
+  preferred_model?: string;
   key_preview: string | null;
   latency_ms: number;
   supported?: boolean;
@@ -88,6 +96,8 @@ interface ModelListResult {
   speaking_models?: ModelOption[];
   writing_model?: string;
   speaking_model?: string;
+  model_order?: string[];
+  preferred_model?: string;
   supported?: boolean;
   message: string;
   detection_message?: string;
@@ -110,8 +120,7 @@ function newKey(index: number, provider: AiProviderSelection, model: string, end
     label: `API Key ${index + 1}`,
     provider: provider === "disabled" ? "gemini" : provider,
     model,
-    writing_model: "",
-    speaking_model: "",
+    preferred_model: "",
     endpoint_url: endpointUrl,
     api_key: "",
     enabled: true,
@@ -183,56 +192,62 @@ function selectableModelValue(preferred?: string, options?: ModelOption[]) {
 
 interface ModelPickerProps {
   keyConfig: AiKeyConfig;
-  fallbackModel: string;
   onPick: (value: string) => void;
 }
 
 /**
- * The one model this key marks with.
+ * What this key will actually use, and an optional cap.
  *
- * One model rather than one per skill, because that is what lets a Final Test
- * or full mock send its Writing and its Speaking in a single request - and
- * every provider limit that matters counts requests, not parts.
- *
- * Options are whatever the provider says this key can run, best first, with
- * the ones that cannot hear a recording marked as such: choosing one of those
- * means Speaking goes to an instructor. Nothing is hardcoded - until the key
- * has been checked there is no list, which is the honest state to show.
+ * This used to be a plain dropdown, which invited a choice the app then
+ * quietly corrected: pick a model the key cannot call and it came back as a
+ * different one, with nothing saying why. The order below is the truth - the
+ * run starts at the newest and most capable model the key offers and works
+ * down - and the selector only exists for the rarer, deliberate case of
+ * holding marking off a model.
  */
-function ModelPicker({ keyConfig, fallbackModel, onPick }: ModelPickerProps) {
+function ModelPicker({ keyConfig, onPick }: ModelPickerProps) {
   const supported = providerInfo(keyConfig.provider).supported;
   const options = keyConfig.model_options ?? [];
-  const selected = keyConfig.model || keyConfig.writing_model || fallbackModel;
+  const order = keyConfig.model_order?.length
+    ? keyConfig.model_order
+    : options.filter((option) => option.available !== false).map((option) => option.value);
+  const pinned = keyConfig.preferred_model || "";
+  const speakingCapable = new Set(optionsForSkill(options, "speaking").map((option) => option.value));
+  const labelFor = (value: string) => options.find((option) => option.value === value)?.label || value;
 
   if (!supported) {
-    return <input value="" disabled placeholder="No supported evaluation models" />;
+    return <p className="hint" style={{ margin: 0 }}>This provider is not supported for AI evaluation.</p>;
   }
 
-  if (!options.length) {
-    return (
-      <>
-        <input value={selected} disabled placeholder="Load models to list what this key supports" />
-        <p className="hint" style={{ margin: "6px 0 0" }}>Paste the key, then use Load models.</p>
-      </>
-    );
+  if (!order.length) {
+    return <p className="hint" style={{ margin: 0 }}>Paste the key, then use Load models to see what it can run.</p>;
   }
 
-  const speakingCapable = new Set(optionsForSkill(options, "speaking").map((option) => option.value));
+  // From the pinned model down, since anything above it is not used.
+  const effective = pinned ? order.slice(Math.max(order.indexOf(pinned), 0)) : order;
+
   return (
     <>
-      <select value={selected} onChange={(event) => onPick(event.target.value)}>
-        {options.map((option) => (
-          <option key={option.value} value={option.value} disabled={option.available === false}>
-            {option.label}
-            {speakingCapable.has(option.value) ? "" : " - Writing only"}
+      <p className="hint" style={{ margin: "0 0 8px" }}>
+        {effective.map((value, index) => (
+          <span key={value}>
+            {index > 0 && <span aria-hidden="true"> → </span>}
+            <strong style={{ fontWeight: index === 0 ? 700 : 400 }}>{labelFor(value)}</strong>
+          </span>
+        ))}
+      </p>
+      <select value={pinned} onChange={(event) => onPick(event.target.value)}>
+        <option value="">Automatic - newest and most capable first</option>
+        {order.map((value) => (
+          <option key={value} value={value}>
+            Start from {labelFor(value)}
+            {speakingCapable.has(value) ? "" : " (Writing only)"}
           </option>
         ))}
       </select>
-      {selected && !speakingCapable.has(selected) && (
+      {pinned && !speakingCapable.has(pinned) && (
         <p className="hint" style={{ margin: "6px 0 0" }}>
-          {speakingCapable.size
-            ? "This model cannot mark Speaking recordings. They will fall back to another model on this key, so Writing and Speaking will not share one request."
-            : "No model on this key can mark Speaking recordings - they will go to an instructor."}
+          This model cannot mark Speaking recordings; those fall to the next model that can.
         </p>
       )}
     </>
@@ -294,8 +309,7 @@ export function AiKeyPriorityManager({
         model: key.model || model,
         // What is selected on screen right now, saved or not - otherwise the
         // server answers about the stored key and overwrites the choice.
-        writing_model: key.model || undefined,
-        speaking_model: key.model || undefined,
+        preferred_model: key.preferred_model || undefined,
         endpoint_url: key.endpoint_url || endpointUrl || undefined,
         api_key: key.api_key,
       });
@@ -313,8 +327,10 @@ export function AiKeyPriorityManager({
         speaking_models: data.speaking_models || [],
         // The server picks a working model per skill, so a key that can mark
         // is never left needing a decision before it will.
-        writing_model: selectableModelValue(key.model, data.model_options) || data.writing_model || "",
-        speaking_model: selectableModelValue(key.model, data.model_options) || data.speaking_model || "",
+        model_order: data.model_order || [],
+        // A pin the provider no longer offers is dropped back to automatic
+        // rather than left pointing at a model that cannot be called.
+        preferred_model: selectableModelValue(key.preferred_model, data.model_options) || "",
         // A background refresh leaves the last real result on screen.
         ...(silent ? {} : { info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}` }),
       });
@@ -357,8 +373,7 @@ export function AiKeyPriorityManager({
         provider: "auto",
         preferred_provider: key.provider || provider,
         model: key.model || model,
-        writing_model: key.model || undefined,
-        speaking_model: key.model || undefined,
+        preferred_model: key.preferred_model || undefined,
         endpoint_url: key.endpoint_url || endpointUrl || undefined,
         api_key: key.api_key,
       });
@@ -374,8 +389,10 @@ export function AiKeyPriorityManager({
         speaking_models: data.speaking_models || [],
         // The admin's own choice survives a check, as long as the provider
         // still offers it - a test must not quietly re-pick their model.
-        writing_model: selectableModelValue(key.model, data.model_options) || data.writing_model || "",
-        speaking_model: selectableModelValue(key.model, data.model_options) || data.speaking_model || "",
+        model_order: data.model_order || [],
+        // A pin the provider no longer offers is dropped back to automatic
+        // rather than left pointing at a model that cannot be called.
+        preferred_model: selectableModelValue(key.preferred_model, data.model_options) || "",
         last_status: data.ok ? "ok" : "failed",
         last_checked_at: new Date().toISOString(),
         info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}${data.detection_message ? ` ${data.detection_message}` : ""}${data.latency_ms ? ` (${data.latency_ms} ms)` : ""}`,
@@ -480,17 +497,12 @@ export function AiKeyPriorityManager({
                   </p>
                 )}
               </div>
-              <div>
-                <label>Model</label>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label>Models used, in order</label>
                 <ModelPicker
                   keyConfig={key}
-                  fallbackModel={model}
                   onPick={(value) => update(index, {
-                    // One model marks both skills, which is what lets a Final
-                    // Test send its Writing and Speaking in a single request.
-                    model: value,
-                    writing_model: value,
-                    speaking_model: value,
+                    preferred_model: value,
                     last_status: null,
                     last_checked_at: null,
                     info: null,

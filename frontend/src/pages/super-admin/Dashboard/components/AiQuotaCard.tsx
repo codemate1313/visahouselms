@@ -50,6 +50,8 @@ interface QuotaPlanEntry {
 interface QuotaModelGroup {
   model?: string | null;
   provider?: string | null;
+  /** Where this model sits in the hierarchy: 1st choice, 2nd, 3rd. */
+  position?: number;
   first_rank: number;
   keys: number;
   requests_today: number;
@@ -173,6 +175,80 @@ function remainingLabel(value: number | null | undefined): string {
 
 function modelDisplay(value: string | null | undefined): string {
   return value || "Unselected model";
+}
+
+/** How many fallbacks to show before folding the rest away. */
+const VISIBLE_MODELS = 4;
+
+/**
+ * The model hierarchy for one skill.
+ *
+ * Everything below the first few is a fallback that has never been reached -
+ * listing fifty of them, each reading "limit not set, 0 used today", buries
+ * the two lines that matter under identical rows of nothing. The tail is
+ * folded away, and a row only draws a usage bar when there is usage or a
+ * ceiling to draw it against.
+ */
+function ModelStack({ label, groups }: { label: string; groups: QuotaModelGroup[] }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!groups.length) {
+    return <p className="ai-quota-note">No {label.toLowerCase()} model route is available.</p>;
+  }
+
+  // Anything used today stays visible however far down the order it sits.
+  const alwaysShown = groups.filter((group, index) => index < VISIBLE_MODELS || group.requests_today > 0);
+  const visible = expanded ? groups : alwaysShown;
+  const hidden = groups.length - visible.length;
+
+  return (
+    <div className="ai-quota-model-stack">
+      {visible.map((group, index) => {
+        const percent = group.rpd_limit && group.rpd_limit > 0
+          ? Math.round((group.requests_today / group.rpd_limit) * 100)
+          : null;
+        const idle = group.requests_today === 0 && percent === null;
+        return (
+          <div
+            key={`${label}-${group.model || "none"}`}
+            className={`ai-quota-model-group${idle ? " is-idle" : ""}`}
+          >
+            <div className="ai-quota-model-rank">#{group.position ?? index + 1}</div>
+            <div className="ai-quota-model-body">
+              <div className="ai-quota-model-title">
+                <strong>{modelDisplay(group.model)}</strong>
+                <span>
+                  {group.keys} key{group.keys === 1 ? "" : "s"}
+                  {index === 0 ? " · in use" : ""}
+                </span>
+              </div>
+              <div className="ai-quota-model-meta">
+                {idle ? (
+                  <span>Standing by - nothing marked on it today</span>
+                ) : (
+                  <>
+                    <span>{readable(group.requests_today)} used today</span>
+                    {percent !== null ? <span>{remainingLabel(group.remaining_today)}</span> : null}
+                  </>
+                )}
+              </div>
+              {percent !== null && <UsageBar percent={percent} />}
+            </div>
+          </div>
+        );
+      })}
+      {hidden > 0 && (
+        <button type="button" className="ai-quota-model-more" onClick={() => setExpanded(true)}>
+          {hidden} more fallback{hidden === 1 ? "" : "s"} below this
+        </button>
+      )}
+      {expanded && (
+        <button type="button" className="ai-quota-model-more" onClick={() => setExpanded(false)}>
+          Show fewer
+        </button>
+      )}
+    </div>
+  );
 }
 
 function PlanPair({ label, entry }: { label: string; entry: QuotaPlanEntry | null | undefined }) {
@@ -619,34 +695,7 @@ export function AiQuotaCard() {
                   <strong>{label}</strong>
                   <span>{plan?.entries.length ?? 0} key/model routes</span>
                 </div>
-                <div className="ai-quota-model-stack">
-                  {plan?.model_groups.length ? (
-                    plan.model_groups.map((group) => {
-                      const percent = group.rpd_limit && group.rpd_limit > 0
-                        ? Math.round((group.requests_today / group.rpd_limit) * 100)
-                        : null;
-                      return (
-                        <div key={`${label}-${group.model || "none"}`} className="ai-quota-model-group">
-                          <div className="ai-quota-model-rank">#{group.first_rank}</div>
-                          <div className="ai-quota-model-body">
-                            <div className="ai-quota-model-title">
-                              <strong>{modelDisplay(group.model)}</strong>
-                              <span>{group.keys} key{group.keys === 1 ? "" : "s"}</span>
-                            </div>
-                            <div className="ai-quota-model-meta">
-                              <span>{remainingLabel(group.remaining_today)}</span>
-                              <span>{readable(group.requests_today)} used today</span>
-                              {group.unknown_limits ? <span>{group.unknown_limits} unset limit{group.unknown_limits === 1 ? "" : "s"}</span> : null}
-                            </div>
-                            <UsageBar percent={percent} />
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="ai-quota-note">No {label.toLowerCase()} model route is available.</p>
-                  )}
-                </div>
+                <ModelStack label={label} groups={plan?.model_groups ?? []} />
               </div>
             ))}
           </section>

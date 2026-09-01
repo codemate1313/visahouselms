@@ -112,6 +112,7 @@ def submit(db: Session, data: dict, ip: Optional[str]) -> dict:
     in the queue.
     """
     admin_email = account_service.ensure_user_credentials_available(db, data["admin_email"])
+    contact_email = account_service.validate_account_email(data["contact_email"])
 
     pending = (
         db.query(InstituteSignupRequest)
@@ -137,7 +138,7 @@ def submit(db: Session, data: dict, ip: Optional[str]) -> dict:
 
     row = InstituteSignupRequest(
         institute_name=data["institute_name"].strip(),
-        contact_email=data["contact_email"].strip().lower(),
+        contact_email=contact_email,
         contact_phone=(data.get("contact_phone") or "").strip() or None,
         city=(data.get("city") or "").strip() or None,
         country=(data.get("country") or "").strip() or None,
@@ -336,4 +337,3 @@ def mark_approved_with_institute(
         {"institute_id": institute_id, "admin_email": row.admin_email, "source": "institute_onboarding_form"},
     )
     db.commit()
-

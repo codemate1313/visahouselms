@@ -297,6 +297,7 @@ def create_institute(
     commit: bool = True,
 ) -> dict:
     admin_email = account_service.ensure_user_credentials_available(db, admin_email)
+    contact_email = account_service.validate_account_email(contact_email) if contact_email else None
 
     role = db.query(Role).filter(Role.name == INSTITUTE_ADMIN).first()
     if role is None:
@@ -456,7 +457,11 @@ def update_institute(
         institute.name = name
         institute.slug = _unique_slug(db, name, exclude_id=institute.id)
     if "contact_email" in payload:
-        institute.contact_email = payload["contact_email"]
+        institute.contact_email = (
+            account_service.validate_account_email(payload["contact_email"])
+            if payload["contact_email"]
+            else None
+        )
     if "session_duration_hours" in payload and payload["session_duration_hours"]:
         institute.session_duration_hours = payload["session_duration_hours"]
     if "ai_student_monthly_limit" in payload:

@@ -1,5 +1,6 @@
 import unittest
 from typing import Optional
+from unittest import mock
 
 from fastapi import HTTPException
 from sqlalchemy import create_engine
@@ -94,6 +95,17 @@ class AccountCreationCredentialTests(unittest.TestCase):
             account_service.USER_CREDENTIALS_CONFLICT_DETAIL,
         )
 
+    def _assert_invalid_email_rejected(self, callback) -> None:
+        with self.assertRaises(HTTPException) as context:
+            callback()
+        self.assertEqual(context.exception.status_code, 422)
+        self.assertEqual(context.exception.detail, account_service.INVALID_ACCOUNT_EMAIL_DETAIL)
+
+    def _accept_admin_reject_contact(self, email: str) -> str:
+        if email == "admin@valid.test":
+            return "admin@valid.test"
+        raise HTTPException(status_code=422, detail=account_service.INVALID_ACCOUNT_EMAIL_DETAIL)
+
     def test_super_admin_creation_rejects_existing_student_credentials(self) -> None:
         self._assert_credentials_belong_to_user(
             lambda: super_admin_service.create_super_admin(
@@ -174,6 +186,22 @@ class AccountCreationCredentialTests(unittest.TestCase):
             )
         )
 
+    def test_google_student_registration_rejects_undeliverable_email(self) -> None:
+        with mock.patch.object(
+            account_service,
+            "validate_account_email",
+            side_effect=HTTPException(status_code=422, detail=account_service.INVALID_ACCOUNT_EMAIL_DETAIL),
+        ):
+            self._assert_invalid_email_rejected(
+                lambda: auth_service.get_or_create_google_student(
+                    self.db,
+                    "student@missing.invalid",
+                    "Bad",
+                    "Email",
+                    "127.0.0.1",
+                )
+            )
+
     def test_public_institute_signup_rejects_existing_user_credentials(self) -> None:
         self._assert_credentials_belong_to_user(
             lambda: institute_signup_service.submit(
@@ -191,6 +219,65 @@ class AccountCreationCredentialTests(unittest.TestCase):
                 "127.0.0.1",
             )
         )
+
+    def test_public_institute_signup_rejects_undeliverable_contact_email(self) -> None:
+        with mock.patch.object(
+            account_service,
+            "validate_account_email",
+            side_effect=self._accept_admin_reject_contact,
+        ):
+            self._assert_invalid_email_rejected(
+                lambda: institute_signup_service.submit(
+                    self.db,
+                    {
+                        "institute_name": "Invalid Contact Signup",
+                        "contact_email": "contact@missing.invalid",
+                        "admin_email": "admin@valid.test",
+                        "admin_first_name": "Valid",
+                        "admin_last_name": "Admin",
+                        "phone": None,
+                        "message": None,
+                        "preferred_plan_id": None,
+                    },
+                    "127.0.0.1",
+                )
+            )
+
+    def test_institute_creation_rejects_undeliverable_contact_email(self) -> None:
+        with mock.patch.object(
+            account_service,
+            "validate_account_email",
+            side_effect=self._accept_admin_reject_contact,
+        ):
+            self._assert_invalid_email_rejected(
+                lambda: institute_service.create_institute(
+                    self.db,
+                    self.owner,
+                    "Invalid Contact Institute",
+                    "contact@missing.invalid",
+                    "admin@valid.test",
+                    "Valid",
+                    "Principal",
+                    24,
+                    "127.0.0.1",
+                )
+            )
+
+    def test_institute_update_rejects_undeliverable_contact_email(self) -> None:
+        with mock.patch.object(
+            account_service,
+            "validate_account_email",
+            side_effect=HTTPException(status_code=422, detail=account_service.INVALID_ACCOUNT_EMAIL_DETAIL),
+        ):
+            self._assert_invalid_email_rejected(
+                lambda: institute_service.update_institute(
+                    self.db,
+                    self.owner,
+                    self.institute.id,
+                    {"contact_email": "contact@missing.invalid"},
+                    "127.0.0.1",
+                )
+            )
 
 
 if __name__ == "__main__":

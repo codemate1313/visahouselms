@@ -83,7 +83,7 @@ export const testRunnerStrings = {
     previous: "Previous",
     next: "Next",
     partNavigationAriaLabel: "Move between test parts",
-    navigationLocked: "Navigation is locked while the listening audio plays or a speaking part is running",
+    navigationLocked: "Navigation is locked until Listening is complete, while audio plays, or while Speaking is running",
     secureBadge: "Secure",
     secureBadgeTitle: "Final Test security controls are active",
     devExitFullscreen: "Exit full screen (dev)",
@@ -92,7 +92,7 @@ export const testRunnerStrings = {
   nav: {
     testSectionsAriaLabel: "Test sections",
     progress: "Progress",
-    navigationLocked: "Navigation is locked while the listening audio plays or a speaking part is running",
+    navigationLocked: "Navigation is locked until Listening is complete, while audio plays, or while Speaking is running",
   },
   sourcePane: {
     sourceMaterial: "Source material",
