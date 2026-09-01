@@ -183,7 +183,34 @@ export function ListeningHeaderPlayer({
      another five seconds of reading time. */
   const waitsBeforeStart = playlistIndex === 0 && resumeFrom === 0;
 
+  /* The settle between the last note and the handover has to stay locked, and
+     six different code paths can ask to release the lock - effect cleanups on
+     a dependency change, a playlist advancing, a revisit check. One of them
+     did exactly that and reopened the rail for five seconds. Rather than
+     trusting each caller, the release is refused for the length of the settle:
+     the only thing allowed to unlock then is the handover itself. */
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+  const handoverStartedRef = useRef(false);
+
+  const setNavigationLock = useCallback(
+    (locked: boolean) => {
+      if (
+        !locked
+        && phaseRef.current === "finished"
+        && !handoverStartedRef.current
+        && !wasCompletedOnMountRef.current
+      ) {
+        return;
+      }
+      onAudioLockChange?.(locked);
+    },
+    [onAudioLockChange],
+  );
+
   const releaseAfterComplete = useCallback(async () => {
+    // The handover is the one moment the settle's lock may be lifted.
+    handoverStartedRef.current = true;
     try {
       await onAudioComplete?.();
     } finally {
@@ -206,16 +233,24 @@ export function ListeningHeaderPlayer({
      nobody can skip ahead during the silence. */
   useEffect(() => {
     if (!currentAudioUrl) {
-      onAudioLockChange?.(false);
+      setNavigationLock(false);
       return;
     }
 
-    if (isCompletedInitial) {
-      onAudioLockChange?.(false);
+    /* The ref, not the live value. `isCompletedInitial` is read from storage
+       on every render, and `handleEnded` writes that very flag the moment the
+       recording finishes - so using it here re-ran this effect on completion,
+       fired its cleanup, and released the lock for the whole five-second
+       settle before the handover. That was the hole a candidate could use to
+       jump back into a section they had already heard. The ref answers the
+       question actually being asked: was this part already done when the
+       candidate arrived on it? */
+    if (wasCompletedOnMountRef.current) {
+      setNavigationLock(false);
       return;
     }
 
-    onAudioLockChange?.(true);
+    setNavigationLock(true);
     const start = () => {
       setPhase("playing");
       const audioEl = audioRef.current;
@@ -238,7 +273,7 @@ export function ListeningHeaderPlayer({
 
     if (!waitsBeforeStart) {
       start();
-      return () => onAudioLockChange?.(false);
+      return () => setNavigationLock(false);
     }
 
     setPhase("waiting");
@@ -256,9 +291,11 @@ export function ListeningHeaderPlayer({
     return () => {
       window.clearInterval(ticker);
       window.clearTimeout(starter);
-      onAudioLockChange?.(false);
+      setNavigationLock(false);
     };
-  }, [currentAudioUrl, waitsBeforeStart, resumeFrom, isCompletedInitial, onAudioLockChange]);
+    // `isCompletedInitial` is deliberately not a dependency - see above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAudioUrl, waitsBeforeStart, resumeFrom, setNavigationLock]);
 
   // A new track gets its own single resume.
   useEffect(() => { resumedRef.current = false; }, [storageKey]);
@@ -327,14 +364,20 @@ export function ListeningHeaderPlayer({
        candidate is revisiting. Nothing is about to play, so nothing should
        hold them on it. */
     if (wasCompletedOnMountRef.current) {
-      onAudioLockChange?.(false);
+      setNavigationLock(false);
       return;
     }
     const timer = window.setTimeout(() => {
       void releaseAfterComplete();
     }, END_DELAY_SECONDS * 1000);
     return () => window.clearTimeout(timer);
-  }, [phase, releaseAfterComplete, onAudioLockChange]);
+  }, [phase, releaseAfterComplete, setNavigationLock]);
+
+  /* Declared last so its cleanup runs after the others: whatever the settle
+     guard refused a moment ago, a player that is being torn down must not
+     leave the rail locked behind it - the candidate would land on Reading
+     unable to move. */
+  useEffect(() => () => onAudioLockChange?.(false), [onAudioLockChange]);
 
   if (!currentAudioUrl) return null;
 
@@ -357,7 +400,7 @@ export function ListeningHeaderPlayer({
       onEnded={handleEnded}
       onPlay={() => {
         setPhase("playing");
-        onAudioLockChange?.(true);
+        setNavigationLock(true);
       }}
     />
   );
