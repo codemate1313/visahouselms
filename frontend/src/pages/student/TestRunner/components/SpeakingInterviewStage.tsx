@@ -339,13 +339,9 @@ export function SpeakingInterviewStage({
     void onRecord(question.id);
   };
 
-  const continueInterview = () => {
-    if (!isLastQuestion) {
-      setQuestionIndex((index) => index + 1);
-      return;
-    }
-    onContinuePart();
-  };
+  /* There is no manual "continue" any more: the effect above hands over on its
+     own once an answer is saved, and a button beside it was a second way to do
+     the same thing - or to do it early, before the upload had landed. */
 
   const hasCandidateText = Boolean(question.passage?.trim());
   const candidatePdfUrl = question.interaction?.candidate_material_url
@@ -354,7 +350,13 @@ export function SpeakingInterviewStage({
   const candidateImageUrl = question.image_url ? `${API_BASE_URL}${question.image_url}` : null;
   const hasCandidateAttachment = Boolean(candidateImageUrl || candidatePdfUrl);
   const recordingFailedForQuestion = recordingFailedQuestionId === question.id && Boolean(recordingErrorMessage);
-  const canStartManually = mode === "ready" && (manualStartOffered || showSkip);
+  /* Never live while the examiner is still speaking. The control stays on
+     screen so the dock does not jump, but pressing it mid-question would cut
+     the examiner off and start recording over the tail of the prompt - so
+     until they stop it is a dummy. `manualStartOffered` remains the rescue for
+     audio that never arrives; the examiner check is what stops the button
+     waking up during a pause between two pieces of one prompt. */
+  const canStartManually = mode === "ready" && !examinerBusy && (manualStartOffered || showSkip);
   const isSubmittingAnswer = mode === "uploading" || (mode === "complete" && isLastQuestion && isLastTestPart);
   /* Silence is not evidence the examiner audio is still on its way - it is
      indistinguishable, to the candidate, from playback having quietly failed.
@@ -425,21 +427,18 @@ export function SpeakingInterviewStage({
               </div>
               <div className="speaking-prep-status">
                 {t.recordingStartsAutomatically}
-                {showSkip && (
-                  <Button
-                    type="button"
-                    variant="danger"
-                    onClick={startRecording}
-                    style={{
-                      marginLeft: "12px",
-                      padding: "4px 8px",
-                      fontSize: "11px",
-                    }}
-                  >
-                    Skip Prep
-                  </Button>
-                )}
               </div>
+              {/* Preparation time is an allowance, not a requirement: a
+                  candidate who is ready starts speaking without waiting the
+                  clock out. This lives in the preparation dock, so a prompt
+                  with no preparation time never shows one. */}
+              <Button
+                className="speaking-control-button is-next"
+                leftIcon={<Icon name="microphone" />}
+                onClick={startRecording}
+              >
+                {t.continueToRecording}
+              </Button>
             </div>
           ) : (
             <div className="speaking-interview-control-dock">
@@ -464,11 +463,7 @@ export function SpeakingInterviewStage({
                 >
                   {t.submitAnswer}
                 </Button>
-                {mode === "complete" && !(isLastQuestion && isLastTestPart) ? (
-                  <Button className="speaking-control-button is-next" rightIcon={<Icon name="arrowRight" />} onClick={continueInterview}>
-                    {isLastQuestion ? t.continueToNextPart : t.continueToNextQuestion}
-                  </Button>
-                ) : null}
+
               </div>
 
               {recordingFailedForQuestion && (
@@ -596,25 +591,10 @@ export function SpeakingInterviewStage({
                     </span>
                   ) : null
                 : mode === "preparing"
-                    ? (
-                      <>
-                        {t.recordingStartsAutomatically}
-                        {showSkip && (
-                          <Button
-                            type="button"
-                            variant="danger"
-                            onClick={startRecording}
-                            style={{
-                              marginLeft: "12px",
-                              padding: "4px 8px",
-                              fontSize: "11px",
-                            }}
-                          >
-                            Skip Prep
-                          </Button>
-                        )}
-                      </>
-                    )
+                    // The control that cuts preparation short lives in the
+                    // action dock below, where the candidate is already
+                    // looking, rather than inline in the status line.
+                    ? t.recordingStartsAutomatically
                     : mode === "starting"
                       ? t.startingRecording
                       : mode === "recording"
@@ -648,11 +628,17 @@ export function SpeakingInterviewStage({
               >
                 {t.submitResponse}
               </Button>
-              {mode === "complete" && !(isLastQuestion && isLastTestPart) ? (
-                <Button variant="primary" size="lg" rightIcon={<Icon name="arrowRight" />} onClick={continueInterview}>
-                  {isLastQuestion ? t.continueToNextPart : t.continueToNextQuestion}
+              {mode === "preparing" && (
+                <Button
+                  variant="primary"
+                  size="lg"
+                  leftIcon={<Icon name="microphone" />}
+                  onClick={startRecording}
+                >
+                  {t.continueToRecording}
                 </Button>
-              ) : null}
+              )}
+
             </div>
 
             {recordingFailedForQuestion && (

@@ -461,8 +461,8 @@
 }
 
 .lc-exam .lc-rail-tab.is-active:hover:not(:disabled) {
-  border-color: var(--lc-red);
-  background: var(--lc-red);
+  border-color: #242424;
+  background: #242424;
   color: #ffffff;
   box-shadow: none;
 }
@@ -475,8 +475,8 @@
 }
 
 .lc-rail-tab.is-active {
-  border-color: var(--lc-red);
-  background: var(--lc-red);
+  border-color: #242424;
+  background: #242424;
   box-shadow: none;
   color: #ffffff;
 }
@@ -490,7 +490,7 @@
   height: 0;
   border-top: 14px solid transparent;
   border-bottom: 14px solid transparent;
-  border-left: 14px solid var(--lc-red);
+  border-left: 14px solid #242424;
   transform: translateY(-50%);
 }
 

@@ -2066,6 +2066,55 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.expire_all()
         return module_authoring_service.get_module_or_404(self.db, module.id)
 
+    def test_the_speaking_handover_records_a_lapse_rather_than_refusing_it(self):
+        """A candidate whose share blinked used to be stopped at the door.
+
+        The main paper is already sealed and answered by this point, so there
+        is nowhere to send them back to - the lapse belongs in the proctoring
+        log, not in the way.
+        """
+        module = self._composite_module_with_writing_and_speaking()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        attempt_service.commence_attempt(self.db, self.student, attempt)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in sorted(attempt.module.parts, key=lambda item: item.sort_order):
+            for question in part.questions:
+                if part.section_type == "speaking":
+                    attempt_service.save_audio_answer(self.db, attempt, question.id, b"audio" * 4000, ".webm")
+                else:
+                    attempt_service.save_answer(self.db, attempt, question.id, {"text": "A response."})
+
+        # Proctoring says the share has dropped and the heartbeat is stale.
+        attempt.security_required = True
+        attempt.security_media_state = {
+            "camera_active": True,
+            "microphone_active": True,
+            "fullscreen_active": True,
+            "screen_share_active": False,
+        }
+        attempt.security_last_heartbeat_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=5)
+        self.db.commit()
+
+        # Saving an answer with the same lapse in place must not be refused
+        # either - the candidate is no longer shown a screen explaining a
+        # block, so a block would just lose their work.
+        writing_part = next(part for part in attempt.module.parts if part.section_type == "writing")
+        attempt_service.save_answer(
+            self.db, attempt, writing_part.questions[0].id, {"text": "Still typing."}
+        )
+
+        before = len(attempt.flags)
+        sealed = attempt_service.seal_main_paper_for_speaking(self.db, attempt, start_now=True)
+        self.db.refresh(sealed)
+
+        # It went through, and the lapse is on the record.
+        self.assertEqual(sealed.phase if hasattr(sealed, "phase") else attempt_service._attempt_phase(sealed), "speaking")
+        recorded = {flag.flag_type for flag in sealed.flags[before:]}
+        self.assertIn("screen_share_stopped", recorded)
+        self.assertIn("visibility_change", recorded)
+
     def test_a_final_test_marks_writing_and_speaking_in_one_request(self):
         """One request for the whole paper.
 

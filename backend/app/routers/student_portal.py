@@ -468,7 +468,7 @@ def get_attempt_part(
 ):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     attempt_service.require_security_access(attempt, session, x_attempt_token)
-    attempt_service.require_live_security(attempt)
+    attempt_service.note_security_lapse(db, attempt, "in_exam_request")
     return attempt_service.get_attempt_part_view(attempt, part_id)
 
 
@@ -616,7 +616,7 @@ def save_answer(
 ):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     attempt_service.require_security_access(attempt, session, x_attempt_token)
-    attempt_service.require_live_security(attempt)
+    attempt_service.note_security_lapse(db, attempt, "in_exam_request")
     return attempt_service.save_answer(db, attempt, question_id, payload.response, payload.revision)
 
 
@@ -632,7 +632,7 @@ def save_attempt_progress(
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     if attempt.security_required:
         attempt_service.require_security_access(attempt, session, x_attempt_token)
-        attempt_service.require_live_security(attempt)
+        attempt_service.note_security_lapse(db, attempt, "in_exam_request")
     return attempt_service.save_resume_progress(db, attempt, payload.part_id)
 
 
@@ -649,7 +649,7 @@ async def save_audio_answer(
     started_at = time.monotonic()
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     attempt_service.require_security_access(attempt, session, x_attempt_token)
-    attempt_service.require_live_security(attempt)
+    attempt_service.note_security_lapse(db, attempt, "in_exam_request")
     content, extension = await read_validated_speaking_answer(file)
     result = attempt_service.save_audio_answer(db, attempt, question_id, content, extension)
     # Waiting for a recording to reach the server is not answering time. Measured
@@ -700,7 +700,7 @@ def evaluate_part_immediately(
 ):
     attempt = attempt_service.get_attempt_or_404(db, user, attempt_id)
     attempt_service.require_security_access(attempt, session, x_attempt_token)
-    attempt_service.require_live_security(attempt)
+    attempt_service.note_security_lapse(db, attempt, "in_exam_request")
 
     from app.services import ai_evaluation_service
     background_tasks.add_task(

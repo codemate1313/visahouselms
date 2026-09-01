@@ -1633,6 +1633,24 @@ export function TestRunner() {
     }
   }
 
+  /* The examiner's first line is synthesised on demand and cached by a hash of
+     its text, so the very first candidate to reach a prompt waits on a call to
+     the speech service before hearing anything. Asking for it while the
+     confirm dialog is still open moves that wait behind a screen the candidate
+     is already reading, instead of leaving them looking at a silent examiner.
+     Fire-and-forget: if it fails, the stage asks again for itself. */
+  useEffect(() => {
+    if (!confirmSubmit || !isSplitCompositeAttempt || isSpeakingPhase || !attempt) return;
+    const firstSpeakingPart = attempt.parts.find((part) => part.section_type === "speaking");
+    if (!firstSpeakingPart) return;
+    void apiClient
+      .get(`/student/attempts/${id}/speaking-avatar/${firstSpeakingPart.id}`, {
+        headers: { ...securityHeaders(), "X-Skip-Loader": "1" },
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmSubmit, isSplitCompositeAttempt, isSpeakingPhase, attempt?.id]);
+
   async function sealMainPaperForSpeaking() {
     if (!attempt || speakingTransitionRef.current) return;
     const firstSpeakingIndex = attempt.parts.findIndex((part) => part.section_type === "speaking");

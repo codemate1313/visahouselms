@@ -876,6 +876,8 @@ def require_security_access(
 
 
 def require_live_security(attempt: TestAttempt) -> None:
+    """Kept, but nothing calls it any more - see `note_security_lapse`. Restore
+    a call here to make a lapse block a request again."""
     if not attempt.security_required:
         return
     state = attempt.security_media_state or {}
@@ -1167,7 +1169,6 @@ def record_heartbeat(
 
 def get_attempt_part_view(attempt: TestAttempt, part_id: int) -> dict:
     _require_in_progress(attempt)
-    require_live_security(attempt)
     part = next((item for item in attempt.module.parts if item.id == part_id), None)
     if part is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test part not found")
@@ -1209,9 +1210,46 @@ def _require_in_progress(attempt: TestAttempt) -> None:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Time is up for this attempt")
 
 
+def note_security_lapse(db: Session, attempt: TestAttempt, where: str) -> None:
+    """Note a proctoring lapse instead of refusing the request.
+
+    This used to raise 423: every one of camera, microphone, full screen and
+    screen share had to be flagged active and the heartbeat under thirty
+    seconds old, or the request was refused. Heartbeats run every five seconds,
+    so a few dropped ones - or a share flag that blinked - stopped a candidate
+    entering their Speaking section, and, worse, stopped their answers saving
+    while they carried on typing.
+
+    Now that the candidate is no longer shown a screen explaining the block,
+    blocking is the one thing that must not happen: it would lose their work
+    silently. The lapse is still recorded, with the same severity it carries
+    anywhere else in the exam, so the grader sees exactly what happened. The
+    device and token binding checked by the callers still stands - this relaxes
+    what the browser is doing, never who is doing it.
+    """
+    if not attempt.security_required:
+        return
+    state = attempt.security_media_state or {}
+    lapses = {
+        "camera_stopped": not state.get("camera_active"),
+        "microphone_stopped": not state.get("microphone_active"),
+        "screen_share_stopped": not state.get("screen_share_active"),
+        "fullscreen_exit": not state.get("fullscreen_active"),
+    }
+    stale_heartbeat = (
+        attempt.security_last_heartbeat_at is None
+        or (_now() - attempt.security_last_heartbeat_at).total_seconds() > FINAL_TEST_HEARTBEAT_GRACE_SECONDS
+    )
+    for flag_type, missing in lapses.items():
+        if missing:
+            _add_security_flag(db, attempt, flag_type, {"at": where})
+    if stale_heartbeat:
+        _add_security_flag(db, attempt, "visibility_change", {"at": where, "reason": "stale_heartbeat"})
+
+
 def seal_main_paper_for_speaking(db: Session, attempt: TestAttempt, *, start_now: bool) -> TestAttempt:
     _require_in_progress(attempt)
-    require_live_security(attempt)
+    note_security_lapse(db, attempt, "speaking_handover")
     if not _split_composite_has_speaking(attempt):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

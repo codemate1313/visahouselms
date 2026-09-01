@@ -136,8 +136,9 @@ export const testRunnerStrings = {
     submittingTest: "All speaking parts complete - submitting your test...",
     submitResponse: "Submit response",
     savingResponse: "Saving response...",
-    continueToNextQuestion: "Continue to next prompt",
-    continueToNextPart: "Continue to next part",
+    /* Shown only while a prompt's preparation time is running: the candidate
+       may start speaking before the clock is out. */
+    continueToRecording: "Continue",
   },
   footer: {
     answeredOf: (answered: number, total: number) => `${answered} of ${total} answered`,
