@@ -2190,8 +2190,12 @@
 
 .lc-exam .speaking-interview-control-dock.is-prep {
   gap: 0 16px;
-  grid-template-columns: 112px minmax(0, 1fr);
-  grid-template-rows: 60px;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  grid-template-rows: 62px;
+}
+
+.lc-exam .speaking-interview-control-dock.is-prep .speaking-interview-actions {
+  grid-column: 3;
 }
 
 .lc-exam .speaking-prep-timer {

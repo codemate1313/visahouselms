@@ -432,13 +432,15 @@ export function SpeakingInterviewStage({
                   candidate who is ready starts speaking without waiting the
                   clock out. This lives in the preparation dock, so a prompt
                   with no preparation time never shows one. */}
-              <Button
-                className="speaking-control-button is-next"
-                leftIcon={<Icon name="microphone" />}
-                onClick={startRecording}
-              >
-                {t.continueToRecording}
-              </Button>
+              <div className="speaking-interview-actions">
+                <Button
+                  className="speaking-control-button is-next"
+                  leftIcon={<Icon name="microphone" />}
+                  onClick={startRecording}
+                >
+                  {t.continueToRecording}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="speaking-interview-control-dock">
