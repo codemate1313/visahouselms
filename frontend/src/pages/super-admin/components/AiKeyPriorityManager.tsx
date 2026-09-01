@@ -182,29 +182,27 @@ function selectableModelValue(preferred?: string, options?: ModelOption[]) {
 }
 
 interface ModelPickerProps {
-  skill: "writing" | "speaking";
   keyConfig: AiKeyConfig;
   fallbackModel: string;
   onPick: (value: string) => void;
 }
 
 /**
- * One skill's model list for one key.
+ * The one model this key marks with.
  *
- * The options are whatever the provider said this key can run, filtered to the
- * models that can mark this kind of paper - a Speaking recording sent to a
- * model that cannot hear is a guaranteed zero, so those models are not offered
- * here at all. Nothing is hardcoded: until the key has been checked there is
- * no list to choose from, which is the honest state to show.
+ * One model rather than one per skill, because that is what lets a Final Test
+ * or full mock send its Writing and its Speaking in a single request - and
+ * every provider limit that matters counts requests, not parts.
+ *
+ * Options are whatever the provider says this key can run, best first, with
+ * the ones that cannot hear a recording marked as such: choosing one of those
+ * means Speaking goes to an instructor. Nothing is hardcoded - until the key
+ * has been checked there is no list, which is the honest state to show.
  */
-function ModelPicker({ skill, keyConfig, fallbackModel, onPick }: ModelPickerProps) {
+function ModelPicker({ keyConfig, fallbackModel, onPick }: ModelPickerProps) {
   const supported = providerInfo(keyConfig.provider).supported;
-  const listed = skill === "speaking" ? keyConfig.speaking_models : keyConfig.writing_models;
-  const options = listed?.length
-    ? listed
-    : optionsForSkill(keyConfig.model_options ?? [], skill);
-  const selected =
-    (skill === "speaking" ? keyConfig.speaking_model : keyConfig.writing_model) || keyConfig.model || fallbackModel;
+  const options = keyConfig.model_options ?? [];
+  const selected = keyConfig.model || keyConfig.writing_model || fallbackModel;
 
   if (!supported) {
     return <input value="" disabled placeholder="No supported evaluation models" />;
@@ -214,23 +212,28 @@ function ModelPicker({ skill, keyConfig, fallbackModel, onPick }: ModelPickerPro
     return (
       <>
         <input value={selected} disabled placeholder="Load models to list what this key supports" />
-        <p className="hint" style={{ margin: "6px 0 0" }}>
-          {keyConfig.model_options?.length
-            ? `No model on this key can mark ${skill === "speaking" ? "Speaking recordings" : "Writing"}.`
-            : "Paste the key, then use Load models."}
-        </p>
+        <p className="hint" style={{ margin: "6px 0 0" }}>Paste the key, then use Load models.</p>
       </>
     );
   }
 
+  const speakingCapable = new Set(optionsForSkill(options, "speaking").map((option) => option.value));
   return (
-    <select value={selected} onChange={(event) => onPick(event.target.value)}>
-      {options.map((option) => (
-        <option key={option.value} value={option.value} disabled={option.available === false}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+    <>
+      <select value={selected} onChange={(event) => onPick(event.target.value)}>
+        {options.map((option) => (
+          <option key={option.value} value={option.value} disabled={option.available === false}>
+            {option.label}
+            {speakingCapable.has(option.value) ? "" : " - Writing only"}
+          </option>
+        ))}
+      </select>
+      {selected && !speakingCapable.has(selected) && (
+        <p className="hint" style={{ margin: "6px 0 0" }}>
+          This model cannot mark Speaking recordings - they will go to an instructor.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -289,8 +292,8 @@ export function AiKeyPriorityManager({
         model: key.model || model,
         // What is selected on screen right now, saved or not - otherwise the
         // server answers about the stored key and overwrites the choice.
-        writing_model: key.writing_model || undefined,
-        speaking_model: key.speaking_model || undefined,
+        writing_model: key.model || undefined,
+        speaking_model: key.model || undefined,
         endpoint_url: key.endpoint_url || endpointUrl || undefined,
         api_key: key.api_key,
       });
@@ -308,8 +311,8 @@ export function AiKeyPriorityManager({
         speaking_models: data.speaking_models || [],
         // The server picks a working model per skill, so a key that can mark
         // is never left needing a decision before it will.
-        writing_model: selectableModelValue(key.writing_model, data.writing_models) || data.writing_model || "",
-        speaking_model: selectableModelValue(key.speaking_model, data.speaking_models) || data.speaking_model || "",
+        writing_model: selectableModelValue(key.model, data.model_options) || data.writing_model || "",
+        speaking_model: selectableModelValue(key.model, data.model_options) || data.speaking_model || "",
         // A background refresh leaves the last real result on screen.
         ...(silent ? {} : { info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}` }),
       });
@@ -352,8 +355,8 @@ export function AiKeyPriorityManager({
         provider: "auto",
         preferred_provider: key.provider || provider,
         model: key.model || model,
-        writing_model: key.writing_model || undefined,
-        speaking_model: key.speaking_model || undefined,
+        writing_model: key.model || undefined,
+        speaking_model: key.model || undefined,
         endpoint_url: key.endpoint_url || endpointUrl || undefined,
         api_key: key.api_key,
       });
@@ -369,8 +372,8 @@ export function AiKeyPriorityManager({
         speaking_models: data.speaking_models || [],
         // The admin's own choice survives a check, as long as the provider
         // still offers it - a test must not quietly re-pick their model.
-        writing_model: selectableModelValue(key.writing_model, data.writing_models) || data.writing_model || "",
-        speaking_model: selectableModelValue(key.speaking_model, data.speaking_models) || data.speaking_model || "",
+        writing_model: selectableModelValue(key.model, data.model_options) || data.writing_model || "",
+        speaking_model: selectableModelValue(key.model, data.model_options) || data.speaking_model || "",
         last_status: data.ok ? "ok" : "failed",
         last_checked_at: new Date().toISOString(),
         info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}${data.detection_message ? ` ${data.detection_message}` : ""}${data.latency_ms ? ` (${data.latency_ms} ms)` : ""}`,
@@ -476,21 +479,20 @@ export function AiKeyPriorityManager({
                 )}
               </div>
               <div>
-                <label>Writing model</label>
+                <label>Model</label>
                 <ModelPicker
-                  skill="writing"
                   keyConfig={key}
                   fallbackModel={model}
-                  onPick={(value) => update(index, { writing_model: value, last_status: null, last_checked_at: null, info: null })}
-                />
-              </div>
-              <div>
-                <label>Speaking model</label>
-                <ModelPicker
-                  skill="speaking"
-                  keyConfig={key}
-                  fallbackModel={model}
-                  onPick={(value) => update(index, { speaking_model: value, last_status: null, last_checked_at: null, info: null })}
+                  onPick={(value) => update(index, {
+                    // One model marks both skills, which is what lets a Final
+                    // Test send its Writing and Speaking in a single request.
+                    model: value,
+                    writing_model: value,
+                    speaking_model: value,
+                    last_status: null,
+                    last_checked_at: null,
+                    info: null,
+                  })}
                 />
               </div>
             </div>

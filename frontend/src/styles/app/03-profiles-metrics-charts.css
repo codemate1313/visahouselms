@@ -4869,10 +4869,13 @@ button.danger-text:hover,
 .ai-quota-ops-card strong {
   display: block;
   margin-top: 4px;
+  overflow: hidden;
   font-size: 19px;
   line-height: 1.05;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ai-quota-ops-card small {
@@ -5116,6 +5119,154 @@ button.danger-text:hover,
   color: var(--text-muted);
 }
 
+.ai-quota-route-board {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border));
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(14, 165, 233, 0.06)),
+    var(--surface);
+}
+
+.ai-quota-route-board > header,
+.ai-quota-model-lane-head,
+.ai-quota-model-title,
+.ai-quota-model-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-quota-route-board h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 780;
+  color: var(--text);
+}
+
+.ai-quota-route-board header span,
+.ai-quota-model-lane-head span,
+.ai-quota-model-title span,
+.ai-quota-model-meta {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.ai-quota-route-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ai-quota-route-pair {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.ai-quota-route-pair span,
+.ai-quota-route-pair strong,
+.ai-quota-route-pair small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-quota-route-pair span {
+  font-size: 10px;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ai-quota-route-pair strong {
+  margin-top: 5px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.ai-quota-route-pair small {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+
+.ai-quota-model-lane {
+  display: grid;
+  gap: 10px;
+}
+
+.ai-quota-model-lane-head strong {
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 780;
+}
+
+.ai-quota-model-stack {
+  display: grid;
+  gap: 9px;
+}
+
+.ai-quota-model-group {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.ai-quota-model-rank {
+  display: grid;
+  place-items: center;
+  min-height: 52px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface-muted));
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-quota-model-body {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.ai-quota-model-title,
+.ai-quota-model-meta {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.ai-quota-model-title strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-quota-model-meta {
+  justify-content: flex-start;
+  gap: 6px 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .ai-quota-key-card {
   display: grid;
   gap: 16px;
@@ -5314,6 +5465,47 @@ button.danger-text:hover,
 [data-theme="dark"] .ai-quota-key-card {
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .ai-quota-route-board {
+  background:
+    linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(14, 165, 233, 0.08)),
+    rgba(255, 255, 255, 0.03);
+  border-color: rgba(125, 211, 252, 0.18);
+}
+
+[data-theme="dark"] .ai-quota-route-pair,
+[data-theme="dark"] .ai-quota-model-body {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .ai-quota-model-rank {
+  background: rgba(248, 113, 113, 0.13);
+  color: #fca5a5;
+}
+
+@media (max-width: 760px) {
+  .ai-quota-route-board > header,
+  .ai-quota-model-lane-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ai-quota-route-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .ai-quota-route-summary,
+  .ai-quota-model-group {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-quota-model-rank {
+    min-height: 34px;
+  }
 }
 
 /* Slider toggle switch styles */

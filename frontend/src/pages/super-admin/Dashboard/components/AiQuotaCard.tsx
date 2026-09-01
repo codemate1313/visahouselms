@@ -33,6 +33,38 @@ interface QuotaKey {
   usage_percent: { rpm: number | null; tpm: number | null; rpd: number | null };
 }
 
+interface QuotaPlanEntry {
+  rank: number;
+  key: string;
+  key_label: string;
+  key_id?: string | null;
+  provider?: string | null;
+  model?: string | null;
+  enabled: boolean;
+  requests_today: number;
+  rpd_limit: number | null;
+  remaining_today: number | null;
+  exhausted: boolean;
+}
+
+interface QuotaModelGroup {
+  model?: string | null;
+  provider?: string | null;
+  first_rank: number;
+  keys: number;
+  requests_today: number;
+  rpd_limit: number | null;
+  remaining_today: number | null;
+  unknown_limits: number;
+}
+
+interface QuotaPlan {
+  active: QuotaPlanEntry | null;
+  next: QuotaPlanEntry | null;
+  entries: QuotaPlanEntry[];
+  model_groups: QuotaModelGroup[];
+}
+
 interface QuotaSummary {
   enabled: boolean;
   configured: boolean;
@@ -69,6 +101,10 @@ interface QuotaSummary {
       duration_ms?: number | null;
       key?: string;
     } | null;
+  };
+  plan?: {
+    writing: QuotaPlan;
+    speaking: QuotaPlan;
   };
   series: { hour: string; requests: number; tokens: number; failed: number }[];
   day_started_at: string;
@@ -110,16 +146,6 @@ function compact(value: number): string {
   return String(value);
 }
 
-function formatDuration(ms: number | null | undefined): string {
-  if (ms === null || ms === undefined) return "—";
-  if (ms < 1000) return `${ms}ms`;
-  const seconds = ms / 1000;
-  if (seconds < 60) return `${seconds.toFixed(seconds < 10 ? 1 : 0)}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainder = Math.round(seconds % 60);
-  return `${minutes}m ${remainder}s`;
-}
-
 function shortTime(value: string | null | undefined): string {
   if (!value) return "—";
   return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
@@ -140,7 +166,32 @@ function UsageBar({ percent }: { percent: number | null }) {
   );
 }
 
+function remainingLabel(value: number | null | undefined): string {
+  return value === null || value === undefined ? "limit not set" : `${readable(value)} left`;
+}
 
+function modelDisplay(value: string | null | undefined): string {
+  return value || "Unselected model";
+}
+
+function PlanPair({ label, entry }: { label: string; entry: QuotaPlanEntry | null | undefined }) {
+  return (
+    <div className="ai-quota-route-pair">
+      <span>{label}</span>
+      {entry ? (
+        <>
+          <strong>{modelDisplay(entry.model)}</strong>
+          <small>{entry.key_label} · {remainingLabel(entry.remaining_today)}</small>
+        </>
+      ) : (
+        <>
+          <strong>No route</strong>
+          <small>AI marking is not configured for this lane</small>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function AiQuotaCard() {
   const [data, setData] = useState<QuotaSummary | null>(null);
@@ -259,6 +310,10 @@ export function AiQuotaCard() {
   const seriesPeak = Math.max(1, ...recentSeries.map((point) => point.requests));
   const successToday = Math.max(0, data.totals.requests_today - data.totals.failed_today);
   const failurePercent = data.totals.requests_today > 0 ? Math.round(data.totals.failed_today / data.totals.requests_today * 100) : 0;
+  const writingPlan = data.plan?.writing;
+  const speakingPlan = data.plan?.speaking;
+  const activeEntry = speakingPlan?.active ?? writingPlan?.active ?? null;
+  const nextEntry = speakingPlan?.next ?? writingPlan?.next ?? null;
 
   const arcLength = 235.62;
   const effectivePct =
@@ -429,14 +484,14 @@ export function AiQuotaCard() {
               <small>{queue.pending} pending · {queue.running} running</small>
             </div>
             <div className="ai-quota-ops-card">
-              <span>Avg eval</span>
-              <strong>{formatDuration(performance.average_duration_ms)}</strong>
-              <small>slowest {formatDuration(performance.slowest_duration_ms)}</small>
+              <span>Active model</span>
+              <strong title={modelDisplay(activeEntry?.model)}>{modelDisplay(activeEntry?.model)}</strong>
+              <small>{activeEntry ? `${activeEntry.key_label} · ${remainingLabel(activeEntry.remaining_today)}` : "No key ready"}</small>
             </div>
             <div className={`ai-quota-ops-card ${performance.timeout_failures_today ? "is-alert" : ""}`}>
-              <span>Timeouts</span>
-              <strong>{performance.timeout_failures_today}</strong>
-              <small>{data.totals.failed_today} failed today</small>
+              <span>Next route</span>
+              <strong title={modelDisplay(nextEntry?.model)}>{modelDisplay(nextEntry?.model)}</strong>
+              <small>{nextEntry ? `${nextEntry.key_label} · ${remainingLabel(nextEntry.remaining_today)}` : "No fallback ready"}</small>
             </div>
           </div>
 
@@ -537,6 +592,63 @@ export function AiQuotaCard() {
           <p className="ai-quota-note">
             The day counter follows Google's reset at midnight Pacific — this one started {formatDateTime(data.day_started_at)}.
           </p>
+
+          <section className="ai-quota-route-board">
+            <header>
+              <div>
+                <h4>Model hierarchy</h4>
+                <span>Sorted by the server plan: configured model first, then strongest available fallback across keys.</span>
+              </div>
+              <Badge tone={data.enabled && data.configured ? "green" : "gray"}>
+                {data.enabled && data.configured ? "Routing ready" : "Not routing"}
+              </Badge>
+            </header>
+            <div className="ai-quota-route-summary">
+              <PlanPair label="Writing now" entry={writingPlan?.active} />
+              <PlanPair label="Writing next" entry={writingPlan?.next} />
+              <PlanPair label="Speaking now" entry={speakingPlan?.active} />
+              <PlanPair label="Speaking next" entry={speakingPlan?.next} />
+            </div>
+            {[
+              ["Writing", writingPlan] as const,
+              ["Speaking", speakingPlan] as const,
+            ].map(([label, plan]) => (
+              <div key={label} className="ai-quota-model-lane">
+                <div className="ai-quota-model-lane-head">
+                  <strong>{label}</strong>
+                  <span>{plan?.entries.length ?? 0} key/model routes</span>
+                </div>
+                <div className="ai-quota-model-stack">
+                  {plan?.model_groups.length ? (
+                    plan.model_groups.map((group) => {
+                      const percent = group.rpd_limit && group.rpd_limit > 0
+                        ? Math.round((group.requests_today / group.rpd_limit) * 100)
+                        : null;
+                      return (
+                        <div key={`${label}-${group.model || "none"}`} className="ai-quota-model-group">
+                          <div className="ai-quota-model-rank">#{group.first_rank}</div>
+                          <div className="ai-quota-model-body">
+                            <div className="ai-quota-model-title">
+                              <strong>{modelDisplay(group.model)}</strong>
+                              <span>{group.keys} key{group.keys === 1 ? "" : "s"}</span>
+                            </div>
+                            <div className="ai-quota-model-meta">
+                              <span>{remainingLabel(group.remaining_today)}</span>
+                              <span>{readable(group.requests_today)} used today</span>
+                              {group.unknown_limits ? <span>{group.unknown_limits} unset limit{group.unknown_limits === 1 ? "" : "s"}</span> : null}
+                            </div>
+                            <UsageBar percent={percent} />
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="ai-quota-note">No {label.toLowerCase()} model route is available.</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </section>
 
           {data.keys.map((key) => (
             <section key={key.key} className="ai-quota-key-card">

@@ -876,11 +876,14 @@ class AttemptServiceTestCase(unittest.TestCase):
         self._course_with_module(module.id)
         attempt = self._submit_writing_attempt(module)
 
-        calls = {"count": 0}
+        second_part_title = sorted(
+            (part.title for part in attempt.module.parts if not part.auto_marked)
+        )[-1]
 
         def rate_limited_on_the_second_part(_config, payload):
-            calls["count"] += 1
-            if calls["count"] == 2:
+            # Refused whatever model it is offered: the whole part is out of
+            # quota, not just one model on one key.
+            if payload["part"]["title"] == second_part_title:
                 raise HTTPException(status_code=429, detail="Rate limit reached (5 RPM free tier).")
             return self._ai_suggestion(payload)
 
@@ -1560,7 +1563,9 @@ class AttemptServiceTestCase(unittest.TestCase):
             quota_exhausted = ai_evaluation_service.auto_evaluate_submission(self.db, attempt)
 
         self.assertTrue(quota_exhausted)
-        self.assertEqual(self.db.query(AiEvaluation).filter_by(status="failed").count(), 1)
+        # Every (model, key) pair on the plan is refused, and the pass stops
+        # rather than carrying on into the next part.
+        self.assertGreaterEqual(self.db.query(AiEvaluation).filter_by(status="failed").count(), 1)
         self.assertTrue(all(grade.status == PART_GRADE_PENDING for grade in attempt.part_grades))
 
     def test_failure_explanations_cover_the_common_provider_errors(self):
@@ -1998,6 +2003,228 @@ class AttemptServiceTestCase(unittest.TestCase):
         # A working key is never left needing a decision before it can mark.
         self.assertTrue(result["writing_model"])
         self.assertTrue(result["speaking_model"])
+
+    def _save_keys_with_models(self, live_models, count=3):
+        ai_evaluation_service.save_configured_keys(self.db, [
+            {
+                "id": f"key-{index}",
+                "label": f"Key {index}",
+                "provider": "gemini",
+                "model": live_models[0],
+                "writing_model": live_models[0],
+                "speaking_model": live_models[0],
+                "api_key": f"AIza-{index}",
+                "enabled": True,
+                "priority": index,
+            }
+            for index in range(1, count + 1)
+        ])
+        # Pretend the directory has been refreshed for each key.
+        from app.services.settings_service import set_setting
+        set_setting(self.db, ai_evaluation_service.LIVE_MODELS_SETTING, json.dumps({
+            "checked_at": datetime.now(timezone.utc).isoformat(),
+            "keys": {f"key-{index}": live_models for index in range(1, count + 1)},
+        }))
+        self.db.commit()
+
+    def _composite_module_with_writing_and_speaking(self):
+        """A full mock: Writing parts and Speaking parts in one paper."""
+        created = module_authoring_service.create_module(
+            self.db,
+            self.instructor,
+            {"module_type": "full_mock", "title": "Full Mock A", "description": None, "instructions": None},
+            "127.0.0.1",
+        )
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+        for part in module.parts:
+            if part.auto_marked:
+                continue
+            question_type = "speaking_prompt" if part.section_type == "speaking" else "essay"
+            self.db.add(
+                ExamModuleQuestion(
+                    part_id=part.id,
+                    **_question(question_type, f"{part.title} prompt", Decimal(part.max_marks or 1), []),
+                    source_type="manual",
+                    source_filename=None,
+                    sort_order=0,
+                    created_by_id=self.instructor.id,
+                )
+            )
+        self.db.commit()
+        self.db.expire_all()
+        return module_authoring_service.get_module_or_404(self.db, module.id)
+
+    def test_a_final_test_marks_writing_and_speaking_in_one_request(self):
+        """One request for the whole paper.
+
+        Daily and per-minute limits count requests, not parts, so a Final Test
+        that spent one call per essay plus another for the interview burned
+        three of the day's requests on one candidate. Together they cost one.
+        """
+        self._enable_ai_evaluation()
+        self._subscribe_student_for_ai()
+        module = self._composite_module_with_writing_and_speaking()
+        self._course_with_module(module.id)
+
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        attempt_service.commence_attempt(self.db, self.student, attempt)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        for part in sorted(attempt.module.parts, key=lambda item: item.sort_order):
+            for question in part.questions:
+                if part.section_type == "speaking":
+                    attempt_service.save_audio_answer(
+                        self.db, attempt, question.id, b"candidate-audio" * 900, ".webm"
+                    )
+                else:
+                    attempt_service.save_answer(self.db, attempt, question.id, {"text": "A developed response."})
+        attempt_service.submit_attempt(self.db, attempt)
+
+        payloads = []
+
+        def evaluator(_config, payload):
+            payloads.append(payload)
+            return {
+                "parts": [
+                    {
+                        "part_id": part["part_id"],
+                        "criteria": [
+                            {"criterion": item["criterion"], "marks_awarded": 1, "rationale": "Evidence."}
+                            for item in part["rubric"]
+                        ],
+                        "comment": "Marked.",
+                        "confidence": 0.8,
+                    }
+                    for part in payload["parts"]
+                ],
+            }
+
+        with patch.object(ai_evaluation_service, "_remote_evaluator", side_effect=evaluator):
+            ai_evaluation_service.auto_evaluate_submission(self.db, attempt)
+
+        # One call, carrying every part of the paper.
+        self.assertEqual(len(payloads), 1)
+        sent = payloads[0]
+        self.assertEqual(sent["task"], "cefr_rubric_evaluation_batch")
+        self.assertEqual(sorted(sent["skills"]), ["speaking", "writing"])
+        self.assertEqual(
+            sorted(part["section_type"] for part in sent["parts"]),
+            sorted(part.section_type for part in attempt.module.parts if not part.auto_marked),
+        )
+
+        self.db.refresh(attempt)
+        self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in attempt.part_grades))
+
+    def test_the_best_model_is_spent_on_every_key_before_dropping_a_level(self):
+        live = ["gemini-3.7-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-pro"]
+        self._save_keys_with_models(live, count=3)
+
+        plan = ai_evaluation_service.evaluation_plan(self.db, "writing")
+        order = [(entry["key_id"], entry["model"]) for entry in plan]
+
+        # Every key is tried on the best model before anything steps down.
+        self.assertEqual(
+            order[:3],
+            [("key-1", "gemini-3.7-flash"), ("key-2", "gemini-3.7-flash"), ("key-3", "gemini-3.7-flash")],
+        )
+        self.assertEqual(
+            order[3:6],
+            [("key-1", "gemini-3.5-flash"), ("key-2", "gemini-3.5-flash"), ("key-3", "gemini-3.5-flash")],
+        )
+        # Pro outranks an older Flash, and Lite is the last resort of all.
+        models_in_order = [model for _key, model in order]
+        self.assertLess(models_in_order.index("gemini-2.5-pro"), models_in_order.index("gemini-3.5-flash-lite"))
+        self.assertEqual(models_in_order[-1], "gemini-3.5-flash-lite")
+
+    def test_a_model_out_of_daily_quota_drops_out_until_the_day_resets(self):
+        live = ["gemini-3.7-flash", "gemini-3.5-flash"]
+        self._save_keys_with_models(live, count=2)
+
+        plan = ai_evaluation_service.evaluation_plan(self.db, "writing")
+        self.assertIn(("key-1", "gemini-3.7-flash"), [(e["key_id"], e["model"]) for e in plan])
+
+        # Key 1 spends its day on the best model.
+        config = next(entry for entry in plan if entry["key_id"] == "key-1")
+        ai_evaluation_service.mark_rpd_exhausted(self.db, config, "gemini-3.7-flash")
+
+        after = [(entry["key_id"], entry["model"]) for entry in ai_evaluation_service.evaluation_plan(self.db, "writing")]
+        # That one pair is out; the same model on the other key is untouched.
+        self.assertNotIn(("key-1", "gemini-3.7-flash"), after)
+        self.assertIn(("key-2", "gemini-3.7-flash"), after)
+        self.assertIn(("key-1", "gemini-3.5-flash"), after)
+        self.assertTrue(ai_evaluation_service.is_rpd_exhausted(self.db, config, "gemini-3.7-flash"))
+
+        # And it comes back once the quota day has rolled over.
+        from app.services.settings_service import set_setting
+        set_setting(self.db, ai_evaluation_service.RPD_EXHAUSTED_SETTING, json.dumps({
+            f"key-1|gemini-3.7-flash": (datetime.now(timezone.utc) - timedelta(hours=1)).replace(tzinfo=None).isoformat(),
+        }))
+        self.db.commit()
+        self.assertFalse(ai_evaluation_service.is_rpd_exhausted(self.db, config, "gemini-3.7-flash"))
+
+    def test_a_declared_daily_limit_retires_a_model_before_the_provider_does(self):
+        live = ["gemini-3.7-flash", "gemini-3.5-flash"]
+        self._save_keys_with_models(live, count=1)
+        config = ai_evaluation_service.evaluation_plan(self.db, "writing")[0]
+
+        from app.services import ai_quota_service
+        ai_quota_service.save_declared_limits(self.db, {
+            ai_evaluation_service._quota_limit_key("Key 1", "gemini-3.7-flash"): {"rpd": 2},
+        })
+        self.db.commit()
+
+        self.assertFalse(ai_evaluation_service.is_rpd_exhausted(self.db, config, "gemini-3.7-flash"))
+
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+        for _ in range(2):
+            self.db.add(AiEvaluation(
+                attempt_id=attempt.id, part_id=part.id, requested_by_id=self.student.id,
+                provider="gemini", model="gemini-3.7-flash", key_label="Key 1", status="completed",
+            ))
+        self.db.commit()
+        self.assertTrue(ai_evaluation_service.is_rpd_exhausted(self.db, config, "gemini-3.7-flash"))
+
+    def test_quota_summary_exposes_sorted_model_hierarchy(self):
+        live = ["gemini-3.7-flash", "gemini-3.5-flash"]
+        self._save_keys_with_models(live, count=2)
+        module = self._build_writing_module()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        part = sorted(attempt.module.parts, key=lambda item: item.sort_order)[0]
+
+        from app.services import ai_quota_service
+        ai_quota_service.save_declared_limits(self.db, {
+            ai_evaluation_service._quota_limit_key("Key 1", "gemini-3.7-flash"): {"rpd": 3},
+            ai_evaluation_service._quota_limit_key("Key 2", "gemini-3.7-flash"): {"rpd": 4},
+        })
+        self.db.add(AiEvaluation(
+            attempt_id=attempt.id,
+            part_id=part.id,
+            requested_by_id=self.student.id,
+            provider="gemini",
+            model="gemini-3.7-flash",
+            key_label="Key 1",
+            status="completed",
+        ))
+        self.db.commit()
+
+        summary = ai_quota_service.usage_summary(self.db)
+        writing_plan = summary["plan"]["writing"]
+
+        self.assertEqual(writing_plan["active"]["key_label"], "Key 1")
+        self.assertEqual(writing_plan["active"]["model"], "gemini-3.7-flash")
+        self.assertEqual(writing_plan["active"]["remaining_today"], 2)
+        self.assertEqual(writing_plan["next"]["key_label"], "Key 2")
+        flash_group = writing_plan["model_groups"][0]
+        self.assertEqual(flash_group["model"], "gemini-3.7-flash")
+        self.assertEqual(flash_group["keys"], 2)
+        self.assertEqual(flash_group["remaining_today"], 6)
+        self.assertNotIn("api_key", writing_plan["active"])
 
     def test_a_check_keeps_the_model_the_admin_just_chose(self):
         """Detect & test kept resetting the dropdowns to its own pick.

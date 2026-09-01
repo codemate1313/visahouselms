@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 import httpx
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -364,6 +365,41 @@ NON_EVALUATION_MARKERS = (
     "realtime",
     "guard",
 )
+
+
+class RateLimited(HTTPException):
+    """A 429. `daily` separates "come back next minute" from "come back
+    tomorrow" - the first is worth waiting out, the second takes the model out
+    of the running until the quota day rolls over."""
+
+    def __init__(self, detail: str, *, daily: bool = False):
+        super().__init__(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=detail)
+        self.daily = daily
+
+
+def _model_version(model_id: str) -> float:
+    match = re.search(r"gemini-(\d+(?:\.\d+)?)", (model_id or "").lower())
+    try:
+        return float(match.group(1)) if match else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def model_rank(model_id: str) -> tuple:
+    """Marking quality, best first.
+
+    Three rules, in order: a "lite" model is always a last resort, a newer
+    generation beats an older one, and at the same generation Pro beats Flash.
+    Computed rather than listed so a model Google ships next month slots into
+    the right place without anyone editing this file.
+    """
+    name = (model_id or "").lower()
+    return (
+        1 if "lite" in name else 0,
+        -_model_version(name),
+        0 if "pro" in name else 1,
+        name,
+    )
 
 
 def model_skills(provider: str, model_id: str) -> set[str]:
@@ -999,6 +1035,68 @@ def check_configured_models(db: Session, *, force: bool = False) -> list[dict]:
         except Exception:
             logger.exception("Could not send the model availability notification")
     return problems
+
+
+def _models_available_to(db: Session, config: dict, skill: str) -> list[str]:
+    """Every model this key could mark this kind of paper with, best first."""
+    if config.get("provider") != "gemini":
+        model = config.get("speaking_model" if skill == SKILL_SPEAKING else "writing_model") or config.get("model")
+        return [model] if model else []
+
+    live = config.get("live_models") or []
+    usable = [model for model in live if skill in model_skills("gemini", model)]
+    if not usable:
+        # No directory yet: the preference order is the best guess available,
+        # and a call that misses simply moves to the next entry.
+        usable = list(gemini_model_chain(config.get("model"), [], skill=skill))
+    return sorted(dict.fromkeys(usable), key=model_rank)
+
+
+def evaluation_plan(db: Session, skill: str, configs: Optional[list[dict]] = None) -> list[dict]:
+    """Every (model, key) pair worth trying for this paper, in order.
+
+    Two rules, in this order:
+
+      1. The model each key is configured with goes first, across every key -
+         an explicit choice is an instruction, not a suggestion.
+      2. After that, quality decides: the best remaining model is tried on
+         every key before anything drops to the next one down, so five keys on
+         the newest Flash are all spent before the run settles for an older
+         one. "Lite" models sit at the very end.
+
+    Pairs whose daily quota is already gone are left out entirely - a daily
+    limit does not reset for hours, so re-testing it wastes a call per paper.
+    """
+    entries: list[dict] = []
+    seen: set[tuple] = set()
+
+    def add(config: dict, model: str) -> None:
+        if not model:
+            return
+        # Keys are identified by whatever they have: a saved key has an id,
+        # one built for a test has only its secret.
+        pair = (config.get("key_id") or config.get("key_label") or config.get("api_key"), model)
+        if pair in seen or is_rpd_exhausted(db, config, model):
+            return
+        seen.add(pair)
+        entries.append({**config, "model": model})
+
+    key_configs = configs if configs is not None else _candidate_configs(db)
+
+    # Pass one: what each key was told to use.
+    for config in key_configs:
+        add(config, config_for_skill(config, skill).get("model"))
+
+    # Pass two: everything else, best model across all keys before stepping
+    # down to the next.
+    remaining: list[tuple] = []
+    for index, config in enumerate(key_configs):
+        for model in _models_available_to(db, config, skill):
+            remaining.append((model_rank(model), index, config, model))
+    for _rank, _index, config, model in sorted(remaining, key=lambda row: (row[0], row[1])):
+        add(config, model)
+
+    return entries[:EVALUATION_PLAN_MAX_ATTEMPTS]
 
 
 def config_for_skill(config: dict, skill: str) -> dict:
@@ -1690,6 +1788,7 @@ def _batch_payload(attempt: TestAttempt, parts: list[ExamModulePart]) -> dict:
                 "part_id": part.id,
                 "part_code": part.part_code,
                 "title": part.title,
+                "section_type": part.section_type,
                 "skill_focus": part.skill_focus,
                 "rubric": part.rubric or [],
                 "responses": responses,
@@ -1698,20 +1797,28 @@ def _batch_payload(attempt: TestAttempt, parts: list[ExamModulePart]) -> dict:
     if not payload_parts:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No answerable Speaking recordings were found for AI marking.",
+            detail="No answerable responses were found for AI marking.",
         )
 
+    section_types = {part["section_type"] for part in payload_parts}
     return {
         "task": "cefr_rubric_evaluation_batch",
         "framework": cefr_service.FRAMEWORK_VERSION,
         "policy_version": cefr_service.POLICY_VERSION,
-        "skill": "speaking",
+        # A Final Test or full mock sends its Writing and its Speaking together
+        # in this one request. Every provider limit that matters is counted per
+        # request, so one call for the whole paper costs a fraction of what one
+        # call per part did.
+        "skill": SKILL_SPEAKING if SKILL_SPEAKING in section_types else SKILL_WRITING,
+        "skills": sorted(section_types),
         "audio_bytes": inline_bytes,
         "is_final": bool(attempt.is_final),
         "parts": payload_parts,
         "instructions": (
-            "You are an expert Language CERT and CEFR speaking examiner. "
-            "Evaluate each Speaking part independently. Return JSON only. "
+            "You are an expert Language CERT and CEFR examiner. "
+            "Evaluate each part independently, against its own rubric and its own skill: "
+            "Writing parts are marked on the written response, Speaking parts on the recording. "
+            "Return JSON only. "
             "For every part_id supplied, return exactly one result object with that same part_id. "
             "Score every authored rubric criterion strictly between 0 and its max_marks. "
             "If a response is inaudible, off-topic, in the wrong language, or does not answer the prompt, "
@@ -1806,6 +1913,108 @@ def _quota_limit_key(label: object, model: object) -> str:
     key = str(label or "Primary API Key").strip() or "Primary API Key"
     model_name = str(model or "").strip()
     return f"{key} · {model_name}" if model_name else key
+
+
+RPD_EXHAUSTED_SETTING = "ai.rpd_exhausted"
+# One part can be attempted against every model on every key - that is the
+# point, and the last resort has to stay reachable, so this is set high enough
+# for a full set of keys to work down to the Lite models. It exists only to
+# stop a pathological configuration spending a hundred calls on one essay;
+# pairs already out of daily quota never enter the plan, so a real run is far
+# shorter than this.
+EVALUATION_PLAN_MAX_ATTEMPTS = 40
+
+
+def _quota_day_start() -> datetime:
+    """Start of the current Gemini quota day (midnight Pacific), in UTC."""
+    from app.services.ai_quota_service import _pacific_day_start
+
+    return _pacific_day_start()
+
+
+def _rpd_exhausted_map(db: Session) -> dict:
+    raw = get_setting(db, RPD_EXHAUSTED_SETTING)
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, ValueError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _rpd_pair_key(config: dict, model: str) -> str:
+    return f"{config.get('key_id') or config.get('key_label') or 'primary'}|{model}"
+
+
+def mark_rpd_exhausted(db: Session, config: dict, model: str) -> None:
+    """This key cannot use this model again until the quota day rolls over.
+
+    Recorded rather than inferred: a daily limit does not reset for hours, so
+    without a note of it every paper for the rest of the day would spend a call
+    rediscovering the same wall.
+    """
+    from app.services.settings_service import set_setting
+
+    current = _rpd_exhausted_map(db)
+    current[_rpd_pair_key(config, model)] = (_quota_day_start() + timedelta(days=1)).isoformat()
+    # Old entries fall away on their own; clearing them here keeps the setting
+    # from growing a line per model per key per day for ever.
+    now = _now()
+    pruned = {}
+    for pair, resets_at in current.items():
+        try:
+            if datetime.fromisoformat(resets_at) > now:
+                pruned[pair] = resets_at
+        except (TypeError, ValueError):
+            continue
+    set_setting(db, RPD_EXHAUSTED_SETTING, json.dumps(pruned))
+
+
+def _rpd_limit_for(db: Session, config: dict, model: str) -> Optional[int]:
+    """Only a limit the admin actually declared counts here.
+
+    Guessing a daily ceiling either retires a model early (wasting quota that
+    was there) or too late (which the 429 catches anyway), so an undeclared
+    limit means "wait for the provider to say no".
+    """
+    limits = _declared_quota_limits(db)
+    label = config.get("key_label") or "Primary API Key"
+    declared = limits.get(_quota_limit_key(label, model)) or limits.get(label) or {}
+    try:
+        rpd = int(declared.get("rpd") or 0)
+    except (TypeError, ValueError):
+        rpd = 0
+    return rpd if rpd > 0 else None
+
+
+def _requests_today(db: Session, config: dict, model: str) -> int:
+    label = config.get("key_label") or "Primary API Key"
+    return (
+        db.query(func.count(AiEvaluation.id))
+        .filter(
+            AiEvaluation.key_label == label,
+            AiEvaluation.model == model,
+            AiEvaluation.created_at >= _quota_day_start(),
+            AiEvaluation.status.notin_(("auto_zero", "not_sent")),
+        )
+        .scalar()
+        or 0
+    )
+
+
+def is_rpd_exhausted(db: Session, config: dict, model: str) -> bool:
+    """Has this key spent its day on this model?"""
+    marked = _rpd_exhausted_map(db).get(_rpd_pair_key(config, model))
+    if marked:
+        try:
+            if datetime.fromisoformat(marked) > _now():
+                return True
+        except (TypeError, ValueError):
+            pass
+
+    limit = _rpd_limit_for(db, config, model)
+    return bool(limit) and _requests_today(db, config, model) >= limit
 
 
 def _rpm_limit_for_config(db: Session, config: dict) -> Optional[int]:
@@ -1938,6 +2147,7 @@ def _batch_evaluation_prompt(payload: dict) -> str:
         sections.append(
             f"Part ID: {part['part_id']}\n"
             f"Part Title: {part['title']}\n"
+            f"Skill: {(part.get('section_type') or 'writing').upper()}\n"
             f"Skill Focus: {part.get('skill_focus') or ''}\n"
             "Rubric Criteria:\n"
             + "\n".join(
@@ -1945,10 +2155,12 @@ def _batch_evaluation_prompt(payload: dict) -> str:
                 for item in part.get("rubric", [])
             )
         )
+    skills = payload.get("skills") or [payload.get("skill") or "writing"]
     return (
         f"Framework: {payload['framework']} ({payload['policy_version']})\n"
-        f"Skill: {payload['skill'].upper()}\n\n"
-        "Evaluate all supplied Speaking parts in this single request.\n\n"
+        f"Skills in this paper: {', '.join(skill.upper() for skill in skills)}\n\n"
+        "Evaluate every part supplied below in this single request, each against "
+        "its own rubric and its own skill.\n\n"
         + "\n\n".join(sections)
         + "\n\nInstructions:\n"
         + payload["instructions"]
@@ -2082,6 +2294,11 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
                 res = client.post(url, headers=headers, json=gemini_payload)
 
             last_candidate = index == len(model_chain) - 1
+            # A retired model is dialled around here, because no caller can
+            # know a name has stopped existing until it is tried. A refusal on
+            # quota is different: the plan above decides what to reach for
+            # next, and it knows about the other keys as well as the other
+            # models.
             if _model_is_gone(res) and not last_candidate:
                 logger.warning(
                     "Gemini model %s is no longer available; trying %s",
@@ -2089,18 +2306,20 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
                     model_chain[index + 1],
                 )
                 continue
-            if res.status_code == 429 and not last_candidate:
-                logger.info("Gemini model %s returned 429, falling back to %s", candidate, model_chain[index + 1])
-                # Retrying inside the same minute just spends another request
-                # into a window that is already closed.
-                time.sleep(RATE_LIMIT_RETRY_SECONDS)
-                continue
             break
 
         if res.status_code == 429:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Google Gemini API rate limit reached (15 RPM free tier limit). Please wait a moment and try again.",
+            body = (res.text or "").lower()
+            # Google names the metric it refused on. "Per day" is the whole
+            # day gone; anything else clears within the minute.
+            daily = any(marker in body for marker in ("perday", "per day", "daily", "requests_per_day"))
+            raise RateLimited(
+                (
+                    f"Google Gemini daily request limit reached for {model}."
+                    if daily
+                    else f"Google Gemini rate limit reached for {model}. Please wait a moment and try again."
+                ),
+                daily=daily,
             )
 
         res.raise_for_status()
@@ -2596,12 +2815,17 @@ def request_suggestion(
     evaluator: Optional[Callable[[dict, dict], dict]] = None,
     configs: Optional[list[dict]] = None,
 ) -> dict:
-    configs_to_try = configs or (_candidate_configs(db) if evaluator is None else [{
-        "provider": "test_evaluator",
-        "model": "test-model",
-        "monthly_limit": DEFAULT_MONTHLY_LIMIT,
-        "api_key": "test",
-    }])
+    if evaluator is not None and not configs:
+        configs_to_try = [{
+            "provider": "test_evaluator",
+            "model": "test-model",
+            "monthly_limit": DEFAULT_MONTHLY_LIMIT,
+            "api_key": "test",
+        }]
+    else:
+        # Every (model, key) pair worth trying, best model across all keys
+        # first. Pairs whose day is already spent are not in the list.
+        configs_to_try = evaluation_plan(db, part.section_type, configs)
     if not configs_to_try:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI evaluation is not enabled or fully configured")
 
@@ -2632,8 +2856,6 @@ def request_suggestion(
     failed_records: list[AiEvaluation] = []
 
     for index, config in enumerate(configs_to_try):
-        # Writing and Speaking are marked by different models on the same key.
-        config = config_for_skill(config, part.section_type)
         if evaluator is None:
             _throttle_provider_quota(db, config)
         record = AiEvaluation(
@@ -2686,10 +2908,15 @@ def request_suggestion(
             record.error = _redact_secrets(exc.detail)[:4000]
             db.add(record)
             failed_records.append(record)
-            if exc.status_code == 429 and index == len(configs_to_try) - 1:
-                db.commit()
-                raise
-            if exc.status_code == 429 and index < len(configs_to_try) - 1:
+            if exc.status_code == 429:
+                if getattr(exc, "daily", False):
+                    # Gone until midnight Pacific: remember it, so the rest of
+                    # today's papers skip this pair instead of rediscovering it.
+                    db.commit()
+                    mark_rpd_exhausted(db, config, config.get("model"))
+                if index == len(configs_to_try) - 1:
+                    db.commit()
+                    raise
                 # Separate keys can still share a project quota, so give the
                 # window a moment before spending the next one.
                 time.sleep(RATE_LIMIT_KEY_SWITCH_SECONDS)
@@ -2714,10 +2941,34 @@ def request_speaking_suggestions(
     parts: list[ExamModulePart],
     evaluator: Optional[Callable[[dict, dict], dict]] = None,
 ) -> dict[int, dict]:
-    speaking_parts = [part for part in parts if part.section_type == "speaking"]
+    """The Speaking-only form of the batch, kept for callers that only ever
+    hand it recordings."""
+    speaking_parts = [part for part in parts if part.section_type == SKILL_SPEAKING]
     if not speaking_parts:
         return {}
-    configs_to_try = _candidate_configs(db) if evaluator is None else [{
+    return request_batch_suggestions(db, actor, attempt, speaking_parts, evaluator)
+
+
+def request_batch_suggestions(
+    db: Session,
+    actor: User,
+    attempt: TestAttempt,
+    parts: list[ExamModulePart],
+    evaluator: Optional[Callable[[dict, dict], dict]] = None,
+) -> dict[int, dict]:
+    """Mark several parts in one provider request.
+
+    Every provider limit that matters - requests per minute, requests per day -
+    counts requests, not parts. A Final Test marked part by part spent one of
+    them per essay and another for the interview; marked together it spends
+    one for the whole paper.
+    """
+    speaking_parts = [part for part in parts if part.section_type == "speaking"]
+    if not parts:
+        return {}
+    # The model has to be able to hear if anything in the batch is a recording.
+    batch_skill = SKILL_SPEAKING if speaking_parts else SKILL_WRITING
+    configs_to_try = evaluation_plan(db, batch_skill) if evaluator is None else [{
         "provider": "test_evaluator",
         "model": "test-model",
         "monthly_limit": DEFAULT_MONTHLY_LIMIT,
@@ -2727,10 +2978,10 @@ def request_speaking_suggestions(
     if not configs_to_try:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="AI evaluation is not enabled or fully configured")
 
-    primary_part = sorted(speaking_parts, key=lambda item: item.sort_order)[0]
+    primary_part = sorted(parts, key=lambda item: item.sort_order)[0]
     limits = _limit_rows(db, attempt, int(configs_to_try[0].get("monthly_limit") or DEFAULT_MONTHLY_LIMIT))
     try:
-        payload = _batch_payload(attempt, speaking_parts)
+        payload = _batch_payload(attempt, parts)
     except HTTPException as exc:
         db.add(AiEvaluation(
             attempt_id=attempt.id,
@@ -2749,7 +3000,6 @@ def request_speaking_suggestions(
     last_error: Optional[Exception] = None
     failed_records: list[AiEvaluation] = []
     for index, config in enumerate(configs_to_try):
-        config = config_for_skill(config, SKILL_SPEAKING)
         if evaluator is None:
             _throttle_provider_quota(db, config)
         record = AiEvaluation(
@@ -2775,7 +3025,7 @@ def request_speaking_suggestions(
                 if substitution:
                     _record_model_substitution(db, config, substitution, record)
             record.response_raw = _readable_response(raw)
-            suggestions = _normalize_batch(raw, speaking_parts)
+            suggestions = _normalize_batch(raw, parts)
             record.status = "completed"
             record.suggestions = {"parts": {str(part_id): suggestion for part_id, suggestion in suggestions.items()}}
             for limit in limits:
@@ -2790,10 +3040,13 @@ def request_speaking_suggestions(
             record.error = _redact_secrets(exc.detail)[:4000]
             db.add(record)
             failed_records.append(record)
-            if exc.status_code == 429 and index == len(configs_to_try) - 1:
-                db.commit()
-                raise
-            if exc.status_code == 429 and index < len(configs_to_try) - 1:
+            if exc.status_code == 429:
+                if getattr(exc, "daily", False):
+                    db.commit()
+                    mark_rpd_exhausted(db, config, config.get("model"))
+                if index == len(configs_to_try) - 1:
+                    db.commit()
+                    raise
                 time.sleep(RATE_LIMIT_KEY_SWITCH_SECONDS)
         except Exception as exc:
             last_error = exc
@@ -2915,6 +3168,33 @@ def auto_evaluate_submission(db: Session, attempt: TestAttempt) -> bool:
             continue
 
         pending_parts.append(part)
+
+    # One request for the whole paper. A Final Test used to cost one call per
+    # Writing part plus one for the interview; the daily limit counts calls,
+    # not parts, so sending them together is the difference between spending
+    # three of the day's requests on one candidate and spending one.
+    if len(pending_parts) > 1:
+        try:
+            suggestions = request_batch_suggestions(db, attempt.user, attempt, pending_parts)
+            marked = [part for part in pending_parts if part.id in suggestions]
+            for part in marked:
+                _apply_ai_grade(db, attempt, part, suggestions[part.id])
+            db.commit()
+            pending_parts = [part for part in pending_parts if part not in marked]
+        except HTTPException as exc:
+            if exc.status_code == 429:
+                quota_exhausted = True
+                pending_parts = []
+            else:
+                # One bad batch must not cost every part its marking: fall
+                # through and let them go one at a time below.
+                logger.warning(
+                    "Batch AI evaluation failed for attempt %s (%s); marking the parts individually",
+                    attempt.id,
+                    _redact_secrets(exc.detail)[:200],
+                )
+        except Exception:
+            logger.exception("Batch AI evaluation failed for attempt %s; marking the parts individually", attempt.id)
 
     speaking_parts = [part for part in pending_parts if part.section_type == "speaking"]
     if speaking_parts:

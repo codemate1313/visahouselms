@@ -209,6 +209,65 @@ def usage_summary(db: Session) -> dict:
         })
     keys.sort(key=lambda item: (-item["requests_today"], item["key"]))
 
+    def quota_plan_for(skill: str) -> dict:
+        plan_entries = []
+        model_groups: dict[str, dict] = {}
+        for index, config in enumerate(ai_evaluation_service.evaluation_plan(db, skill), start=1):
+            label = config.get("key_label") or "Primary API Key"
+            model = config.get("model")
+            key = _quota_limit_key(label, model)
+            declared = limits.get(key, {}) or limits.get(label, {})
+            usage = buckets.get(key, {})
+            try:
+                rpd_limit = int(declared.get("rpd") or 0)
+            except (TypeError, ValueError):
+                rpd_limit = 0
+            used_today = int(usage.get("requests_today") or 0)
+            remaining_today = max(0, rpd_limit - used_today) if rpd_limit > 0 else None
+            entry = {
+                "rank": index,
+                "key": key,
+                "key_label": label,
+                "key_id": config.get("key_id"),
+                "provider": config.get("provider"),
+                "model": model,
+                "enabled": bool(config.get("enabled", True)),
+                "requests_today": used_today,
+                "rpd_limit": rpd_limit or None,
+                "remaining_today": remaining_today,
+                "exhausted": ai_evaluation_service.is_rpd_exhausted(db, config, model) if model else False,
+            }
+            plan_entries.append(entry)
+            group = model_groups.setdefault(model or "Unselected model", {
+                "model": model,
+                "provider": config.get("provider"),
+                "first_rank": index,
+                "keys": 0,
+                "requests_today": 0,
+                "rpd_limit": 0,
+                "remaining_today": 0,
+                "unknown_limits": 0,
+            })
+            group["keys"] += 1
+            group["requests_today"] += used_today
+            if rpd_limit > 0:
+                group["rpd_limit"] += rpd_limit
+                group["remaining_today"] += remaining_today or 0
+            else:
+                group["unknown_limits"] += 1
+
+        groups = sorted(model_groups.values(), key=lambda item: item["first_rank"])
+        for group in groups:
+            if group["unknown_limits"] == group["keys"]:
+                group["rpd_limit"] = None
+                group["remaining_today"] = None
+        return {
+            "active": plan_entries[0] if plan_entries else None,
+            "next": plan_entries[1] if len(plan_entries) > 1 else None,
+            "entries": plan_entries,
+            "model_groups": groups,
+        }
+
     series = [
         {"hour": slot, **values}
         for slot, values in sorted(hourly.items())
@@ -287,6 +346,10 @@ def usage_summary(db: Session) -> dict:
         "totals": totals,
         "queue": queue,
         "performance": performance,
+        "plan": {
+            "writing": quota_plan_for(ai_evaluation_service.SKILL_WRITING),
+            "speaking": quota_plan_for(ai_evaluation_service.SKILL_SPEAKING),
+        },
         "series": series,
         "day_started_at": day_start,
         # So the screen can say when the daily allowance comes back rather than
