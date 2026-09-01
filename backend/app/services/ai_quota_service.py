@@ -224,46 +224,15 @@ def usage_summary(db: Session) -> dict:
         })
     keys.sort(key=lambda item: (-item["requests_today"], item["key"]))
 
-    def _models_listed_for_key(config: dict, skill: str) -> list[str]:
-        options = config.get("model_options") if isinstance(config.get("model_options"), list) else []
-        listed = [
-            str(option.get("value") or "").removeprefix("models/")
-            for option in options
-            if option.get("available", True) is not False
-            and skill in (option.get("skills") or [skill])
-        ]
-        configured = ai_evaluation_service.config_for_skill(config, skill).get("model")
-        values = [configured, *listed] if listed else [configured]
-        return list(dict.fromkeys(value for value in values if value))
-
     def quota_plan_for(skill: str) -> dict:
         plan_entries = []
         model_groups: dict[str, dict] = {}
-        configs = [
-            config for config in ai_evaluation_service._candidate_configs(db)
-            if config.get("enabled", True)
-        ]
-        raw_entries: list[dict] = []
-        seen: set[tuple] = set()
-
-        def add(config: dict, model: Optional[str]) -> None:
-            if not model:
-                return
-            pair = (config.get("key_id") or config.get("key_label"), model)
-            if pair in seen or ai_evaluation_service.is_rpd_exhausted(db, config, model):
-                return
-            seen.add(pair)
-            raw_entries.append({**config, "model": model})
-
-        for config in configs:
-            add(config, ai_evaluation_service.config_for_skill(config, skill).get("model"))
-
-        remaining: list[tuple] = []
-        for index, config in enumerate(configs):
-            for model in _models_listed_for_key(config, skill):
-                remaining.append((ai_evaluation_service.model_rank(model), index, config, model))
-        for _rank, _index, config, model in sorted(remaining, key=lambda row: (row[0], row[1])):
-            add(config, model)
+        # The one implementation of the order lives in the evaluator. This used
+        # to build its own copy, and the moment the real rule changed - pinned
+        # model first, otherwise newest first - the card carried on describing
+        # the old one, telling super admins a model was "in use" that nothing
+        # would reach for.
+        raw_entries = ai_evaluation_service.evaluation_plan(db, skill)
 
         for index, config in enumerate(raw_entries, start=1):
             label = config.get("key_label") or "Primary API Key"

@@ -219,12 +219,16 @@ function ModelStack({ label, groups }: { label: string; groups: QuotaModelGroup[
                 <strong>{modelDisplay(group.model)}</strong>
                 <span>
                   {group.keys} key{group.keys === 1 ? "" : "s"}
-                  {index === 0 ? " · in use" : ""}
+                  {index === 0 ? " · first choice" : ""}
                 </span>
               </div>
               <div className="ai-quota-model-meta">
                 {idle ? (
-                  <span>Standing by - nothing marked on it today</span>
+                  <span>
+                    {index === 0
+                      ? "The next paper goes here - nothing marked on it yet today"
+                      : "Standing by - reached only if the models above run out"}
+                  </span>
                 ) : (
                   <>
                     <span>{readable(group.requests_today)} used today</span>
@@ -674,15 +678,15 @@ export function AiQuotaCard() {
             <header>
               <div>
                 <h4>Model hierarchy</h4>
-                <span>Built from each saved API key: selected model first, then the models loaded for that key.</span>
+                <span>Newest and most capable model first, tried on every key before stepping down. A model pinned on a key leads for that key.</span>
               </div>
               <Badge tone={data.enabled && data.configured ? "green" : "gray"}>
                 {data.enabled && data.configured ? "Routing ready" : "Not routing"}
               </Badge>
             </header>
             <div className="ai-quota-route-summary">
-              <PlanPair label="Reading & Writing now" entry={readingWritingPlan?.active} />
-              <PlanPair label="Reading & Writing next" entry={readingWritingPlan?.next} />
+              <PlanPair label="Writing now" entry={readingWritingPlan?.active} />
+              <PlanPair label="Writing next" entry={readingWritingPlan?.next} />
               <PlanPair label="Speaking now" entry={speakingPlan?.active} />
               <PlanPair label="Speaking next" entry={speakingPlan?.next} />
             </div>

@@ -2127,6 +2127,37 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.refresh(attempt)
         self.assertTrue(all(grade.status == PART_GRADE_AI_GRADED for grade in attempt.part_grades))
 
+    def test_the_quota_card_shows_the_order_the_evaluator_will_really_use(self):
+        """The card had its own copy of the routing rules.
+
+        The moment the real rule changed - newest first unless a key is pinned
+        - the card carried on describing the old one, naming a model as "in
+        use" that nothing would reach for.
+        """
+        from app.services import ai_quota_service
+
+        live = ["gemini-3.7-flash", "gemini-2.5-flash"]
+        self._save_keys_with_models(live, count=2)
+        ai_evaluation_service.save_configured_keys(self.db, [
+            {
+                "id": f"key-{index}", "label": f"API Key {index}", "provider": "gemini",
+                "model": "gemini-2.5-flash", "api_key": f"AIza-{index}",
+                "enabled": True, "priority": index,
+            }
+            for index in (1, 2)
+        ])
+        self.db.commit()
+
+        card = ai_quota_service.usage_summary(self.db)["plan"]["writing"]
+        runtime = ai_evaluation_service.evaluation_plan(self.db, "writing")
+
+        self.assertEqual(
+            [(entry["model"], entry["key_id"]) for entry in card["entries"]],
+            [(entry["model"], entry["key_id"]) for entry in runtime],
+        )
+        self.assertEqual(card["active"]["model"], "gemini-3.7-flash")
+        self.assertEqual([group["position"] for group in card["model_groups"]], [1, 2])
+
     def test_aliases_previews_and_transcribers_are_not_offered_for_marking(self):
         """The routing list had grown to fifty-odd entries per skill.
 
@@ -2353,7 +2384,12 @@ class AttemptServiceTestCase(unittest.TestCase):
         reading_writing_plan = summary["plan"]["reading_writing"]
 
         self.assertIs(summary["plan"]["writing"], reading_writing_plan)
-        self.assertEqual([entry["model"] for entry in reading_writing_plan["entries"]], ["gemini-2.5-flash"])
+        # With no directory loaded there is nothing to say what the key really
+        # offers, so the configured model leads and the standard preference
+        # order follows it - a wrong guess there costs one hop, not a paper.
+        models = [entry["model"] for entry in reading_writing_plan["entries"]]
+        self.assertEqual(models[0], "gemini-2.5-flash")
+        self.assertNotIn("gemini-2.5-flash", models[1:])
         self.assertEqual(reading_writing_plan["model_groups"][0]["keys"], 1)
 
     def test_a_check_keeps_the_model_the_admin_just_chose(self):
