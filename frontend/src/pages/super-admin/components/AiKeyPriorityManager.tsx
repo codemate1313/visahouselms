@@ -169,16 +169,6 @@ function defaultModelForProvider(provider: AiDetectedProvider, fallback: string)
   return "";
 }
 
-function modelMatchesProvider(provider: AiDetectedProvider, model: string) {
-  if (!model) return false;
-  if (provider === "gemini") return model.startsWith("gemini-");
-  if (provider === "openai") {
-    return ["gpt-5", "gpt-4.1", "gpt-4o", "o4", "o3"].some((prefix) => model.startsWith(prefix));
-  }
-  if (provider === "custom_json") return true;
-  return false;
-}
-
 function isMaskedSecret(value: string) {
   return Boolean(value) && value.split("").every((char) => char === "*");
 }
@@ -330,7 +320,7 @@ export function AiKeyPriorityManager({
         model_order: data.model_order || [],
         // A pin the provider no longer offers is dropped back to automatic
         // rather than left pointing at a model that cannot be called.
-        preferred_model: selectableModelValue(key.preferred_model, data.model_options) || "",
+        preferred_model: selectableModelValue(data.preferred_model, data.model_options) || "",
         // A background refresh leaves the last real result on screen.
         ...(silent ? {} : { info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}` }),
       });
@@ -392,7 +382,7 @@ export function AiKeyPriorityManager({
         model_order: data.model_order || [],
         // A pin the provider no longer offers is dropped back to automatic
         // rather than left pointing at a model that cannot be called.
-        preferred_model: selectableModelValue(key.preferred_model, data.model_options) || "",
+        preferred_model: selectableModelValue(data.preferred_model, data.model_options) || "",
         last_status: data.ok ? "ok" : "failed",
         last_checked_at: new Date().toISOString(),
         info: `${data.provider_label ? `${data.provider_label}: ` : ""}${data.message}${data.detection_message ? ` ${data.detection_message}` : ""}${data.latency_ms ? ` (${data.latency_ms} ms)` : ""}`,
@@ -531,10 +521,16 @@ export function AiKeyPriorityManager({
                   update(index, {
                     api_key: event.target.value,
                     provider: detectedProvider ?? key.provider,
-                    model: detectedProvider && !modelMatchesProvider(detectedProvider, key.model)
+                    model: detectedProvider
                       ? defaultModelForProvider(detectedProvider, model)
                       : key.model,
                     model_options: [],
+                    writing_models: [],
+                    speaking_models: [],
+                    model_order: [],
+                    preferred_model: "",
+                    writing_model: undefined,
+                    speaking_model: undefined,
                     last_status: null,
                     last_checked_at: null,
                     info: detectedProvider && !providerInfo(detectedProvider).supported

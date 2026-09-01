@@ -2207,13 +2207,8 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(card["active"]["model"], "gemini-3.7-flash")
         self.assertEqual([group["position"] for group in card["model_groups"]], [1, 2])
 
-    def test_a_pinned_model_is_the_one_actually_tested(self):
-        """A check on the pinned model reported a limit on a different one.
-
-        The pin was resolved against the offered list, and when the exact id
-        was not on it the "best available" quietly took its place - so the
-        admin was told about a model they had never chosen.
-        """
+    def test_a_stale_pin_from_a_replaced_key_is_not_tested(self):
+        """A replacement key must only test models in its live directory."""
         self._save_gemini_key(model="gemini-3.7-flash")
         client = self._fake_gemini_models(["gemini-3.7-flash", "gemini-2.5-pro"])
         dialled: list[str] = []
@@ -2234,11 +2229,12 @@ class AttemptServiceTestCase(unittest.TestCase):
                 key_id="gemini-1",
                 provider="gemini",
                 api_key="AIza-secret",
-                # Deliberately a model the provider did not list.
+                # Deliberately inherited from the previous key and absent
+                # from this replacement key's directory.
                 preferred_model="gemini-3.5-flash",
             )
 
-        self.assertEqual(dialled, ["gemini-3.5-flash"])
+        self.assertEqual(dialled, ["gemini-3.7-flash"])
 
     def test_image_models_are_never_offered_as_markers(self):
         for rejected in ("gemini-3-pro-image-preview", "nano-banana-2", "gemini-2.5-flash-image"):
@@ -2554,6 +2550,39 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(tested, ["gemini-2.5-flash-lite"])
         self.assertEqual(result["model"], "gemini-2.5-flash-lite")
         self.assertEqual(result["preferred_model"], "gemini-2.5-flash-lite")
+
+    def test_connection_does_not_fall_through_to_an_unselected_legacy_model(self):
+        dialled: list[str] = []
+
+        class FakeResponse:
+            status_code = 404
+            text = "selected model is unavailable"
+
+            def raise_for_status(self):
+                raise RuntimeError("HTTP 404")
+
+        class FakeClient:
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *_args):
+                return False
+
+            def post(self_inner, url, **_kwargs):
+                dialled.append(url.split("/models/")[1].split(":")[0])
+                return FakeResponse()
+
+        with patch.object(ai_evaluation_service.httpx, "Client", return_value=FakeClient()):
+            result = ai_evaluation_service.test_connection(
+                provider="gemini",
+                api_key="AIza-new-key",
+                model="gemini-2.5-pro",
+            )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(dialled, ["gemini-2.5-pro"])
+        self.assertEqual(result["model"], "gemini-2.5-pro")
+        self.assertNotIn("gemini-2.0-flash", result["message"])
 
     def test_a_key_that_cannot_list_models_says_why_instead_of_a_404(self):
         """What the super admin actually saw: a 404 naming a model they never

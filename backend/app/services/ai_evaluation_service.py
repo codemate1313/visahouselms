@@ -762,6 +762,7 @@ def _persist_key_model(
     options: list[dict],
     writing_model: Optional[str] = None,
     speaking_model: Optional[str] = None,
+    preferred_model: Optional[str] = None,
 ) -> None:
     from app.services.settings_service import set_setting
 
@@ -776,6 +777,8 @@ def _persist_key_model(
                 item["writing_model"] = writing_model
             if speaking_model is not None:
                 item["speaking_model"] = speaking_model
+            if preferred_model is not None:
+                item["preferred_model"] = preferred_model
             changed = True
     if changed:
         set_setting(db, "ai.api_keys", json.dumps(stored))
@@ -891,6 +894,7 @@ def list_configured_key_models(
             options=options,
             writing_model=writing_model,
             speaking_model=speaking_model,
+            preferred_model=selected_pin,
         )
 
     speaking_note = (
@@ -1279,6 +1283,12 @@ def test_connection(
         "model": _resolve_model_for_provider(provider, model),
         "endpoint_url": endpoint_url,
     }
+    if provider == "gemini":
+        # A connection test must test the model named on screen. Without a
+        # live-model boundary the evaluator appended legacy guesses and the
+        # final error named gemini-2.0-flash even when the admin selected a
+        # completely different model.
+        config["live_models"] = [config["model"]]
     payload = {
         "task": "connection_test",
         "framework": cefr_service.FRAMEWORK_VERSION,
@@ -1419,12 +1429,13 @@ def test_configured_key(
     # picked a different model and not saved it yet, and answering about the
     # old one silently undoes their selection.
     requested_pin = preferred_model or (stored or {}).get("preferred_model") or ""
-    # Taken verbatim. Resolving a pin against the offered list quietly replaced
-    # it with the best available whenever the exact id was not on that list -
-    # so a check on the model the admin had chosen came back reporting a limit
-    # on a model they had never picked. If the pin cannot be called, the test
-    # has to say that about the pin.
-    selected_pin = requested_pin
+    # A pasted replacement key can inherit the previous key's unsaved pin.
+    # Only test a pin that this key's live directory actually returned.
+    selected_pin = (
+        requested_pin
+        if any(option.get("value") == requested_pin and option.get("available", True) is not False for option in discovered)
+        else ""
+    )
     if selected_pin:
         # A pin bypasses the "choose the best on offer" step entirely. That
         # step is what replaced it, and replacing the model under test is the
@@ -1469,6 +1480,7 @@ def test_configured_key(
             options=discovered,
             writing_model=writing_model,
             speaking_model=speaking_model,
+            preferred_model=selected_pin,
         )
     return result | {
         "detected_provider": detected["provider"],
