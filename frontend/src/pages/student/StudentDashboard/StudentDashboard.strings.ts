@@ -1,4 +1,16 @@
 export const studentDashboardStrings = {
+  unfinished: {
+    eyebrow: "Pick up where you left off",
+    heading: (count: number) => (count === 1 ? "1 test still to finish" : `${count} tests still to finish`),
+    subtitle: "Your answers are saved. Continue whenever you are ready.",
+    inProgress: "Started, not yet submitted",
+    speakingLeft: "Written paper complete - Speaking still to do",
+    startedAt: (when: string) => `started ${when}`,
+    resumeBadge: "In progress",
+    speakingBadge: "Speaking pending",
+    resume: "Continue test",
+    startSpeaking: "Start Speaking",
+  },
   loadError: "Failed to load your dashboard.",
   loading: "Loading...",
   eyebrow: "Student Dashboard",

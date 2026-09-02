@@ -1025,12 +1025,14 @@ def secure_preflight(
             detail="This Final Test is active in another browser tab",
         )
 
+    # An address that differs from the last sitting is a candidate on a
+    # different network - home instead of the centre, or a phone that changed
+    # cell. Flagging it here greeted everyone who came back for their Speaking
+    # section with "1 of 3 violations" before they had done anything. A change
+    # *during* a live session is still flagged, by the heartbeat.
     if attempt.security_ip_address and ip_address and attempt.security_ip_address != ip_address:
-        _add_security_flag(
-            db,
-            attempt,
-            "ip_change",
-            {"previous": attempt.security_ip_address, "current": ip_address},
+        logger.info(
+            "Final Test %s resumed from a new address; recording it without a violation", attempt.id
         )
 
     raw_token = secrets.token_urlsafe(32)
@@ -1676,6 +1678,26 @@ def _recompute_score(attempt: TestAttempt) -> None:
     attempt.max_score = total_max if total_max > 0 else None
 
 
+def _speaking_was_never_attempted(attempt: TestAttempt) -> bool:
+    """True when the module has a Speaking section and nothing was recorded.
+
+    Not "some answers missing" - none at all, which is what a candidate who
+    deferred their interview and never came back looks like.
+    """
+    speaking_question_ids = {
+        question.id
+        for part in attempt.module.parts
+        if part.section_type == "speaking"
+        for question in part.questions
+    }
+    if not speaking_question_ids:
+        return False
+    return not any(
+        answer.question_id in speaking_question_ids and (answer.audio_path or answer.response)
+        for answer in attempt.answers
+    )
+
+
 def _finalize_if_all_graded(db: Session, attempt: TestAttempt) -> bool:
     """Marks the attempt ATTEMPT_GRADED once every human-graded part carries a
     published grade - human ("graded") or automatic AI ("ai_graded") -
@@ -1705,6 +1727,19 @@ def _finalize_if_all_graded(db: Session, attempt: TestAttempt) -> bool:
     db.commit()
 
     from app.services import achievement_service, notification_service
+
+    # A paper whose Speaking section was never sat is not a result worth
+    # announcing: the score is whatever the written half came to, and telling
+    # the candidate their Final Test "has been graded" at 2 out of 164 reads
+    # as a verdict on them rather than on an interview they have not given.
+    # The grade is still recorded, and still visible from their results - it
+    # is only the announcement that waits.
+    if _speaking_was_never_attempted(attempt):
+        logger.info(
+            "Attempt %s graded without its Speaking section; holding the grade-released notice",
+            attempt.id,
+        )
+        return True
 
     # Achievements and the in-app notification are best-effort: a failure here
     # must never turn an already-saved grade into an error for the caller, and

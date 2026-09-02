@@ -13,6 +13,7 @@ import { LearningPlanPanel } from "./components/LearningPlanPanel";
 import { RecentActivityPanel } from "./components/RecentActivityPanel";
 import type { TestProgressItem } from "./types";
 import { DailyEnglishChallenge } from "./components/DailyEnglishChallenge";
+import { UnfinishedTestsPanel } from "./components/UnfinishedTestsPanel";
 
 export function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -92,6 +93,8 @@ export function StudentDashboard() {
         <div className="sd-combined-hero-divider" />
         <DailyEnglishChallenge />
       </div>
+
+      <UnfinishedTestsPanel attempts={attempts} />
 
       <StatCardsGrid stats={statCards} />
 

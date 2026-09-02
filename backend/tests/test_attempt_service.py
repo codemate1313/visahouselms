@@ -2066,6 +2066,56 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.expire_all()
         return module_authoring_service.get_module_or_404(self.db, module.id)
 
+    def test_no_grade_notice_goes_out_when_speaking_was_never_sat(self):
+        """"Final Test Live has been graded - 2.00 / 164.00".
+
+        A paper whose interview never happened is not a result worth
+        announcing; the score is whatever the written half came to.
+        """
+        from app.models.notification import StudentNotification
+
+        module = self._composite_module_with_writing_and_speaking()
+        self._course_with_module(module.id)
+        attempt_out = attempt_service.start_attempt(self.db, self.student, module)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        attempt_service.commence_attempt(self.db, self.student, attempt)
+        attempt = attempt_service.get_attempt_or_404(self.db, self.student, attempt_out["id"])
+        # Written answers only - the interview was deferred and never taken.
+        for part in attempt.module.parts:
+            if part.section_type == "speaking":
+                continue
+            for question in part.questions:
+                attempt_service.save_answer(self.db, attempt, question.id, {"text": "A response."})
+
+        self.assertTrue(attempt_service._speaking_was_never_attempted(attempt))
+
+        # What submission leaves behind: every subjective part carries a
+        # published grade, the unanswered Speaking one scored zero.
+        attempt.status = "grading"
+        for part in attempt.module.parts:
+            if part.auto_marked:
+                continue
+            self.db.add(AttemptPartGrade(
+                attempt_id=attempt.id,
+                part_id=part.id,
+                criteria=[],
+                total_marks=Decimal("0") if part.section_type == "speaking" else Decimal("1"),
+                status="ai_graded",
+            ))
+        self.db.commit()
+        self.db.refresh(attempt)
+
+        self.assertTrue(attempt_service._finalize_if_all_graded(self.db, attempt))
+        self.db.refresh(attempt)
+        self.assertEqual(attempt.status, "graded")
+
+        notices = (
+            self.db.query(StudentNotification)
+            .filter_by(attempt_id=attempt.id, kind="grade_released")
+            .all()
+        )
+        self.assertEqual(notices, [], "no grade notice while the interview is outstanding")
+
     def test_deferring_speaking_closes_the_paper_without_starting_the_clock(self):
         """"Later" has to mean later.
 
