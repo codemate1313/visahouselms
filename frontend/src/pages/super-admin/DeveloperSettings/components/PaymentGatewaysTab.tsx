@@ -20,6 +20,12 @@ interface PaymentGatewaysForm {
   stripe_publishable_key: string;
   stripe_secret_key: string;
   stripe_webhook_secret: string;
+  payu_enabled: boolean;
+  payu_merchant_key: string;
+  payu_salt: string;
+  payu_mode: string;
+  /** Which gateway takes rupee payments when more than one is configured. */
+  inr_gateway: string;
 }
 
 export function PaymentGatewaysTab() {
@@ -42,6 +48,11 @@ export function PaymentGatewaysTab() {
     stripe_publishable_key: "",
     stripe_secret_key: "",
     stripe_webhook_secret: "",
+    payu_enabled: false,
+    payu_merchant_key: "",
+    payu_salt: "",
+    payu_mode: "test",
+    inr_gateway: "razorpay",
   });
   const showInfo = useToastStore((state) => state.showInfo);
   const originalRef = useRef<PaymentGatewaysForm | null>(null);
@@ -49,9 +60,11 @@ export function PaymentGatewaysTab() {
   const [connectionStatus, setConnectionStatus] = useState<{
     razorpay: "success" | "failed" | "not_configured" | "testing";
     stripe: "success" | "failed" | "not_configured" | "testing";
+    payu: "success" | "failed" | "not_configured" | "testing" | "configured";
   }>({
     razorpay: "not_configured",
     stripe: "not_configured",
+    payu: "not_configured",
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +76,8 @@ export function PaymentGatewaysTab() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const razorpayWebhookUrl = `${origin}/api/v1/payments/webhook/razorpay`;
   const stripeWebhookUrl = `${origin}/api/v1/payments/webhook/stripe`;
+  const payuWebhookUrl = `${origin}/api/v1/payments/webhook/payu`;
+  const payuReturnUrl = `${origin}/api/v1/payments/webhook/payu/return`;
 
   useEffect(() => {
     loadSettings();
@@ -80,6 +95,11 @@ export function PaymentGatewaysTab() {
         stripe_publishable_key: data.stripe_publishable_key ?? "",
         stripe_secret_key: data.stripe_secret_key ?? "",
         stripe_webhook_secret: data.stripe_webhook_secret ?? "",
+        payu_enabled: data.payu_enabled === "true",
+        payu_merchant_key: data.payu_merchant_key ?? "",
+        payu_salt: data.payu_salt ?? "",
+        payu_mode: data.payu_mode ?? "test",
+        inr_gateway: data.inr_gateway ?? "razorpay",
       };
       setForm(nextForm);
       originalRef.current = nextForm;
@@ -92,10 +112,11 @@ export function PaymentGatewaysTab() {
 
   async function checkConnectionStatus() {
     try {
-      const { data } = await apiClient.get<{ razorpay: string; stripe: string }>("/super-admin/dev-settings/payment-gateways/status");
+      const { data } = await apiClient.get<{ razorpay: string; stripe: string; payu?: string }>("/super-admin/dev-settings/payment-gateways/status");
       setConnectionStatus({
         razorpay: data.razorpay as any,
         stripe: data.stripe as any,
+        payu: (data.payu ?? "not_configured") as any,
       });
     } catch {
       // Ignore
@@ -448,6 +469,128 @@ export function PaymentGatewaysTab() {
                 {copiedKey === "stripe" ? "Copied!" : "Copy URL"}
               </Button>
             </div>
+          </div>
+        </div>
+
+        {/* ---------------- PayU ---------------- */}
+        <div className="gateway-card" style={{ marginTop: "1.25rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
+                  background: "#dcfce7",
+                  color: "#15803d",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.1rem",
+                }}
+              >
+                <Icon name="transactions" />
+              </div>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text)" }}>
+                    PayU (India)
+                  </h3>
+                  {renderStatusIndicator(connectionStatus.payu === "configured" ? "success" : connectionStatus.payu)}
+                </div>
+                <small style={{ color: "var(--text-muted)" }}>
+                  UPI, cards and net banking in rupees. PayU takes the candidate to its own page and sends them back, so
+                  there is no card popup here.
+                </small>
+              </div>
+            </div>
+
+            <label className="toggle-row" style={{ margin: 0, cursor: "pointer", fontWeight: 600 }}>
+              <Checkbox
+                checked={form.payu_enabled}
+                onChange={(e) => setForm({ ...form, payu_enabled: e.target.checked })}
+              />
+              <span>Enable PayU</span>
+            </label>
+          </div>
+
+          <div className="form-grid">
+            <div>
+              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>Merchant key</label>
+              <input
+                value={form.payu_merchant_key}
+                onChange={(e) => setForm({ ...form, payu_merchant_key: e.target.value })}
+                placeholder="From PayU dashboard - Merchant Key"
+              />
+            </div>
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.2rem" }}>
+                <label style={{ fontWeight: 700, fontSize: "0.8125rem", margin: 0 }}>Salt</label>
+                {form.payu_salt?.includes("*") && <span className="ui-secret-status">Encrypted & Active</span>}
+              </div>
+              <PasswordInput
+                value={form.payu_salt}
+                onChange={(e) => setForm({ ...form, payu_salt: e.target.value })}
+                placeholder="From PayU dashboard - Salt (v1)"
+              />
+            </div>
+          </div>
+
+          <div className="form-grid" style={{ marginTop: "1rem" }}>
+            <div>
+              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>Environment</label>
+              <select value={form.payu_mode} onChange={(e) => setForm({ ...form, payu_mode: e.target.value })}>
+                <option value="test">Test - test.payu.in</option>
+                <option value="live">Live - secure.payu.in</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>Rupee payments go to</label>
+              <select value={form.inr_gateway} onChange={(e) => setForm({ ...form, inr_gateway: e.target.value })}>
+                <option value="razorpay">Razorpay</option>
+                <option value="payu">PayU</option>
+              </select>
+              <small style={{ color: "var(--text-muted)" }}>
+                Both can stay configured. If the one chosen here is not usable, the other is used rather than leaving
+                students unable to pay. USD always goes to Stripe.
+              </small>
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: "1rem",
+              background: "var(--surface-subtle, #f8fafc)",
+              border: "1px solid var(--border)",
+              borderRadius: "10px",
+              padding: "0.65rem 0.875rem",
+              display: "grid",
+              gap: "6px",
+              fontSize: "0.775rem",
+              color: "var(--text-secondary, #475569)",
+            }}
+          >
+            <span>
+              <strong>Success / failure URL:</strong> <code className="ui-code-info">{payuReturnUrl}</code>
+            </span>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap" }}>
+              <span>
+                <strong>Webhook URL:</strong> <code className="ui-code-info">{payuWebhookUrl}</code>
+              </span>
+              <Button
+                type="button"
+                variant="secondary"
+                className="btn-secondary"
+                onClick={() => handleCopy(payuWebhookUrl, "payu")}
+                style={{ padding: "0.25rem 0.55rem", fontSize: "0.75rem" }}
+              >
+                {copiedKey === "payu" ? "Copied!" : "Copy URL"}
+              </Button>
+            </span>
+            <span style={{ color: "var(--text-muted)" }}>
+              Set both in the PayU dashboard. The webhook is what settles a payment when the candidate closes the tab
+              before being sent back.
+            </span>
           </div>
         </div>
 

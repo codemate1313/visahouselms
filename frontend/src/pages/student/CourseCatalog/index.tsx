@@ -8,6 +8,7 @@ import { Icon } from "@/components/icons";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/utils/razorpay";
+import { submitPayuCheckout } from "@/utils/payu";
 import { courseCatalogStrings as strings } from "./CourseCatalog.strings";
 import { PlanGrid } from "./components/PlanGrid";
 import { CheckoutModal } from "./components/CheckoutModal";
@@ -61,26 +62,17 @@ export function CourseCatalog() {
     if (!checkoutFor) return;
     setBuying(true);
     try {
-      const isUSD = selectedCurrency === "USD" && checkoutFor.is_international_enabled;
-
-      if (!isUSD) {
-        // Pre-check: ensure Razorpay SDK is already loaded for INR orders
-        const isLoaded = await loadRazorpayScript();
-        if (!isLoaded) {
-          showError(
-            "The Razorpay payment window could not be opened. " +
-            "Please open this page in a regular (non-Incognito) Chrome window and disable any ad-blockers, " +
-            "then try again.",
-            "Payment Gateway Blocked"
-          );
-          setBuying(false);
-          return;
-        }
-      }
+      /* The Razorpay script is loaded in its own branch below, not here. This
+         used to run for every rupee order and refuse to continue when the
+         script was blocked - which would now stop a PayU payment, a gateway
+         that needs no script at all, because an ad-blocker had eaten a
+         Razorpay CDN the order was never going to use. */
 
       const { data } = await apiClient.post<{
         online_payment: boolean;
         gateway?: string;
+        action_url?: string;
+        fields?: Record<string, string>;
         order_id?: string;
         payment_intent_id?: string;
         client_secret?: string;
@@ -119,8 +111,27 @@ export function CourseCatalog() {
         return;
       }
 
-      // 2. Razorpay Checkout Flow
+      // 2. PayU Checkout Flow - a redirect, not a modal.
+      if (data.online_payment && data.gateway === "payu" && data.action_url && data.fields) {
+        // The page is about to navigate away, so nothing after this runs and
+        // the busy state is deliberately left on - the button must not look
+        // clickable again while the browser is leaving.
+        submitPayuCheckout(data.action_url, data.fields);
+        return;
+      }
+
+      // 3. Razorpay Checkout Flow
       if (data.online_payment && data.gateway === "razorpay" && data.order_id && data.key_id && data.payment_id) {
+        if (!(await loadRazorpayScript())) {
+          showError(
+            "The Razorpay payment window could not be opened. " +
+            "Please open this page in a regular (non-Incognito) Chrome window and disable any ad-blockers, " +
+            "then try again.",
+            "Payment Gateway Blocked"
+          );
+          setBuying(false);
+          return;
+        }
         openRazorpayCheckout({
           keyId: data.key_id,
           orderId: data.order_id,

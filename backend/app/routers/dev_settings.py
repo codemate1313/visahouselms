@@ -359,7 +359,7 @@ def job_status(job_id: int, db: Session = Depends(get_db)):
 
 
 
-# ---------- Payment Gateways (Razorpay & Stripe) ----------
+# ---------- Payment Gateways (Razorpay, Stripe & PayU) ----------
 
 # NOTE: More-specific sub-routes must be declared BEFORE the base /payment-gateways GET,
 # otherwise FastAPI may shadow them.
@@ -396,7 +396,19 @@ def get_payment_gateways_status(db: Session = Depends(get_db)):
         except Exception:
             stripe_status = "failed"
 
-    return {"razorpay": razorpay_status, "stripe": stripe_status}
+    # PayU publishes no credential-check endpoint - the merchant key and salt
+    # are only exercised when a real transaction is signed - so "configured" is
+    # the strongest claim that can honestly be made without taking a payment.
+    payu_key = data.get("payu_merchant_key")
+    payu_salt = data.get("payu_salt")
+    if not payu_key or not payu_salt or payu_salt == "********":
+        stored = get_settings_group(db, "payment_gateways", mask_secrets=False)
+        payu_key = payu_key or stored.get("payu_merchant_key")
+        if not payu_salt or payu_salt == "********":
+            payu_salt = stored.get("payu_salt")
+    payu_status = "configured" if (payu_key and payu_salt) else "not_configured"
+
+    return {"razorpay": razorpay_status, "stripe": stripe_status, "payu": payu_status}
 
 
 @router.post("/payment-gateways/test-connection")

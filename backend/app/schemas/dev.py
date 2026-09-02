@@ -103,6 +103,14 @@ class PaymentGatewaySettingsIn(BaseModel):
     stripe_publishable_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None
     stripe_webhook_secret: Optional[str] = None
+    payu_enabled: Optional[bool] = False
+    payu_merchant_key: Optional[str] = None
+    payu_salt: Optional[str] = None
+    # "test" points at test.payu.in, "live" at secure.payu.in.
+    payu_mode: Optional[str] = "test"
+    # Which gateway takes rupee payments when more than one is configured.
+    # Both can stay set up; this decides which one a student is sent to.
+    inr_gateway: Optional[str] = "razorpay"
 
 
 class StaticOtpSettingsIn(BaseModel):

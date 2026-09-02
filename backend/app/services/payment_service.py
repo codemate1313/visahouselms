@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import secrets
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import List, Optional
@@ -525,6 +526,122 @@ def get_public_payment_config(db: Session) -> dict:
         "razorpay_key_id": gw_settings.get("razorpay_key_id") if gw_settings.get("razorpay_enabled") == "true" else None,
         "stripe_enabled": gw_settings.get("stripe_enabled") == "true",
         "stripe_publishable_key": gw_settings.get("stripe_publishable_key") if gw_settings.get("stripe_enabled") == "true" else None,
+        "payu_enabled": gw_settings.get("payu_enabled") == "true",
+        # Which gateway a rupee payment is sent to when both are configured.
+        "inr_gateway": _inr_gateway(gw_settings),
+    }
+
+
+def _inr_gateway(gw_settings: dict) -> str:
+    """Razorpay or PayU for a rupee payment.
+
+    Both can be configured at once - the admin's choice decides, and a choice
+    that is not actually usable falls through to the one that is, so a
+    half-finished switch never leaves students unable to pay.
+    """
+    razorpay_ready = (
+        gw_settings.get("razorpay_enabled") == "true"
+        and bool(gw_settings.get("razorpay_key_id"))
+        and bool(gw_settings.get("razorpay_key_secret"))
+    )
+    payu_ready = (
+        gw_settings.get("payu_enabled") == "true"
+        and bool(gw_settings.get("payu_merchant_key"))
+        and bool(gw_settings.get("payu_salt"))
+    )
+    preferred = (gw_settings.get("inr_gateway") or "razorpay").lower()
+    if preferred == "payu" and payu_ready:
+        return "payu"
+    if preferred == "razorpay" and razorpay_ready:
+        return "razorpay"
+    if payu_ready:
+        return "payu"
+    if razorpay_ready:
+        return "razorpay"
+    return ""
+
+
+def _create_payu_order(
+    db: Session,
+    gw_settings: dict,
+    plan,
+    buyer,
+    coupon_code: Optional[str],
+    user_id: int,
+    plan_id: int,
+) -> dict:
+    """A signed PayU form for the browser to post.
+
+    Unlike Razorpay and Stripe there is no order to create over HTTP - PayU
+    learns about the transaction when the candidate's browser arrives carrying
+    these fields. The payment row is written first so the reference exists
+    before anyone can come back with a result for it.
+    """
+    from app.core import payu_gateway
+
+    discount, coupon = coupon_service.validate_and_price(
+        db, coupon_code, plan.price, "plan", plan_id, buyer.email
+    )
+    gst_calc = calculate_gst_and_totals(plan, discount)
+    final_amount = gst_calc["final_amount"]
+
+    payment = Payment(
+        source="b2c",
+        user_id=user_id,
+        plan_id=plan_id,
+        amount=plan.price,
+        discount_amount=discount,
+        subtotal_amount=gst_calc["subtotal_amount"],
+        gst_rate_id=gst_calc["gst_rate_id"],
+        gst_percentage=gst_calc["gst_percentage"],
+        gst_tax_type=gst_calc["gst_tax_type"],
+        gst_amount=gst_calc["gst_amount"],
+        final_amount=final_amount,
+        amount_paid=Decimal("0.00"),
+        currency=(plan.currency or "INR").upper(),
+        coupon_id=coupon.id if coupon else None,
+        gateway="payu",
+        status=STATUS_PENDING,
+    )
+    db.add(payment)
+    db.flush()
+
+    # The transaction id is ours to choose and comes back untouched, so the
+    # payment row can be found again from the reply without trusting anything
+    # else in it.
+    txnid = f"vh{payment.id}x{secrets.token_hex(6)}"
+    payment.gateway_reference = txnid
+    db.add(payment)
+    db.commit()
+
+    # PayU posts its answer to these, so they have to be absolute and reachable
+    # from PayU's servers. Nginx serves the app at / and proxies /api to this
+    # backend, so the site's own origin is the right base for both.
+    base = settings.frontend_url.rstrip("/")
+    checkout = payu_gateway.build_checkout(
+        merchant_key=gw_settings.get("payu_merchant_key") or "",
+        salt=gw_settings.get("payu_salt") or "",
+        mode=gw_settings.get("payu_mode") or "test",
+        txnid=txnid,
+        amount=final_amount,
+        product_info=plan.name,
+        first_name=(buyer.first_name or "").strip(),
+        email=buyer.email,
+        phone=(getattr(buyer, "phone", "") or "").strip(),
+        success_url=f"{base}/api/v1/payments/webhook/payu/return",
+        failure_url=f"{base}/api/v1/payments/webhook/payu/return",
+        udf={"udf1": str(payment.id), "udf2": str(user_id), "udf3": str(plan_id)},
+    )
+
+    return {
+        "online_payment": True,
+        "gateway": "payu",
+        "action_url": checkout["action"],
+        "fields": checkout["fields"],
+        "amount": float(final_amount),
+        "currency": (plan.currency or "INR").upper(),
+        "plan_name": plan.name,
+        "payment_id": payment.id,
     }
 
 
@@ -617,7 +734,11 @@ def create_user_plan_order(
             "payment_id": payment.id,
         }
 
-    # 2. Razorpay Checkout for Domestic INR
+    # 2. PayU for Domestic INR, when it is the chosen rupee gateway.
+    if _inr_gateway(gw_settings) == "payu":
+        return _create_payu_order(db, gw_settings, plan, buyer, coupon_code, user_id, plan_id)
+
+    # 3. Razorpay Checkout for Domestic INR
     razorpay_enabled = gw_settings.get("razorpay_enabled") == "true"
     key_id = gw_settings.get("razorpay_key_id")
     key_secret = gw_settings.get("razorpay_key_secret")
@@ -821,6 +942,86 @@ def verify_razorpay_payment(
 
     payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
     return _serialize(payment)
+
+
+def settle_payu_return(db: Session, payload: dict, ip: Optional[str] = None) -> dict:
+    """Apply the result PayU sent back with the candidate's browser.
+
+    Nothing in this payload is trusted before the hash is checked: the browser
+    carrying it belongs to the person being charged, and a POST claiming
+    `status=success` takes ten seconds to write by hand. The transaction id is
+    ours, so the payment row is found by that rather than by anything PayU
+    reports about amounts or plans.
+    """
+    from app.core import payu_gateway
+
+    gw_settings = get_settings_group(db, "payment_gateways", mask_secrets=False)
+    salt = gw_settings.get("payu_salt") or ""
+    txnid = (payload.get("txnid") or "").strip()
+
+    # Matched on a prefix, not equality: once settled the reference also carries
+    # PayU's own id, and the webhook copy of the same result has to still find
+    # the row it belongs to.
+    payment = (
+        db.query(Payment)
+        .filter(Payment.gateway_reference.like(f"%{txnid}%"), Payment.gateway == "payu")
+        .first()
+        if txnid
+        else None
+    )
+    if payment is None:
+        return {"ok": False, "reason": "unknown_transaction", "payment_id": None}
+
+    if not payu_gateway.verify_response(payload, salt):
+        payment.status = STATUS_FAILED
+        db.add(payment)
+        db.commit()
+        return {"ok": False, "reason": "invalid_signature", "payment_id": payment.id}
+
+    if (payload.get("status") or "").lower() != "success":
+        payment.status = STATUS_FAILED
+        db.add(payment)
+        db.commit()
+        return {"ok": False, "reason": "declined", "payment_id": payment.id}
+
+    # The amount PayU signed has to be the amount that was asked for; a hash is
+    # only proof that PayU sent this, not that it is the transaction we started.
+    if payu_gateway.format_amount(payment.final_amount) != (payload.get("amount") or "").strip():
+        payment.status = STATUS_FAILED
+        db.add(payment)
+        db.commit()
+        return {"ok": False, "reason": "amount_mismatch", "payment_id": payment.id}
+
+    if payment.status == STATUS_PAID:
+        # PayU can deliver the same result twice - the browser return and the
+        # server-to-server webhook. The first one to arrive does the work.
+        return {"ok": True, "reason": "already_settled", "payment_id": payment.id}
+
+    payment.status = STATUS_PAID
+    payment.paid_at = _now()
+    payment.amount_paid = payment.final_amount
+    payment.invoice_number = payment.invoice_number or f"INV-{payment.id:06d}"
+    payment.gateway_reference = f"PayU: {txnid} | {payload.get('mihpayid') or ''}".strip(" |")
+    db.add(payment)
+
+    try:
+        if payment.coupon_id:
+            coupon = db.query(Coupon).filter(Coupon.id == payment.coupon_id).first()
+            buyer = db.query(User).filter(User.id == payment.user_id).first()
+            if coupon and buyer:
+                coupon_service.redeem(db, coupon, buyer.email, user_id=payment.user_id, payment_id=payment.id)
+
+        subscription = subscription_service.subscribe_user(
+            db, payment.user_id, payment.plan_id, ip, commit=False
+        )
+        payment.subscription_id = subscription.id
+        db.add(payment)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    return {"ok": True, "reason": "paid", "payment_id": payment.id}
 
 
 # ---------------------------------------------------------------------------

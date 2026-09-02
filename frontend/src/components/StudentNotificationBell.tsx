@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { apiClient } from "../api/client";
 import type { StudentNotification } from "../api/types";
 import { cleanNotificationMessage, destinationFor, notificationTime, scoreLabel } from "../utils/notificationHelpers";
+import { lockBodyScroll } from "../utils/scrollLock";
 
 import { Icon } from "./icons";
 import { PinList, type PinListItem } from "./PinList";
@@ -109,6 +110,15 @@ export function NotificationBell({
   // teal institute portal. The bell itself IS inside the wrapper, so we read
   // the resolved colour off it and carry it onto the portalled subtree.
   const [brand, setBrand] = useState<{ primary: string; hover: string } | null>(null);
+
+  /* The drawer is a full-height panel over the page, and the page kept its own
+     scrollbar while it was open - two vertical bars side by side, and a wheel
+     over the backdrop moving the screen underneath. The shared lock is counted,
+     so it nests safely with a modal opened from inside the drawer. */
+  useEffect(() => {
+    if (!isOpen) return;
+    return lockBodyScroll();
+  }, [isOpen]);
 
   const loadNotifications = useCallback(async () => {
     try {

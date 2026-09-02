@@ -4,8 +4,10 @@ import traceback
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.models.payment import Payment
 from app.models.subscription import Subscription
@@ -241,3 +243,53 @@ async def razorpay_webhook(
             ) from exc
 
     return {"status": "ok"}
+
+
+@router.post("/payu/return")
+async def payu_return(request: Request, db: Session = Depends(get_db)):
+    """Where PayU sends the candidate back, whether they paid or not.
+
+    Both `surl` and `furl` point here: PayU says which happened in the payload,
+    and the hash says whether to believe it. This is deliberately unauthenticated
+    - the browser arrives from PayU's domain carrying no session cookie for a
+    cross-site POST - so the signature is the whole of the trust, and the
+    transaction id is the only field used to find the payment.
+    """
+    form = await request.form()
+    payload = {key: str(value) for key, value in form.items()}
+
+    try:
+        result = payment_service.settle_payu_return(
+            db, payload, request.client.host if request.client else None
+        )
+    except Exception:
+        record_error(db, "payu_return", traceback.format_exc())
+        result = {"ok": False, "reason": "error", "payment_id": None}
+
+    # The candidate is mid-redirect, so the answer has to be a page rather than
+    # JSON: send them back into the app with the outcome in the query string.
+    base = settings.frontend_url.rstrip("/")
+    query = f"payu={'success' if result.get('ok') else 'failed'}"
+    if result.get("reason"):
+        query += f"&reason={result['reason']}"
+    if result.get("payment_id"):
+        query += f"&payment_id={result['payment_id']}"
+    return RedirectResponse(url=f"{base}/student/courses?{query}", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/payu")
+async def payu_webhook(request: Request, db: Session = Depends(get_db)):
+    """PayU's server-to-server copy of the same result.
+
+    A candidate who closes the tab on PayU's page never comes back through the
+    return URL above, and their payment would sit pending for ever. This arrives
+    regardless, carries the same fields and the same hash, and settles the same
+    payment - whichever gets here first does the work.
+    """
+    form = await request.form()
+    payload = {key: str(value) for key, value in form.items()}
+    try:
+        return payment_service.settle_payu_return(db, payload, None)
+    except Exception:
+        record_error(db, "payu_webhook", traceback.format_exc())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="PayU webhook failed")
