@@ -199,8 +199,9 @@
   display: grid;
   grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
   align-items: center;
-  min-height: 70px;
-  padding: 8px 18px;
+  min-height: 50px;
+  padding-right: 18px;
+  padding-left: 5px;
   border: 1px solid #e6e6e6;
   background: #ffffff;
   box-shadow: 0 3px 7px rgba(0, 0, 0, 0.13);
@@ -219,6 +220,7 @@
 .lc-brand-text {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 1px;
 }
 
@@ -282,7 +284,8 @@
   flex: 0 0 auto;
   display: block;
   width: auto;
-  height: 46px;
+  height: 40px;
+  align-self: center;
 }
 
 .lc-timer {
