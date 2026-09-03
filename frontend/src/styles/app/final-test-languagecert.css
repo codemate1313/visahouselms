@@ -214,7 +214,6 @@
   align-items: center;
   gap: 10px;
   line-height: 1;
-  padding-left: 20px;
 }
 
 .lc-brand-text {
@@ -283,7 +282,7 @@
   flex: 0 0 auto;
   display: block;
   width: auto;
-  height: 36px;
+  height: 46px;
 }
 
 .lc-timer {

@@ -36,8 +36,8 @@ export function LanguageCertLogo() {
     <svg
       className="lc-languagecert-logo"
       viewBox="0 0 174 212"
-      width="30"
-      height="36"
+      width="38"
+      height="46"
       aria-label="LanguageCert"
       role="img"
       focusable="false"
