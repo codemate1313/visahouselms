@@ -199,9 +199,8 @@
   display: grid;
   grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
   align-items: center;
-  min-height: 50px;
-  padding-right: 18px;
-  padding-left: 5px;
+  min-height: 60px;
+  padding: 8px 18px;
   border: 1px solid #e6e6e6;
   background: #ffffff;
   box-shadow: 0 3px 7px rgba(0, 0, 0, 0.13);
@@ -209,11 +208,11 @@
 }
 
 .lc-brand {
-  display: flex;
+  display: inline-flex;
   min-width: 0;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   line-height: 1;
 }
 
@@ -221,41 +220,42 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1px;
+  gap: 2px;
+  line-height: 1;
 }
 
 .lc-brand-wordmark {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.3px;
   line-height: 1;
 }
 
 .lc-brand-people {
-  color: var(--lc-ink);
+  color: #242426;
 }
 
 .lc-brand-cert {
-  color: var(--lc-red);
+  color: #d1282f;
 }
 
 .lc-brand-sub {
   display: flex;
   gap: 4px;
-  font-size: 10.5px;
+  font-size: 10px;
   line-height: 1;
 }
 
 .lc-brand-passport {
-  color: var(--lc-ink);
-  font-weight: 700;
-  letter-spacing: 0.2px;
+  color: #242426;
+  font-weight: 800;
+  letter-spacing: 0.3px;
 }
 
 .lc-brand-ates {
-  color: #8a8b8f;
-  font-weight: 400;
-  letter-spacing: 0.2px;
+  color: #78787c;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 .lc-header-title {
@@ -283,8 +283,8 @@
 .lc-languagecert-logo {
   flex: 0 0 auto;
   display: block;
-  width: auto;
-  height: 40px;
+  width: 36px;
+  height: 34px;
   align-self: center;
 }
 
