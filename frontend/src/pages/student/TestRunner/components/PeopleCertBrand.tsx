@@ -8,16 +8,16 @@
 export function PeopleCertBrand() {
   return (
     <div className="lc-brand" aria-label="PeopleCert Passport Web A.T.E.S.">
-      <LanguageCertLogo />
-      <div className="lc-brand-text">
+      <div className="lc-brand-main">
+        <LanguageCertLogo />
         <div className="lc-brand-wordmark">
           <span className="lc-brand-people">People</span>
           <span className="lc-brand-cert">Cert</span>
         </div>
-        <div className="lc-brand-sub">
-          <span className="lc-brand-passport">PASSPORT</span>
-          <span className="lc-brand-ates">WEB A.T.E.S.</span>
-        </div>
+      </div>
+      <div className="lc-brand-sub">
+        <span className="lc-brand-passport">PASSPORT</span>
+        <span className="lc-brand-ates">WEB A.T.E.S.</span>
       </div>
     </div>
   );

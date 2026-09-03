@@ -211,17 +211,18 @@
 .lc-brand {
   display: flex;
   min-width: 0;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
   line-height: 1;
 }
 
-.lc-brand-text {
+.lc-brand-main {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1px;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
 }
 
 .lc-brand-wordmark {
@@ -244,6 +245,7 @@
   gap: 4px;
   font-size: 10.5px;
   line-height: 1;
+  margin-top: 3px;
 }
 
 .lc-brand-passport {
@@ -284,7 +286,7 @@
   flex: 0 0 auto;
   display: block;
   width: auto;
-  height: 40px;
+  height: 28px;
   align-self: center;
 }
 
