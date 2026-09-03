@@ -134,6 +134,7 @@ export function PublicHeader() {
         <div className="vh-header-actions">
           <IconButton
             className="vh-theme-toggle"
+            showTooltip={false}
             label={`Theme: ${dark ? "Dark" : "Light"}`}
             onClick={toggleTheme}
             icon={<ThemeIcon dark={dark} />}

@@ -8,7 +8,7 @@ from typing import Optional
 from uuid import uuid4
 
 from fastapi import HTTPException, status
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.config import settings
@@ -594,6 +594,22 @@ def _composite_sources(
 
 def create_module(db: Session, actor: User, data: dict, ip: Optional[str]) -> dict:
     payload = dict(data)
+    title = (payload.get("title") or "").strip()
+    if title:
+        existing = (
+            _module_query(db)
+            .filter(
+                ExamModule.created_by_id == actor.id,
+                ExamModule.deleted_at.is_(None),
+                func.lower(ExamModule.title) == title.lower(),
+            )
+            .first()
+        )
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Test with same name already exists, you can't create one.",
+            )
     source_module_ids = list(payload.pop("source_module_ids", []))
     req_duration = payload.pop("duration_minutes", None)
     module_type = payload["module_type"]
@@ -777,6 +793,24 @@ def update_module(
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
     _require_draft(db, module)
+    if "title" in fields_set:
+        title = (data.get("title") or "").strip()
+        if title:
+            existing = (
+                _module_query(db)
+                .filter(
+                    ExamModule.created_by_id == actor.id,
+                    ExamModule.deleted_at.is_(None),
+                    ExamModule.id != module.id,
+                    func.lower(ExamModule.title) == title.lower(),
+                )
+                .first()
+            )
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Test with same name already exists, you can't create one.",
+                )
     for field in ("title", "description", "instructions", "duration_minutes", "show_onboarding_instructions", "onboarding_instructions"):
         if field in fields_set:
             if field == "duration_minutes" and module.module_type in DERIVED_DURATION_MODULE_TYPES:

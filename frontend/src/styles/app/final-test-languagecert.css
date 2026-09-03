@@ -272,6 +272,13 @@
   gap: 8px;
 }
 
+.lc-languagecert-logo {
+  flex: 0 0 auto;
+  display: block;
+  width: auto;
+  height: 36px;
+}
+
 .lc-timer {
   display: inline-flex;
   min-width: 0;

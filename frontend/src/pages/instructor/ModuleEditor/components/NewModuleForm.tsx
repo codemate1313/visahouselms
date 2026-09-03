@@ -30,6 +30,7 @@ interface NewModuleFormProps {
   onModuleImportFileChange: (file: File | null) => void;
   /** Called when the user clicks Shuffle. Returns which sections had no fresh modules. */
   onShuffle?: () => { exhaustedSections: ExamSection[] };
+  existingTitles?: string[];
 }
 export function NewModuleForm({
   requestedType,
@@ -46,6 +47,7 @@ export function NewModuleForm({
   onShuffle,
   moduleImportFile,
   onModuleImportFileChange,
+  existingTitles,
 }: NewModuleFormProps) {
   const t = strings.newModule;
   const typeLabels = strings.typeLabels;
@@ -123,9 +125,24 @@ export function NewModuleForm({
       ? meta.defaultDuration
       : details.duration_minutes || meta.defaultDuration;
 
+  const validateTitle = (): string | null => {
+    const trimmed = details.title.trim();
+    if (!trimmed) {
+      return "Module Title is required before proceeding to Step 2.";
+    }
+    const isDuplicate = existingTitles?.some(
+      (t) => t.trim().toLowerCase() === trimmed.toLowerCase()
+    );
+    if (isDuplicate) {
+      return "Test with same name already exists, you can't create one.";
+    }
+    return null;
+  };
+
   const handleNextStep = () => {
-    if (!details.title.trim()) {
-      setValidationError("Module Title is required before proceeding to Step 2.");
+    const titleError = validateTitle();
+    if (titleError) {
+      setValidationError(titleError);
       document.getElementById("new-module-title")?.focus();
       return;
     }
@@ -139,6 +156,14 @@ export function NewModuleForm({
   };
 
   const handleSubmit = (event: FormEvent) => {
+    const titleError = validateTitle();
+    if (titleError) {
+      event.preventDefault();
+      setActiveTab("config");
+      setValidationError(titleError);
+      document.getElementById("new-module-title")?.focus();
+      return;
+    }
     if (activeTab === "config") {
       event.preventDefault();
       handleNextStep();
@@ -191,15 +216,18 @@ export function NewModuleForm({
       <HorizontalAuthoringStepper
         activeTab={activeTab}
         onTabChange={(tab) => {
-          if (tab === "instructions" && !details.title.trim()) {
-            setValidationError("Module Title is required before proceeding to Step 2.");
-            document.getElementById("new-module-title")?.focus();
-            return;
+          if (tab === "instructions") {
+            const titleError = validateTitle();
+            if (titleError) {
+              setValidationError(titleError);
+              document.getElementById("new-module-title")?.focus();
+              return;
+            }
           }
           setValidationError(null);
           setActiveTab(tab);
         }}
-        hasTitle={!!details.title.trim()}
+        hasTitle={!validateTitle()}
         hasInstructions={(details.show_onboarding_instructions ?? true) ? (details.onboarding_instructions && details.onboarding_instructions.length > 0) : true}
       />
 
@@ -226,11 +254,30 @@ export function NewModuleForm({
                 <div className="vh-input-wrapper">
                   <input
                     id="new-module-title"
-                    className={`vh-input-enhanced ${validationError && !details.title.trim() ? "is-invalid" : ""}`}
+                    className={`vh-input-enhanced ${validationError ? "is-invalid" : ""}`}
                     value={details.title}
                     onChange={(event) => {
-                      setValidationError(null);
-                      onDetailsChange({ ...details, title: event.target.value });
+                      const val = event.target.value;
+                      onDetailsChange({ ...details, title: val });
+                      if (validationError) {
+                        const trimmed = val.trim().toLowerCase();
+                        const isDup = existingTitles?.some(
+                          (t) => t.trim().toLowerCase() === trimmed
+                        );
+                        if (!val.trim()) {
+                          setValidationError("Module Title is required before proceeding to Step 2.");
+                        } else if (isDup) {
+                          setValidationError("Test with same name already exists, you can't create one.");
+                        } else {
+                          setValidationError(null);
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      const titleError = validateTitle();
+                      if (titleError && details.title.trim()) {
+                        setValidationError(titleError);
+                      }
                     }}
                     placeholder={t.titlePlaceholder(typeLabel)}
                     maxLength={200}
@@ -240,7 +287,10 @@ export function NewModuleForm({
                   {details.title && (
                     <IconButton
                       className="vh-clear-btn"
-                      onClick={() => onDetailsChange({ ...details, title: "" })}
+                      onClick={() => {
+                        onDetailsChange({ ...details, title: "" });
+                        setValidationError(null);
+                      }}
                       label="Clear title"
                       showTooltip={false}
                       icon={<Icon name="cross" />}
@@ -248,7 +298,7 @@ export function NewModuleForm({
                   )}
                 </div>
 
-                {validationError && !details.title.trim() && (
+                {validationError && (
                   <p className="vh-validation-inline-error">
                     <Icon name="cross" />
                     <span>{validationError}</span>

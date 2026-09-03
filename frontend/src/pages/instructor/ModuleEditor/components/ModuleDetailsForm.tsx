@@ -26,6 +26,7 @@ interface ModuleDetailsFormProps {
   busy: boolean;
   onSubmit: (event: FormEvent) => void;
   onDelete: () => void;
+  existingTitles?: string[];
 }
 
 export function ModuleDetailsForm({
@@ -35,6 +36,7 @@ export function ModuleDetailsForm({
   isEditable,
   busy,
   onSubmit,
+  existingTitles,
 }: ModuleDetailsFormProps) {
   const t = strings.newModule; // Reusing strings from new module where appropriate
   const typeLabels = strings.typeLabels;
@@ -47,9 +49,24 @@ export function ModuleDetailsForm({
 
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const validateTitle = (): string | null => {
+    const trimmed = details.title.trim();
+    if (!trimmed) {
+      return "Module Title is required before proceeding to Step 2.";
+    }
+    const isDuplicate = existingTitles?.some(
+      (t) => t.trim().toLowerCase() === trimmed.toLowerCase() && t.trim().toLowerCase() !== module.title.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      return "Test with same name already exists, you can't create one.";
+    }
+    return null;
+  };
+
   const handleNextStep = () => {
-    if (!details.title.trim()) {
-      setValidationError("Module Title is required before proceeding to Step 2.");
+    const titleError = validateTitle();
+    if (titleError) {
+      setValidationError(titleError);
       document.getElementById("edit-module-title")?.focus();
       return;
     }
@@ -59,6 +76,14 @@ export function ModuleDetailsForm({
   };
 
   const handleSubmit = (event: FormEvent) => {
+    const titleError = validateTitle();
+    if (titleError) {
+      event.preventDefault();
+      setActiveTab("config");
+      setValidationError(titleError);
+      document.getElementById("edit-module-title")?.focus();
+      return;
+    }
     if (activeTab === "config") {
       event.preventDefault();
       handleNextStep();
@@ -84,15 +109,18 @@ export function ModuleDetailsForm({
       <HorizontalAuthoringStepper
         activeTab={activeTab}
         onTabChange={(tab) => {
-          if (tab === "instructions" && !details.title.trim()) {
-            setValidationError("Module Title is required before proceeding to Step 2.");
-            document.getElementById("edit-module-title")?.focus();
-            return;
+          if (tab === "instructions") {
+            const titleError = validateTitle();
+            if (titleError) {
+              setValidationError(titleError);
+              document.getElementById("edit-module-title")?.focus();
+              return;
+            }
           }
           setValidationError(null);
           setActiveTab(tab);
         }}
-        hasTitle={!!details.title.trim()}
+        hasTitle={!validateTitle()}
         hasInstructions={(details.show_onboarding_instructions ?? true) ? (details.onboarding_instructions && details.onboarding_instructions.length > 0) : true}
       />
 
@@ -119,11 +147,30 @@ export function ModuleDetailsForm({
                 <div className="vh-input-wrapper">
                   <input
                     id="edit-module-title"
-                    className={`vh-input-enhanced ${validationError && !details.title.trim() ? "is-invalid" : ""}`}
+                    className={`vh-input-enhanced ${validationError ? "is-invalid" : ""}`}
                     value={details.title}
                     onChange={(event) => {
-                      setValidationError(null);
-                      onDetailsChange({ ...details, title: event.target.value });
+                      const val = event.target.value;
+                      onDetailsChange({ ...details, title: val });
+                      if (validationError) {
+                        const trimmed = val.trim().toLowerCase();
+                        const isDup = existingTitles?.some(
+                          (t) => t.trim().toLowerCase() === trimmed && t.trim().toLowerCase() !== module.title.trim().toLowerCase()
+                        );
+                        if (!val.trim()) {
+                          setValidationError("Module Title is required before proceeding to Step 2.");
+                        } else if (isDup) {
+                          setValidationError("Test with same name already exists, you can't create one.");
+                        } else {
+                          setValidationError(null);
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      const titleError = validateTitle();
+                      if (titleError && details.title.trim()) {
+                        setValidationError(titleError);
+                      }
                     }}
                     placeholder={t.titlePlaceholder(typeLabel)}
                     maxLength={200}
@@ -136,12 +183,15 @@ export function ModuleDetailsForm({
                       label="Clear title"
                       showTooltip={false}
                       className="vh-clear-btn"
-                      onClick={() => onDetailsChange({ ...details, title: "" })}
+                      onClick={() => {
+                        onDetailsChange({ ...details, title: "" });
+                        setValidationError(null);
+                      }}
                     />
                   )}
                 </div>
 
-                {validationError && !details.title.trim() && (
+                {validationError && (
                   <p className="vh-validation-inline-error">
                     <Icon name="cross" />
                     <span>{validationError}</span>

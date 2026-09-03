@@ -515,23 +515,7 @@ export function SpeakingInterviewStage({
       </header>
 
       <div className="speaking-interview-layout">
-        <aside className="speaking-interview-parts" aria-label="Speaking parts">
-          <span className="speaking-interview-parts-label">Parts</span>
-          {Array.from({ length: speakingPartCount }, (_, index) => {
-            const partNumber = index + 1;
-            const stateClass = partNumber < speakingPartNumber
-              ? "is-complete"
-              : partNumber === speakingPartNumber
-                ? "is-current"
-                : "";
-            return (
-              <div key={partNumber} className={`speaking-interview-part ${stateClass}`.trim()}>
-                <span>{partNumber}</span>
-                <strong>Part {partNumber}</strong>
-              </div>
-            );
-          })}
-        </aside>
+
 
         <section className="speaking-interview-workspace">
           <div className="speaking-interview-progress">

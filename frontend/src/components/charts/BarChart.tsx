@@ -85,18 +85,24 @@ export function BarChart({
     return null;
   }
 
-  // SVG Geometry: 520 x 240
+  const count = rows.length;
+
+  // Check if labels need to be angled to avoid horizontal collision
+  const approxSlotWidth = 420 / Math.max(1, count);
+  const maxLabelCharWidth = Math.max(0, ...rows.map((r) => r.label.length * 7));
+  const shouldRotate = count > 3 || maxLabelCharWidth > approxSlotWidth * 0.75;
+
+  // SVG Geometry
   const width = 520;
-  const height = 240;
-  const paddingLeft = 70;
+  const height = shouldRotate ? 275 : 240;
+  const paddingLeft = shouldRotate ? 65 : 70;
   const paddingRight = 30;
-  const paddingTop = 35;
-  const paddingBottom = 45;
+  const paddingTop = shouldRotate ? 30 : 35;
+  const paddingBottom = shouldRotate ? 80 : 45;
 
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
-  const count = rows.length;
   // Capped bar width to prevent massive thick blocks when count is 1 or 2
   const maxBarWidth = 42;
   const calculatedWidth = Math.max(20, Math.floor(chartWidth / count - 20));
@@ -235,16 +241,32 @@ export function BarChart({
                     </text>
                   )}
                   {/* X Axis Label */}
-                  <text
-                    x={x + barWidth / 2}
-                    y={height - 12}
-                    textAnchor="middle"
-                    fontSize="12"
-                    fontWeight="600"
-                    fill="var(--text-muted)"
-                  >
-                    {r.label.length > 14 ? `${r.label.slice(0, 12)}…` : r.label}
-                  </text>
+                  {shouldRotate ? (
+                    <text
+                      x={x + barWidth / 2}
+                      y={paddingTop + chartHeight + 14}
+                      textAnchor="end"
+                      transform={`rotate(-35 ${x + barWidth / 2} ${paddingTop + chartHeight + 14})`}
+                      fontSize="11"
+                      fontWeight="600"
+                      fill="var(--text-muted)"
+                    >
+                      <title>{r.label}</title>
+                      {r.label.length > 16 ? `${r.label.slice(0, 14)}…` : r.label}
+                    </text>
+                  ) : (
+                    <text
+                      x={x + barWidth / 2}
+                      y={height - 12}
+                      textAnchor="middle"
+                      fontSize="12"
+                      fontWeight="600"
+                      fill="var(--text-muted)"
+                    >
+                      <title>{r.label}</title>
+                      {r.label.length > 14 ? `${r.label.slice(0, 12)}…` : r.label}
+                    </text>
+                  )}
                 </g>
               );
             })}
@@ -278,6 +300,11 @@ export function BarChart({
               <div style={{ color: "#38bdf8", fontSize: 15, fontWeight: 800, marginTop: 2 }}>
                 {formatValue(rows[hoveredIndex].value)}
               </div>
+              {rows[hoveredIndex].subtext && (
+                <div style={{ opacity: 0.75, fontSize: 11, marginTop: 2, color: "var(--text-muted, #94a3b8)" }}>
+                  {rows[hoveredIndex].subtext}
+                </div>
+              )}
             </div>
           )}
         </div>

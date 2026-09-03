@@ -20,10 +20,6 @@ import { Button } from "@/components/ui/Button/Button";
 // provider call can take a while), so a freshly submitted human-graded
 // attempt is polled briefly for the result to land.
 const AI_GRADING_POLL_INTERVAL_MS = 4000;
-// The watch has to outlast the countdown the student is looking at, or the
-// page gives up at a minute while their timer still reads two.
-const AI_GRADING_POLL_MIN_MS = 60_000;
-const AI_GRADING_POLL_MAX_MS = 6 * 60_000;
 
 export function AttemptResult() {
   const { id } = useParams();
@@ -39,14 +35,7 @@ export function AttemptResult() {
   const [requestingRetake, setRequestingRetake] = useState(false);
   const [showRetakeModal, setShowRetakeModal] = useState(false);
   const mountedAtRef = useRef(new Date().toISOString());
-  // How long to keep watching, read inside the interval so a re-estimate does
-  // not tear the poll down and start it again.
-  const pollWindowRef = useRef(AI_GRADING_POLL_MIN_MS);
-  // The poll gives up after a minute. Grading can legitimately still be
-  // running at that point, so the page has to say so instead of leaving a
-  // spinner that no longer watches anything.
-  const [pollTimedOut, setPollTimedOut] = useState(false);
-  const [rechecking, setRechecking] = useState(false);
+
   const [retryingAi, setRetryingAi] = useState(false);
   const [retryMessage, setRetryMessage] = useState<string | null>(null);
 
@@ -65,32 +54,14 @@ export function AttemptResult() {
 
   const awaitingAiGrading = attempt?.ai_evaluation_status === "pending";
   const aiProgress = attempt?.ai_evaluation_progress ?? null;
-  const aiEstimateSeconds = aiProgress?.estimated_seconds ?? 0;
+
   const aiManualReviewRequired = attempt?.ai_evaluation_status === "manual_required";
 
-  // Half again the estimate, plus a margin for the queue: long enough that the
-  // watch outlives the countdown, capped so a stuck job cannot poll for ever.
   useEffect(() => {
-    pollWindowRef.current = Math.min(
-      AI_GRADING_POLL_MAX_MS,
-      Math.max(AI_GRADING_POLL_MIN_MS, aiEstimateSeconds * 1500 + 30_000),
-    );
-  }, [aiEstimateSeconds]);
-
-  useEffect(() => {
-    // `pollTimedOut` is a dependency, not just state: clearing it from the
-    // "Check now" button is what arms a fresh watch.
-    if (!awaitingAiGrading || pollTimedOut) return;
+    if (!awaitingAiGrading) return;
     let active = true;
-    let attempts = 0;
 
     const timer = window.setInterval(() => {
-      attempts += 1;
-      if (attempts * AI_GRADING_POLL_INTERVAL_MS > pollWindowRef.current) {
-        window.clearInterval(timer);
-        if (active) setPollTimedOut(true);
-        return;
-      }
       apiClient
         .get<Attempt>(`/student/attempts/${id}`, { headers: { "X-Skip-Loader": "1" } })
         .then(({ data }) => {
@@ -151,10 +122,7 @@ export function AttemptResult() {
       active = false;
       window.clearInterval(timer);
     };
-  }, [awaitingAiGrading, id, pollTimedOut]);
-
-  // A different attempt starts its own watch.
-  useEffect(() => setPollTimedOut(false), [id]);
+  }, [awaitingAiGrading, id]);
 
   async function retryAiEvaluation() {
     setRetryingAi(true);
@@ -164,7 +132,6 @@ export function AttemptResult() {
       setRetryMessage(data.message);
       // Queued work lands in the background: put the page back on watch so the
       // result appears without a manual reload.
-      setPollTimedOut(false);
       await recheckGrading();
     } catch (err: unknown) {
       setRetryMessage(extractErrorMessage(err, strings.aiEvaluation.retryFailed));
@@ -174,7 +141,6 @@ export function AttemptResult() {
   }
 
   async function recheckGrading() {
-    setRechecking(true);
     try {
       const { data } = await apiClient.get<Attempt>(`/student/attempts/${id}`, {
         headers: { "X-Skip-Loader": "1" },
@@ -186,12 +152,8 @@ export function AttemptResult() {
       );
       setAnalysis(analysisData);
       setAnalysisError(false);
-      // Still grading: hand the watch back to the poll for another minute.
-      if (data.ai_evaluation_status === "pending") setPollTimedOut(false);
     } catch {
       setAnalysisError(true);
-    } finally {
-      setRechecking(false);
     }
   }
 
@@ -257,14 +219,7 @@ export function AttemptResult() {
           <span className="page-eyebrow">{strings.eyebrow}</span>
           <h1>{attempt.module_title}</h1>
           <p className="page-subtitle" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            {awaitingAiGrading && pollTimedOut ? (
-              <>
-                <span>{strings.aiEvaluation.stillRunning}</span>
-                <Button type="button" variant="secondary" size="sm" onClick={() => void recheckGrading()} disabled={rechecking}>
-                  {rechecking ? strings.aiEvaluation.checking : strings.aiEvaluation.checkAgain}
-                </Button>
-              </>
-            ) : awaitingAiGrading ? (
+            {awaitingAiGrading ? (
               aiProgress ? (
                 <AiEvaluationProgress progress={aiProgress} variant="inline" />
               ) : (

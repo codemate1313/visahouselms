@@ -52,6 +52,7 @@ export function AuthOverlay({ authMode, publicTheme, onClose, onModeChange, clos
           className="login-modal-close-btn"
           onClick={handleClose}
           disabled={closeDisabled}
+          showTooltip={false}
           label={strings.authOverlay.closeAriaLabel}
           icon={
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

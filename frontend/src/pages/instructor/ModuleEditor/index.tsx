@@ -54,6 +54,8 @@ export function ModuleEditor() {
   // All composite (full_mock / final_test) modules the instructor has authored,
   // used by the Shuffle button to detect which source modules are already in use.
   const [existingMockModules, setExistingMockModules] = useState<ExamModule[]>([]);
+  const [existingModules, setExistingModules] = useState<ExamModule[]>([]);
+  const existingTitles = useMemo(() => existingModules.map((m) => m.title), [existingModules]);
   const [manual, setManual] = useState<QuestionDraft | null>(null);
   // Which part the current draft belongs to, so a reload can tell "same part,
   // keep what is typed" from "different part, start fresh".
@@ -167,15 +169,27 @@ export function ModuleEditor() {
     navigate(location.pathname + location.search, { replace: true, state: null });
   }, [location.pathname, location.search, location.state, navigate]);
   useEffect(() => {
-    if (!isNew || !requestedType || !MOCK_SOURCE_TYPES.has(requestedType)) return;
-    setLoadingSources(true);
+    if (isNew && requestedType && MOCK_SOURCE_TYPES.has(requestedType)) {
+      setLoadingSources(true);
+    }
     apiClient.get<ExamModule[]>("/instructor/modules")
       .then(({ data }) => {
-        setSourceModules(data.filter((item) => SOURCE_SECTIONS.includes(item.module_type as ExamSection) && item.status !== "archived" && item.ready_to_publish));
-        setExistingMockModules(data.filter((item) => COMPOSITE_TYPES.has(item.module_type)));
+        setExistingModules(data);
+        if (isNew && requestedType && MOCK_SOURCE_TYPES.has(requestedType)) {
+          setSourceModules(data.filter((item) => SOURCE_SECTIONS.includes(item.module_type as ExamSection) && item.status !== "archived" && item.ready_to_publish));
+          setExistingMockModules(data.filter((item) => COMPOSITE_TYPES.has(item.module_type)));
+        }
       })
-      .catch((err: unknown) => setError(extractErrorMessage(err, "Failed to load completed source modules.")))
-      .finally(() => setLoadingSources(false));
+      .catch((err: unknown) => {
+        if (isNew && requestedType && MOCK_SOURCE_TYPES.has(requestedType)) {
+          setError(extractErrorMessage(err, "Failed to load completed source modules."));
+        }
+      })
+      .finally(() => {
+        if (isNew && requestedType && MOCK_SOURCE_TYPES.has(requestedType)) {
+          setLoadingSources(false);
+        }
+      });
   }, [isNew, requestedType]);
 
   /**
@@ -352,6 +366,15 @@ export function ModuleEditor() {
   async function createModule(event: FormEvent) {
     event.preventDefault();
     if (!requestedType) return;
+    const trimmedTitle = details.title.trim();
+    if (!trimmedTitle) {
+      setError("Module Title is required before proceeding to Step 2.");
+      return;
+    }
+    if (existingModules.some((m) => m.title.trim().toLowerCase() === trimmedTitle.toLowerCase())) {
+      setError("Test with same name already exists, you can't create one.");
+      return;
+    }
     const isComposite = COMPOSITE_TYPES.has(requestedType);
     const usesMockSources = MOCK_SOURCE_TYPES.has(requestedType);
     const sourceModuleIds = usesMockSources
@@ -1060,6 +1083,7 @@ export function ModuleEditor() {
         onShuffle={handleShuffle}
         moduleImportFile={moduleImportFile}
         onModuleImportFileChange={setModuleImportFile}
+        existingTitles={existingTitles}
       />
     );
   }
@@ -1188,6 +1212,7 @@ export function ModuleEditor() {
                 busy={busy}
                 onSubmit={saveDetails}
                 onDelete={deleteModule}
+                existingTitles={existingTitles}
               />
             </>
           ) : (

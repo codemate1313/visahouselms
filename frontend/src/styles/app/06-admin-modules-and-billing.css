@@ -2660,6 +2660,7 @@
 .student-notification-tab-label {
   display: inline-block;
   letter-spacing: -0.01em;
+  color: inherit;
 }
 
 .student-notification-tab-badge {
