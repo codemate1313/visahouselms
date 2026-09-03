@@ -101,7 +101,7 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                   Unlock Course
                 </Button>
               ) : isExhausted ? (
-                module.latest_attempt_id ? (
+                module.latest_attempt_id && module.latest_attempt_status !== "expired" ? (
                   <Link to={`/student/attempts/${module.latest_attempt_id}/result/details`} style={{ width: "100%", textDecoration: "none" }}>
                     <Button
                       variant="outline"

@@ -4,7 +4,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button/Button";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
 import { formatTime, languageCertHeaderTitle } from "../helpers";
-import { LcClockIcon, LanguageCertLogo, PeopleCertBrand } from "./PeopleCertBrand";
+import { LcClockIcon, PeopleCertBrand } from "./PeopleCertBrand";
 
 interface TestRunnerHeaderProps {
   attempt: Attempt;
@@ -115,7 +115,6 @@ export function TestRunnerHeader({
                 <LcClockIcon />
               </div>
             )}
-            <LanguageCertLogo />
             {developerTools}
           </div>
         </div>

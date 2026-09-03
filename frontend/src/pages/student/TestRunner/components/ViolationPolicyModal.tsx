@@ -6,7 +6,7 @@ interface ViolationPolicyModalProps {
   limit: number;
   autoSubmitted: boolean;
   onContinue: () => void;
-  onViewResult: () => void;
+  onReturnToTests: () => void;
 }
 
 export function ViolationPolicyModal({
@@ -14,7 +14,7 @@ export function ViolationPolicyModal({
   limit,
   autoSubmitted,
   onContinue,
-  onViewResult,
+  onReturnToTests,
 }: ViolationPolicyModalProps) {
   const t = strings.security;
   return (
@@ -25,7 +25,7 @@ export function ViolationPolicyModal({
           {autoSubmitted ? t.violationFinalTitle : t.violationWarningTitle(count, limit)}
         </h2>
         <p>{autoSubmitted ? t.violationFinalBody : t.violationWarningBody}</p>
-        <Button type="button" onClick={autoSubmitted ? onViewResult : onContinue}>
+        <Button type="button" onClick={autoSubmitted ? onReturnToTests : onContinue}>
           {autoSubmitted ? t.viewResult : t.continueTest}
         </Button>
       </section>

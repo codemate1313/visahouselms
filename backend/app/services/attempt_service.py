@@ -956,14 +956,20 @@ def _maybe_auto_submit_for_violations(db: Session, attempt: TestAttempt) -> None
     count = _final_test_violation_count(attempt)
     if count < FINAL_TEST_AUTO_SUBMIT_VIOLATION_LIMIT:
         return
+    now = _now()
     attempt.security_media_state = {
         **(attempt.security_media_state or {}),
         "auto_submitted_for_violations": True,
+        "terminated_for_violations": True,
+        "violation_limit_reached": True,
         "auto_submit_reason": "final_test_rule_violations",
         "auto_submit_violation_count": count,
-        "auto_submitted_at": _now().isoformat(),
+        "terminated_at": now.isoformat(),
     }
-    submit_attempt(db, attempt, require_complete_speaking=False)
+    # Mark as expired so it is recorded as attempted, without grading answers or hitting AI evaluation APIs
+    attempt.status = ATTEMPT_EXPIRED
+    attempt.submitted_at = now
+    db.add(attempt)
 
 
 def secure_preflight(

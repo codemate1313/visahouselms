@@ -465,7 +465,7 @@ export function TestRunner() {
     setAttempt((current) => current ? { ...current, security_risk_score: policy.risk_score } : current);
     if (policy.violation_count <= 0 || policy.violation_count === lastViolationNoticeCountRef.current) return;
     lastViolationNoticeCountRef.current = policy.violation_count;
-    if (policy.auto_submitted) {
+    if (policy.auto_submitted || policy.violation_count >= policy.violation_limit) {
       submittedRef.current = true;
       setSubmitting(false);
       stopSecurityMedia();
@@ -475,14 +475,19 @@ export function TestRunner() {
       setFullscreenActive(false);
       updateSecurityMedia({ fullscreen: false });
       sessionStorage.removeItem(securityStorageKey(id, "token"));
+      showError(
+        strings.security.violationFinalBody,
+        strings.security.violationFinalTitle,
+      );
+      navigate("/student/my-courses", { replace: true });
+      return;
     }
     setViolationNotice({
       count: policy.violation_count,
       limit: policy.violation_limit,
-      autoSubmitted: policy.auto_submitted,
+      autoSubmitted: false,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, updateSecurityMedia]);
+  }, [id, navigate, showError, updateSecurityMedia]);
 
   /* On a Final Test or Full Mock the countdown is the Reading and Writing
      block's own allowance - the parts' durations added together - counted from
@@ -1737,7 +1742,7 @@ export function TestRunner() {
         setViolationNotice(null);
         await enterFullscreen();
       }}
-      onViewResult={() => navigate(`/student/attempts/${attempt.id}/result`, { replace: true })}
+      onReturnToTests={() => navigate("/student/my-courses", { replace: true })}
     />
   ) : null;
   const cameraPreview = isSpeakingPart && liveCameraStream && securityAuthorized && mediaState.camera ? (

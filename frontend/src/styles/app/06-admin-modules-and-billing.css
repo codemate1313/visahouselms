@@ -2645,12 +2645,9 @@
   transform: none !important;
 }
 
-.student-notification-filter-tab.is-active {
-  /* The drawer's own surface is white in light mode, so white text here left
-     the selected filter invisible - the one tab a reader needs to find. The
-     dark theme keeps white below; this is the light-mode value, matching the
-     hover state its siblings already use. */
-  color: #111113 !important;
+.student-notification-filter-tab.is-active,
+.student-notification-filter-tab.is-active:hover {
+  color: #ffffff !important;
   font-weight: 700 !important;
   background: transparent !important;
   border-color: transparent !important;
@@ -2661,6 +2658,10 @@
   display: inline-block;
   letter-spacing: -0.01em;
   color: inherit;
+}
+
+.student-notification-filter-tab.is-active .student-notification-tab-label {
+  color: #ffffff !important;
 }
 
 .student-notification-tab-badge {

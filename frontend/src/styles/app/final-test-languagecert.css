@@ -210,10 +210,17 @@
 .lc-brand {
   display: flex;
   min-width: 0;
-  flex-direction: column;
-  gap: 1px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
   line-height: 1;
   padding-left: 20px;
+}
+
+.lc-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .lc-brand-wordmark {
