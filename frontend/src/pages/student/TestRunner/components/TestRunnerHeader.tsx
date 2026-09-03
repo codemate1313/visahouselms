@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import type { Attempt } from "@/api/types";
+import { useAuthStore } from "@/store/authStore";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button/Button";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
-import { formatTime, languageCertHeaderTitle } from "../helpers";
+import { buildExamUrn, formatTime, languageCertHeaderTitle } from "../helpers";
 import { LcClockIcon, PeopleCertBrand } from "./PeopleCertBrand";
 
 interface TestRunnerHeaderProps {
@@ -52,6 +53,7 @@ export function TestRunnerHeader({
   languageCertSkin = false,
   timerVisible = true,
 }: TestRunnerHeaderProps) {
+  const user = useAuthStore((state) => state.user);
   const t = strings.header;
   const sectionLabels = strings.sectionLabels;
   const previousTarget = previousPartIndex !== undefined
@@ -96,13 +98,18 @@ export function TestRunnerHeader({
       && secondsLeft > 0
       && timerVisible;
 
+    const urn = buildExamUrn(attempt, user?.id);
+
     return (
       <header className="test-runner-header lc-header">
         <div className="lc-header-inner">
           <PeopleCertBrand />
           {/* The equal outer grid columns keep this title centred without
               allowing it to overlap the brand or the optional timer. */}
-          <h1 className="lc-header-title">{languageCertHeaderTitle(currentPart.section_type)}</h1>
+          <div className="lc-header-center">
+            <h1 className="lc-header-title">{languageCertHeaderTitle(currentPart.section_type)}</h1>
+            <div className="lc-header-urn">{urn}</div>
+          </div>
           <div className="lc-header-right">
             {showTimer && (
               <div

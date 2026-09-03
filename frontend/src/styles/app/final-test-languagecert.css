@@ -201,7 +201,7 @@
   align-items: center;
   min-height: 50px;
   padding-right: 18px;
-  padding-left: 5px;
+  padding-left: 10px;
   border: 1px solid #e6e6e6;
   background: #ffffff;
   box-shadow: 0 3px 7px rgba(0, 0, 0, 0.13);
@@ -260,9 +260,19 @@
   letter-spacing: 0.2px;
 }
 
+.lc-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  gap: 3px;
+  line-height: 1.2;
+}
+
 .lc-header-title {
   min-width: 0;
-  max-width: min(460px, 42vw);
+  max-width: min(520px, 46vw);
   overflow: hidden;
   margin: 0;
   padding: 0;
@@ -273,6 +283,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   pointer-events: none;
+}
+
+.lc-header-urn {
+  color: #2b2e35;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--lc-font-mono, "SFMono-Regular", Consolas, Menlo, monospace);
+  line-height: 1;
+  letter-spacing: 0.4px;
+  text-align: center;
+  white-space: nowrap;
+  user-select: text;
 }
 
 .lc-header-right {
