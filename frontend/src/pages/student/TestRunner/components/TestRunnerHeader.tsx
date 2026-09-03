@@ -98,7 +98,7 @@ export function TestRunnerHeader({
       && secondsLeft > 0
       && timerVisible;
 
-    const urn = buildExamUrn(attempt, user?.id);
+    const urn = buildExamUrn(attempt, user?.id).split("/").pop() ?? "";
 
     return (
       <header className="test-runner-header lc-header">
