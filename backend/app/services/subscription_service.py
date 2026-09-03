@@ -892,19 +892,37 @@ def my_current_plan_view(db: Session, user: User) -> dict:
     # card read "Attempt Exhausted" over a test the Start button would happily
     # open - the candidate had opened onboarding once and backed out.
     attempt_rows = (
-        db.query(TestAttempt.module_id, TestAttempt.id, TestAttempt.status)
+        db.query(
+            TestAttempt.module_id,
+            TestAttempt.id,
+            TestAttempt.status,
+            TestAttempt.security_media_state,
+        )
         .filter(
             TestAttempt.user_id == user.id,
-            TestAttempt.status.notin_(["cancelled", "ready"]),
+            TestAttempt.status != "cancelled",
         )
         .order_by(TestAttempt.id.desc())
         .all()
     )
     attempts_by_module: dict[int, list[dict]] = {}
-    for mod_id, att_id, att_status in attempt_rows:
+    for mod_id, att_id, att_status, att_media in attempt_rows:
+        media = att_media or {}
+        is_violated = (
+            att_status == "violated"
+            or bool(media.get("terminated_for_violations"))
+            or bool(media.get("violation_limit_reached"))
+            or bool(media.get("is_violated"))
+        )
+        if att_status == "ready" and not is_violated:
+            continue
         if mod_id not in attempts_by_module:
             attempts_by_module[mod_id] = []
-        attempts_by_module[mod_id].append({"id": att_id, "status": att_status})
+        attempts_by_module[mod_id].append({
+            "id": att_id,
+            "status": "violated" if is_violated else att_status,
+            "is_violated": is_violated,
+        })
 
     available_retake_module_ids = set(
         row[0]
@@ -923,24 +941,29 @@ def my_current_plan_view(db: Session, user: User) -> dict:
     def _module_attempt_info(module: ExamModule) -> dict:
         mod_atts = attempts_by_module.get(module.id, [])
         has_att = len(mod_atts) > 0
-        dev_unlimited_speaking = _dev_unlimited_speaking_attempts(db, module)
-        retake_avail = module.id in available_retake_module_ids or dev_unlimited_speaking
-        # Sittings bought and not yet used. A direct student who bought the plan
-        # again has another go, and the card has to say so - otherwise it reads
-        # "Attempt Exhausted" over a test the Start button would happily open,
-        # which is the same display-versus-gate mismatch that made a second plan
-        # look like it had done nothing.
-        sittings_left = (
-            _entitlements.sittings_remaining(db, user.id, module.id)
-            if user.institute_id is None else 0
-        )
-        is_exh = has_att and not retake_avail and sittings_left <= 0
         latest = mod_atts[0] if mod_atts else None
+        is_violated = any(a.get("is_violated") for a in mod_atts)
+        is_final = (module.module_type == "final_test")
+        dev_unlimited_speaking = _dev_unlimited_speaking_attempts(db, module)
+        retake_avail = (module.id in available_retake_module_ids or dev_unlimited_speaking) and not is_violated and not is_final
+
+        if is_violated or (is_final and has_att):
+            sittings_left = 0
+            retake_avail = False
+            is_exh = True
+        else:
+            sittings_left = (
+                _entitlements.sittings_remaining(db, user.id, module.id)
+                if user.institute_id is None else 0
+            )
+            is_exh = has_att and not retake_avail and sittings_left <= 0
+
         return {
-            "has_attempted": has_att,
+            "has_attempted": has_att or is_violated,
             "is_exhausted": is_exh,
+            "is_violated": is_violated,
             "latest_attempt_id": latest["id"] if latest else None,
-            "latest_attempt_status": latest["status"] if latest else None,
+            "latest_attempt_status": "violated" if is_violated else (latest["status"] if latest else None),
             "retake_available": retake_avail,
             "sittings_remaining": sittings_left,
         }

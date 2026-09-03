@@ -51,7 +51,8 @@ export function MyCourses() {
     let unattempted = 0;
     let completed = 0;
     allModules.forEach((m) => {
-      if (m.is_exhausted && !m.retake_available) {
+      const isAttemptDone = (m.is_exhausted || m.is_violated || m.latest_attempt_status === "violated") && !m.retake_available;
+      if (isAttemptDone) {
         completed += 1;
       } else {
         unattempted += 1;
@@ -70,11 +71,13 @@ export function MyCourses() {
       // 1. Skill/Type filter
       if (typeFilter !== "ALL" && m.module_type !== typeFilter) return false;
 
+      const isAttemptDone = (m.is_exhausted || m.is_violated || m.latest_attempt_status === "violated") && !m.retake_available;
+
       // 2. Attempt Status filter
       if (statusFilter === "UNATTEMPTED") {
-        if (m.is_exhausted && !m.retake_available) return false;
+        if (isAttemptDone) return false;
       } else if (statusFilter === "COMPLETED") {
-        if (!m.is_exhausted || m.retake_available) return false;
+        if (!isAttemptDone) return false;
       }
 
       // 3. Search query
@@ -84,8 +87,10 @@ export function MyCourses() {
 
     // 4. Sorting: Unattempted / Ready FIRST, Completed SECOND, Locked LAST
     return [...filtered].sort((a, b) => {
-      const aRank = a.is_locked ? 3 : (a.is_exhausted && !a.retake_available) ? 2 : 1;
-      const bRank = b.is_locked ? 3 : (b.is_exhausted && !b.retake_available) ? 2 : 1;
+      const aDone = (a.is_exhausted || a.is_violated || a.latest_attempt_status === "violated") && !a.retake_available;
+      const bDone = (b.is_exhausted || b.is_violated || b.latest_attempt_status === "violated") && !b.retake_available;
+      const aRank = a.is_locked ? 3 : aDone ? 2 : 1;
+      const bRank = b.is_locked ? 3 : bDone ? 2 : 1;
       if (aRank !== bRank) {
         return aRank - bRank;
       }

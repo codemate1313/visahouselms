@@ -22,15 +22,16 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
         const isStarting = starting === moduleId;
         const isLocked = Boolean(module.is_locked);
         const isDemo = Boolean(module.is_demo);
-        const isExhausted = Boolean(module.is_exhausted);
-        const retakeAvailable = Boolean(module.retake_available);
+        const isViolated = Boolean(module.is_violated || module.latest_attempt_status === "violated");
+        const isExhausted = Boolean(module.is_exhausted || isViolated);
+        const retakeAvailable = Boolean(module.retake_available && !isViolated);
         const moduleTypeClass = `type-${module.module_type || "default"}`;
 
         const categoryTitle = typeLabels[module.module_type as keyof typeof typeLabels] ?? module.module_type;
 
         return (
           <div
-            className={`premium-test-card ${moduleTypeClass}${isLocked ? " is-locked" : ""}${isExhausted ? " is-exhausted" : ""}`}
+            className={`premium-test-card ${moduleTypeClass}${isLocked ? " is-locked" : ""}${isViolated ? " is-violated" : ""}${isExhausted ? " is-exhausted" : ""}`}
             key={moduleId}
           >
             {/* Locked Center Overlay */}
@@ -54,7 +55,12 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                 <ModuleTypeIcon type={module.module_type} />
               </div>
 
-              {isExhausted ? (
+              {isViolated ? (
+                <span className="premium-status-badge is-violated" title="This test was terminated due to security violations.">
+                  <span className="badge-dot" />
+                  <span>Test Violated</span>
+                </span>
+              ) : isExhausted ? (
                 <span className="premium-status-badge is-exhausted" title={strings.attemptStatus.exhaustedTooltip}>
                   <span className="badge-dot" />
                   <span>Completed</span>
@@ -99,6 +105,16 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                   className="start-test-btn is-locked-btn"
                 >
                   Unlock Course
+                </Button>
+              ) : isViolated ? (
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  disabled
+                  className="start-test-btn is-violated-btn"
+                  title="This test was terminated due to security violations and cannot be taken again."
+                >
+                  Test Violated
                 </Button>
               ) : isExhausted ? (
                 module.latest_attempt_id && module.latest_attempt_status !== "expired" ? (

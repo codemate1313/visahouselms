@@ -5068,6 +5068,23 @@ button.student-notification-read-all:hover * {
   border-color: rgba(59, 130, 246, 0.3);
 }
 
+.premium-status-badge.is-violated {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.premium-status-badge.is-violated .badge-dot {
+  background: #dc2626;
+  box-shadow: 0 0 6px #dc2626;
+}
+
+[data-theme="dark"] .premium-status-badge.is-violated {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
 /* Card Footer & Action Button */
 .premium-card-footer {
   margin-top: auto;
@@ -5136,6 +5153,32 @@ button.start-test-btn.is-exhausted-btn:hover {
   background: rgba(255, 255, 255, 0.12) !important;
   border-color: rgba(255, 255, 255, 0.28) !important;
   color: #ffffff !important;
+}
+
+.start-test-btn.is-violated-btn,
+button.start-test-btn.is-violated-btn {
+  background: #fef2f2 !important;
+  border: 1.5px solid #fca5a5 !important;
+  color: #dc2626 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  cursor: not-allowed !important;
+  opacity: 0.9 !important;
+}
+
+.start-test-btn.is-violated-btn:hover,
+button.start-test-btn.is-violated-btn:hover {
+  background: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+  transform: none !important;
+}
+
+[data-theme="dark"] .start-test-btn.is-violated-btn,
+[data-theme="dark"] button.start-test-btn.is-violated-btn {
+  background: rgba(220, 38, 38, 0.15) !important;
+  border: 1px solid rgba(220, 38, 38, 0.3) !important;
+  color: #f87171 !important;
+  cursor: not-allowed !important;
 }
 
 /* Locked Card Overlay */

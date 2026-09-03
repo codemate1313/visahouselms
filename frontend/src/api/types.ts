@@ -483,6 +483,7 @@ export interface StudentPlanModule {
   is_demo?: boolean;
   has_attempted?: boolean;
   is_exhausted?: boolean;
+  is_violated?: boolean;
   latest_attempt_id?: number | null;
   latest_attempt_status?: string | null;
   retake_available?: boolean;

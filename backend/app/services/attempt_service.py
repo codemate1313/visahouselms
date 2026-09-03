@@ -23,6 +23,7 @@ from app.models.attempt import (
     ATTEMPT_IN_PROGRESS,
     ATTEMPT_READY,
     ATTEMPT_SUBMITTED,
+    ATTEMPT_VIOLATED,
     ATTEMPT_FLAG_TYPES,
     PART_GRADE_AI_GRADED,
     PART_GRADE_DRAFT,
@@ -327,8 +328,28 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     if waiting_at_onboarding is not None and not waiting_at_onboarding.answers:
         return get_student_view(db, get_attempt_or_404(db, user, waiting_at_onboarding.id))
 
-    # Every module type allows exactly one original sitting; an approved,
-    # unconsumed RetakeRequest is the only way to earn another (except final tests).
+    prior_all_attempts = (
+        db.query(TestAttempt)
+        .filter(
+            TestAttempt.user_id == user.id,
+            TestAttempt.module_id == module.id,
+            TestAttempt.status != "cancelled",
+        )
+        .all()
+    )
+    for pa in prior_all_attempts:
+        media = pa.security_media_state or {}
+        if pa.status == ATTEMPT_VIOLATED or media.get("terminated_for_violations") or media.get("is_violated"):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This test was terminated due to security violations and cannot be taken again.",
+            )
+        if is_final and pa.status != ATTEMPT_READY:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="You have already attempted the final test. Final tests cannot be retaken.",
+            )
+
     prior_sittings = (
         db.query(TestAttempt)
         .filter(
@@ -343,22 +364,13 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
     retake_request = None
 
     if original_attempt:
-        # A direct student who bought the plan again bought another go at it.
-        # Before this, a repeat purchase bought only more days to look at a
-        # paper they had already sat - full price for no further sitting - and
-        # the only way back in was a Retake Request, which is a goodwill
-        # workflow for when something went wrong, not something money buys.
-        #
-        # Institute students are unaffected: they do not buy their own plans,
-        # so a second institute plan must not silently reset every student's
-        # sittings. Their route to another go remains the Retake Request.
         has_paid_sitting = False
         if user.institute_id is None:
             from app.services import entitlement_service
 
             has_paid_sitting = entitlement_service.sittings_remaining(db, user.id, module.id) > 0
 
-        if is_final and not has_paid_sitting:
+        if is_final:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="You have already attempted the final test. Final tests cannot be retaken.",
@@ -962,12 +974,13 @@ def _maybe_auto_submit_for_violations(db: Session, attempt: TestAttempt) -> None
         "auto_submitted_for_violations": True,
         "terminated_for_violations": True,
         "violation_limit_reached": True,
+        "is_violated": True,
         "auto_submit_reason": "final_test_rule_violations",
         "auto_submit_violation_count": count,
         "terminated_at": now.isoformat(),
     }
-    # Mark as expired so it is recorded as attempted, without grading answers or hitting AI evaluation APIs
-    attempt.status = ATTEMPT_EXPIRED
+    # Mark as violated so it is recorded as attempted and cannot be used again
+    attempt.status = ATTEMPT_VIOLATED
     attempt.submitted_at = now
     db.add(attempt)
 
