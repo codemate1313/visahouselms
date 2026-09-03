@@ -1182,6 +1182,16 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             errors,
         )
 
+    def test_download_excel_template_returns_xlsx(self) -> None:
+        from app.routers.module_authoring import download_excel_template
+
+        res = download_excel_template("reading", self.instructor)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.media_type, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        self.assertIn("reading-upload-template.xlsx", res.headers["content-disposition"])
+        self.assertGreater(len(res.body), 1000)
+
 
 if __name__ == "__main__":
     unittest.main()
+

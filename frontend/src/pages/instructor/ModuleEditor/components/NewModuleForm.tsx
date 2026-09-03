@@ -1,10 +1,12 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { RequiredMark, SearchableSelect } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/Button/Button";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
+import { apiClient } from "@/api/client";
 import { usePageTitleStore } from "@/store/pageTitleStore";
+import { useToastStore } from "@/store/toastStore";
 import type { ExamModule, ExamModuleType, ExamSection } from "@/api/types";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 import { COMPOSITE_TYPES, MOCK_SOURCE_TYPES, DERIVED_DURATION_MODULE_TYPES, SOURCE_SECTIONS, MODULE_TYPE_META } from "../helpers";
@@ -50,7 +52,39 @@ export function NewModuleForm({
   const [activeTab, setActiveTab] = useState<"config" | "instructions">("config");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [exhaustedSections, setExhaustedSections] = useState<ExamSection[]>([]);
+  const [downloadingSample, setDownloadingSample] = useState(false);
+  const pdfCsvInputRef = useRef<HTMLInputElement>(null);
+  const excelInputRef = useRef<HTMLInputElement>(null);
+  const showSuccess = useToastStore((state) => state.showSuccess);
+  const showError = useToastStore((state) => state.showError);
   const setCustomBreadcrumbs = usePageTitleStore((state) => state.setCustomBreadcrumbs);
+
+  async function handleDownloadExcelSample() {
+    setDownloadingSample(true);
+    try {
+      const targetType = requestedType || "reading";
+      const response = await apiClient.get<Blob>(
+        `/instructor/modules/templates/excel?module_type=${targetType}`,
+        { responseType: "blob" }
+      );
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${targetType}-sample-template.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      showSuccess("Excel sample template downloaded successfully");
+    } catch {
+      showError("Could not download sample Excel template");
+    } finally {
+      setDownloadingSample(false);
+    }
+  }
 
   const typeLabel = requestedType ? typeLabels[requestedType] : "";
 
@@ -291,20 +325,182 @@ export function NewModuleForm({
               {!usesMockSources && (
                 <div className="vh-form-group">
                   <div className="vh-label-row">
-                    <label htmlFor="new-module-full-upload">{strings.moduleImport.fileLabel}</label>
+                    <label>{strings.moduleImport.fileLabel}</label>
                   </div>
                   <p className="field-hint">
                     {isComposite
                       ? t.finalTestUploadHint
                       : strings.moduleImport.createHint(typeLabel)}
                   </p>
-                  <input
-                    id="new-module-full-upload"
-                    type="file"
-                    accept=".pdf,.csv,application/pdf,text/csv"
-                    onChange={(event) => onModuleImportFileChange(event.target.files?.[0] ?? null)}
-                  />
-                  {moduleImportFile && <p className="field-hint">Selected: {moduleImportFile.name}</p>}
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                      gap: "14px",
+                      marginTop: "10px",
+                    }}
+                  >
+                    {/* Primary Button: Upload PDF or CSV */}
+                    <div
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border)",
+                        background: "var(--surface)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
+                      <label
+                        htmlFor="new-module-full-upload"
+                        style={{
+                          fontWeight: 600,
+                          fontSize: "13px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span>📄</span>
+                        <span>{strings.moduleImport.pdfCsvLabel}</span>
+                      </label>
+                      <input
+                        id="new-module-full-upload"
+                        ref={pdfCsvInputRef}
+                        type="file"
+                        accept=".pdf,.csv,application/pdf,text/csv"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0] ?? null;
+                          onModuleImportFileChange(file);
+                          if (file && excelInputRef.current) {
+                            excelInputRef.current.value = "";
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* Second Button: Upload Excel (.xlsx) */}
+                    <div
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border)",
+                        background: "var(--surface)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          flexWrap: "wrap",
+                          gap: "4px",
+                        }}
+                      >
+                        <label
+                          htmlFor="new-module-excel-upload"
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "13px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            cursor: "pointer",
+                            margin: 0,
+                          }}
+                        >
+                          <span>📊</span>
+                          <span>{strings.moduleImport.excelLabel}</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleDownloadExcelSample}
+                          disabled={downloadingSample}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--primary, #b80f28)",
+                            cursor: "pointer",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            padding: "2px 4px",
+                            textDecoration: "underline",
+                          }}
+                        >
+                          {downloadingSample ? (
+                            <span>⏳ {strings.moduleImport.downloadingSample}</span>
+                          ) : (
+                            <span>📥 {strings.moduleImport.downloadSampleExcel}</span>
+                          )}
+                        </button>
+                      </div>
+                      <input
+                        id="new-module-excel-upload"
+                        ref={excelInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0] ?? null;
+                          onModuleImportFileChange(file);
+                          if (file && pdfCsvInputRef.current) {
+                            pdfCsvInputRef.current.value = "";
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {moduleImportFile && (
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        background: "var(--surface-hover, rgba(0,0,0,0.04))",
+                        padding: "6px 12px",
+                        borderRadius: "20px",
+                        border: "1px solid var(--border)",
+                        fontSize: "13px",
+                      }}
+                    >
+                      <span>
+                        Selected: <strong>{moduleImportFile.name}</strong>{" "}
+                        <span style={{ opacity: 0.7 }}>
+                          ({(moduleImportFile.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onModuleImportFileChange(null);
+                          if (pdfCsvInputRef.current) pdfCsvInputRef.current.value = "";
+                          if (excelInputRef.current) excelInputRef.current.value = "";
+                        }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "var(--text-muted, #666)",
+                          fontSize: "14px",
+                          lineHeight: 1,
+                          padding: "0 4px",
+                        }}
+                        title={strings.moduleImport.clearFile}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

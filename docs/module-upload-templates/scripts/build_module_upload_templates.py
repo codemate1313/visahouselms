@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_ROOT = ROOT.parent / "module-upload-test-files"
 CSV_DIR = ROOT / "csv"
 PDF_DIR = ROOT / "pdf"
+EXCEL_DIR = ROOT / "excel"
 
 CSV_COLUMNS = [
     "prompt",
@@ -66,6 +67,92 @@ def write_csv(path: Path, rows: list[dict[str, object]]) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({column: row.get(column, "") for column in CSV_COLUMNS})
+
+
+def get_excel_columns_for_path(path: Path, rows: list[dict[str, object]]) -> list[str]:
+    stem = path.stem.lower()
+    if "writing" in stem:
+        return ["part_code", "prompt", "instructions", "passage"]
+    if "speaking" in stem:
+        return ["part_code", "prompt", "instructions"]
+    if "listening" in stem:
+        return [
+            "part_code",
+            "prompt",
+            "option_a",
+            "option_b",
+            "option_c",
+            "option_d",
+            "correct_answer",
+            "instructions",
+        ]
+    has_extended_options = any(
+        bool(row.get(f"option_{letter}"))
+        for row in rows
+        for letter in "efgh"
+    )
+    cols = ["part_code", "prompt", "option_a", "option_b", "option_c", "option_d"]
+    if has_extended_options:
+        cols.extend(["option_e", "option_f", "option_g", "option_h"])
+    cols.extend(["correct_answer", "passage", "instructions"])
+    return cols
+
+
+def write_excel(path: Path, rows: list[dict[str, object]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    import openpyxl
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.utils import get_column_letter
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Questions"
+
+    header_fill = PatternFill(start_color="B80F28", end_color="B80F28", fill_type="solid")
+    header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    thin_border = Border(
+        left=Side(style="thin", color="D0D5DD"),
+        right=Side(style="thin", color="D0D5DD"),
+        top=Side(style="thin", color="D0D5DD"),
+        bottom=Side(style="thin", color="D0D5DD"),
+    )
+
+    columns = get_excel_columns_for_path(path, rows)
+    ws.append(columns)
+    for col_idx in range(1, len(columns) + 1):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    for row_idx, row in enumerate(rows, start=2):
+        row_data = [str(row.get(column, "") or "") for column in columns]
+        ws.append(row_data)
+        for col_idx in range(1, len(columns) + 1):
+            cell = ws.cell(row=row_idx, column=col_idx)
+            cell.border = thin_border
+            cell.alignment = Alignment(vertical="top")
+
+    for col in ws.columns:
+        col_name = get_column_letter(col[0].column)
+        col_header = ws.cell(row=1, column=col[0].column).value
+        if col_header == "part_code":
+            ws.column_dimensions[col_name].width = 16
+        elif col_header == "prompt":
+            ws.column_dimensions[col_name].width = 45
+        elif col_header in {"correct_answer"}:
+            ws.column_dimensions[col_name].width = 15
+        elif col_header in {"passage"}:
+            ws.column_dimensions[col_name].width = 45
+        elif col_header in {"instructions"}:
+            ws.column_dimensions[col_name].width = 35
+        elif str(col_header).startswith("option_"):
+            ws.column_dimensions[col_name].width = 24
+        else:
+            ws.column_dimensions[col_name].width = 18
+
+    ws.row_dimensions[1].height = 24
+    wb.save(path)
 
 
 def csv_rows() -> dict[str, list[dict[str, object]]]:
@@ -718,11 +805,18 @@ Keep PDFs selectable, not scanned images. Scanned PDFs need OCR before upload.
 def main() -> None:
     CSV_DIR.mkdir(parents=True, exist_ok=True)
     PDF_DIR.mkdir(parents=True, exist_ok=True)
+    EXCEL_DIR.mkdir(parents=True, exist_ok=True)
     (FIXTURE_ROOT / "pdf").mkdir(parents=True, exist_ok=True)
+    (FIXTURE_ROOT / "excel").mkdir(parents=True, exist_ok=True)
     for filename, rows in csv_rows().items():
         write_csv(CSV_DIR / filename, rows)
+        excel_name = filename.replace(".csv", ".xlsx")
+        write_excel(EXCEL_DIR / excel_name, rows)
     for filename, rows in full_csv_rows().items():
         write_csv(CSV_DIR / filename, rows)
+        excel_name = filename.replace(".csv", ".xlsx")
+        write_excel(EXCEL_DIR / excel_name, rows)
+        write_excel(FIXTURE_ROOT / "excel" / excel_name, rows)
     for filename, sections in PDF_SECTIONS.items():
         title = filename.replace("-", " ").replace(".pdf", "").title()
         build_pdf(PDF_DIR / filename, title, sections)

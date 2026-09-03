@@ -141,8 +141,8 @@ class ModuleWideQuestionBatchCreate(BaseModel):
     @classmethod
     def valid_source(cls, value: str) -> str:
         value = value.strip().lower()
-        if value not in {"pdf", "csv"}:
-            raise ValueError("source_type must be pdf or csv")
+        if value not in {"pdf", "csv", "xlsx", "xls", "excel"}:
+            raise ValueError("source_type must be pdf, csv, or excel")
         return value
 
 

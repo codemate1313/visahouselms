@@ -78,6 +78,35 @@ class QuestionImportTests(unittest.TestCase):
         self.assertEqual(question["correct_answers"], ["B"])
         self.assertEqual(preview["warning_count"], 0)
 
+    def test_excel_extracts_questions_and_types(self) -> None:
+        import openpyxl
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Reading 1A"
+        ws.append(["part_code", "prompt", "option_a", "option_b", "option_c", "correct_answer", "question_type"])
+        ws.append(["Reading 1A", "Choose the best synonym for bold word.", "easy", "hard", "simple", "B", "mcq_single"])
+        buf = io.BytesIO()
+        wb.save(buf)
+        upload = UploadFile(
+            io.BytesIO(buf.getvalue()),
+            filename="reading-upload.xlsx",
+            headers=Headers({"content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),
+        )
+        preview = asyncio.run(question_import_service.preview_upload(upload))
+        self.assertEqual(preview["source_type"], "xlsx")
+        self.assertEqual(preview["question_count"], 1)
+        self.assertEqual(preview["questions"][0]["question_type"], "mcq_single")
+        self.assertEqual(preview["questions"][0]["correct_answers"], ["B"])
+        self.assertEqual(preview["questions"][0]["target_part"], "Reading 1A")
+        self.assertEqual(len(preview["questions"][0]["options"]), 3)
+
+    def test_excel_template_generation_contains_valid_questions(self) -> None:
+        excel_bytes = question_import_service.generate_excel_template("reading")
+        self.assertTrue(len(excel_bytes) > 1000)
+        source, questions, warnings = question_import_service.parse_excel(excel_bytes)
+        self.assertEqual(len(questions), 30)
+        self.assertEqual(len(warnings), 0)
+
     def test_pdf_extracts_numbered_questions_options_and_answer(self) -> None:
         content = _simple_pdf([
             "1. Which word means fast?",

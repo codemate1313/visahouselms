@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.uploads import read_compressed_profile_image, read_validated_course_asset, read_validated_mp3
@@ -84,6 +84,21 @@ def create_module(
     actor: User = Depends(get_current_user),
 ):
     return module_authoring_service.create_module(db, actor, payload.model_dump(), _ip(request))
+
+
+@router.get("/templates/excel")
+def download_excel_template(
+    module_type: str = Query("reading", description="Module type for sample template"),
+    actor: User = Depends(get_current_user),
+):
+    excel_bytes = question_import_service.generate_excel_template(module_type)
+    norm_type = (module_type or "module").replace("_", "-")
+    filename = f"{norm_type}-upload-template.xlsx"
+    return Response(
+        content=excel_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/{module_id}")

@@ -1122,11 +1122,53 @@ export function ModuleEditor() {
                   <h2>{strings.moduleImport.heading}</h2>
                   <p>{strings.moduleImport.editorHint}</p>
                 </div>
+                {module && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const targetType = module.module_type || "reading";
+                        const response = await apiClient.get<Blob>(
+                          `/instructor/modules/templates/excel?module_type=${targetType}`,
+                          { responseType: "blob" }
+                        );
+                        const blob = new Blob([response.data], {
+                          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `${targetType}-sample-template.xlsx`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        showSuccess("Excel sample template downloaded successfully");
+                      } catch {
+                        showError("Could not download sample Excel template");
+                      }
+                    }}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "var(--primary, #b80f28)",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    📥 {strings.moduleImport.downloadSampleExcel}
+                  </button>
+                )}
               </div>
               <form className="import-upload" onSubmit={previewModuleImport}>
                 <input
                   type="file"
-                  accept=".pdf,.csv,application/pdf,text/csv"
+                  accept=".pdf,.csv,.xlsx,.xls,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                   onChange={(event) => setModuleImportFile(event.target.files?.[0] ?? null)}
                 />
                 <Button type="submit" disabled={busy || !moduleImportFile}>
