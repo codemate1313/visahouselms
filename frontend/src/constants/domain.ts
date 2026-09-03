@@ -235,6 +235,7 @@ export const ATTEMPT_STATUS = {
   GRADING: "grading",
   GRADED: "graded",
   EXPIRED: "expired",
+  VIOLATED: "violated",
 } as const;
 
 export type AttemptStatus = (typeof ATTEMPT_STATUS)[keyof typeof ATTEMPT_STATUS];
@@ -245,6 +246,7 @@ export const ATTEMPT_STATUS_LABELS: Readonly<Record<AttemptStatus, string>> = {
   [ATTEMPT_STATUS.SUBMITTED]: "Submitted",
   [ATTEMPT_STATUS.GRADING]: "Grading",
   [ATTEMPT_STATUS.GRADED]: "Graded",
+  [ATTEMPT_STATUS.VIOLATED]: "Test violated",
   [ATTEMPT_STATUS.EXPIRED]: "Expired",
 };
 

@@ -11,6 +11,7 @@ import { PartReviewSection } from "./components/PartReviewSection";
 import { ReevaluationStatus } from "@/components/ReevaluationStatus";
 import { ReevaluationForm } from "./components/ReevaluationForm";
 import { LinkButton, PageHeader } from "@/components/ui";
+import { Icon } from "@/components/icons";
 
 export function AttemptResultDetails() {
   const { id } = useParams();
@@ -30,6 +31,7 @@ export function AttemptResultDetails() {
   if (!attempt) return <p>{strings.loading}</p>;
 
   const graded = attempt.status === "graded";
+  const isViolated = attempt.status === "violated";
   const reviewable = ["grading", "graded"].includes(attempt.status);
   const profile = attempt.cefr_profile;
   const metrics = getAttemptMetrics(attempt);
@@ -72,17 +74,27 @@ export function AttemptResultDetails() {
       />
       {error && <p className="error-text">{error}</p>}
 
-      <ResultDetailStats metrics={metrics} />
+      {isViolated ? (
+        <div className="attempt-violated-notice">
+          <Icon name="warning" className="attempt-violated-notice-icon" />
+          <h3>{strings.violatedNotice.heading}</h3>
+          <p>{strings.violatedNotice.body}</p>
+        </div>
+      ) : (
+        <>
+          <ResultDetailStats metrics={metrics} />
 
-      {profile && <CefrProfilePanel profile={profile} />}
+          {profile && <CefrProfilePanel profile={profile} />}
 
-      {attempt.parts.map((part) => (
-        <PartReviewSection key={part.id} part={part} />
-      ))}
+          {attempt.parts.map((part) => (
+            <PartReviewSection key={part.id} part={part} />
+          ))}
 
-      {!graded && attempt.status !== "expired" && <p className="hint">{strings.scoreUpdateHint}</p>}
+          {!graded && attempt.status !== "expired" && <p className="hint">{strings.scoreUpdateHint}</p>}
+        </>
+      )}
 
-      {attempt.reevaluation && (
+      {!isViolated && attempt.reevaluation && (
         <ReevaluationStatus
           reevaluation={attempt.reevaluation}
           strings={{

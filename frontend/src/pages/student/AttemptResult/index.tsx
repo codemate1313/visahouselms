@@ -173,6 +173,7 @@ export function AttemptResult() {
     !attempt.retake_request;
 
   const isAiGraded = attempt.parts.some((part) => part.grade?.status === "ai_graded");
+  const isViolated = attempt.status === "violated";
   const statusLabels = strings.statusLabels;
 
   async function requestInstructorReview(event: FormEvent) {
@@ -246,19 +247,29 @@ export function AttemptResult() {
         </div>
       </div>
 
-      <PerformanceOverviewPanel attempt={attempt} metrics={metrics} awaitingAiGrading={awaitingAiGrading} />
-      <AnalysisPanel
-        analysis={analysis}
-        analysisError={analysisError}
-        awaitingAiGrading={awaitingAiGrading}
-        aiProgress={aiProgress}
-        onRetryAi={aiManualReviewRequired && attempt.status === "grading" ? () => void retryAiEvaluation() : undefined}
-        retryingAi={retryingAi}
-        retryMessage={retryMessage}
-        manualReviewRequired={aiManualReviewRequired && attempt.status === "grading"}
-      />
+      {isViolated ? (
+        <div className="attempt-violated-notice">
+          <Icon name="warning" className="attempt-violated-notice-icon" />
+          <h3>{strings.violatedNotice.heading}</h3>
+          <p>{strings.violatedNotice.body}</p>
+        </div>
+      ) : (
+        <>
+          <PerformanceOverviewPanel attempt={attempt} metrics={metrics} awaitingAiGrading={awaitingAiGrading} />
+          <AnalysisPanel
+            analysis={analysis}
+            analysisError={analysisError}
+            awaitingAiGrading={awaitingAiGrading}
+            aiProgress={aiProgress}
+            onRetryAi={aiManualReviewRequired && attempt.status === "grading" ? () => void retryAiEvaluation() : undefined}
+            retryingAi={retryingAi}
+            retryMessage={retryMessage}
+            manualReviewRequired={aiManualReviewRequired && attempt.status === "grading"}
+          />
+        </>
+      )}
 
-      {attempt.reevaluation && (
+      {!isViolated && attempt.reevaluation && (
         <ReevaluationStatus
           reevaluation={attempt.reevaluation}
           strings={{

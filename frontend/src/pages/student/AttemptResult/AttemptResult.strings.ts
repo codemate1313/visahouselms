@@ -8,6 +8,11 @@ export const attemptResultStrings = {
     grading: "Awaiting instructor grading",
     graded: "Graded",
     expired: "Expired before submission",
+    violated: "Test violated",
+  },
+  violatedNotice: {
+    heading: "Test Violated",
+    body: "This attempt was terminated due to security violations during the test, so no result is available.",
   },
   aiEvaluation: {
     inProgress: "AI evaluation in progress...",
