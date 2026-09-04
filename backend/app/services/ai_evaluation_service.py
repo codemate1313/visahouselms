@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import json
 import logging
 import mimetypes
@@ -2305,6 +2306,203 @@ def _model_is_gone(response: httpx.Response) -> bool:
     )
 
 
+# One small request, so a dead model costs a handshake instead of a whole
+# recording. Kept short because a model can be switched off at any time.
+MODEL_PROBE_TIMEOUT = 10.0
+# Which model names a key has been seen to answer on, so the handshake costs
+# one request per model per process rather than one before every paper. Only
+# acknowledgements are remembered: a name that just came back 404 is asked
+# about again next time, because bringing a model back is Google's decision.
+MODEL_ACK_TTL_SECONDS = 15 * 60
+_model_acknowledged: dict[tuple[str, str], float] = {}
+
+
+def reset_model_acknowledgements() -> None:
+    """Forget which models answered. For tests and for the settings screen."""
+    _model_acknowledged.clear()
+
+
+def _key_fingerprint(api_key: str) -> str:
+    return hashlib.sha256((api_key or "").encode("utf-8")).hexdigest()[:16]
+
+
+def _model_was_acknowledged(api_key: str, model: str) -> bool:
+    seen = _model_acknowledged.get((_key_fingerprint(api_key), model))
+    return bool(seen is not None and (time.monotonic() - seen) < MODEL_ACK_TTL_SECONDS)
+
+
+def _acknowledge_model(api_key: str, model: str) -> None:
+    _model_acknowledged[(_key_fingerprint(api_key), model)] = time.monotonic()
+
+
+def _gemini_model_answers(client, api_key: str, model: str) -> Optional[bool]:
+    """Does this model exist for this key, before a recording is spent on it?
+
+    True - Google acknowledged the name. False - Google says the number is
+    disconnected, so the caller should dial the next one without uploading
+    anything. None - we could not tell (the directory is down, the key is over
+    quota), and only the call itself can settle it, so it is made.
+    """
+    if _model_was_acknowledged(api_key, model):
+        return True
+    try:
+        response = client.get(
+            f"{GEMINI_API_ROOT}/models/{model}",
+            headers=_gemini_headers(api_key),
+            timeout=MODEL_PROBE_TIMEOUT,
+        )
+    except Exception as exc:
+        logger.info(
+            "Could not check whether Gemini model %s exists: %s",
+            model,
+            _redact_secrets(exc)[:200],
+        )
+        return None
+    if getattr(response, "status_code", 0) == 200:
+        _acknowledge_model(api_key, model)
+        return True
+    if _model_is_gone(response):
+        return False
+    # A 429 or a 500 says nothing about the name, so it stays in the chain.
+    return None
+
+
+def _live_gemini_candidates(client, api_key: str, *, skill: str, exclude: set[str]) -> list[str]:
+    """What Google says this key can call right now, best first.
+
+    Reached only when every name in the chain has been refused inside this
+    request. Before this, that was the end of it: the paper failed, and the
+    student pressing retry was what found a model that answered - a retry the
+    server is in a better position to do itself, in the same request.
+    """
+    try:
+        response = client.get(
+            f"{GEMINI_API_ROOT}/models",
+            headers=_gemini_headers(api_key),
+            timeout=MODEL_PROBE_TIMEOUT,
+        )
+        response.raise_for_status()
+        data = response.json()
+    except Exception as exc:
+        logger.warning(
+            "Could not read the live Gemini model list: %s", _redact_secrets(exc)[:200]
+        )
+        return []
+
+    names = [
+        str(item.get("name") or "").removeprefix("models/")
+        for item in (data.get("models") or [])
+        if "generateContent" in set(item.get("supportedGenerationMethods") or [])
+    ]
+    usable = [
+        name
+        for name in names
+        if name
+        and name not in exclude
+        and name not in GEMINI_RETIRED_MODELS
+        and skill in model_skills("gemini", name)
+    ]
+    return sorted(dict.fromkeys(usable), key=model_rank)
+
+
+def _gemini_dial(
+    client,
+    api_key: str,
+    model_chain: list[str],
+    body: dict,
+    *,
+    skill: str = SKILL_WRITING,
+    soften: Optional[Callable[[], bool]] = None,
+    label: str = "evaluation",
+    discover: bool = True,
+):
+    """Find a model that answers, and send the request to it - in one request.
+
+    Each candidate is acknowledged before the payload is spent on it, and a
+    name that turns out to be gone is dialled around here. When the chain runs
+    out, Google's live list is read and the best name on it is tried too, so
+    "the model is not available" stops being something the student has to
+    retry into.
+
+    Returns the response, and the model that produced it.
+    """
+    headers = _gemini_headers(api_key)
+    queue = [name for name in dict.fromkeys(model_chain) if name] or [DEFAULT_GEMINI_MODEL]
+    tried: list[str] = []
+    refilled = False
+    response = None
+    model = queue[0]
+
+    def refill() -> None:
+        """Ask Google directly, once, when the chain has nothing left."""
+        nonlocal queue, refilled
+        # A connection test names one model deliberately: answering it with a
+        # different model's "OK" would say the setting on screen works.
+        if queue or refilled or not discover:
+            return
+        refilled = True
+        queue = _live_gemini_candidates(client, api_key, skill=skill, exclude=set(tried))
+        if queue:
+            logger.info(
+                "Gemini %s: chain exhausted; Google still lists %s",
+                label,
+                ", ".join(queue[:3]),
+            )
+
+    while queue:
+        candidate = queue.pop(0)
+        if candidate in tried:
+            continue
+        tried.append(candidate)
+
+        if _gemini_model_answers(client, api_key, candidate) is False:
+            logger.warning(
+                "Gemini %s model %s is not available for this key; moving on without sending the payload",
+                label,
+                candidate,
+            )
+            refill()
+            continue
+
+        model = candidate
+        url = f"{GEMINI_API_ROOT}/models/{candidate}:generateContent"
+        response = client.post(url, headers=headers, json=body)
+
+        # A schema this endpoint will not accept must not cost the student
+        # their evaluation - drop it and ask again in the original shape.
+        if getattr(response, "status_code", 0) == 400 and soften is not None and soften():
+            response = client.post(url, headers=headers, json=body)
+
+        # A retired model is dialled around here, because a name can stop
+        # existing between the handshake and the call. A refusal on quota is
+        # different: the plan above decides what to reach for next, and it
+        # knows about the other keys as well as the other models.
+        if not _model_is_gone(response):
+            if getattr(response, "status_code", 0) == 200:
+                _acknowledge_model(api_key, candidate)
+            return response, model
+
+        refill()
+        if queue:
+            logger.warning(
+                "Gemini %s model %s is no longer available; trying %s",
+                label,
+                candidate,
+                queue[0],
+            )
+
+    if response is None:
+        # Every name was refused at the handshake and Google offered nothing
+        # else. Send the request that was asked for anyway, so the failure the
+        # log shows is a real answer from Google rather than our own guess.
+        model = tried[0] if tried else DEFAULT_GEMINI_MODEL
+        response = client.post(
+            f"{GEMINI_API_ROOT}/models/{model}:generateContent", headers=headers, json=body
+        )
+    return response, model
+
+
+
 def _gemini_evaluator(config: dict, payload: dict) -> dict:
     api_key = config["api_key"]
     requested_model = (config.get("model") or DEFAULT_GEMINI_MODEL).replace("–", "-").replace("—", "-").strip().removeprefix("models/")
@@ -2313,7 +2511,6 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
     model_chain = gemini_model_chain(
         requested_model, config.get("live_models"), skill=payload.get("skill") or SKILL_WRITING
     )
-    model = model_chain[0]
 
     parts = []
     if payload.get("task") == "cefr_rubric_evaluation_batch":
@@ -2390,37 +2587,24 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
         "generationConfig": generation_config,
     }
 
-    headers = _gemini_headers(api_key)
+    def drop_schema() -> bool:
+        if "responseSchema" not in generation_config:
+            return False
+        logger.info("Gemini rejected the response schema; retrying without it")
+        generation_config.pop("responseSchema")
+        return True
 
     timeout = _timeout_for_request(payload)
     with httpx.Client(timeout=timeout) as client:
-        res = None
-        for index, candidate in enumerate(model_chain):
-            model = candidate
-            url = f"{GEMINI_API_ROOT}/models/{candidate}:generateContent"
-            res = client.post(url, headers=headers, json=gemini_payload)
-
-            # A schema this endpoint will not accept must not cost the student
-            # their evaluation - drop it and ask again in the original shape.
-            if res.status_code == 400 and "responseSchema" in generation_config:
-                logger.info("Gemini rejected the response schema; retrying without it")
-                generation_config.pop("responseSchema")
-                res = client.post(url, headers=headers, json=gemini_payload)
-
-            last_candidate = index == len(model_chain) - 1
-            # A retired model is dialled around here, because no caller can
-            # know a name has stopped existing until it is tried. A refusal on
-            # quota is different: the plan above decides what to reach for
-            # next, and it knows about the other keys as well as the other
-            # models.
-            if _model_is_gone(res) and not last_candidate:
-                logger.warning(
-                    "Gemini model %s is no longer available; trying %s",
-                    candidate,
-                    model_chain[index + 1],
-                )
-                continue
-            break
+        res, model = _gemini_dial(
+            client,
+            api_key,
+            model_chain,
+            gemini_payload,
+            skill=payload.get("skill") or SKILL_WRITING,
+            soften=drop_schema,
+            discover=payload.get("task") != "connection_test",
+        )
 
         if res.status_code == 429:
             body = (res.text or "").lower()
@@ -2694,17 +2878,15 @@ def _gemini_interlocutor(config: dict, prompt: str, audio_b64: str, mime_type: s
         ]}],
         "generationConfig": {"responseMimeType": "application/json", "temperature": 0.25},
     }
-    headers = _gemini_headers(config["api_key"])
     with httpx.Client(timeout=45.0) as client:
-        response = None
-        for index, candidate in enumerate(model_chain):
-            url = f"{GEMINI_API_ROOT}/models/{candidate}:generateContent"
-            response = client.post(url, headers=headers, json=payload)
-            last_candidate = index == len(model_chain) - 1
-            if _model_is_gone(response) and not last_candidate:
-                logger.warning("Gemini interlocutor model %s is no longer available; trying %s", candidate, model_chain[index + 1])
-                continue
-            break
+        response, _model = _gemini_dial(
+            client,
+            config["api_key"],
+            model_chain,
+            payload,
+            skill=SKILL_SPEAKING,
+            label="interlocutor",
+        )
         response.raise_for_status()
         data = response.json()
     return json.loads(data["candidates"][0]["content"]["parts"][0]["text"])

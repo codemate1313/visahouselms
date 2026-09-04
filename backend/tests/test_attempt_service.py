@@ -2814,6 +2814,182 @@ class AttemptServiceTestCase(unittest.TestCase):
             ai_evaluation_service.gemini_model_chain("gemini-flash-latest", []),
         )
 
+    def _speaking_payload(self):
+        return {
+            "task": "cefr_rubric_evaluation",
+            "framework": "F",
+            "policy_version": "1",
+            "skill": "speaking",
+            "part": {"title": "Speaking 1", "skill_focus": "fluency"},
+            "rubric": [{"criterion": "Fluency", "max_marks": "10"}],
+            "responses": [{"prompt": "Spell your name.", "audio_b64": "AAAA", "mime_type": "audio/webm"}],
+            "instructions": "Mark it.",
+            "audio_bytes": 143 * 1024,
+        }
+
+    @staticmethod
+    def _marked_body():
+        return {
+            "candidates": [{"content": {"parts": [{"text": json.dumps({
+                "criteria": [{"criterion": "Fluency", "marks_awarded": 6, "rationale": "ok"},],
+                "comment": "Marked.",
+                "confidence": 0.8,
+            })}]}}],
+            "usageMetadata": {"totalTokenCount": 100},
+        }
+
+    def test_a_model_that_is_gone_is_found_before_the_recording_is_sent(self):
+        """The handshake that stops a 404 from costing a paper.
+
+        Sending three recordings to a name Google has switched off costs the
+        student the whole evaluation and the platform the upload. Asking
+        whether the model exists first costs one small request, and its answer
+        decides where the payload actually goes - in the same request, so
+        nobody has to press retry to find the model that works.
+        """
+        ai_evaluation_service.reset_model_acknowledgements()
+        asked: list = []
+        dialled: list = []
+        body = self._marked_body()
+
+        class FakeResponse:
+            def __init__(self, status_code, payload=None):
+                self.status_code = status_code
+                self._payload = payload or {}
+                self.text = "models/gemini-2.0-flash is not found for API version v1beta"
+
+            def json(self):
+                return self._payload
+
+            def raise_for_status(self):
+                if self.status_code >= 400:
+                    raise RuntimeError(f"HTTP {self.status_code}")
+
+        class FakeClient:
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *_args):
+                return False
+
+            def get(self_inner, url, **_kwargs):
+                name = url.split("/models/")[1]
+                asked.append(name)
+                return FakeResponse(404 if name == "gemini-2.0-flash" else 200)
+
+            def post(self_inner, url, **_kwargs):
+                dialled.append(url.split("/models/")[1].split(":")[0])
+                return FakeResponse(200, body)
+
+        with patch.object(ai_evaluation_service.httpx, "Client", return_value=FakeClient()):
+            result = ai_evaluation_service._gemini_evaluator(
+                {"api_key": "AIza-probe", "model": "gemini-2.0-flash", "live_models": []},
+                self._speaking_payload(),
+            )
+
+        # The dead name was asked about, and the recording was never sent to it.
+        self.assertIn("gemini-2.0-flash", asked)
+        self.assertNotIn("gemini-2.0-flash", dialled)
+        self.assertEqual(len(dialled), 1)
+        self.assertEqual(result["comment"], "Marked.")
+        self.assertEqual(result["_model_substituted"]["used"], dialled[0])
+
+    def test_when_every_known_model_is_gone_google_is_asked_in_the_same_request(self):
+        """The retry the server does instead of the student.
+
+        Google retires the whole preference order between directory refreshes.
+        Before this the evaluation failed with a 404 and pressing retry was
+        what eventually reached a model that answered - so the live list is
+        read here, inside the same request, and the best name on it is dialled.
+        """
+        ai_evaluation_service.reset_model_acknowledgements()
+        dialled: list = []
+        body = self._marked_body()
+        survivor = "gemini-3.0-flash"
+
+        class FakeResponse:
+            def __init__(self, status_code, payload=None):
+                self.status_code = status_code
+                self._payload = payload or {}
+                self.text = "is not found for API version v1beta"
+
+            def json(self):
+                return self._payload
+
+            def raise_for_status(self):
+                if self.status_code >= 400:
+                    raise RuntimeError(f"HTTP {self.status_code}")
+
+        class FakeClient:
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *_args):
+                return False
+
+            def get(self_inner, url, **_kwargs):
+                if url.endswith("/models"):
+                    return FakeResponse(200, {"models": [
+                        {"name": f"models/{survivor}", "supportedGenerationMethods": ["generateContent"]},
+                    ]})
+                name = url.split("/models/")[1]
+                return FakeResponse(200 if name == survivor else 404)
+
+            def post(self_inner, url, **_kwargs):
+                dialled.append(url.split("/models/")[1].split(":")[0])
+                return FakeResponse(200, body)
+
+        with patch.object(ai_evaluation_service.httpx, "Client", return_value=FakeClient()):
+            result = ai_evaluation_service._gemini_evaluator(
+                {"api_key": "AIza-refill", "model": "gemini-2.5-flash", "live_models": []},
+                self._speaking_payload(),
+            )
+
+        # Nothing was uploaded to a dead name, and the paper was still marked.
+        self.assertEqual(dialled, [survivor])
+        self.assertEqual(result["comment"], "Marked.")
+        self.assertEqual(result["_model_substituted"], {"requested": "gemini-2.5-flash", "used": survivor})
+
+    def test_a_model_that_answered_is_not_asked_about_again(self):
+        """The handshake is one request per model, not one per paper."""
+        ai_evaluation_service.reset_model_acknowledgements()
+        asked: list = []
+        body = self._marked_body()
+
+        class FakeResponse:
+            def __init__(self, status_code, payload=None):
+                self.status_code = status_code
+                self._payload = payload or {}
+                self.text = ""
+
+            def json(self):
+                return self._payload
+
+            def raise_for_status(self):
+                if self.status_code >= 400:
+                    raise RuntimeError(f"HTTP {self.status_code}")
+
+        class FakeClient:
+            def __enter__(self_inner):
+                return self_inner
+
+            def __exit__(self_inner, *_args):
+                return False
+
+            def get(self_inner, url, **_kwargs):
+                asked.append(url.split("/models/")[1])
+                return FakeResponse(200)
+
+            def post(self_inner, _url, **_kwargs):
+                return FakeResponse(200, body)
+
+        config = {"api_key": "AIza-warm", "model": "gemini-2.5-flash", "live_models": []}
+        with patch.object(ai_evaluation_service.httpx, "Client", return_value=FakeClient()):
+            for _ in range(3):
+                ai_evaluation_service._gemini_evaluator(config, self._speaking_payload())
+
+        self.assertEqual(asked, ["gemini-2.5-flash"])
+
     def test_a_retired_pro_model_is_never_quietly_swapped_for_a_cheap_one(self):
         # Someone who chose a "pro" model chose it for marking quality. Falling
         # back to flash without saying so changes every grade it touches.
