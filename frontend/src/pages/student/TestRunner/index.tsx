@@ -2015,15 +2015,17 @@ export function TestRunner() {
       )}
 
       <div className={`test-runner-layout${currentPart.section_type === "speaking" ? " test-runner-layout--speaking" : ""}`}>
-        <PartsNav
-          answeredCount={answeredCount}
-          totalQuestions={totalQuestions}
-          sectionGroups={sectionGroups}
-          partIndex={partIndex}
-          onSelectPart={selectPart}
-          isNavigationLocked={isNavigationLocked}
-          languageCertSkin={languageCertSkin}
-        />
+        {(!isSpeakingPart || languageCertSkin) && (
+          <PartsNav
+            answeredCount={answeredCount}
+            totalQuestions={totalQuestions}
+            sectionGroups={sectionGroups}
+            partIndex={partIndex}
+            onSelectPart={selectPart}
+            isNavigationLocked={isNavigationLocked}
+            languageCertSkin={languageCertSkin}
+          />
+        )}
 
         {/* Listening, Speaking, and standalone MCQ parts without separate source text span
             the screen as one full-width column, matching the standard engine layout. */}
