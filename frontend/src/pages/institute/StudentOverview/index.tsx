@@ -5,6 +5,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { useAuthStore } from "@/store/authStore";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { studentOverviewStrings as strings } from "./StudentOverview.strings";
 import type { StudentOverviewData } from "./types";
 import { StudentHeader } from "./components/StudentHeader";
@@ -122,7 +123,7 @@ export function StudentOverview({ instituteId, portalBasePath = "/super-admin" }
       </div>
     );
   }
-  if (!data) return <p>{strings.loading}</p>;
+  if (!data) return <RouteLoadingState />;
   const { student, security, attempts } = data;
 
   return (

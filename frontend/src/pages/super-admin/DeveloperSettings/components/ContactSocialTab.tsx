@@ -5,6 +5,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { Icon, type IconName } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { Button, RequiredMark } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -209,7 +210,7 @@ export function ContactSocialTab() {
     }
   }
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <RouteLoadingState />;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>

@@ -68,11 +68,39 @@ SPEAKING_RUBRIC = [
 ]
 
 
+CANONICAL_PART_TITLES: dict[str, str] = {
+    "reading_1a": "Reading Part 1A",
+    "reading_1b": "Reading Part 1B",
+    "reading_2": "Reading Part 2",
+    "reading_3": "Reading Part 3",
+    "reading_4": "Reading Part 4",
+    "listening_1": "Listening Part 1",
+    "listening_2": "Listening Part 2",
+    "listening_3": "Listening Part 3",
+    "listening_4": "Listening Part 4",
+    "writing_1": "Writing Part 1",
+    "writing_2": "Writing Part 2",
+    "speaking_1": "Speaking Part 1",
+    "speaking_2": "Speaking Part 2",
+    "speaking_3": "Speaking Part 3",
+    "speaking_4": "Speaking Part 4",
+}
+
+
+def get_canonical_part_title(part_code: str, default: str = "") -> str:
+    if part_code in CANONICAL_PART_TITLES:
+        return CANONICAL_PART_TITLES[part_code]
+    for code, title in CANONICAL_PART_TITLES.items():
+        if part_code.endswith(code):
+            return title
+    return default or part_code.replace("_", " ").title()
+
+
 READING_PARTS = [
     {
         "part_code": "reading_1a",
         "section_type": "reading",
-        "title": "Reading 1A",
+        "title": "Reading Part 1A",
         "skill_focus": "Understand vocabulary used in academic texts; identify synonyms and use vocabulary in context.",
         "instructions": "Read each sentence. Choose the word that can best replace the bold word without changing the meaning.",
         "question_limit": 6,
@@ -89,7 +117,7 @@ READING_PARTS = [
     {
         "part_code": "reading_1b",
         "section_type": "reading",
-        "title": "Reading 1B",
+        "title": "Reading Part 1B",
         "skill_focus": "Understand vocabulary and lexico-grammatical features in academic texts.",
         "instructions": "Read the text and choose the correct word for each gap.",
         "question_limit": 5,
@@ -109,7 +137,7 @@ READING_PARTS = [
     {
         "part_code": "reading_2",
         "section_type": "reading",
-        "title": "Reading 2",
+        "title": "Reading Part 2",
         "skill_focus": "Understand how meaning is built in discourse and recognise text organisation and discourse features.",
         "instructions": "Read the text. Six sentences have been removed. Choose the sentence that best fits each gap. One sentence is a distractor.",
         "question_limit": 6,
@@ -131,7 +159,7 @@ READING_PARTS = [
     {
         "part_code": "reading_3",
         "section_type": "reading",
-        "title": "Reading 3",
+        "title": "Reading Part 3",
         "skill_focus": "Understand the purpose of different texts and scan and locate specific information.",
         "instructions": "Read texts A–D. For questions 18–24, decide which text answers the question.",
         "question_limit": 7,
@@ -158,7 +186,7 @@ READING_PARTS = [
     {
         "part_code": "reading_4",
         "section_type": "reading",
-        "title": "Reading 4",
+        "title": "Reading Part 4",
         "skill_focus": "Understand long complex texts including opinion, purpose, argumentation, exemplification, comparison and contrast, cause and effect, and locate specific information.",
         "instructions": "Read the text and choose the correct answer for each question.",
         "question_limit": 6,
@@ -180,7 +208,7 @@ LISTENING_PARTS = [
     {
         "part_code": "listening_1",
         "section_type": "listening",
-        "title": "Listening 1",
+        "title": "Listening Part 1",
         "skill_focus": "Complete seven short unfinished dialogues by choosing the correct response.",
         "instructions": "You will hear some short conversations. You will hear each conversation twice. Choose the correct answer to complete each conversation.",
         "question_limit": 7,
@@ -192,7 +220,7 @@ LISTENING_PARTS = [
     {
         "part_code": "listening_2",
         "section_type": "listening",
-        "title": "Listening 2",
+        "title": "Listening Part 2",
         "skill_focus": "Understand five conversations set in an academic context.",
         "instructions": "You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer. You will hear each conversation twice.",
         "question_limit": 10,
@@ -204,7 +232,7 @@ LISTENING_PARTS = [
     {
         "part_code": "listening_3",
         "section_type": "listening",
-        "title": "Listening 3",
+        "title": "Listening Part 3",
         "skill_focus": "Identify specific information from an academic lecture or podcast.",
         "instructions": "You will hear a recording. You will hear the recording twice. Complete the notes with NO MORE THAN THREE WORDS for each gap.",
         "question_limit": 7,
@@ -216,7 +244,7 @@ LISTENING_PARTS = [
     {
         "part_code": "listening_4",
         "section_type": "listening",
-        "title": "Listening 4",
+        "title": "Listening Part 4",
         "skill_focus": "Understand a group discussion or debate in an academic context.",
         "instructions": "You will hear a discussion. You will hear the discussion twice. Choose the correct answer for each question.",
         "question_limit": 6,
@@ -231,27 +259,41 @@ WRITING_PARTS = [
     {
         "part_code": "writing_1",
         "section_type": "writing",
-        "title": "Writing 1",
+        "title": "Writing Part 1",
         "skill_focus": "Respond appropriately to supplied information with a formal academic report or article for an intended public audience.",
         "instructions": "Write your response in 150–200 words.",
         "question_limit": 1,
         "minimum_questions": 1,
         "max_marks": 32,
         "auto_marked": False,
-        "answer_constraints": {"allowed_question_types": ["essay"], "minimum_words": 150, "maximum_words": 200, "score_weight": 40, "preserve_question_order": True},
+        "answer_constraints": {
+            "allowed_question_types": ["essay"],
+            "minimum_words": 150,
+            "maximum_words": 200,
+            "score_weight": 40,
+            "preserve_question_order": True,
+            "image_required": True,
+            "allow_image": True,
+        },
         "rubric": WRITING_RUBRIC,
     },
     {
         "part_code": "writing_2",
         "section_type": "writing",
-        "title": "Writing 2",
+        "title": "Writing Part 2",
         "skill_focus": "Produce a piece of discursive writing on an academic subject.",
         "instructions": "Write your response in 250 words.",
         "question_limit": 1,
         "minimum_questions": 1,
         "max_marks": 32,
         "auto_marked": False,
-        "answer_constraints": {"allowed_question_types": ["essay"], "minimum_words": 250, "score_weight": 60, "preserve_question_order": True},
+        "answer_constraints": {
+            "allowed_question_types": ["essay"],
+            "minimum_words": 250,
+            "score_weight": 60,
+            "preserve_question_order": True,
+            "allow_image": False,
+        },
         "rubric": WRITING_RUBRIC,
     },
 ]
@@ -260,21 +302,21 @@ SPEAKING_PARTS = [
     {
         "part_code": "speaking_1",
         "section_type": "speaking",
-        "title": "Speaking 1",
+        "title": "Speaking Part 1",
         "skill_focus": "Give personal information and answer questions on familiar topics.",
         "instructions": "Ask the candidate's name and country, then the topic questions.",
     },
     {
         "part_code": "speaking_2",
         "section_type": "speaking",
-        "title": "Speaking 2",
+        "title": "Speaking Part 2",
         "skill_focus": "Communicate appropriately in two role-play situations.",
         "instructions": "Two role plays: the examiner starts one and the candidate starts one.",
     },
     {
         "part_code": "speaking_3",
         "section_type": "speaking",
-        "title": "Speaking 3",
+        "title": "Speaking Part 3",
         "skill_focus": "Read a text aloud, then discuss it.",
         "instructions": (
             "Allow 20 seconds of preparation and ask the candidate to read the text aloud, "
@@ -284,7 +326,7 @@ SPEAKING_PARTS = [
     {
         "part_code": "speaking_4",
         "section_type": "speaking",
-        "title": "Speaking 4",
+        "title": "Speaking Part 4",
         "skill_focus": "Plan and deliver an extended presentation and answer follow-up questions.",
         "instructions": (
             "Allow one minute to prepare and up to two minutes to present, "

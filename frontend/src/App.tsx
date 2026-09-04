@@ -15,6 +15,7 @@ import { usePrintLightTheme } from "./hooks/usePrintLightTheme";
 
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { MaintenanceNotice } from "./components/MaintenanceNotice";
+import { RouteLoadingState } from "./components/RouteLoadingState";
 import { router } from "./routes/router";
 import { useAuthStore } from "./store/authStore";
 import { trackPageView } from "./utils/traffic";
@@ -149,7 +150,20 @@ function App() {
       <ImpersonationBanner />
       <MaintenanceNotice />
       <ConnectivityNotice />
-      {initialized && (
+      {!initialized ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            width: "100%",
+            background: "var(--surface, #ffffff)",
+          }}
+        >
+          <RouteLoadingState />
+        </div>
+      ) : (
         <Suspense
           fallback={
             <div
@@ -162,21 +176,7 @@ function App() {
                 background: "var(--surface, #ffffff)",
               }}
             >
-              <div
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  border: "3px solid var(--border, rgba(15, 23, 42, 0.1))",
-                  borderTopColor: "var(--primary, #b91c2b)",
-                  borderRadius: "50%",
-                  animation: "appSpinner 0.7s linear infinite",
-                }}
-              />
-              <style>{`
-                @keyframes appSpinner {
-                  to { transform: rotate(360deg); }
-                }
-              `}</style>
+              <RouteLoadingState />
             </div>
           }
         >

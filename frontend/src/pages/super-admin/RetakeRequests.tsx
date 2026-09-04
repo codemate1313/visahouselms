@@ -6,6 +6,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { retakeRequestsStrings as strings } from "./RetakeRequests.strings";
 import { formatDate } from "@/utils/date";
 import type { BadgeTone } from "@/components/ui";
@@ -77,7 +78,7 @@ export function RetakeRequests() {
   }
 
   if (error && !requests) return <p className="error-text">{error}</p>;
-  if (!requests) return <p>{strings.loading}</p>;
+  if (!requests) return <RouteLoadingState />;
 
   const t = strings.table;
 

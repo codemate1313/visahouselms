@@ -8,6 +8,7 @@ import type { OnboardingRow } from "./types";
 import { exportOnboardingsExcel, exportOnboardingsPDF } from "./exportHelpers";
 import { OnboardingsFilterBar } from "./components/OnboardingsFilterBar";
 import { OnboardingsTable } from "./components/OnboardingsTable";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 
 export function InstituteOnboardings() {
   const [rows, setRows] = useState<OnboardingRow[]>([]);
@@ -86,7 +87,7 @@ export function InstituteOnboardings() {
         onExportExcel={handleExportExcel}
       />
 
-      {loading ? <p>{strings.loading}</p> : <OnboardingsTable rows={filteredRows} onRequestDelete={setDeletingRow} />}
+      {loading ? <RouteLoadingState /> : <OnboardingsTable rows={filteredRows} onRequestDelete={setDeletingRow} />}
 
       <ConfirmModal
         isOpen={Boolean(deletingRow)}

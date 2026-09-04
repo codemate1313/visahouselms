@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { confirmExport } from "@/utils/confirmExport";
 import { PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { revenueDashboardStrings as strings } from "./RevenueDashboard.strings";
 import type { InstituteRow, MethodRow, Summary } from "./types";
 import { exportRevenueExcel, exportRevenuePDF } from "./exportHelpers";
@@ -60,7 +61,7 @@ export function RevenueDashboard() {
   }
 
   if (error) return <p className="error-text">{error}</p>;
-  if (!summary) return <p>{strings.loading}</p>;
+  if (!summary) return <RouteLoadingState />;
 
   return (
     <div>

@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { Button, Checkbox, PageHeader, RequiredMark, SearchableSelect } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -232,6 +233,7 @@ export function PlanForm() {
         await apiClient.patch(`/super-admin/plans/${id}`, payload);
         originalRef.current = payload;
         showSuccess("Plan updated successfully");
+        navigate(catalogue.basePath);
       }
     } catch (err) {
       setError(extractErrorMessage(err, strings.errors.save));
@@ -240,7 +242,7 @@ export function PlanForm() {
     }
   }
 
-  if (loading) return <p>{strings.loading}</p>;
+  if (loading) return <RouteLoadingState />;
 
   const f = strings.fields;
 

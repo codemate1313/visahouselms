@@ -26,7 +26,7 @@ from app.models.attempt import (
     PART_GRADE_PENDING,
     TestAttempt,
 )
-from app.models.exam_module import ExamModulePart
+from app.models.exam_module import ExamModulePart, ExamModuleQuestion
 from app.models.user import User
 from app.services import cefr_service
 from app.services.settings_service import get_setting
@@ -1761,6 +1761,190 @@ def _apply_zero_grade(db: Session, attempt: TestAttempt, part: ExamModulePart, r
     db.add(grade)
 
 
+def _image_mime_type(path: Path) -> str:
+    """Return an image MIME type for question visual materials."""
+    suffix = path.suffix.lower()
+    if suffix in (".jpg", ".jpeg"):
+        return "image/jpeg"
+    if suffix == ".png":
+        return "image/png"
+    if suffix == ".webp":
+        return "image/webp"
+    if suffix == ".gif":
+        return "image/gif"
+    mime_type, _ = mimetypes.guess_type(str(path))
+    if mime_type and mime_type.startswith("image/"):
+        return mime_type
+    return "image/jpeg"
+
+
+def _load_question_image(image_path: Optional[str]) -> Optional[dict]:
+    """Read and base64-encode a question image (e.g. charts/graphs/diagrams)."""
+    if not image_path:
+        return None
+    try:
+        full_path = settings.storage_path / image_path
+        if not full_path.exists() or not full_path.is_file():
+            return None
+        raw_bytes = full_path.read_bytes()
+        # Enforce reasonable size limit (10 MB max per image)
+        if len(raw_bytes) > 10 * 1024 * 1024:
+            logger.warning(
+                "Question image %s exceeds 10MB limit (%d bytes), omitting visual attachment",
+                image_path,
+                len(raw_bytes),
+            )
+            return None
+        return {
+            "image_b64": base64.b64encode(raw_bytes).decode("utf-8"),
+            "image_mime_type": _image_mime_type(full_path),
+        }
+    except Exception as exc:
+        logger.warning("Could not read question image %s: %s", image_path, exc)
+        return None
+
+
+SPEAKING_TURN_LABELS = {
+    "identity": "Personal Identification & Warm-up Question",
+    "topic_question": "Interview / Familiar Topic Question",
+    "roleplay_response": "Situational Roleplay (Candidate Responding)",
+    "roleplay_initiate": "Situational Roleplay (Candidate Initiating)",
+    "read_aloud": "Read Aloud Passage",
+    "presentation": "Individual Long Turn / Topic Presentation",
+    "follow_up": "Discussion / Follow-up Question",
+    "interview": "Interview Response",
+    "image_description": "Picture / Visual Prompt Description",
+}
+
+DEFAULT_SPEAKING_TIMINGS = {
+    "identity": (0, 30),
+    "topic_question": (0, 30),
+    "roleplay_response": (0, 60),
+    "roleplay_initiate": (0, 60),
+    "read_aloud": (20, 90),
+    "presentation": (60, 120),
+    "follow_up": (0, 40),
+    "interview": (0, 30),
+    "image_description": (30, 60),
+}
+
+
+def _resolve_speaking_turn(part: ExamModulePart, question: ExamModuleQuestion) -> tuple[str, int, int]:
+    """Resolve turn type, preparation seconds, and response seconds with blueprint fallbacks."""
+    interaction = question.interaction if isinstance(question.interaction, dict) else {}
+    turn_type = interaction.get("turn_type")
+    part_code = (part.part_code or "").lower()
+
+    if not turn_type:
+        sort_order = question.sort_order or 0
+        if "speaking_1" in part_code:
+            turn_type = "identity" if sort_order == 0 else "topic_question"
+        elif "speaking_2" in part_code:
+            turn_type = "roleplay_response" if sort_order % 2 == 0 else "roleplay_initiate"
+        elif "speaking_3" in part_code:
+            turn_type = "read_aloud" if (sort_order == 0 or question.passage) else "follow_up"
+        elif "speaking_4" in part_code:
+            turn_type = "presentation" if sort_order == 0 else "follow_up"
+        elif question.passage:
+            turn_type = "read_aloud"
+        else:
+            turn_type = "interview"
+
+    default_prep, default_resp = DEFAULT_SPEAKING_TIMINGS.get(turn_type, (0, 30))
+    prep_secs = interaction.get("preparation_seconds")
+    if prep_secs is None:
+        prep_secs = default_prep
+    resp_secs = interaction.get("response_seconds")
+    if resp_secs is None:
+        resp_secs = default_resp
+
+    return str(turn_type), int(prep_secs), int(resp_secs)
+
+
+def _build_question_context(part: ExamModulePart, question: ExamModuleQuestion) -> str:
+    """Build a rich, structured prompt containing all authored question fields."""
+    sections: list[str] = []
+
+    # 1. Section Instructions (from Part)
+    if part.instructions and part.instructions.strip():
+        sections.append(f"### Section Instructions:\n{part.instructions.strip()}")
+
+    # 2. Speaking Task Format & Turn Context (if Speaking)
+    if part.section_type == "speaking":
+        turn_type, prep_seconds, resp_seconds = _resolve_speaking_turn(part, question)
+        turn_label = SPEAKING_TURN_LABELS.get(turn_type, turn_type.replace("_", " ").title())
+
+        timing_parts = []
+        if prep_seconds > 0:
+            timing_parts.append(f"Preparation Time: {prep_seconds}s")
+        timing_parts.append(f"Target Speaking Duration: {resp_seconds}s")
+        timing_str = ", ".join(timing_parts)
+
+        speaking_meta = [
+            f"- Task Format / Turn Type: {turn_label}",
+            f"- Expected Timing: {timing_str}",
+        ]
+
+        if turn_type == "read_aloud" or (question.passage and question.passage.strip()):
+            speaking_meta.append(
+                "- Evaluation Rule for Read Aloud: Carefully evaluate pronunciation, word stress, rhythm, "
+                "and phrasing directly against the text below. Check strictly for word omissions, substitutions, "
+                "or additions. Do NOT penalize vocabulary or grammatical range, since the text was predetermined."
+            )
+        elif turn_type in ("presentation", "topic_presentation"):
+            speaking_meta.append(
+                "- Evaluation Rule for Presentation: Evaluate the candidate on sustained monologue flow, "
+                "discourse structure, idea organization, depth of elaboration, and topic coherence over the full duration."
+            )
+        elif turn_type in ("interview", "topic_question", "identity"):
+            speaking_meta.append(
+                "- Evaluation Rule for Interview: Evaluate conversational spontaneity, directness of response, "
+                "natural fluency, and relevant extension without over-rehearsed or repetitive rambling."
+            )
+        elif "roleplay" in turn_type:
+            speaking_meta.append(
+                "- Evaluation Rule for Roleplay: Evaluate situational appropriateness, register, communicative function, "
+                "and interactive effectiveness in the specified role."
+            )
+
+        sections.append("### Speaking Task Format & Evaluation Guidelines:\n" + "\n".join(speaking_meta))
+
+    # 3. Reading Passage / Background Context (e.g. Read Aloud text or reading prompt)
+    if question.passage and question.passage.strip():
+        passage_title = "Reference Passage to Read Aloud" if part.section_type == "speaking" else "Reference Passage / Text Material"
+        sections.append(f"### {passage_title}:\n{question.passage.strip()}")
+
+    # 4. Specific Question Instructions
+    if question.instructions and question.instructions.strip():
+        sections.append(f"### Question-Specific Instructions:\n{question.instructions.strip()}")
+
+    # 5. Word Count & Constraints
+    constraints: list[str] = []
+    if part.answer_constraints and isinstance(part.answer_constraints, dict):
+        if part.answer_constraints.get("min_words"):
+            constraints.append(f"Minimum words: {part.answer_constraints['min_words']}")
+        if part.answer_constraints.get("max_words"):
+            constraints.append(f"Maximum words: {part.answer_constraints['max_words']}")
+    if question.interaction and isinstance(question.interaction, dict):
+        if question.interaction.get("min_words"):
+            constraints.append(f"Minimum words: {question.interaction['min_words']}")
+        if question.interaction.get("max_words"):
+            constraints.append(f"Maximum words: {question.interaction['max_words']}")
+    if constraints:
+        sections.append("### Requirements & Word Count Constraints:\n" + "\n".join(f"- {c}" for c in constraints))
+
+    # 6. Core Question Prompt / Task Scenario
+    prompt_text = (question.prompt or "").strip()
+    if prompt_text:
+        sections.append(f"### Task / Question Prompt:\n{prompt_text}")
+
+    # 7. Rubric notes or Key Points (if provided by author)
+    if question.explanation and question.explanation.strip():
+        sections.append(f"### Examiner Guidelines / Key Points:\n{question.explanation.strip()}")
+
+    return "\n\n".join(sections) if sections else prompt_text
+
+
 def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
     answers = {answer.question_id: answer for answer in attempt.answers}
     responses = []
@@ -1774,6 +1958,8 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
             
         text_resp = (answer.response or {}).get("text") if answer.response else None
         audio_path = answer.audio_path
+        question_context = _build_question_context(part, question)
+        img_data = _load_question_image(question.image_path)
         
         if part.section_type == "speaking" and audio_path:
             full_path = settings.storage_path / audio_path
@@ -1783,20 +1969,26 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
                 
                 if inline_bytes + len(audio_bytes) <= MAX_INLINE_BYTES_PER_PART:
                     inline_bytes += len(audio_bytes)
-                    responses.append({
-                        "prompt": question.prompt,
+                    resp_item = {
+                        "prompt": question_context,
                         "audio_b64": base64.b64encode(audio_bytes).decode("utf-8"),
                         "mime_type": mime_type,
-                    })
+                    }
+                    if img_data:
+                        resp_item.update(img_data)
+                    responses.append(resp_item)
                 else:
                     # Dropping this silently is how a part ended up "awaiting
                     # examiner marking" with no reason anywhere.
                     skipped.append(f"{len(audio_bytes) / 1024 / 1024:.1f} MB")
         elif text_resp:
-            responses.append({
-                "prompt": question.prompt,
+            resp_item = {
+                "prompt": question_context,
                 "text": str(text_resp)[:12000],
-            })
+            }
+            if img_data:
+                resp_item.update(img_data)
+            responses.append(resp_item)
 
     if not responses:
         if skipped:
@@ -1831,6 +2023,8 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
         "instructions": (
             "You are an expert Language CERT and CEFR language examiner. "
             "Analyze the student's submission carefully against the provided rubric criteria. "
+            "Evaluate whether the candidate fulfilled all specific question requirements, "
+            "passages, visual materials (if provided), and word count constraints. "
             "Return JSON ONLY matching the required schema. "
             "Score EVERY rubric criterion strictly between 0 and its max_marks. "
             "If the response does not address the prompt, is inaudible, is in the wrong language, or is "
@@ -1857,6 +2051,8 @@ def _batch_payload(attempt: TestAttempt, parts: list[ExamModulePart]) -> dict:
                 continue
             audio_path = answer.audio_path
             text_resp = (answer.response or {}).get("text") if answer.response else None
+            question_context = _build_question_context(part, question)
+            img_data = _load_question_image(question.image_path)
             if part.section_type == "speaking" and audio_path:
                 full_path = settings.storage_path / audio_path
                 if full_path.exists():
@@ -1864,18 +2060,24 @@ def _batch_payload(attempt: TestAttempt, parts: list[ExamModulePart]) -> dict:
                     mime_type = _speaking_audio_mime_type(full_path)
                     if inline_bytes + len(audio_bytes) <= MAX_INLINE_BYTES_PER_PART:
                         inline_bytes += len(audio_bytes)
-                        responses.append({
-                            "prompt": question.prompt,
+                        resp_item = {
+                            "prompt": question_context,
                             "audio_b64": base64.b64encode(audio_bytes).decode("utf-8"),
                             "mime_type": mime_type,
-                        })
+                        }
+                        if img_data:
+                            resp_item.update(img_data)
+                        responses.append(resp_item)
                     else:
                         skipped.append(f"{len(audio_bytes) / 1024 / 1024:.1f} MB")
             elif text_resp:
-                responses.append({
-                    "prompt": question.prompt,
+                resp_item = {
+                    "prompt": question_context,
                     "text": str(text_resp)[:12000],
-                })
+                }
+                if img_data:
+                    resp_item.update(img_data)
+                responses.append(resp_item)
         if skipped:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1919,6 +2121,8 @@ def _batch_payload(attempt: TestAttempt, parts: list[ExamModulePart]) -> dict:
             "You are an expert Language CERT and CEFR examiner. "
             "Evaluate each part independently, against its own rubric and its own skill: "
             "Writing parts are marked on the written response, Speaking parts on the recording. "
+            "Evaluate whether the candidate fulfilled all specific question requirements, "
+            "passages, visual materials (if provided), and word count constraints. "
             "Return JSON only. "
             "For every part_id supplied, return exactly one result object with that same part_id. "
             "Score every authored rubric criterion strictly between 0 and its max_marks. "
@@ -1948,6 +2152,7 @@ def _request_summary(payload: dict, config: dict) -> dict:
                 "part_id": item.get("part_id"),
                 "part_title": item.get("part_title"),
                 "prompt": str(item.get("prompt") or "")[:300],
+                "has_image": bool(item.get("image_b64")),
                 "kind": "audio",
                 # base64 inflates by 4/3; report what the recording weighs.
                 "audio_kb": round(len(item["audio_b64"]) * 3 / 4 / 1024),
@@ -1959,6 +2164,7 @@ def _request_summary(payload: dict, config: dict) -> dict:
                 "part_id": item.get("part_id"),
                 "part_title": item.get("part_title"),
                 "prompt": str(item.get("prompt") or "")[:300],
+                "has_image": bool(item.get("image_b64")),
                 "kind": "text",
                 "words": len(text.split()),
                 "characters": len(text),
@@ -2518,7 +2724,15 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
         for part in payload.get("parts", []):
             parts.append({"text": f"\nPart ID {part['part_id']} - {part['title']}\n"})
             for resp in part.get("responses", []):
-                parts.append({"text": f"Question Prompt: {resp['prompt']}\n"})
+                parts.append({"text": f"Question Context & Instructions:\n{resp['prompt']}\n"})
+                if "image_b64" in resp:
+                    parts.append({
+                        "inlineData": {
+                            "mimeType": resp.get("image_mime_type", "image/jpeg"),
+                            "data": resp["image_b64"],
+                        }
+                    })
+                    parts.append({"text": "Task Visual Reference / Image (shown above).\n"})
                 if "audio_b64" in resp:
                     parts.append({
                         "inlineData": {
@@ -2553,7 +2767,15 @@ def _gemini_evaluator(config: dict, payload: dict) -> dict:
             "}\n\n"
         )
         for resp in payload["responses"]:
-            parts.append({"text": f"Question Prompt: {resp['prompt']}\n"})
+            parts.append({"text": f"Question Context & Instructions:\n{resp['prompt']}\n"})
+            if "image_b64" in resp:
+                parts.append({
+                    "inlineData": {
+                        "mimeType": resp.get("image_mime_type", "image/jpeg"),
+                        "data": resp["image_b64"],
+                    }
+                })
+                parts.append({"text": "Task Visual Reference / Image (shown above).\n"})
             if "audio_b64" in resp:
                 parts.append({
                     "inlineData": {
@@ -2713,7 +2935,13 @@ def _openai_evaluator(config: dict, payload: dict) -> dict:
         for part in payload.get("parts", []):
             content.append({"type": "input_text", "text": f"\nPart ID {part['part_id']} - {part['title']}\n"})
             for resp in part.get("responses", []):
-                content.append({"type": "input_text", "text": f"Question Prompt: {resp['prompt']}\n"})
+                content.append({"type": "input_text", "text": f"Question Context & Instructions:\n{resp['prompt']}\n"})
+                if "image_b64" in resp:
+                    mime = resp.get("image_mime_type", "image/jpeg")
+                    content.append({
+                        "type": "input_image",
+                        "image_url": f"data:{mime};base64,{resp['image_b64']}",
+                    })
                 if "text" in resp:
                     content.append({"type": "input_text", "text": f"Student Response for part_id {part['part_id']}:\n{resp['text']}\n"})
                 elif "audio_b64" in resp:
@@ -2760,7 +2988,13 @@ def _openai_evaluator(config: dict, payload: dict) -> dict:
         }
     else:
         for resp in payload["responses"]:
-            content.append({"type": "input_text", "text": f"Question Prompt: {resp['prompt']}\n"})
+            content.append({"type": "input_text", "text": f"Question Context & Instructions:\n{resp['prompt']}\n"})
+            if "image_b64" in resp:
+                mime = resp.get("image_mime_type", "image/jpeg")
+                content.append({
+                    "type": "input_image",
+                    "image_url": f"data:{mime};base64,{resp['image_b64']}",
+                })
             if "text" in resp:
                 content.append({"type": "input_text", "text": f"Student Response:\n{resp['text']}\n"})
             elif "audio_b64" in resp:

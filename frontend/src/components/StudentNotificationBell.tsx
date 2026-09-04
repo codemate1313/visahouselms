@@ -11,6 +11,7 @@ import { Icon } from "./icons";
 import { PinList, type PinListItem } from "./PinList";
 import { Button } from "./ui/Button/Button";
 import { IconButton } from "./ui/IconButton/IconButton";
+import { RouteLoadingState } from "./RouteLoadingState";
 
 type PinnableNotification = StudentNotification & PinListItem;
 
@@ -471,7 +472,9 @@ export function NotificationBell({
 
             <div className="student-notification-list">
               {loading ? (
-                <p className="student-notification-state">Loading notifications...</p>
+                <div style={{ padding: "24px 0" }}>
+                  <RouteLoadingState size={36} />
+                </div>
               ) : error ? (
                 <div className="student-notification-state is-error">
                   <p>{error}</p>

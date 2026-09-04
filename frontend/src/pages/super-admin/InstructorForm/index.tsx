@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { InstructorAccount, InstructorAccountCreated } from "@/api/types";
 import { Button, RequiredMark } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -140,7 +141,7 @@ export function InstructorForm({ basePath = "/super-admin" }: { basePath?: strin
     setCopied(true);
   }
 
-  if (loading) return <p>{strings.loading}</p>;
+  if (loading) return <RouteLoadingState />;
   if (created) {
     return <CreatedInstructorView created={created} copied={copied} error={error} onCopyPassword={copyPassword} onDone={() => navigate(`${basePath}/instructors`)} />;
   }

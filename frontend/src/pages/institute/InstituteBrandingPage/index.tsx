@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Button, PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { useAuthStore } from "@/store/authStore";
@@ -118,7 +119,7 @@ export function InstituteBrandingPage() {
   }
 
   if (loadError) return <p className="error-text">{loadError}</p>;
-  if (!branding) return <p>{strings.loading}</p>;
+  if (!branding) return <RouteLoadingState />;
 
   const f = strings.fields;
 

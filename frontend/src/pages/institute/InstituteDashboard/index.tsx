@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { useAuthStore } from "@/store/authStore";
 import { PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { instituteDashboardStrings as strings } from "./InstituteDashboard.strings";
 import type { DashboardSummary } from "./types";
 import { DashboardStats } from "./components/DashboardStats";
@@ -22,7 +23,7 @@ export function InstituteDashboard() {
   }, []);
 
   if (error) return <p className="error-text">{error}</p>;
-  if (!summary) return <p>{strings.loading}</p>;
+  if (!summary) return <RouteLoadingState />;
 
   const permissions = summary.permissions;
   const canSeeStudents = Boolean(

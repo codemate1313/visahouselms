@@ -4,6 +4,7 @@ import type { GradingAdminOverview } from "@/api/types";
 import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Badge, PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { gradingOversightStrings as strings } from "./GradingOversight.strings";
 import { formatDate } from "@/utils/date";
 import type { BadgeTone } from "@/components/ui";
@@ -18,7 +19,7 @@ export function GradingOversight() {
     apiClient.get<GradingAdminOverview>("/super-admin/grading/overview").then(({ data }) => setOverview(data)).catch(() => setError(strings.loadError));
   }, []);
   if (error) return <p className="error-text">{error}</p>;
-  if (!overview) return <p>{strings.loading}</p>;
+  if (!overview) return <RouteLoadingState />;
 
   const t = strings.register.table;
 

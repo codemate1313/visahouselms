@@ -186,12 +186,15 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
 
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={onClose} style={{ overflowY: "auto" }}>
       <div
         className="modal-card catalog-checkout-modal"
         onClick={(e) => e.stopPropagation()}
         style={{
           boxShadow: "0 32px 80px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12)",
+          maxHeight: "min(90vh, calc(100vh - 40px))",
+          overflowY: "auto",
+          overflowX: "hidden",
         }}
       >
         {/* ── Header ── */}
@@ -199,6 +202,9 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
           background: "linear-gradient(145deg, #a31c28 0%, #c8202e 55%, var(--danger) 100%)",
           padding: "14px 24px 12px",
           flexShrink: 0,
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
         }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>

@@ -3,6 +3,7 @@ import { lockBodyScroll } from "@/utils/scrollLock";
 import { apiClient } from "@/api/client";
 import { useAuthStore } from "@/store/authStore";
 import { Button, PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { dashboardStrings as strings } from "./Dashboard.strings";
 import type { MetricDetail, MetricKey, Summary } from "./types";
 import { computeRevenueTrend } from "./helpers";
@@ -76,7 +77,7 @@ export function Dashboard() {
   }
 
   if (error) return <p className="error-text">{error}</p>;
-  if (!summary) return <p>{strings.loading}</p>;
+  if (!summary) return <RouteLoadingState />;
 
   const revenueTrend = computeRevenueTrend(summary.revenue_by_month);
 

@@ -12,6 +12,7 @@ import { ReevaluationStatus } from "@/components/ReevaluationStatus";
 import { ReevaluationForm } from "./components/ReevaluationForm";
 import { LinkButton, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 
 export function AttemptResultDetails() {
   const { id } = useParams();
@@ -28,7 +29,7 @@ export function AttemptResultDetails() {
   }, [id]);
 
   if (error && !attempt) return <p className="error-text">{error}</p>;
-  if (!attempt) return <p>{strings.loading}</p>;
+  if (!attempt) return <RouteLoadingState />;
 
   const graded = attempt.status === "graded";
   const isViolated = attempt.status === "violated";

@@ -490,7 +490,7 @@ def parse_pdf(
             return
         norm_cp = (current.get("target_part") or current_part).lower().replace("-", "_").replace(" ", "_")
         part_head = current.get("part_heading") or (" ".join(current_heading_lines).strip()) or DEFAULT_PART_HEADINGS.get(norm_cp, "")
-        is_passage_part = any(p in norm_cp for p in ("reading_1b", "reading_2", "reading_3", "reading_4", "listening_3"))
+        is_passage_part = any(p in norm_cp for p in ("reading_1b", "reading_2", "reading_3", "reading_4", "listening_3", "writing"))
         if is_passage_part and current_passage:
             def _clean_passage_text(raw_lines: list[str]) -> str:
                 if not raw_lines:
@@ -567,7 +567,7 @@ def parse_pdf(
             mode = "prompt"
         elif not current and current_part:
             clean_line = line.strip()
-            if re.match(r"^(?:reading\s+)?passage(?:\s+\d+)?\s*:?$", clean_line, re.IGNORECASE):
+            if re.match(r"^(?:reading\s+|writing\s+)?(?:passage|context)(?:\s+\d+)?\s*:?$", clean_line, re.IGNORECASE):
                 collecting_passage = True
             elif collecting_passage:
                 current_passage.append(line)
@@ -695,7 +695,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
     sample_rows_by_type: dict[str, list[dict[str, object]]] = {
         "reading": [
             {
-                "part_code": "Reading 1A",
+                "part_code": "Reading Part 1A",
                 "prompt": "The committee's findings were largely **compatible** with those of the earlier study, which strengthened confidence in both sets of results.",
                 "question_type": "mcq_single",
                 "option_a": "consistent",
@@ -709,7 +709,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "instructions": "Read each sentence. Choose the word that can best replace the bold word without changing the meaning.",
             },
             {
-                "part_code": "Reading 1B",
+                "part_code": "Reading Part 1B",
                 "prompt": "Choose the best option for gap (1).",
                 "question_type": "mcq_single",
                 "option_a": "vital",
@@ -723,7 +723,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "instructions": "Read the text and choose the correct word for each gap.",
             },
             {
-                "part_code": "Reading 2",
+                "part_code": "Reading Part 2",
                 "prompt": "Choose the best option for gap 1.",
                 "question_type": "matching_reusable",
                 "option_a": "Researchers documented dozens of rare species during the first survey.",
@@ -736,7 +736,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "instructions": "Read the text. Choose the sentence that best fits each gap. One sentence is a distractor.",
             },
             {
-                "part_code": "Reading 3",
+                "part_code": "Reading Part 3",
                 "prompt": "Which text mentions archaeological discoveries that challenged earlier historical assumptions?",
                 "question_type": "matching_reusable",
                 "option_a": "Text A",
@@ -750,7 +750,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "instructions": "Read texts A–D. Decide which text answers each question.",
             },
             {
-                "part_code": "Reading 4",
+                "part_code": "Reading Part 4",
                 "prompt": "What is the primary argument presented in paragraph 2 regarding renewable energy transition?",
                 "question_type": "mcq_single",
                 "option_a": "Storage technology must advance alongside generation capacity",
@@ -766,7 +766,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
         ],
         "listening": [
             {
-                "part_code": "Listening 1",
+                "part_code": "Listening Part 1",
                 "prompt": "Where will the orientation session take place?",
                 "question_type": "mcq_single",
                 "option_a": "Lecture Hall A",
@@ -779,7 +779,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "instructions": "You will hear some short conversations. You will hear each conversation twice. Choose the correct answer.",
             },
             {
-                "part_code": "Listening 2",
+                "part_code": "Listening Part 2",
                 "prompt": "Why does the student visit the academic advisor?",
                 "question_type": "mcq_single",
                 "option_a": "To request an extension for coursework",
@@ -793,7 +793,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "instructions": "You will hear five conversations. Listen to the conversations and answer the questions. Choose the correct answer.",
             },
             {
-                "part_code": "Listening 3",
+                "part_code": "Listening Part 3",
                 "prompt": "Archaeology research project at an Ancient Roman villa — Excavations began in the year [1].",
                 "question_type": "short_answer",
                 "correct_answer": "1994",
@@ -803,7 +803,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "instructions": "You will hear a recording. You will hear the recording twice. Complete the notes with NO MORE THAN THREE WORDS for each gap.",
             },
             {
-                "part_code": "Listening 4",
+                "part_code": "Listening Part 4",
                 "prompt": "What consensus did the panel reach regarding artificial intelligence in medical diagnostics?",
                 "question_type": "mcq_single",
                 "option_a": "AI should assist clinicians rather than replace them",
@@ -817,7 +817,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
         ],
         "writing": [
             {
-                "part_code": "Writing 1",
+                "part_code": "Writing Part 1",
                 "prompt": "The bar chart shows international student enrollment across four academic departments from 2020 to 2024. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.",
                 "question_type": "essay",
                 "points": 32,
@@ -826,7 +826,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "passage": "Business: 2020 (420), 2024 (580). Engineering: 2020 (380), 2024 (510). Arts: 2020 (210), 2024 (190). Sciences: 2020 (310), 2024 (440).",
             },
             {
-                "part_code": "Writing 2",
+                "part_code": "Writing Part 2",
                 "prompt": "Some people argue that universities should focus exclusively on job-specific training, while others believe higher education should provide a broad general knowledge. Discuss both views and give your own opinion.",
                 "question_type": "essay",
                 "points": 32,
@@ -836,7 +836,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
         ],
         "speaking": [
             {
-                "part_code": "Speaking 1",
+                "part_code": "Speaking Part 1",
                 "prompt": "Please state your full name and candidate number.",
                 "question_type": "speaking_prompt",
                 "points": 1,
@@ -846,7 +846,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "response_seconds": 30,
             },
             {
-                "part_code": "Speaking 1",
+                "part_code": "Speaking Part 1",
                 "prompt": "What hobbies or activities do you enjoy in your free time?",
                 "question_type": "speaking_prompt",
                 "points": 1,
@@ -856,7 +856,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "response_seconds": 45,
             },
             {
-                "part_code": "Speaking 2",
+                "part_code": "Speaking Part 2",
                 "prompt": "You are arranging a campus study group. Suggest meeting times to your classmate and explain your preference.",
                 "question_type": "speaking_prompt",
                 "points": 1,
@@ -866,7 +866,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "response_seconds": 90,
             },
             {
-                "part_code": "Speaking 3",
+                "part_code": "Speaking Part 3",
                 "prompt": "Give a short presentation on a book or article that made a strong impression on you. Explain why it was memorable.",
                 "question_type": "speaking_prompt",
                 "points": 1,
@@ -876,7 +876,7 @@ def generate_excel_template(module_type: str = "reading") -> bytes:
                 "response_seconds": 120,
             },
             {
-                "part_code": "Speaking 4",
+                "part_code": "Speaking Part 4",
                 "prompt": "How has digital communication influenced interpersonal relationships in modern society?",
                 "question_type": "speaking_prompt",
                 "points": 1,

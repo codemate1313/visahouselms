@@ -4,6 +4,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { Icon } from "@/components/icons";
 import { SearchableSelect } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 
 interface InstitutePerformance {
   institute_id: number | null;
@@ -52,12 +53,7 @@ export function ModuleAnalytics({ moduleId }: ModuleAnalyticsProps) {
   }, [moduleId]);
 
   if (loading) {
-    return (
-      <div className="course-analytics-loading">
-        <div className="analytics-loading-spinner" />
-        <p>Loading course performance metrics...</p>
-      </div>
-    );
+    return <RouteLoadingState size={44} />;
   }
 
   if (error || !data) {

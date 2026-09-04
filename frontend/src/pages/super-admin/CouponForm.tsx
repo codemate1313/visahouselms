@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Button, RequiredMark, SearchableSelect } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
@@ -114,7 +115,7 @@ export function CouponForm() {
     }
   }
 
-  if (loading) return <p>{strings.loading}</p>;
+  if (loading) return <RouteLoadingState />;
 
   return (
     <div>

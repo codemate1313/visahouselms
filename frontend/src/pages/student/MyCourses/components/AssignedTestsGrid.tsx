@@ -152,6 +152,8 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                     ? strings.attemptStatus.startRetakeBtn
                     : isDemo
                     ? strings.demo.startTest
+                    : module.latest_attempt_status === "in_progress" || module.latest_attempt_status === "ready"
+                    ? strings.resumeTest
                     : strings.startTest}
                 </Button>
               )}

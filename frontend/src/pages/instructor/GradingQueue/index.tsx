@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import type { GradingQueueItem } from "@/api/types";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { PageHeader, SearchableSelect, SearchInput } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useAuthStore } from "@/store/authStore";
 import { gradingQueueStrings as strings } from "./GradingQueue.strings";
 import { GradingQueueTable } from "./components/GradingQueueTable";
@@ -114,7 +115,7 @@ export function GradingQueue() {
       </form>
       {error && <p className="error-text">{error}</p>}
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : items.length === 0 ? (
         <div className="empty-state">
           <h2>{strings.empty.title}</h2>

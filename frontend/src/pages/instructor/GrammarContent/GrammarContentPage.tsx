@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons";
 import { RowActionMenu } from "@/components/RowActionMenu";
 import { Badge, Button, DataTableCard, Input, Modal, SearchInput, Textarea } from "@/components/ui";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useToastStore } from "@/store/toastStore";
 import "./GrammarContentPage.css";
 
@@ -227,10 +228,7 @@ export function GrammarContentPage() {
       </div>
 
       {loading ? (
-        <div className="gc-loading-state">
-          <div className="gc-loading-spinner" />
-          <p>Loading grammar content...</p>
-        </div>
+        <RouteLoadingState />
       ) : items.length === 0 ? (
         <div className="gc-empty-card">
           <div className="gc-empty-icon">📚</div>

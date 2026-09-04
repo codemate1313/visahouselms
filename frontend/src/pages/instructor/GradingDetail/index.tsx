@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { AttemptPart, GradingDetail as GradingDetailType, GradingQueueItem, GradingQueueMetadata } from "@/api/types";
 import { Badge, Button, LinkButton, Modal, PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { formatDateTime } from "@/utils/date";
@@ -299,7 +300,7 @@ export function GradingDetail() {
   }, [activeSubjectivePart, activeIndex, buildPartPayload, canEdit, id, partComments, partHasProgress, partMarks, savingPartId]);
 
   if (error && !detail) return <p className="error-text">{error}</p>;
-  if (!detail) return <p>{strings.loading}</p>;
+  if (!detail) return <RouteLoadingState />;
   const allSubjectivePartsGraded = subjectiveParts.length > 0 && subjectiveParts.every((part) => part.grade?.status === "graded");
   const readyPartsCount = subjectiveParts.filter(
     (part) => part.grade && part.rubric.every((criterion) => part.grade!.criteria.some((item) => item.criterion === criterion.criterion)),

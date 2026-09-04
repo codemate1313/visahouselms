@@ -6,6 +6,7 @@ import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { PasswordInput } from "@/components/PasswordInput";
 import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { Button, Card } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { startImpersonation } from "@/utils/impersonate";
 import "./DeveloperPanel.css";
 
@@ -330,7 +331,7 @@ export function DeveloperPanel() {
           <p className="muted-text">The developer layer can inspect elevated accounts, create audited elevated accounts, change roles, require password resets, move accounts to Deleted Users, and open read-only view-as sessions.</p>
           
           {loading ? (
-            <p>Loading accounts...</p>
+            <RouteLoadingState />
           ) : (
             <div className="dev-table-wrap">
               <table className="dev-data-table">

@@ -1449,7 +1449,109 @@ body.test-runner-route-active #root {
 }
 
 .test-runner-body--writing {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  display: flex !important;
+  flex-direction: column !important;
+  grid-template-columns: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  gap: 16px !important;
+  padding: 16px 20px 32px !important;
+}
+
+.test-runner-body--writing .test-runner-source-pane,
+.test-runner-body--writing .test-runner-question-pane {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 0 0 auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+}
+
+.test-runner-writing-passage-frame {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 16px 18px;
+  background: var(--surface-color-variant, rgba(0, 0, 0, 0.03));
+  border-radius: 8px;
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+[data-theme="dark"] .test-runner-writing-passage-frame {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.test-runner-writing-image-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.test-runner-writing-image-wrapper img {
+  width: 60% !important;
+  max-width: 60% !important;
+  height: auto;
+  max-height: 440px;
+  object-fit: contain;
+  border-radius: 6px;
+  display: block;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .test-runner-writing-image-wrapper img {
+    width: 90% !important;
+    max-width: 90% !important;
+  }
+}
+
+.test-runner-writing-passage-text {
+  width: 100%;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-main);
+  text-align: left;
+}
+
+.test-runner-writing-prompt-text {
+  width: 100%;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--text-main);
+  text-align: left;
+}
+
+.test-runner-simple-essay-textarea {
+  width: 100% !important;
+  min-height: 380px !important;
+  font-family: inherit !important;
+  font-size: 15px !important;
+  line-height: 1.75 !important;
+  padding: 16px 18px !important;
+  border-radius: 8px !important;
+  border: 1.5px solid #d7dae0 !important;
+  background: var(--surface) !important;
+  color: var(--text-main) !important;
+  outline: none !important;
+  resize: vertical !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.test-runner-simple-essay-textarea:focus {
+  border-color: var(--primary, #c8102e) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary, #c8102e) 15%, transparent) !important;
+}
+
+[data-theme="dark"] .test-runner-simple-essay-textarea {
+  background: #18191d !important;
+  color: #f1f5f9 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
 }
 
 /* Single-column full-width layout for listening or standalone MCQ parts without separate source material */

@@ -5,6 +5,7 @@ import { PublicFooter } from "@/components/publicSite/PublicFooter";
 import { PublicOrbBackground } from "@/components/publicSite/PublicOrbBackground";
 import { useRevealOnScroll } from "@/components/publicSite/useRevealOnScroll";
 import { SegmentedControl } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useSEO } from "@/hooks/useSEO";
 import { API_BASE_URL } from "@/api/client";
 import { useContactSettings } from "./useContactSettings";
@@ -70,7 +71,7 @@ export function BlogsList() {
 
         <section className="vh-blog-grid-section vh-reveal">
           {loading ? (
-            <div className="vh-blog-empty">Loading articles...</div>
+            <RouteLoadingState />
           ) : visibleBlogs.length > 0 ? (
             <div className="vh-blog-grid">
               {visibleBlogs.map((post) => (

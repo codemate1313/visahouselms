@@ -172,7 +172,7 @@ def require_module_access(
     user: User = Depends(require_student),
 ) -> ExamModule:
     module = db.get(ExamModule, module_id)
-    if module is None or module.status != "published" or not module.is_visible or module.deleted_at is not None:
+    if module is None or module.status != "published" or module.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
     if not has_module_access(db, user, module_id):
         raise HTTPException(

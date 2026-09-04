@@ -328,16 +328,11 @@ def _band_status(percentage: float, pending: bool = False) -> str:
 
 
 def _part_label(part) -> str:
-    """`reading_1a` -> `Reading 1A`. Part titles are candidate-facing
-    instruction paragraphs for Listening and Reading, so the code is the only
-    thing short enough to head a row."""
-    code = (part.part_code or "").strip()
-    if not code:
-        return (part.title or cefr_service.SKILL_LABELS.get(part.section_type, "Part")).strip()[:60]
-    words = []
-    for chunk in code.split("_"):
-        words.append(chunk.upper() if any(character.isdigit() for character in chunk) else chunk.capitalize())
-    return " ".join(words)
+    from app.services.module_blueprint_service import get_canonical_part_title
+    title = (part.title or "").strip()
+    if title:
+        return title
+    return get_canonical_part_title(part.part_code, title)
 
 
 def _criterion_action(

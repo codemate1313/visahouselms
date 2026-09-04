@@ -172,31 +172,40 @@ export function ModuleReadinessPanel({ module, busy, onChangeStatus, onChoosePar
             )}
 
             {module.status === "published" && (
-              <div className="vh-actions-dual">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="vh-btn-secondary"
-                  onClick={() => {
-                    onChangeStatus("draft");
-                    setIsOpen(false);
-                  }}
-                  disabled={busy}
-                >
-                  {t.returnToDraft}
-                </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  className="vh-btn-danger"
-                  onClick={() => {
-                    onChangeStatus("archived");
-                    setIsOpen(false);
-                  }}
-                  disabled={busy}
-                >
-                  {t.archive}
-                </Button>
+              <div>
+                <div className="vh-actions-dual">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="vh-btn-secondary"
+                    onClick={() => {
+                      onChangeStatus("draft");
+                      setIsOpen(false);
+                    }}
+                    disabled={busy || module.has_active_attempts}
+                    title={module.has_active_attempts ? "Cannot return to draft while a student is actively taking the test" : undefined}
+                  >
+                    {t.returnToDraft}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    className="vh-btn-danger"
+                    onClick={() => {
+                      onChangeStatus("archived");
+                      setIsOpen(false);
+                    }}
+                    disabled={busy || module.has_active_attempts}
+                    title={module.has_active_attempts ? "Cannot archive module while a student is actively taking the test" : undefined}
+                  >
+                    {t.archive}
+                  </Button>
+                </div>
+                {module.has_active_attempts && (
+                  <p style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--color-amber-600, #d97706)", fontWeight: 500, display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                    <span>🔒 Status locked while student is taking test</span>
+                  </p>
+                )}
               </div>
             )}
 

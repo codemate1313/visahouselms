@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { API_BASE_URL, apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Button, Checkbox, LinkButton, RequiredMark, SearchableSelect } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { BrandingPreview } from "@/pages/super-admin/InstituteBranding/components/BrandingPreview";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
@@ -526,7 +527,7 @@ export function InstituteForm({ basePath = "/super-admin" }: InstituteFormProps)
     setCopied(true);
   }
 
-  if (loading) return <p style={{ padding: 24 }}>{strings.loading}</p>;
+  if (loading) return <RouteLoadingState />;
 
   const stepsDef: { key: TabKey; step: number; label: string }[] = [
     { key: "profile", step: 1, label: "Profile & Admin" },

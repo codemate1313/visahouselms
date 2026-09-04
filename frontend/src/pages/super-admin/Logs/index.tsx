@@ -8,6 +8,7 @@ import { LogsFilterBar } from "./components/LogsFilterBar";
 import { LogsTable } from "./components/LogsTable";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 
 export function Logs() {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -132,7 +133,7 @@ export function Logs() {
       {error && <p className="error-text">{error}</p>}
 
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : (
         <>
           <LogsTable tab={tab} rows={rows} expanded={expanded} onToggleExpand={(id) => setExpanded(expanded === id ? null : id)} />

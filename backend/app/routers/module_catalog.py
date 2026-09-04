@@ -49,6 +49,14 @@ def get_module_analytics(module_id: int, db: Session = Depends(get_db)):
 @router.post("/{module_id}/status")
 def set_status(module_id: int, payload: ModuleStatusUpdate, request: Request, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     module = module_authoring_service.get_module_or_404(db, module_id)
+    if payload.status in ("archived", "draft") and module.status == "published":
+        if module_authoring_service.get_active_attempts_count(db, module.id, sweep=True) > 0:
+            action_word = "archive" if payload.status == "archived" else "unpublish"
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Cannot {action_word} this module while a student is actively taking the test.",
+            )
     if payload.status == "published":
         errors = module_authoring_service.validation_errors(module)
         if errors:

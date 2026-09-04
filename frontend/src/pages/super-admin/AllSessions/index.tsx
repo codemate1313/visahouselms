@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { Badge, Button, FilterBar, PageHeader, SearchInput, SearchableSelect } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useToastStore } from "@/store/toastStore";
 import { formatDate } from "@/utils/date";
 import "./AllSessions.css";
@@ -161,7 +162,7 @@ export function AllSessions() {
       </FilterBar>
 
       {loading ? (
-        <p>Loading…</p>
+        <RouteLoadingState />
       ) : rows.length === 0 ? (
         <p className="empty-message">No active sessions match.</p>
       ) : (

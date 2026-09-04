@@ -11,6 +11,7 @@ import { InstructorAnalytics } from "./components/InstructorAnalytics";
 import { CourseUsagePanel } from "./components/CourseUsagePanel";
 import { InstituteInstructorDashboardView } from "./components/InstituteInstructorDashboardView";
 import { PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import type { InstructorDashboardSummary } from "./types";
 
 interface InstructorDashboardProps {
@@ -38,7 +39,7 @@ export function InstructorDashboard({
   }, [apiPath]);
 
   if (error) return <p className="error-text">{error}</p>;
-  if (!summary) return <p>{strings.loading}</p>;
+  if (!summary) return <RouteLoadingState />;
 
   return (
     <div>

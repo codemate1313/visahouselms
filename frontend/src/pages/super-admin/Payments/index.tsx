@@ -15,6 +15,7 @@ import { PaymentsTable } from "./components/PaymentsTable";
 import { DuePaymentModal } from "./components/DuePaymentModal";
 import { Button, PageHeader } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 
 const PAGE_SIZE = 25;
 
@@ -299,7 +300,7 @@ export function Payments() {
       />
 
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : (
         <>
           <PaymentsTable rows={pagedRows} onOpenDueForm={openDueForm} />

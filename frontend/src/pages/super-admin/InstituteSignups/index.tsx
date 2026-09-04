@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Button, SegmentedControl, Textarea } from "@/components/ui";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useToastStore } from "@/store/toastStore";
 import { formatDate } from "@/utils/date";
 import { instituteSignupsStrings as strings } from "./InstituteSignups.strings";
@@ -245,10 +246,7 @@ export function InstituteSignups() {
       </div>
 
       {loading ? (
-        <div className="vh-signups-empty">
-          <span className="vh-signups-spinner" style={{ width: 24, height: 24 }} />
-          <p>{strings.loading}</p>
-        </div>
+        <RouteLoadingState />
       ) : rows.length === 0 ? (
         <div className="vh-signups-empty">
           <div className="vh-signups-empty-icon">

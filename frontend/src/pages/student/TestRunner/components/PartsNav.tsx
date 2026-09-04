@@ -22,11 +22,12 @@ interface PartsNavProps {
   languageCertSkin?: boolean;
 }
 
-function formatPartTitle(title: string) {
-  const match = title.match(/^([A-Za-z\s]+)\s+(\d+)$/);
+export function formatPartTitle(title: string) {
+  if (!title) return "";
+  const match = title.match(/^([A-Za-z]+)\s*(?:-|Part)?\s*(\d+[A-Za-z]?)$/i);
   if (match) {
-    const sectionName = match[1].trim();
-    return `${sectionName} Part ${match[2]}`;
+    const sectionName = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+    return `${sectionName} Part ${match[2].toUpperCase()}`;
   }
   return title;
 }
@@ -76,7 +77,7 @@ export function PartsNav({
                     >
                       <span className="lc-rail-tab-content">
                         {isComplete && <Icon name="check" className="lc-rail-tab-check" />}
-                        <span>{part.title}</span>
+                        <span>{formatPartTitle(part.title)}</span>
                       </span>
                       {isComplete && <span className="sr-only"> (Complete)</span>}
                     </button>

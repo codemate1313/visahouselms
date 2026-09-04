@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import type { AttemptSummary } from "@/api/types";
-import { Icon } from "@/components/icons";
 import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { formatDateTime } from "@/utils/date";
 import { studentAttemptsStrings as strings } from "./StudentAttempts.strings";
 import type { BadgeTone } from "@/components/ui";
@@ -119,7 +119,7 @@ export function StudentAttempts() {
     return () => window.clearInterval(intervalId);
   }, [attempts, loadAttempts]);
 
-  if (loading) return <p>{strings.loading}</p>;
+  if (loading) return <RouteLoadingState />;
 
   const filteredAttempts = attempts.filter((attempt) => {
     if (selectedFilter === "all") return true;
@@ -176,18 +176,16 @@ export function StudentAttempts() {
           {attempt.status === "ready" || attempt.status === "in_progress" ? (
             <Link
               to={attemptTargetUrl(attempt)}
-              aria-label={strings.resumeTest}
-              data-tooltip={strings.resumeTest}
+              style={{ textDecoration: "none" }}
             >
-              <Icon name="module" />
+              <Button variant="outline" size="sm">{strings.resumeTest}</Button>
             </Link>
           ) : (
             <Link
               to={`/student/attempts/${attempt.id}/result`}
-              aria-label={strings.viewResult}
-              data-tooltip={strings.viewResult}
+              style={{ textDecoration: "none" }}
             >
-              <Icon name="overview" />
+              <Button variant="outline" size="sm">{strings.viewResult}</Button>
             </Link>
           )}
         </td>

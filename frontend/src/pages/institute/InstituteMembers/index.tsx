@@ -6,6 +6,7 @@ import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { instituteMembersStrings as strings } from "./InstituteMembers.strings";
 import type { ImportResult, InstituteMember, MemberCapacity } from "./types";
 import { MembersHeader } from "./components/MembersHeader";
@@ -408,7 +409,7 @@ export function InstituteMembers({ role, instituteId, portalBasePath = "/super-a
       {!staffFeatureLocked && (
         <>
           {loading ? (
-            <p>{strings.loading}</p>
+            <RouteLoadingState />
           ) : (
             <MembersTable
               label={label}

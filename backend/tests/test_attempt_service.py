@@ -186,10 +186,19 @@ class AttemptServiceTestCase(unittest.TestCase):
         )
         module = module_authoring_service.get_module_or_404(self.db, created["id"])
         for part in module.parts:
+            image_path = None
+            if part.section_type == "writing" and (part.part_code == "writing_1" or part.part_code.endswith("writing_1")):
+                chart_rel = Path("exam-modules") / "shared" / "writing_1_chart.webp"
+                chart_abs = settings.storage_path / chart_rel
+                chart_abs.parent.mkdir(parents=True, exist_ok=True)
+                if not chart_abs.is_file():
+                    chart_abs.write_bytes(b"RIFF\x24\x00\x00\x00WEBPVP8 \x18\x00\x00\x000\x01\x00\x9d\x01*\x01\x00\x01\x00\x00")
+                image_path = chart_rel.as_posix()
             self.db.add(
                 ExamModuleQuestion(
                     part_id=part.id,
                     **_question("essay", f"{part.part_code} prompt", Decimal(part.max_marks), []),
+                    image_path=image_path,
                     source_type="manual",
                     source_filename=None,
                     sort_order=0,
@@ -332,11 +341,11 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertEqual(analysis["generated_by"], "cefr_analysis_engine")
 
         parts = {row["label"]: row for row in analysis["part_breakdown"]}
-        self.assertEqual(parts["Reading 1A"]["marks"], "6 / 6")
-        self.assertEqual(parts["Reading 1A"]["status"], "strong")
-        self.assertEqual(parts["Reading 2"]["status"], "priority")
-        self.assertTrue(parts["Reading 1A"]["focus"])
-        self.assertEqual(parts["Reading 4"]["unanswered"], 1)
+        self.assertEqual(parts["Reading Part 1A"]["marks"], "6 / 6")
+        self.assertEqual(parts["Reading Part 1A"]["status"], "strong")
+        self.assertEqual(parts["Reading Part 2"]["status"], "priority")
+        self.assertTrue(parts["Reading Part 1A"]["focus"])
+        self.assertEqual(parts["Reading Part 4"]["unanswered"], 1)
 
         self.assertTrue(analysis["question_type_breakdown"])
         self.assertTrue(all(row["total"] for row in analysis["question_type_breakdown"]))
@@ -349,7 +358,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         # The blank item is the cheapest mark on the paper, so it leads.
         self.assertIn("never received an answer", analysis["focus_areas"][0]["title"])
         self.assertEqual(analysis["progression"]["next_level"], "B1")
-        self.assertIn("Reading 1A", analysis["summary"])
+        self.assertIn("Reading Part 1A", analysis["summary"])
 
     def test_analysis_reports_rubric_criteria_for_examiner_marked_parts(self):
         module = self._build_writing_module()
@@ -432,7 +441,7 @@ class AttemptServiceTestCase(unittest.TestCase):
 
         self.assertGreaterEqual(evaluator.call_count, 2)
         self.assertTrue(updated["criteria_breakdown"])
-        self.assertTrue(any(row["part_label"] == "Writing 1" for row in updated["criteria_breakdown"]))
+        self.assertTrue(any(row["part_label"] == "Writing Part 1" for row in updated["criteria_breakdown"]))
 
     def test_mcq_multiple_requires_exact_set_match(self):
         module = self._build_reading_module()
@@ -747,10 +756,19 @@ class AttemptServiceTestCase(unittest.TestCase):
                 False,
                 None,
             )
+            image_path = None
+            if part.section_type == "writing" and (part.part_code == "writing_1" or part.part_code.endswith("writing_1")):
+                chart_rel = Path("exam-modules") / "shared" / "writing_1_chart.webp"
+                chart_abs = settings.storage_path / chart_rel
+                chart_abs.parent.mkdir(parents=True, exist_ok=True)
+                if not chart_abs.is_file():
+                    chart_abs.write_bytes(b"RIFF\x24\x00\x00\x00WEBPVP8 \x18\x00\x00\x000\x01\x00\x9d\x01*\x01\x00\x01\x00\x00")
+                image_path = chart_rel.as_posix()
             self.db.add(
                 ExamModuleQuestion(
                     part_id=part.id,
                     **_question("essay", f"{part.part_code} prompt", Decimal(part.max_marks), []),
+                    image_path=image_path,
                     source_type="manual",
                     source_filename=None,
                     sort_order=0,

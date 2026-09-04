@@ -12,6 +12,7 @@ import type { BlogPostDetail } from "./types";
 import type { BlogListItem } from "../blogTypes";
 import { BlogMarkdownBody } from "./components/BlogMarkdownBody";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import "@/styles/public/chrome.css";
 import "@/styles/public/blogs.css";
 
@@ -107,7 +108,7 @@ export function BlogDetail() {
         <div className="vh-page-content">
           <PublicHeader />
           <div className="vh-blog-article-wrapper text-center py-36" style={{ minHeight: "60vh", display: "grid", placeItems: "center" }}>
-            <div style={{ color: "var(--ink2)", fontSize: "16px", fontWeight: 500 }}>{strings.loading}</div>
+            <RouteLoadingState />
           </div>
           <PublicFooter />
         </div>

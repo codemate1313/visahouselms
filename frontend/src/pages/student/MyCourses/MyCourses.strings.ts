@@ -38,6 +38,7 @@ export const myCoursesStrings = {
   minutesSuffix: (minutes: number) => `${minutes} minutes`,
   starting: "Starting...",
   startTest: "Start test",
+  resumeTest: "Resume test",
   demo: {
     chip: "Free demo",
     chipTooltip: "Free sample test - no subscription needed. Finish it to see your score.",

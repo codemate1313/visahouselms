@@ -7,6 +7,7 @@ import { usePageTitleStore } from "@/store/pageTitleStore";
 import { confirmExport } from "@/utils/confirmExport";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { couponsStrings as strings } from "./Coupons.strings";
 import type { CouponRow } from "./types";
 import { exportCouponsExcel, exportCouponsPDF } from "./exportHelpers";
@@ -131,7 +132,7 @@ export function Coupons() {
       {error && <p className="error-text">{error}</p>}
 
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : (
         <>
           <CouponsTable coupons={pagedCoupons} onToggleActive={toggleActive} onRequestDelete={setDeletingCoupon} />

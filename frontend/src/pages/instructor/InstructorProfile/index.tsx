@@ -6,6 +6,7 @@ import { fromDateInputValue, toDateInputValue } from "@/components/profileContac
 import { ProfileContactFields } from "@/components/ProfileContactFields";
 import { ProfileEditorShell } from "@/components/ProfileEditorShell";
 import { Button, RequiredMark } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useAuthStore } from "@/store/authStore";
 import { instructorProfileStrings as strings } from "./InstructorProfile.strings";
 
@@ -79,7 +80,7 @@ export function InstructorProfile() {
     }
   }
 
-  if (!profile && !error) return <p>{strings.loading}</p>;
+  if (!profile && !error) return <RouteLoadingState />;
   if (!profile) return <p className="error-text">{error}</p>;
 
   const roleLabel = authUser?.role === "INST_INSTRUCTOR" ? strings.roleLabels.instituteInstructor : strings.roleLabels.saInstructor;

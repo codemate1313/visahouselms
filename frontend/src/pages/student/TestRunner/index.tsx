@@ -8,6 +8,7 @@ import { unlockSharedAudioContext } from "@/lib/talking-avatar.js";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { hasAttemptResponse } from "@/pages/student/attemptMetrics";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { testRunnerStrings as strings } from "./TestRunner.strings";
 import {
   EMPTY_MEDIA_STATE,
@@ -720,14 +721,19 @@ export function TestRunner() {
        paste can bring prepared prose in from anywhere. So the exemption is
        withdrawn for this one module type and copy, cut and paste are blocked
        across every section, writing included. */
-    function isClipboardExemptPart() {
-      if (languageCertSkin) return false;
+    function isClipboardExemptPart(event?: Event) {
+      if (
+        event?.target instanceof HTMLTextAreaElement ||
+        (event?.target as HTMLElement)?.closest?.("textarea")
+      ) {
+        return true;
+      }
       const activePart = currentPartRef.current;
       return activePart?.section_type === "writing"
         || Boolean(activePart?.questions?.some((q) => q.question_type === "essay"));
     }
     function onClipboard(event: ClipboardEvent) {
-      if (isClipboardExemptPart()) return;
+      if (isClipboardExemptPart(event)) return;
       event.preventDefault();
       if (isFinalAttempt && !submittedRef.current) {
         recordFlag("clipboard", { operation: event.type });
@@ -737,7 +743,7 @@ export function TestRunner() {
        Paste item silently does nothing reads as a broken page rather than a
        rule, and right-click is the other route to the same thing. */
     function onContextMenu(event: MouseEvent) {
-      if (isClipboardExemptPart()) return;
+      if (isClipboardExemptPart(event)) return;
       event.preventDefault();
       if (isFinalAttempt && !submittedRef.current) recordFlag("context_menu");
     }
@@ -745,7 +751,7 @@ export function TestRunner() {
       const command = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
       if (command && ["c", "x", "v"].includes(key)) {
-        if (isClipboardExemptPart()) return;
+        if (isClipboardExemptPart(event)) return;
         event.preventDefault();
         if (isFinalAttempt && !submittedRef.current) {
           recordFlag("clipboard", { operation: key === "c" ? "copy" : key === "x" ? "cut" : "paste", source: "keyboard" });
@@ -1721,7 +1727,7 @@ export function TestRunner() {
   }
 
   if (error) return <div className="test-runner-route-frame"><p className="error-text">{error}</p></div>;
-  if (!attempt) return <div className="test-runner-loading">{strings.loading}</div>;
+  if (!attempt) return <RouteLoadingState />;
 
   const brandedTestClass = isInstituteStudent ? " institute-branded-test" : "";
   const brandInitials = branding?.institute_name
@@ -1924,7 +1930,7 @@ export function TestRunner() {
     );
   }
 
-  if (!currentPart) return <div className="test-runner-loading">{strings.loading}</div>;
+  if (!currentPart) return <RouteLoadingState />;
 
   if (shouldRestoreSpeakingResumeControls) {
     return (

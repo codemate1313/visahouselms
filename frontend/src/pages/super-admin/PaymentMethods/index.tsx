@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { confirmAction } from "@/components/confirmDialog";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { confirmExport } from "@/utils/confirmExport";
 import { paymentMethodsStrings as strings } from "./PaymentMethods.strings";
@@ -138,7 +139,7 @@ export function PaymentMethods() {
       />
 
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : (
         <MethodsTable methods={filteredMethods} onToggleActive={toggleActive} onRequestDelete={setDeletingMethod} />
       )}

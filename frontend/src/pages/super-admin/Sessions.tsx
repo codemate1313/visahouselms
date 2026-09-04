@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Icon } from "@/components/icons";
 import { Badge, Button, IconButton, PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { formatDateTime } from "@/utils/date";
 import { sessionsStrings as strings } from "./Sessions.strings";
 
@@ -100,7 +101,7 @@ export function Sessions({ apiBase = "/super-admin" }: SessionsProps) {
       {notice && <p className="success-text">{notice}</p>}
 
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : (
         <table className="data-table sessions-table">
           <thead>

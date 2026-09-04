@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Checkbox, Button } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { useToastStore } from "@/store/toastStore";
 import { trialConfigStrings as strings } from "../TrialConfig.strings";
 import "../PlanForm/PlanForm.css";
@@ -140,7 +141,7 @@ export function DemoCoursePicker() {
     }
   }
 
-  if (loading) return <p className="hint">{strings.loading}</p>;
+  if (loading) return <RouteLoadingState size={44} />;
 
   return (
     <section className="form-card wide" style={{ marginTop: 18 }}>

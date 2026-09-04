@@ -5,6 +5,7 @@ import autoTable from "jspdf-autotable";
 import { apiClient } from "@/api/client";
 import { IconButton, PageHeader, SearchableSelect, SearchInput } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { Icon } from "@/components/icons";
 import { useAuthStore } from "@/store/authStore";
 import { formatCurrencyAmount } from "@/utils/currency";
@@ -501,7 +502,7 @@ export function StudentPurchaseHistory() {
       {error && <p className="error-text">{error}</p>}
 
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : filteredPayments.length === 0 ? (
         <div className="empty-state" style={{ background: "var(--surface)", padding: "2.5rem", borderRadius: "12px", border: "1px solid var(--border)", textAlign: "center" }}>
           <h2>{strings.empty.title}</h2>

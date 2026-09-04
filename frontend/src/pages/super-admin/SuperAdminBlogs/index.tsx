@@ -5,6 +5,7 @@ import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
 import "./SuperAdminBlogs.css";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { superAdminBlogsStrings as strings } from "./SuperAdminBlogs.strings";
 import type { BlogAdminItem, BlogStatusFilter, BlogViewMode } from "./types";
 import { BlogsToolbar } from "./components/BlogsToolbar";
@@ -90,10 +91,7 @@ export function SuperAdminBlogs() {
       />
 
       {loading ? (
-        <div className="sab-loading">
-          <div className="sab-spinner"></div>
-          <p>{strings.loading}</p>
-        </div>
+        <RouteLoadingState />
       ) : filteredItems.length === 0 ? (
         <div className="sab-empty">
           <div className="sab-empty-icon">

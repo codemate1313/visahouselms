@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { type ToastItem, useToastStore } from "../store/toastStore";
 import { Icon } from "@/components/icons";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
@@ -104,11 +105,13 @@ export function GlobalSnackbar() {
 
   if (!toasts.length) return null;
 
-  return (
+  return createPortal(
     <div className="global-snackbar-container" aria-live="polite">
       {toasts.map((toast) => (
         <SnackbarCard key={toast.id} toast={toast} />
       ))}
-    </div>
+    </div>,
+    document.body
   );
 }
+

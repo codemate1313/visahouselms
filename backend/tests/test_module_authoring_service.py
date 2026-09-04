@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings
 from app.core.security import hash_password
 from app.models import Base, ExamModule, ExamModuleAsset, ExamModuleQuestion
+from app.models.attempt import TestAttempt as AttemptModel, ATTEMPT_IN_PROGRESS, ATTEMPT_SUBMITTED
 from app.models.role import SA_INSTRUCTOR, Role
 from app.models.user import User
 from app.schemas.assessment import QuestionCreate
@@ -26,6 +27,7 @@ def _question(
     option_count: int = 2,
     passage: Optional[str] = None,
     correct_answer: str = "A",
+    image_path: Optional[str] = None,
 ) -> dict:
     choice = question_type.startswith("mcq_") or question_type.startswith("matching_")
     return {
@@ -33,6 +35,7 @@ def _question(
         "prompt": prompt,
         "instructions": None,
         "passage": passage,
+        "image_path": image_path,
         "options": [
             {"key": chr(65 + index), "text": f"Option {index + 1}"}
             for index in range(option_count)
@@ -74,13 +77,13 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         settings.storage_dir = self.original_storage_dir
         self.storage.cleanup()
 
-    def _create(self, module_type: str) -> dict:
+    def _create(self, module_type: str, title: Optional[str] = None) -> dict:
         return module_authoring_service.create_module(
             self.db,
             self.instructor,
             {
                 "module_type": module_type,
-                "title": f"Academic {module_type}",
+                "title": title or f"Academic {module_type}",
                 "description": None,
                 "instructions": None,
             },
@@ -124,6 +127,12 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
                         "preparation_seconds": constraints.get("preparation_seconds"),
                         "response_seconds": constraints.get("response_seconds"),
                     }
+                if constraints.get("image_required") or (part.section_type == "writing" and (part.part_code == "writing_1" or part.part_code.endswith("writing_1"))):
+                    chart_rel = Path("exam-modules") / "shared" / "writing_1_chart.webp"
+                    chart_full = settings.storage_path / chart_rel
+                    chart_full.parent.mkdir(parents=True, exist_ok=True)
+                    chart_full.write_bytes(b"dummy chart image")
+                    draft["image_path"] = chart_rel.as_posix()
                 self.db.add(
                     ExamModuleQuestion(
                         part_id=part.id,
@@ -449,8 +458,12 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
                 None,
             )
 
+        chart_rel = Path("exam-modules") / "shared" / "writing_1_chart.webp"
+        (settings.storage_path / chart_rel).parent.mkdir(parents=True, exist_ok=True)
+        (settings.storage_path / chart_rel).write_bytes(b"dummy chart image")
+
         module_authoring_service.add_question(
-            self.db, self.instructor, created["id"], first["id"], _question("essay", "Write an academic report", Decimal("32")), None
+            self.db, self.instructor, created["id"], first["id"], _question("essay", "Write an academic report", Decimal("32"), image_path=chart_rel.as_posix()), None
         )
         module_authoring_service.add_question(
             self.db, self.instructor, created["id"], second["id"], _question("essay", "Write a discursive essay", Decimal("32")), None
@@ -479,7 +492,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             created["id"],
             first["id"],
             first_question["id"],
-            _question("essay", "Updated task after publication", Decimal("32")),
+            _question("essay", "Updated task after publication", Decimal("32"), image_path=chart_rel.as_posix()),
             None,
         )
         self.assertEqual(edited_question["prompt"], "Updated task after publication")
@@ -548,7 +561,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.db.refresh(module)
         errors = module_authoring_service.validation_errors(module)
         self.assertTrue(
-            any("Reading 1A takes exactly 6 questions; it currently has 7." == message for message in errors),
+            any("Reading Part 1A takes exactly 6 questions; it currently has 7." == message for message in errors),
             errors,
         )
 
@@ -573,8 +586,8 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         module = module_authoring_service.get_module_or_404(self.db, created["id"])
         errors = module_authoring_service.validation_errors(module)
         media_error = "requires an MP3 upload or browser-narrated transcript"
-        self.assertFalse(any(message.startswith("Listening 1 ") and media_error in message for message in errors))
-        self.assertTrue(any(message.startswith("Listening 2 ") and media_error in message for message in errors))
+        self.assertFalse(any(message.startswith("Listening Part 1 ") and media_error in message for message in errors))
+        self.assertTrue(any(message.startswith("Listening Part 2 ") and media_error in message for message in errors))
 
     def test_browser_narration_stores_text_without_writing_an_mp3(self) -> None:
         created = self._create("listening")
@@ -744,7 +757,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         )
         db_module = self.db.get(ExamModule, module["id"])
         part = db_module.parts[0]
-        self.assertEqual(part.title, "Reading 1A")
+        self.assertEqual(part.title, "Reading Part 1A")
 
         # Test update part
         updated = module_authoring_service.update_part(
@@ -752,17 +765,29 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             self.instructor,
             module["id"],
             part.id,
-            {"title": "Custom Reading Part 1A", "instructions": "Read carefully."},
-            {"title", "instructions"},
+            {"instructions": "Read carefully."},
+            {"instructions"},
             None
         )
-        self.assertEqual(updated["title"], "Custom Reading Part 1A")
+        self.assertEqual(updated["title"], "Reading Part 1A")
         self.assertEqual(updated["instructions"], "Read carefully.")
 
         # Refresh and verify db
         self.db.refresh(part)
-        self.assertEqual(part.title, "Custom Reading Part 1A")
+        self.assertEqual(part.title, "Reading Part 1A")
         self.assertEqual(part.instructions, "Read carefully.")
+
+        # Test that changing part title is rejected
+        with self.assertRaises(HTTPException):
+            module_authoring_service.update_part(
+                self.db,
+                self.instructor,
+                module["id"],
+                part.id,
+                {"title": "Custom Reading Part 1A"},
+                {"title"},
+                None
+            )
 
     def test_speaking_pdf_material_is_serialized_and_deleted_with_question(self) -> None:
         created = self._create("speaking")
@@ -908,8 +933,8 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual(normalized_pre_split["prompt"], "Read the given text aloud.")
         self.assertEqual(normalized_pre_split["passage"], "The training centre opens early during exam week so learners can revise before class.")
 
-    def _speaking_part(self, part_code: str):
-        created = self._create("speaking")
+    def _speaking_part(self, part_code: str, title: Optional[str] = None):
+        created = self._create("speaking", title=title)
         module = module_authoring_service.get_module_or_404(self.db, created["id"])
         return module, next(item for item in module.parts if item.part_code == part_code)
 
@@ -954,7 +979,7 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
             ("speaking_3", "read_aloud"),
             ("speaking_4", "presentation"),
         ):
-            module, part = self._speaking_part(part_code)
+            module, part = self._speaking_part(part_code, title=f"Speaking Heading Test {part_code}")
             self.assertTrue(part.answer_constraints["spoken_heading"], part_code)
             saved = module_authoring_service.add_question(
                 self.db, self.instructor, module.id, part.id,
@@ -1190,6 +1215,118 @@ class ModuleAuthoringServiceTests(unittest.TestCase):
         self.assertEqual(res.media_type, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         self.assertIn("reading-upload-template.xlsx", res.headers["content-disposition"])
         self.assertGreater(len(res.body), 1000)
+
+    def test_writing_part_1_image_mandatory_and_writing_part_2_disallowed(self) -> None:
+        created = self._create("writing", title="Writing Image Rules Test")
+        part_1 = created["parts"][0]
+        part_2 = created["parts"][1]
+
+        # Writing 1 without image must be rejected
+        with self.assertRaises(HTTPException) as ctx:
+            module_authoring_service.add_question(
+                self.db, self.instructor, created["id"], part_1["id"],
+                QuestionCreate(
+                    question_type="essay",
+                    prompt="Describe the chart provided.",
+                    points=Decimal(part_1["max_marks"]),
+                ).model_dump(),
+                None,
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("requires an image", ctx.exception.detail)
+
+        # Writing 1 with image must succeed
+        chart_rel = Path("exam-modules") / "shared" / "writing_1_chart.webp"
+        (settings.storage_path / chart_rel).parent.mkdir(parents=True, exist_ok=True)
+        (settings.storage_path / chart_rel).write_bytes(b"dummy chart image")
+
+        q1 = module_authoring_service.add_question(
+            self.db, self.instructor, created["id"], part_1["id"],
+            QuestionCreate(
+                question_type="essay",
+                prompt="Describe the chart provided.",
+                points=Decimal(part_1["max_marks"]),
+                image_path=chart_rel.as_posix(),
+            ).model_dump(),
+            None,
+        )
+        self.assertEqual(q1["image_path"], chart_rel.as_posix())
+
+        # Writing 2 rejecting image upload
+        with self.assertRaises(HTTPException) as ctx2:
+            module_authoring_service.save_question_image(
+                self.db, self.instructor, created["id"], part_2["id"],
+                content=b"fake image", ip=None
+            )
+        self.assertEqual(ctx2.exception.status_code, 400)
+        self.assertIn("does not allow image attachments", ctx2.exception.detail)
+
+        # Writing 2 stripping image if passed in question draft
+        q2 = module_authoring_service.add_question(
+            self.db, self.instructor, created["id"], part_2["id"],
+            QuestionCreate(
+                question_type="essay",
+                prompt="Write an essay on higher education.",
+                points=Decimal(part_2["max_marks"]),
+                image_path="exam-modules/shared/some_image.webp",
+            ).model_dump(),
+            None,
+        )
+        self.assertIsNone(q2["image_path"])
+
+    def test_active_attempt_locks_and_submission_unlocks_module(self) -> None:
+        created = self._complete("reading")
+        module_authoring_service.set_status(self.db, self.instructor, created["id"], "published", "127.0.0.1")
+        module = module_authoring_service.get_module_or_404(self.db, created["id"])
+
+        # Initially no active student attempts
+        serialized = module_authoring_service.serialize_module(module)
+        self.assertFalse(serialized["has_active_attempts"])
+        self.assertEqual(serialized["active_attempts_count"], 0)
+
+        from datetime import datetime, timedelta, timezone
+
+        # Simulate student actively taking the test
+        attempt = AttemptModel(
+            module_id=module.id,
+            user_id=self.instructor.id,
+            status=ATTEMPT_IN_PROGRESS,
+            expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=40),
+        )
+        self.db.add(attempt)
+        self.db.commit()
+
+        # Serialization reflects active test taking
+        serialized = module_authoring_service.serialize_module(module)
+        self.assertTrue(serialized["has_active_attempts"])
+        self.assertEqual(serialized["active_attempts_count"], 1)
+
+        # Editing or changing status to draft/archived must fail with 409 Conflict
+        with self.assertRaises(HTTPException) as ctx_draft:
+            module_authoring_service._require_draft(self.db, module)
+        self.assertEqual(ctx_draft.exception.status_code, 409)
+        self.assertIn("actively taking", ctx_draft.exception.detail)
+
+        with self.assertRaises(HTTPException) as ctx_status:
+            module_authoring_service.set_status(self.db, self.instructor, module.id, "draft", None)
+        self.assertEqual(ctx_status.exception.status_code, 409)
+
+        with self.assertRaises(HTTPException) as ctx_archive:
+            module_authoring_service.set_status(self.db, self.instructor, module.id, "archived", None)
+        self.assertEqual(ctx_archive.exception.status_code, 409)
+
+        # Student submits the test
+        attempt.status = ATTEMPT_SUBMITTED
+        self.db.commit()
+
+        # Module automatically unlocks
+        serialized = module_authoring_service.serialize_module(module)
+        self.assertFalse(serialized["has_active_attempts"])
+        self.assertEqual(serialized["active_attempts_count"], 0)
+
+        # Instructor can now return module to draft
+        updated = module_authoring_service.set_status(self.db, self.instructor, module.id, "draft", None)
+        self.assertEqual(updated["status"], "draft")
 
 
 if __name__ == "__main__":

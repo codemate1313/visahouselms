@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { API_BASE_URL } from "@/api/client";
 import { Icon } from "@/components/icons";
 import { Checkbox, SearchableSelect } from "@/components/ui";
@@ -115,6 +116,33 @@ export function ModuleImportReviewPanel({
     onSelectedImportsChange(next);
   }
 
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  function handleCommit() {
+    setValidationError(null);
+    for (const part of preview.parts) {
+      const isWriting1 = part.section_type === "writing" && (
+        part.part_code === "writing_1" ||
+        part.part_code.endsWith("writing_1") ||
+        (part.part_title || "").toLowerCase().includes("writing 1") ||
+        (part.part_title || "").toLowerCase().includes("writing part 1")
+      );
+      if (isWriting1) {
+        for (let i = 0; i < part.questions.length; i++) {
+          const key = keyFor(part.part_id, i);
+          if (selectedImports.has(key)) {
+            const q = part.questions[i];
+            if (!q.image_url && !q.image_path) {
+              setValidationError(`Writing Part 1 requires an image to be attached for each question. Please attach an image for Question ${i + 1}.`);
+              return;
+            }
+          }
+        }
+      }
+    }
+    onCommit();
+  }
+
   return (
     <section className="import-review">
       <div className="import-review-header">
@@ -132,11 +160,18 @@ export function ModuleImportReviewPanel({
           <Button type="button" variant="secondary" onClick={onDiscard}>
             {review.discard}
           </Button>
-          <Button type="button" onClick={onCommit} disabled={busy || !selectedImports.size}>
+          <Button type="button" onClick={handleCommit} disabled={busy || !selectedImports.size}>
             {t.import(selectedImports.size)}
           </Button>
         </div>
       </div>
+
+      {validationError && (
+        <div className="import-warning" style={{ margin: "12px 0", borderColor: "var(--danger, #ef4444)", background: "rgba(239, 68, 68, 0.08)" }}>
+          <strong style={{ color: "var(--danger, #ef4444)" }}>Validation Required</strong>
+          <p style={{ margin: "4px 0 0", fontSize: "13.5px" }}>{validationError}</p>
+        </div>
+      )}
 
       {preview.warnings.length > 0 && (
         <div className="import-warning">
@@ -154,7 +189,20 @@ export function ModuleImportReviewPanel({
           const allowedTypes = part.allowed_question_types ?? [];
           const isNotepadGaps = part.layout === "notepad_gaps";
           const passageRequired = part.section_type === "reading" && part.part_code !== "reading_1a";
-          const partNeedsImage = IMAGE_ELIGIBLE_SECTIONS.has(part.section_type);
+          const isWriting = part.section_type === "writing";
+          const isWriting1 = isWriting && (
+            part.part_code === "writing_1" ||
+            part.part_code.endsWith("writing_1") ||
+            (part.part_title || "").toLowerCase().includes("writing 1") ||
+            (part.part_title || "").toLowerCase().includes("writing part 1")
+          );
+          const isWriting2 = isWriting && (
+            part.part_code === "writing_2" ||
+            part.part_code.endsWith("writing_2") ||
+            (part.part_title || "").toLowerCase().includes("writing 2") ||
+            (part.part_title || "").toLowerCase().includes("writing part 2")
+          );
+          const partNeedsImage = !isWriting2 && (isWriting1 || IMAGE_ELIGIBLE_SECTIONS.has(part.section_type));
           const isListening1 = part.part_code === "listening_1" || part.part_code.endsWith("listening_1");
           const isReading1b = part.part_code === "reading_1b" || part.part_code.endsWith("reading_1b");
           const isReading2 = part.part_code === "reading_2" || part.part_code.endsWith("reading_2");
@@ -260,6 +308,32 @@ export function ModuleImportReviewPanel({
                         <textarea rows={3} value={question.prompt} onChange={(event) => onUpdatePreview(part.part_id, index, { prompt: event.target.value })} />
                       </>
                     ) : null}
+                    {isWriting && (
+                      <div className="writing-passage-preview-field" style={{ marginTop: 10, marginBottom: 12 }}>
+                        <label style={{ fontWeight: 600, fontSize: "13px", display: "block", marginBottom: 4, color: "var(--text-main)" }}>
+                          Passage / Context (Extracted)
+                        </label>
+                        <textarea
+                          rows={4}
+                          placeholder="Passage or scenario context extracted from file (optional for writing task)..."
+                          value={question.passage ?? ""}
+                          onChange={(event) => onUpdatePreview(part.part_id, index, { passage: event.target.value })}
+                          style={{
+                            width: "100%",
+                            padding: "8px 10px",
+                            borderRadius: "6px",
+                            border: "1px solid var(--border)",
+                            background: "var(--surface)",
+                            fontFamily: "inherit",
+                            fontSize: "13.5px",
+                            lineHeight: 1.5,
+                          }}
+                        />
+                        <span className="field-hint" style={{ display: "block", marginTop: 4, fontSize: "12px", color: "var(--text-muted)" }}>
+                          This passage was extracted from your PDF, CSV, or Excel file and will be displayed to candidates during the writing test.
+                        </span>
+                      </div>
+                    )}
                     {!ANSWER_FREE_TYPES.has(question.question_type) && (
                       <>
                         <label>{review.answerKeysLabel}</label>
@@ -293,7 +367,11 @@ export function ModuleImportReviewPanel({
                             </div>
                             <div className="vh-dropzone-text">
                               <span className="vh-dropzone-main">
-                                {uploadingImageKey === selectedKey ? manualStrings.uploadingImage : manualStrings.addImage}
+                                {uploadingImageKey === selectedKey
+                                  ? manualStrings.uploadingImage
+                                  : isWriting1
+                                    ? "Attach Question Image (Mandatory)"
+                                    : manualStrings.addImage}
                               </span>
                             </div>
                             <span className="vh-dropzone-btn">Browse</span>
@@ -301,7 +379,7 @@ export function ModuleImportReviewPanel({
                         ) : (
                           <div className="vh-image-preview-card">
                             <div className="vh-preview-header">
-                              <span className="vh-preview-title">{manualStrings.addImage}</span>
+                              <span className="vh-preview-title">{isWriting1 ? "Question Image (Mandatory)" : manualStrings.addImage}</span>
                               <Button type="button" variant="text" className="vh-remove-img-btn" onClick={() => onRemoveImage(part.part_id, index)}>
                                 <Icon name="x" />
                                 {manualStrings.removeImage}

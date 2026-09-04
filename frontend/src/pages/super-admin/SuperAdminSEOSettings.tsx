@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { RequiredMark } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { seoSettingsStrings as strings } from "./SuperAdminSEOSettings.strings";
 import { Icon } from "@/components/icons";
 
@@ -38,7 +39,7 @@ export function SuperAdminSEOSettings() {
   };
 
   if (loading) {
-    return <p className="hint">{strings.loading}</p>;
+    return <RouteLoadingState />;
   }
 
   return (

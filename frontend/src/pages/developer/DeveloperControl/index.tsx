@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { Button, Input, PageHeader, Textarea } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { confirmAction } from "@/components/confirmDialog";
 import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { useToastStore } from "@/store/toastStore";
@@ -145,7 +146,7 @@ export function DeveloperControl() {
     }
   }
 
-  if (!state) return <p>Loading…</p>;
+  if (!state) return <RouteLoadingState />;
 
   return (
     <div className="developer-control">

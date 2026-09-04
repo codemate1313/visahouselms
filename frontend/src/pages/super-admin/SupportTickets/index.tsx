@@ -11,6 +11,7 @@ import type {
   SupportTicketStatus,
 } from "@/api/types";
 import { Badge, Button, Modal, SearchableSelect, SearchInput, SegmentedControl } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { Icon } from "@/components/icons";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { useToastStore } from "@/store/toastStore";
@@ -564,7 +565,9 @@ function SupportTicketInbox({ scope }: SupportTicketInboxProps) {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="empty-cell">{strings.loading}</td>
+                  <td colSpan={6} className="empty-cell" style={{ padding: "40px 0" }}>
+                    <RouteLoadingState size={40} />
+                  </td>
                 </tr>
               ) : !tickets.length ? (
                 <tr>

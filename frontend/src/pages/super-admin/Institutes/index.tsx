@@ -10,6 +10,7 @@ import { Icon } from "@/components/icons";
 import { institutesStrings as strings } from "./Institutes.strings";
 import type { InstituteRow, SortKey } from "./types";
 import { exportInstitutesExcel, exportInstitutesPDF } from "./exportHelpers";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { InstitutesFilterBar } from "./components/InstitutesFilterBar";
 import { InstitutesTable } from "./components/InstitutesTable";
 import { InstituteDetailDrawer } from "./components/InstituteDetailDrawer";
@@ -276,7 +277,7 @@ export function Institutes({ basePath = "/super-admin" }: InstitutesProps) {
       )}
 
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : (
         <>
           <InstitutesTable

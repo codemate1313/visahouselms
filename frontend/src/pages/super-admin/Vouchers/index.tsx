@@ -4,6 +4,7 @@ import { confirmDelete } from "@/components/confirmDialog";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Badge, Button, DataTableCard, FilterBar, Modal, SearchInput, SearchableSelect, SegmentedControl, Input, Textarea } from "@/components/ui";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import type { BadgeTone } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
@@ -724,7 +725,7 @@ export function Vouchers() {
       {activeTab === "purchases" && (
         <DataTableCard>
           {loading ? (
-            <p className="ui-loading-copy">Loading voucher purchases...</p>
+            <RouteLoadingState />
           ) : (
             <table className="data-table voucher-purchases-table">
               <thead>

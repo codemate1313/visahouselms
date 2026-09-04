@@ -5,7 +5,7 @@ import { extractErrorMessage } from "@/api/errors";
 import type { DirectoryRole, DirectoryUser } from "@/api/types";
 import { MemberFormFields, type MemberFormField } from "@/pages/institute/InstituteMemberForm/components/MemberFormFields";
 import { CredentialCreatedView } from "@/pages/institute/InstituteMemberForm/components/CredentialCreatedView";
-import { usersStrings as strings } from "./Users.strings";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 
 const ROLE_LABELS: Partial<Record<DirectoryRole, string>> = {
   INSTITUTE_ADMIN: "institute admin",
@@ -95,7 +95,7 @@ export function DirectStudentForm({ portalBasePath = "/super-admin" }: { portalB
     }
   }
 
-  if (loading) return <p>{strings.loading}</p>;
+  if (loading) return <RouteLoadingState />;
   if (createdPassword) {
     return (
       <CredentialCreatedView

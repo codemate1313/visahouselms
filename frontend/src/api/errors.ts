@@ -45,12 +45,15 @@ export function extractErrorMessage(err: unknown, fallback: string): string {
       }
 
       if (typeof detail === "object" && detail !== null && !Array.isArray(detail)) {
-        if (typeof detail.message === "string" && detail.message.trim()) {
-          return detail.message;
+        const msg = typeof detail.message === "string" && detail.message.trim() ? detail.message.trim() : "";
+        const errList = Array.isArray(detail.errors) && detail.errors.length > 0
+          ? detail.errors.filter((e) => typeof e === "string" && e.trim()).join(". ")
+          : "";
+        if (msg && errList) {
+          return `${msg}: ${errList}`;
         }
-        if (Array.isArray(detail.errors) && detail.errors.length > 0) {
-          return detail.errors.join(". ");
-        }
+        if (msg) return msg;
+        if (errList) return errList;
         if (typeof detail.detail === "string" && detail.detail.trim()) {
           return detail.detail;
         }

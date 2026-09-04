@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import { confirmDelete } from "@/components/confirmDialog";
 import type { ExamModule, ModuleBlueprint } from "@/api/types";
 import { PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { modulesStrings as strings } from "./Modules.strings";
 import { ModuleTypeGrid } from "./components/ModuleTypeGrid";
 import { ModuleFilterBar } from "./components/ModuleFilterBar";
@@ -79,7 +80,7 @@ export function Modules() {
       />
       {error && <p className="error-text">{error}</p>}
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : !modules.length ? (
         <div className="empty-state">
           <h2>{strings.empty.title}</h2>

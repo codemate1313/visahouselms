@@ -7,6 +7,7 @@ import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
 import { noChangesMessage } from "@/content/common.strings";
 import "./SuperAdminTestimonials.css";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { superAdminTestimonialsStrings as strings } from "./SuperAdminTestimonials.strings";
 import type { TestimonialAdminItem, TestimonialStatusFilter, TestimonialViewMode } from "./types";
 import { TestimonialsToolbar } from "./components/TestimonialsToolbar";
@@ -212,10 +213,7 @@ export function SuperAdminTestimonials() {
       />
 
       {loading ? (
-        <div className="sat-loading">
-          <div className="sat-spinner"></div>
-          <p>{strings.loading}</p>
-        </div>
+        <RouteLoadingState />
       ) : filteredItems.length === 0 ? (
         <div className="sat-empty">
           <div className="sat-empty-icon">

@@ -438,6 +438,16 @@ def _scheduler_tick() -> None:
 
             access_window_service.expire_due_students(db)
             set_setting(db, "internal.last_access_sweep", now.isoformat())
+
+        # sweep abandoned student test attempts that have exceeded their time limit
+        try:
+            from app.services import attempt_service
+
+            swept_count = attempt_service.sweep_expired_attempts(db)
+            if swept_count > 0:
+                logger.info("Auto-swept %d expired or abandoned test attempt(s)", swept_count)
+        except Exception:
+            logger.exception("Failed to sweep expired test attempts")
     finally:
         db.close()
 

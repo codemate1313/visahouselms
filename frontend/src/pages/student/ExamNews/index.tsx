@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiClient } from "@/api/client";
 import { PageHeader, SegmentedControl } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { formatDate } from "@/utils/date";
 import { examNewsStrings as strings } from "./ExamNews.strings";
 import "./ExamNews.css";
@@ -63,10 +64,7 @@ export function ExamNews() {
       <PageHeader eyebrow={strings.eyebrow} title={strings.title} subtitle={strings.subtitle} />
 
       {loading ? (
-        <div className="exam-news-loading">
-          <div className="exam-news-spinner" />
-          <p>{strings.loading}</p>
-        </div>
+        <RouteLoadingState />
       ) : !items.length ? (
         <div className="exam-news-empty">
           <div className="exam-news-empty-icon">📰</div>

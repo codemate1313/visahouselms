@@ -81,8 +81,22 @@ export function ManualQuestionForm({
   const isSpeakingQuestionOnly = isSpeaking && !isSpeakingReadAloud && !isSpeakingPresentation;
   const isReading1a = part.part_code === "reading_1a";
   const isReading1b = part.part_code === "reading_1b";
+  const isWriting = part.section_type === "writing";
+  const isWriting1 = isWriting && (
+    part.part_code === "writing_1" ||
+    part.part_code.endsWith("writing_1") ||
+    (part.title || "").toLowerCase().includes("writing 1") ||
+    (part.title || "").toLowerCase().includes("writing part 1")
+  );
+  const isWriting2 = isWriting && (
+    part.part_code === "writing_2" ||
+    part.part_code.endsWith("writing_2") ||
+    (part.title || "").toLowerCase().includes("writing 2") ||
+    (part.title || "").toLowerCase().includes("writing part 2")
+  );
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const [boldError, setBoldError] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const allowedTurns = part.answer_constraints.allowed_turn_types ?? [];
   const isChoiceQuestion = CHOICE_TYPES.has(manual.question_type);
   const canRemoveOption = manual.options.length > 2;
@@ -99,6 +113,12 @@ export function ManualQuestionForm({
       }
     }
   }, [isListening1, questionIndex, manual, manual.prompt, onManualChange]);
+
+  useEffect(() => {
+    if (isWriting2 && (manual.image_url || manual.image_path)) {
+      onManualChange({ ...manual, image_url: null, image_path: null });
+    }
+  }, [isWriting2, manual, onManualChange]);
   const showsBlankGuidance =
     (manual.question_type === "fill_blank" ||
       part.answer_constraints.inline_marker_required ||
@@ -225,10 +245,16 @@ export function ManualQuestionForm({
       if (promptRef.current) promptRef.current.focus();
       return;
     }
+    if (isWriting1 && !manual.image_url && !manual.image_path) {
+      event.preventDefault();
+      setImageError(true);
+      return;
+    }
     if (isReading1b && !manual.prompt?.trim()) {
       manual.prompt = `Gap ${reading1bGapIndex}`;
     }
     setBoldError(false);
+    setImageError(false);
     onSubmit(event);
   }
 
@@ -401,15 +427,32 @@ export function ManualQuestionForm({
             </div>
             {isReading1a && <p className="hint">{t.boldSelectionHint}</p>}
             {isSpeaking && <p className="hint">{speakingPromptHint}</p>}
-            {part.section_type === "writing" || part.part_code.startsWith("writing_") ? (
-              <RichTextEditor
-                id="module-question-prompt"
-                rows={6}
-                value={manual.prompt}
-                onChange={(nextPrompt) => onManualChange({ ...manual, prompt: nextPrompt })}
-                placeholder={t.promptPlaceholder}
-                required
-              />
+            {isWriting ? (
+              <>
+                <RichTextEditor
+                  id="module-question-prompt"
+                  rows={6}
+                  value={manual.prompt}
+                  onChange={(nextPrompt) => onManualChange({ ...manual, prompt: nextPrompt })}
+                  placeholder={t.promptPlaceholder}
+                  required
+                />
+                <div style={{ marginTop: 14 }}>
+                  <label htmlFor="module-question-passage" style={{ display: "block", marginBottom: 6, fontWeight: 600, fontSize: "13px" }}>
+                    Passage / Context (Optional)
+                  </label>
+                  <RichTextEditor
+                    id="module-question-passage"
+                    rows={5}
+                    value={manual.passage ?? ""}
+                    onChange={(nextPassage) => onManualChange({ ...manual, passage: nextPassage })}
+                    placeholder="Enter context, background reading, or article for the writing prompt (if applicable)..."
+                  />
+                  <span className="field-hint" style={{ display: "block", marginTop: 4, fontSize: "12px", color: "var(--text-muted)" }}>
+                    Optional background reading text or context shown to candidates alongside the prompt.
+                  </span>
+                </div>
+              </>
             ) : (
               <textarea
                 id="module-question-prompt"
@@ -610,38 +653,57 @@ export function ManualQuestionForm({
         )}
 
         {/* 2. Sleek Interactive Image Dropzone Pill for non-speaking questions. */}
-        {!isReading && !isListening && !isSpeaking && (
+        {!isReading && !isListening && !isSpeaking && !isWriting2 && (
           <div className="vh-dropzone-pill-container">
             {!manual.image_url ? (
-              <label className={`vh-dropzone-pill${uploadingImage ? " is-busy" : ""}`}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  disabled={uploadingImage}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) onUploadImage(file);
-                    event.target.value = "";
-                  }}
-                />
-                <div className="vh-dropzone-icon-box">
-                  <Icon name="image" />
-                </div>
-                <div className="vh-dropzone-text">
-                  <span className="vh-dropzone-main">
-                    {uploadingImage ? "Uploading image..." : "Attach Question Image (Optional)"}
-                  </span>
-                  <span className="vh-dropzone-sub">
-                    Drag & drop image here or click to browse
-                  </span>
-                </div>
-                <span className="vh-dropzone-btn">Browse</span>
-              </label>
+              <>
+                <label
+                  className={`vh-dropzone-pill${uploadingImage ? " is-busy" : ""}${imageError ? " is-invalid" : ""}`}
+                  style={imageError ? { borderColor: "var(--danger, #ef4444)" } : undefined}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    disabled={uploadingImage}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        setImageError(false);
+                        onUploadImage(file);
+                      }
+                      event.target.value = "";
+                    }}
+                  />
+                  <div className="vh-dropzone-icon-box">
+                    <Icon name="image" />
+                  </div>
+                  <div className="vh-dropzone-text">
+                    <span className="vh-dropzone-main">
+                      {uploadingImage
+                        ? "Uploading image..."
+                        : isWriting1
+                          ? "Attach Question Image (Mandatory)"
+                          : "Attach Question Image (Optional)"}
+                    </span>
+                    <span className="vh-dropzone-sub">
+                      {isWriting1
+                        ? "Writing Part 1 requires a chart, graph, map or diagram image"
+                        : "Drag & drop image here or click to browse"}
+                    </span>
+                  </div>
+                  <span className="vh-dropzone-btn">Browse</span>
+                </label>
+                {imageError && (
+                  <p className="error-text" style={{ marginTop: "4px", fontSize: "12.5px", fontWeight: 500, color: "var(--danger, #ef4444)" }}>
+                    Writing Part 1 requires an image to be attached before saving.
+                  </p>
+                )}
+              </>
             ) : (
               <div className="vh-image-preview-card">
                 <div className="vh-preview-header">
-                  <span className="vh-preview-title">Question Image Attachment</span>
+                  <span className="vh-preview-title">{isWriting1 ? "Question Image (Mandatory)" : "Question Image Attachment"}</span>
                   <Button type="button" variant="text" className="vh-remove-img-btn" onClick={onRemoveImage}>
                     <Icon name="x" />
                     Remove

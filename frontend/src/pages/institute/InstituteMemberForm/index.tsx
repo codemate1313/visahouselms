@@ -6,6 +6,7 @@ import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { noChangesMessage } from "@/content/common.strings";
 import { useToastStore } from "@/store/toastStore";
 import { isEqual } from "@/utils/isEqual";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import type { InstituteMember, MemberCapacity } from "../InstituteMembers";
 import { instituteMemberFormStrings as strings } from "./InstituteMemberForm.strings";
 import { CapacityLockedView } from "./components/CapacityLockedView";
@@ -160,7 +161,7 @@ export function InstituteMemberForm({ role, instituteId, returnPath }: Props) {
     }
   }
 
-  if (loading) return <p>{strings.loading}</p>;
+  if (loading) return <RouteLoadingState />;
 
   if (isNew) {
     const resource: "students" | "staff" = isStudent ? "students" : "staff";

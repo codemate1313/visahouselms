@@ -6,6 +6,7 @@ import { Icon } from "@/components/icons";
 import { PinList, type PinListItem } from "@/components/PinList";
 import { PageHeader, SearchableSelect, SegmentedControl } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { cleanNotificationMessage, destinationFor, notificationTime, scoreLabel } from "@/utils/notificationHelpers";
 import { notificationsInboxStrings as strings } from "./NotificationsInbox.strings";
 import "./NotificationsInbox.css";
@@ -216,7 +217,7 @@ export function NotificationsInbox({ fallbackRoute }: NotificationsInboxProps) {
         )}
 
         {loading ? (
-          <p className="empty-message">{strings.loadingMessage}</p>
+          <RouteLoadingState />
         ) : error ? (
           <div className="empty-state">
             <h2>{strings.errorTitle}</h2>

@@ -423,6 +423,10 @@ export interface ExamModule {
   is_visible: boolean;
   /** Free sample test: students without a subscription may sit it. */
   is_demo?: boolean;
+  /** True when any student is actively taking this test */
+  has_active_attempts?: boolean;
+  /** Number of active in-progress or ready test attempts */
+  active_attempts_count?: number;
   deleted_at: string | null;
   assignment_count: number;
   duration_minutes: number;

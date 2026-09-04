@@ -5,6 +5,7 @@ import { CollapsiblePanel } from "@/components/CollapsiblePanel";
 import { confirmAction } from "@/components/confirmDialog";
 import { Badge, Checkbox } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { Icon } from "@/components/icons";
 import { useToastStore } from "@/store/toastStore";
 import { developerSettingsStrings as strings } from "../DeveloperSettings.strings";
@@ -84,11 +85,7 @@ export function StaticOtpTab() {
   }
 
   if (loading) {
-    return (
-      <div className="form-card wide p-6">
-        <p className="text-secondary text-sm">Loading Static OTP settings...</p>
-      </div>
-    );
+    return <RouteLoadingState size={44} />;
   }
 
   return (

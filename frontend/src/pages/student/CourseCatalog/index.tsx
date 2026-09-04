@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { StudentPlanCatalogItem } from "@/api/types";
 import { PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { Icon } from "@/components/icons";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
@@ -264,7 +265,7 @@ export function CourseCatalog() {
 
       {error && <p className="error-text">{error}</p>}
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : plans.length === 0 ? (
         <div className="empty-state">
           <h2>{strings.empty.title}</h2>

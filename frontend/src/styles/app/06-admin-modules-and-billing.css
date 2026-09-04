@@ -40,15 +40,10 @@
 }
 
 .btn-action-outline:hover {
-  background: #27272e;
-  border-color: #27272e;
-  color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(28, 28, 31, 0.2);
-}
-
-.btn-action-outline:hover svg {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
+  background: #f4f4f5;
+  border-color: #a1a1aa;
+  color: #18181b;
+  box-shadow: 0 4px 12px rgba(17, 17, 19, 0.08);
 }
 
 .btn-action-primary {
@@ -9434,14 +9429,42 @@ html[data-theme="dark"] body .dashboard .audience-checkbox-card.selected {
 .catalog-checkout-modal {
   width: min(540px, calc(100vw - 32px)) !important;
   max-width: 540px !important;
+  max-height: min(90vh, calc(100vh - 40px)) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
   padding: 0 !important;
   border-radius: 18px !important;
-  overflow: hidden !important;
   border: none !important;
   background: var(--surface) !important;
   box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+.catalog-checkout-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.catalog-checkout-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.catalog-checkout-modal::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.catalog-checkout-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .catalog-checkout-modal::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .catalog-checkout-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .catalog-checkout-modal .catalog-plan-btn.ui-btn,

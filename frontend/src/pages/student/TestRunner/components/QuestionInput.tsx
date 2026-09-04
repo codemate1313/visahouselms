@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@/api/client";
 import type { AttemptQuestion, AttemptResponse } from "@/api/types";
-import { Checkbox, RichTextEditor } from "@/components/ui";
+import { Checkbox } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
 import { renderBoldText } from "@/utils/boldText";
 import { testRunnerStrings as strings } from "../TestRunner.strings";
@@ -32,6 +32,7 @@ export function QuestionInput({
   onRecord,
   languageCertSkin = false,
 }: QuestionInputProps) {
+  void languageCertSkin;
   const selected = question.response?.selected;
   const t = strings.question;
   const textResponse = question.response?.text ?? "";
@@ -137,21 +138,45 @@ export function QuestionInput({
 
       {question.question_type === "essay" && (
         <div className="test-runner-essay-wrapper">
-          <RichTextEditor
-            className="test-runner-essay"
+          <textarea
+            className="test-runner-simple-essay-textarea"
             rows={16}
-            showHistoryControls={languageCertSkin}
             placeholder="Write your response here..."
             value={textResponse}
-            onChange={(nextText) => onChange({ text: nextText }, true)}
-            toolbarExtras={
-              <span className="hint" style={{ visibility: saving ? "visible" : "hidden", opacity: saving ? 1 : 0, transition: "opacity 0.2s ease", marginLeft: "auto", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                {t.saving}
-              </span>
-            }
+            onChange={(e) => onChange({ text: e.target.value }, true)}
+            spellCheck={false}
+            autoCorrect="off"
+            autoCapitalize="off"
+            autoComplete="off"
+            data-gramm="false"
+            data-enable-grammarly="false"
+            onCopy={(e) => e.stopPropagation()}
+            onPaste={(e) => e.stopPropagation()}
+            onCut={(e) => e.stopPropagation()}
+            onContextMenu={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && ["c", "v", "x"].includes(e.key.toLowerCase())) {
+                e.stopPropagation();
+              }
+            }}
           />
           <div className="test-runner-essay-footer">
             <p className="hint"><span className="test-runner-word-count">{wordCount}</span> {t.wordsSuffix}</p>
+            <span
+              className="hint"
+              style={{
+                visibility: saving ? "visible" : "hidden",
+                opacity: saving ? 1 : 0,
+                transition: "opacity 0.2s ease",
+                marginLeft: "auto",
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
+            >
+              {t.saving}
+            </span>
           </div>
         </div>
       )}

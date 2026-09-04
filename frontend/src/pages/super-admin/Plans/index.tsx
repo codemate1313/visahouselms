@@ -13,6 +13,7 @@ import { exportPlansExcel, exportPlansPDF } from "./exportHelpers";
 import { PlansFilterBar } from "./components/PlansFilterBar";
 import { PlansTable } from "./components/PlansTable";
 import { PlanDetailsModal } from "./components/PlanDetailsModal";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { Icon } from "@/components/icons";
 
 export type { PlanRow } from "./types";
@@ -237,7 +238,7 @@ export function Plans() {
       />
 
       {loading ? (
-        <p>{strings.loading}</p>
+        <RouteLoadingState />
       ) : (
         <>
           <PlansTable plans={pagedPlans} basePath={catalogue.basePath} emptyMessage={catalogue.empty} onToggleActive={toggleActive} onTogglePopular={handleTogglePopular} onView={setViewingPlan} onRequestDelete={setDeletingPlan} />

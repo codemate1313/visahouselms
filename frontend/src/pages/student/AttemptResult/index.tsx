@@ -15,6 +15,7 @@ import { RetakeRequestModal } from "./components/RetakeRequestForm";
 import { Badge } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 
 // AI auto-grading runs as a background job right after submission (a
 // provider call can take a while), so a freshly submitted human-graded
@@ -160,7 +161,7 @@ export function AttemptResult() {
   const metrics = useMemo(() => attempt ? getAttemptMetrics(attempt) : null, [attempt]);
 
   if (error && !attempt) return <p className="error-text">{error}</p>;
-  if (!attempt || !metrics) return <p>{strings.loading}</p>;
+  if (!attempt || !metrics) return <RouteLoadingState />;
 
   const hasInstructorReviewablePart = attempt.parts.some((part) => !part.auto_marked);
   const hasRequestedReview = Boolean(attempt.reevaluation);

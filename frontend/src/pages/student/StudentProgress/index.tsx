@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { StudentBadge, StudentLeaderboard } from "@/api/types";
 import { PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { studentProgressStrings as strings } from "./StudentProgress.strings";
 import { ProgressStatTiles } from "./components/ProgressStatTiles";
 import { BadgesPanel } from "./components/BadgesPanel";
@@ -40,7 +41,7 @@ export function StudentProgress() {
   }, [scope]);
 
   if (error) return <p className="error-text">{error}</p>;
-  if (!badges || !leaderboard) return <p>{strings.loading}</p>;
+  if (!badges || !leaderboard) return <RouteLoadingState />;
 
   const earned = badges.filter((badge) => badge.earned);
 

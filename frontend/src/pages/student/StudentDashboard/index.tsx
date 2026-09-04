@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { AttemptSummary, StudentCurrentPlan } from "@/api/types";
 import { PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { getCachedStudentCurrentPlan } from "@/hooks/useStudentAccess";
 import { useAuthStore } from "@/store/authStore";
 import { studentDashboardStrings as strings } from "./StudentDashboard.strings";
@@ -42,7 +43,7 @@ export function StudentDashboard() {
   useDashboardAnimations(containerRef, Boolean(attempts && myPlan));
 
   if (error) return <p className="error-text">{error}</p>;
-  if (!attempts || !myPlan) return <p>{strings.loading}</p>;
+  if (!attempts || !myPlan) return <RouteLoadingState />;
 
   const inProgress = attempts.filter((a) => a.status === "ready" || a.status === "in_progress").length;
   const graded = attempts.filter((a) => a.status === "graded").length;

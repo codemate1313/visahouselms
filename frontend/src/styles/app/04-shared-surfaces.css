@@ -3667,7 +3667,7 @@
   position: fixed;
   top: 24px;
   right: 24px;
-  z-index: 999999;
+  z-index: 2147483647 !important;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -3679,6 +3679,7 @@
 .snackbar-item {
   pointer-events: auto;
   position: relative;
+  z-index: 2147483647 !important;
   display: flex;
   align-items: center;
   gap: 14px;

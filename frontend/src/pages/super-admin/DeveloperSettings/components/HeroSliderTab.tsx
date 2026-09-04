@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEv
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Button, Modal, RequiredMark, SegmentedControl } from "@/components/ui";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { Icon } from "@/components/icons";
 import { apiClient } from "@/api/client";
@@ -384,7 +385,7 @@ export function HeroSliderTab() {
         </div>
       </div>
 
-      {loading && <p className="hint">Loading slides...</p>}
+      {loading && <RouteLoadingState size={44} />}
       {loadError && <p className="error-text">{loadError}</p>}
       {!loading && !loadError && slides.length === 0 && (
         <p className="hint">No slides yet - add one, or reset to the shipped defaults.</p>

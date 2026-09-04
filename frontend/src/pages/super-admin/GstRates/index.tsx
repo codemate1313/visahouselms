@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Button, DataTableCard, Modal, PageHeader, SearchableSelect } from "@/components/ui";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 
 import { Icon } from "@/components/icons";
 import { gstRatesStrings as strings } from "./GstRates.strings";
@@ -151,7 +152,7 @@ export function GstRates() {
       {error && <div className="error-banner mb-4">{error}</div>}
 
       {loading ? (
-        <p className="ui-loading-copy">{strings.loading}</p>
+        <RouteLoadingState />
       ) : (
         <DataTableCard>
           <table className="data-table">

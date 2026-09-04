@@ -18,6 +18,7 @@ from app.config import settings
 from app.core.media_signing import sign_path
 from app.core.uploads import MIN_SPEAKING_AUDIO_BYTES
 from app.models.attempt import (
+    ATTEMPT_EXPIRED,
     ATTEMPT_GRADED,
     ATTEMPT_GRADING,
     ATTEMPT_IN_PROGRESS,
@@ -496,8 +497,8 @@ def credit_clock(db: Session, attempt: TestAttempt, key: str, seconds: float) ->
 
 
 def _auto_expire(db: Session, attempt: TestAttempt) -> None:
-    if attempt.status == ATTEMPT_IN_PROGRESS:
-        attempt.status = "expired"
+    if attempt.status in (ATTEMPT_READY, ATTEMPT_IN_PROGRESS):
+        attempt.status = ATTEMPT_EXPIRED
         db.add(attempt)
         db.commit()
 
@@ -1622,6 +1623,49 @@ def submit_attempt(
     view = get_student_view(db, get_attempt_or_404(db, db.get(User, user_id), attempt_id))
     view["ai_evaluation_pending"] = ai_evaluation_pending
     return view
+
+
+def sweep_expired_attempts(db: Session) -> int:
+    """Finds all attempts whose time has expired and are still in 'ready' or 'in_progress'.
+
+    If the candidate entered responses before abandoning the attempt, the attempt is
+    auto-submitted so their work is saved and graded.
+    If no responses were entered, the attempt is marked expired.
+    """
+    now = _now()
+    expired_attempts = (
+        db.query(TestAttempt)
+        .filter(
+            TestAttempt.status.in_([ATTEMPT_READY, ATTEMPT_IN_PROGRESS]),
+            TestAttempt.expires_at.isnot(None),
+            TestAttempt.expires_at <= now,
+        )
+        .all()
+    )
+    count = 0
+    for attempt in expired_attempts:
+        if _attempt_phase(attempt) == SPEAKING_PHASE_PENDING:
+            continue
+        try:
+            has_substantive_answers = any(
+                ans.response is not None and str(ans.response).strip() not in ("", "{}", "[]", "null")
+                for ans in attempt.answers
+            )
+            if has_substantive_answers:
+                submit_attempt(db, attempt, require_complete_speaking=False)
+            else:
+                _auto_expire(db, attempt)
+            count += 1
+        except Exception:
+            logger.exception("Failed to auto-process expired attempt %s", attempt.id)
+            try:
+                db.rollback()
+                _auto_expire(db, attempt)
+                count += 1
+            except Exception:
+                db.rollback()
+                logger.exception("Failed to mark attempt %s as expired", attempt.id)
+    return count
 
 
 def get_attempt_for_grading_or_404(db: Session, actor: User, attempt_id: int) -> TestAttempt:

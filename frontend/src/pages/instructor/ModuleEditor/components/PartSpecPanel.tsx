@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ExamModulePart } from "@/api/types";
-import { Icon } from "@/components/icons";
 import { RichTextEditor } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
-import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { moduleEditorStrings as strings } from "../ModuleEditor.strings";
 
 interface PartSpecPanelProps {
@@ -12,9 +10,9 @@ interface PartSpecPanelProps {
   busy: boolean;
   onToggleAiEvaluation: (enabled: boolean) => void;
   onUpdateInstructions: (instructions: string) => void;
-  partTitle: string;
-  onPartTitleChange: (title: string) => void;
-  onSavePartTitle: () => void;
+  partTitle?: string;
+  onPartTitleChange?: (title: string) => void;
+  onSavePartTitle?: () => void;
 }
 
 const DEFAULT_INSTRUCTIONS: Record<string, string> = {
@@ -46,9 +44,6 @@ export function PartSpecPanel({
   busy,
   onToggleAiEvaluation,
   onUpdateInstructions,
-  partTitle,
-  onPartTitleChange,
-  onSavePartTitle,
 }: PartSpecPanelProps) {
   const t = strings.partSpec;
   const canUseAiEvaluation = !part.auto_marked && ["writing", "speaking"].includes(part.section_type);
@@ -70,7 +65,6 @@ export function PartSpecPanel({
     () => isMandatoryInstruction && !savedInstruction
   );
   const [instructionsDraft, setInstructionsDraft] = useState(effectiveInstruction);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
 
   useEffect(() => {
     const draft = savedInstruction || defaultInstruction;
@@ -79,10 +73,6 @@ export function PartSpecPanel({
     setIsEditingInstructions(isMandatoryInstruction && !savedInstruction);
   }, [part.id, part.instructions, defaultInstruction, isMandatoryInstruction, savedInstruction]);
 
-  useEffect(() => {
-    setIsEditingTitle(false);
-  }, [part.id]);
-
   function saveInstructions() {
     // Block save for mandatory-instruction parts when the draft is empty.
     if (isMandatoryInstruction && !instructionsDraft.trim()) return;
@@ -90,60 +80,10 @@ export function PartSpecPanel({
     setIsEditingInstructions(false);
   }
 
-  function saveTitle() {
-    if (!partTitle.trim() || partTitle === part.title) {
-      setIsEditingTitle(false);
-      onPartTitleChange(part.title);
-      return;
-    }
-    onSavePartTitle();
-    setIsEditingTitle(false);
-  }
-
-  function cancelTitle() {
-    onPartTitleChange(part.title);
-    setIsEditingTitle(false);
-  }
-
   return (
     <div className="vh-unified-part-header-bar">
       <div className="vh-unified-part-left">
-        {isEditingTitle ? (
-          <div className="vh-part-title-edit">
-            <input
-              type="text"
-              className="ui-input"
-              value={partTitle}
-              autoFocus
-              disabled={busy}
-              aria-label="Section heading"
-              onChange={(event) => onPartTitleChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") { event.preventDefault(); saveTitle(); }
-                if (event.key === "Escape") cancelTitle();
-              }}
-            />
-            <Button type="button" variant="primary" disabled={busy || !partTitle.trim()} onClick={saveTitle}>
-              Save
-            </Button>
-            <Button type="button" variant="secondary" disabled={busy} onClick={cancelTitle}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <>
-            <h3 className="vh-unified-part-title" title={part.title}>{part.title}</h3>
-            {isEditable && (
-              <IconButton
-                className="vh-title-edit-btn"
-                onClick={() => setIsEditingTitle(true)}
-                label="Rename section heading"
-                title="Rename section heading"
-                icon={<Icon name="edit" />}
-              />
-            )}
-          </>
-        )}
+        <h3 className="vh-unified-part-title" title={part.title}>{part.title}</h3>
         <span className="count-chip">{t.questionsCount(part.questions.length, part.question_limit)}</span>
         {canUseAiEvaluation && (
           <div className="vh-slim-ai-toggle-group">

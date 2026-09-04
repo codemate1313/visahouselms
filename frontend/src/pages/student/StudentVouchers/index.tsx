@@ -3,6 +3,7 @@ import { api } from "@/api/client";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import { Button, Modal } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/utils/razorpay";
 import "@/styles/voucher-ui.css";
 import { formatDate } from "@/utils/date";
@@ -242,10 +243,7 @@ export function StudentVouchers() {
       </div>
 
       {loading ? (
-        <div className="sv-loading-state">
-          <div className="sv-loading-spinner" />
-          <p>Loading available exam vouchers...</p>
-        </div>
+        <RouteLoadingState />
       ) : (
         <>
           {/* TAB 1: BROWSE VOUCHERS */}

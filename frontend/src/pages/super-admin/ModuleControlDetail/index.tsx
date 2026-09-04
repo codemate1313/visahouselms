@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import { confirmAction, confirmDelete } from "@/components/confirmDialog";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { moduleControlDetailStrings as strings } from "./ModuleControlDetail.strings";
 import type { Institute, ManagedModule } from "./types";
 import { ModuleDetailHeader } from "./components/ModuleDetailHeader";
@@ -162,7 +163,7 @@ export function ModuleControlDetail() {
     }
   }
 
-  if (!module) return <div className="course-loading-state">{error || strings.loading}</div>;
+  if (!module) return error ? <div className="course-loading-state">{error}</div> : <RouteLoadingState />;
 
   const activeIds = new Set(
     module.assignments.filter((item) => item.is_active).map((item) => item.institute_id)

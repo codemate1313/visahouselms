@@ -54,7 +54,14 @@ export function ActionToolbar({ module, onToggleVisibility, onToggleDemo, onChan
         )}
 
         {module.status === "published" && (
-          <Button type="button" variant="secondary" className="btn-action-outline" onClick={() => onChangeStatus("archived")}>
+          <Button
+            type="button"
+            variant="secondary"
+            className="btn-action-outline"
+            onClick={() => onChangeStatus("archived")}
+            disabled={module.has_active_attempts}
+            title={module.has_active_attempts ? "Cannot archive module while a student is actively taking the test" : undefined}
+          >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="21 8 21 21 3 21 3 8" />
               <rect x="1" y="3" width="22" height="5" />
@@ -64,7 +71,14 @@ export function ActionToolbar({ module, onToggleVisibility, onToggleDemo, onChan
           </Button>
         )}
 
-        <Button type="button" variant="danger" className="btn-action-danger" onClick={onRemove}>
+        <Button
+          type="button"
+          variant="danger"
+          className="btn-action-danger"
+          onClick={onRemove}
+          disabled={module.has_active_attempts}
+          title={module.has_active_attempts ? "Cannot delete module while a student is actively taking the test" : undefined}
+        >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3 6 5 6 21 6" />
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -72,6 +86,27 @@ export function ActionToolbar({ module, onToggleVisibility, onToggleDemo, onChan
           {strings.deleteCourse}
         </Button>
       </div>
+
+      {module.has_active_attempts && (
+        <div
+          style={{
+            marginTop: "0.75rem",
+            padding: "0.5rem 0.875rem",
+            background: "rgba(245, 158, 11, 0.1)",
+            border: "1px solid rgba(245, 158, 11, 0.25)",
+            borderRadius: "6px",
+            color: "var(--color-amber-600, #d97706)",
+            fontSize: "0.8125rem",
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+        >
+          <span>🔒</span>
+          <span>A student is actively taking this test. Archiving and deleting are disabled until all active attempts are submitted.</span>
+        </div>
+      )}
     </div>
   );
 }

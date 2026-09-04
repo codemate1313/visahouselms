@@ -5,6 +5,7 @@ import { confirmAction, confirmDelete } from "@/components/confirmDialog";
 import { Icon } from "@/components/icons";
 import { Button, SearchableSelect } from "@/components/ui";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useToastStore } from "@/store/toastStore";
 import { instagramSettingsStrings as strings } from "./InstagramSettings.strings";
@@ -415,7 +416,7 @@ export function InstagramSettings() {
   };
 
   if (loading) {
-    return <p className="hint">{strings.loading}</p>;
+    return <RouteLoadingState />;
   }
 
   return (

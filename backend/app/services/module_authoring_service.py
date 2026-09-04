@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session, joinedload, object_session, selectinload
 
 from app.config import settings
 from app.core.media_signing import sign_path
@@ -76,6 +76,69 @@ def _require_owner(module: ExamModule, actor: User) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only this module's creator can change it")
 
 
+def sweep_stale_module_attempts(db: Session, module_id: int) -> None:
+    from app.services import attempt_service
+
+    now = _now()
+    stale_attempts = (
+        db.query(TestAttempt)
+        .filter(
+            TestAttempt.module_id == module_id,
+            TestAttempt.status.in_([ATTEMPT_READY, ATTEMPT_IN_PROGRESS]),
+            TestAttempt.expires_at.isnot(None),
+            TestAttempt.expires_at <= now,
+        )
+        .all()
+    )
+    for stale in stale_attempts:
+        if attempt_service._attempt_phase(stale) == attempt_service.SPEAKING_PHASE_PENDING:
+            continue
+        has_substantive_answers = any(
+            ans.response is not None and str(ans.response).strip() not in ("", "{}", "[]", "null")
+            for ans in stale.answers
+        )
+        if has_substantive_answers:
+            try:
+                attempt_service.submit_attempt(db, stale, require_complete_speaking=False)
+            except Exception:
+                attempt_service._auto_expire(db, stale)
+        else:
+            attempt_service._auto_expire(db, stale)
+
+
+def get_active_attempts_count(db: Session, module_id: int, sweep: bool = True) -> int:
+    if sweep:
+        sweep_stale_module_attempts(db, module_id)
+    now = _now()
+    return (
+        db.query(func.count(TestAttempt.id))
+        .filter(
+            TestAttempt.module_id == module_id,
+            TestAttempt.status.in_([ATTEMPT_READY, ATTEMPT_IN_PROGRESS]),
+            or_(TestAttempt.expires_at.is_(None), TestAttempt.expires_at > now),
+        )
+        .scalar()
+        or 0
+    )
+
+
+def get_active_attempts_counts_map(db: Session, module_ids: list[int]) -> dict[int, int]:
+    if not module_ids:
+        return {}
+    now = _now()
+    rows = (
+        db.query(TestAttempt.module_id, func.count(TestAttempt.id))
+        .filter(
+            TestAttempt.module_id.in_(module_ids),
+            TestAttempt.status.in_([ATTEMPT_READY, ATTEMPT_IN_PROGRESS]),
+            or_(TestAttempt.expires_at.is_(None), TestAttempt.expires_at > now),
+        )
+        .group_by(TestAttempt.module_id)
+        .all()
+    )
+    return {module_id: count for module_id, count in rows}
+
+
 def _require_draft(db: Session, module: ExamModule) -> None:
     if module.status == "archived":
         raise HTTPException(
@@ -83,25 +146,11 @@ def _require_draft(db: Session, module: ExamModule) -> None:
             detail="Archived courses cannot be edited. Restore the course first.",
         )
     if module.status == "published":
-        # A published module is live for students. Editing its questions or
-        # assets while someone is mid-attempt (or waiting to be graded off
-        # what they saw) would silently corrupt their scoring - the frozen
-        # content_snapshot they answered against would no longer match the
-        # live question set this service edits.
-        active_attempt = (
-            db.query(TestAttempt.id)
-            .filter(
-                TestAttempt.module_id == module.id,
-                TestAttempt.status.in_(
-                    [ATTEMPT_READY, ATTEMPT_IN_PROGRESS, ATTEMPT_SUBMITTED, ATTEMPT_GRADING]
-                ),
-            )
-            .first()
-        )
-        if active_attempt is not None:
+        active_count = get_active_attempts_count(db, module.id, sweep=True)
+        if active_count > 0:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Cannot edit a published module with active student attempts.",
+                detail="Cannot edit this module while a student is actively taking the test.",
             )
 
 
@@ -432,6 +481,26 @@ def validation_errors(module: ExamModule) -> list[str]:
             else:
                 if not part.assets:
                     errors.append(f"{part.title} requires an MP3 upload or browser-narrated transcript.")
+        is_writing_1 = (
+            (part.answer_constraints or {}).get("image_required")
+            or (
+                part.section_type == "writing"
+                and (
+                    part.part_code == "writing_1"
+                    or part.part_code.endswith("writing_1")
+                    or (part.title or "").strip().lower() in ("writing 1", "writing part 1", "writing - 1")
+                )
+            )
+        )
+        if is_writing_1:
+            missing_images = [
+                q for q in part.questions
+                if not q.image_path and not (q.interaction or {}).get("image_path")
+            ]
+            if missing_images:
+                errors.append(
+                    f"{part.title} requires an image to be attached to every question ({len(missing_images)} missing)."
+                )
     return errors
 
 
@@ -473,7 +542,19 @@ OPTION_BASED_QUESTION_TYPES = {
 }
 
 
-def serialize_module(module: ExamModule, *, detailed: bool = False) -> dict:
+def serialize_module(
+    module: ExamModule,
+    *,
+    detailed: bool = False,
+    active_attempts_count: Optional[int] = None,
+) -> dict:
+    if active_attempts_count is None:
+        session = object_session(module)
+        if session:
+            active_attempts_count = get_active_attempts_count(session, module.id, sweep=detailed)
+        else:
+            active_attempts_count = 0
+
     blueprint = get_blueprint(module.module_type)
     errors = validation_errors(module)
     result = {
@@ -488,6 +569,8 @@ def serialize_module(module: ExamModule, *, detailed: bool = False) -> dict:
         "status": module.status,
         "is_visible": module.is_visible,
         "is_demo": module.is_demo,
+        "has_active_attempts": active_attempts_count > 0,
+        "active_attempts_count": active_attempts_count,
         "duration_minutes": module.duration_minutes,
         "blueprint_version": module.blueprint_version,
         "source_module_ids": list(module.source_module_ids or []),
@@ -548,7 +631,9 @@ def list_modules(
     if status_filter:
         query = query.filter(ExamModule.status == status_filter)
     rows = query.order_by(ExamModule.updated_at.desc(), ExamModule.created_at.desc()).all()
-    return [serialize_module(module) for module in rows]
+    module_ids = [m.id for m in rows]
+    counts_map = get_active_attempts_counts_map(db, module_ids)
+    return [serialize_module(module, active_attempts_count=counts_map.get(module.id, 0)) for module in rows]
 
 
 def _composite_sources(
@@ -1011,6 +1096,38 @@ def _validate_question_for_part(
     if max_words and any(len(answer.split()) > max_words for answer in data.get("correct_answers", [])):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Answers in {part.title} may contain no more than {max_words} words")
 
+    is_writing_1 = (
+        constraints.get("image_required")
+        or (
+            part.section_type == "writing"
+            and (
+                part.part_code == "writing_1"
+                or part.part_code.endswith("writing_1")
+                or (part.title or "").strip().lower() in ("writing 1", "writing part 1", "writing - 1")
+            )
+        )
+    )
+    if is_writing_1 and not data.get("image_path") and not (data.get("interaction") or {}).get("image_path"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{part.title} requires an image to be attached",
+        )
+    is_writing_2 = (
+        constraints.get("allow_image") is False
+        or (
+            part.section_type == "writing"
+            and (
+                part.part_code == "writing_2"
+                or part.part_code.endswith("writing_2")
+                or (part.title or "").strip().lower() in ("writing 2", "writing part 2", "writing - 2")
+            )
+        )
+    )
+    if is_writing_2:
+        data["image_path"] = None
+        if isinstance(data.get("interaction"), dict) and "image_path" in data["interaction"]:
+            data["interaction"].pop("image_path", None)
+
 
 def _new_question(
     part: ExamModulePart,
@@ -1155,6 +1272,7 @@ def _normalize_import_question_for_part(part: ExamModulePart, question: dict, in
         or constraints.get("shared_passage")
         or constraints.get("layout") in {"shared_cloze", "notepad_gaps", "inline_matching_blanks", "source_text_matching"}
         or is_read_aloud_turn
+        or (part.section_type == "writing" and str(data.get("passage") or "").strip())
     )
     if not uses_passage:
         data["passage"] = None
@@ -1270,6 +1388,8 @@ def _assign_module_import_questions(module: ExamModule, questions: list[dict]) -
         by_hint[_part_key(part.part_code)] = part
         by_hint[_part_key(part.title)] = part
         by_hint[_part_key(part.title.replace(" ", "_"))] = part
+        cleaned_without_part = re.sub(r"\bpart\b", "", part.title, flags=re.IGNORECASE)
+        by_hint[_part_key(cleaned_without_part)] = part
 
     grouped: dict[int, list[dict]] = {part.id: [] for part in parts}
     warnings: list[str] = []
@@ -1562,6 +1682,22 @@ def save_question_image(
     _require_owner(module, actor)
     _require_draft(db, module)
     part = _part_or_404(module, part_id)
+    is_writing_2 = (
+        (part.answer_constraints or {}).get("allow_image") is False
+        or (
+            part.section_type == "writing"
+            and (
+                part.part_code == "writing_2"
+                or part.part_code.endswith("writing_2")
+                or (part.title or "").strip().lower() in ("writing 2", "writing part 2", "writing - 2")
+            )
+        )
+    )
+    if is_writing_2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{part.title} does not allow image attachments",
+        )
 
     relative = Path("exam-modules") / str(module.id) / "questions" / f"{uuid4().hex}.webp"
     destination = settings.storage_path / relative
@@ -1834,6 +1970,13 @@ def set_status(
 ) -> dict:
     module = get_module_or_404(db, module_id)
     _require_owner(module, actor)
+    if new_status in ("draft", "archived") and module.status == "published":
+        if get_active_attempts_count(db, module.id, sweep=True) > 0:
+            action_word = "archive" if new_status == "archived" else "return to draft"
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Cannot {action_word} this module while a student is actively taking the test.",
+            )
     if new_status == "published":
         errors = validation_errors(module)
         if errors:
@@ -1853,6 +1996,11 @@ def delete_module(db: Session, actor: User, module_id: int, ip: Optional[str]) -
     _require_owner(module, actor)
     if module.status != "draft":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only draft modules can be deleted")
+    if get_active_attempts_count(db, module.id, sweep=True) > 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete this module while a student is actively taking the test.",
+        )
     paths = [settings.storage_path / asset.file_path for asset in module.assets]
     _audit(
         db,
@@ -1994,7 +2142,10 @@ def list_all_modules(
         query = query.filter(ExamModule.module_type == module_type)
     if status_filter:
         query = query.filter(ExamModule.status == status_filter)
-    return [serialize_module(module) for module in query.order_by(ExamModule.created_by_id, ExamModule.created_at.desc()).all()]
+    rows = query.order_by(ExamModule.created_by_id, ExamModule.created_at.desc()).all()
+    module_ids = [m.id for m in rows]
+    counts_map = get_active_attempts_counts_map(db, module_ids)
+    return [serialize_module(module, active_attempts_count=counts_map.get(module.id, 0)) for module in rows]
 
 
 def set_visibility(db: Session, actor: User, module_id: int, visible: bool, ip: Optional[str]) -> dict:
@@ -2025,6 +2176,11 @@ def set_demo(db: Session, actor: User, module_id: int, is_demo: bool, ip: Option
 
 def remove_by_super_admin(db: Session, actor: User, module_id: int, ip: Optional[str]) -> None:
     module = get_module_or_404(db, module_id)
+    if get_active_attempts_count(db, module.id, sweep=True) > 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete or archive this module while a student is actively taking the test.",
+        )
     module.status = "archived"
     module.is_visible = False
     module.deleted_at = _now()
@@ -2119,17 +2275,12 @@ def update_part(
     module, part = get_editable_part(db, actor, module_id, part_id)
 
     if "title" in fields_set:
-        # The section heading is what the candidate sees above the part and what
-        # the publishing checklist names its errors after, so it must not be
-        # blanked. Rejected here rather than only in the UI, since the endpoint
-        # is reachable directly.
         title = (data.get("title") or "").strip()
-        if not title:
+        if title and title != part.title:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Section heading is required.",
+                detail="Part titles are standard and cannot be modified.",
             )
-        part.title = title
     if "instructions" in fields_set:
         part.instructions = data["instructions"]
     if "audio_mode" in fields_set and data.get("audio_mode") is not None:

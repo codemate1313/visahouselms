@@ -41,6 +41,7 @@ export function ModuleTree({ instructors }: ModuleTreeProps) {
                     <div className="tree-course-head">
                       <div className="course-head-content">
                         <div className="course-status-pills">
+                          {module.has_active_attempts && <Badge tone="amber">🔒 Active Test</Badge>}
                           <Badge tone={module.status === "published" ? "green" : module.status === "draft" ? "amber" : "gray"}>
                             {module.status.charAt(0).toUpperCase() + module.status.slice(1)}
                           </Badge>

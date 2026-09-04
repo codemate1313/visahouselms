@@ -3,6 +3,7 @@ import { apiClient } from "@/api/client";
 import type { ExamModule } from "@/api/types";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { moduleControlStrings as strings } from "./ModuleControl.strings";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { ModuleFilterBar } from "./components/ModuleFilterBar";
 import { ModuleTree } from "./components/ModuleTree";
 
@@ -63,7 +64,7 @@ export function ModuleControl() {
       <ModuleFilterBar search={search} onSearchChange={setSearch} status={status} onStatusChange={setStatus} onSubmit={submit} />
 
       {loading ? (
-        <div className="course-loading-state">{strings.loading}</div>
+        <RouteLoadingState />
       ) : !instructors.length ? (
         <div className="empty-state">
           <h2>{strings.empty.title}</h2>

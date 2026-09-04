@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { Modal, SearchInput, SegmentedControl } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 
 function formatLogDateTime(value: string | number | Date | null | undefined, fallback = "—"): string {
   if (value == null || value === "") return fallback;
@@ -162,10 +163,7 @@ export function AiEvaluationLog({ onCountChange }: { onCountChange?: (count: num
       {error && <p className="error-text" style={{ marginBottom: 16 }}>{error}</p>}
 
       {loading ? (
-        <div className="logs-loading-card">
-          <span className="logs-spinner" />
-          <p className="hint">Loading AI evaluations...</p>
-        </div>
+        <RouteLoadingState />
       ) : (
         <div className="table-wrap logs-table-card">
           <table className="data-table sleek-logs-table">

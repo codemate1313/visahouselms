@@ -9,6 +9,7 @@ import { useToastStore } from "@/store/toastStore";
 import { usePageTitleStore } from "@/store/pageTitleStore";
 import { isEqual } from "@/utils/isEqual";
 import { Button } from "@/components/ui/Button/Button";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import type {
   ExamModule,
   ExamModuleAsset,
@@ -247,41 +248,11 @@ export function ModuleEditor() {
       )
   );
   const isMockSourceModule = Boolean(module && MOCK_SOURCE_TYPES.has(module.module_type));
-  const [partTitle, setPartTitle] = useState("");
-
-  /* Keyed on the part's id and its saved values rather than the object itself.
-     `selectedPart` is derived from `module`, so it is a new object after every
-     reload - depending on it re-ran this effect and wiped an edited section
-     heading whenever anything else was saved. */
   useEffect(() => {
-    if (selectedPart) {
-      setPartTitle(selectedPart.title);
-    } else {
-      setPartTitle("");
-    }
     setAudioFile(null);
     setAudioTitle("Listening audio");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPart?.id, selectedPart?.title]);
-
-  async function savePartHeader() {
-    if (!module || !selectedPart) return;
-    setBusy(true);
-    setError(null);
-    try {
-      // Title only. PartSpecPanel owns instructions; sending them from here too
-      // would let a stale copy overwrite whatever was saved there.
-      await apiClient.patch(`/instructor/modules/${module.id}/parts/${selectedPart.id}`, {
-        title: partTitle,
-      });
-      await loadModule(selectedPart.id);
-      showSuccess("Section heading and instructions saved successfully.");
-    } catch (err: unknown) {
-      showError(extractErrorMessage(err, "Failed to update section header."));
-    } finally {
-      setBusy(false);
-    }
-  }
+  }, [selectedPart?.id]);
 
   const audioMode: "single" | "per_question" = useMemo(() => {
     if (!selectedPart) return "single";
@@ -317,7 +288,7 @@ export function ModuleEditor() {
   }
 
   const detectedTtsSpeakers = useMemo(() => detectConversationSpeakers(tts.conversation), [tts.conversation]);
-  const isEditable = module?.status !== "archived";
+  const isEditable = module?.status !== "archived" && !module?.has_active_attempts;
   const moduleWorkspacePath = useMemo(() => {
     if (location.pathname.startsWith("/institute-instructor/modules")) return "/institute-instructor/modules";
     return "/super-admin/instructor/modules";
@@ -1088,7 +1059,7 @@ export function ModuleEditor() {
     );
   }
 
-  if (loading) return <p>{strings.loading}</p>;
+  if (loading) return <RouteLoadingState />;
   if (!module) return <div><p className="error-text">{error || strings.notFound}</p><Link to={moduleWorkspacePath}>{strings.backToModules}</Link></div>;
 
   return (
@@ -1096,9 +1067,16 @@ export function ModuleEditor() {
       {/* Sleek Bottom Floating Status Bar */}
       <div className="vh-bottom-floating-status-bar">
         <ModuleReadinessPanel module={module} busy={busy} onChangeStatus={changeStatus} onChoosePart={choosePart} />
-        <Badge tone={module.status === "published" ? "green" : module.status === "archived" ? "gray" : "amber"}>
-          {module.status}
-        </Badge>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
+          {module.has_active_attempts && (
+            <Badge tone="amber">
+              🔒 In Progress
+            </Badge>
+          )}
+          <Badge tone={module.status === "published" ? "green" : module.status === "archived" ? "gray" : "amber"}>
+            {module.status}
+          </Badge>
+        </div>
       </div>
 
       <div className="module-authoring-layout">
@@ -1110,6 +1088,31 @@ export function ModuleEditor() {
           />
         </div>
         <main className={`module-part-editor ${selectedPart?.section_type === "speaking" ? "is-speaking-editor" : ""}`} id="module-part-editor">
+          {module.has_active_attempts && (
+            <div
+              style={{
+                marginBottom: "1.5rem",
+                padding: "1rem 1.25rem",
+                background: "rgba(245, 158, 11, 0.08)",
+                border: "1px solid rgba(245, 158, 11, 0.3)",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.75rem",
+                color: "var(--color-amber-600, #d97706)",
+              }}
+            >
+              <span style={{ fontSize: "1.25rem", lineHeight: 1 }}>🔒</span>
+              <div>
+                <strong style={{ display: "block", fontSize: "0.9375rem", marginBottom: "0.25rem" }}>
+                  Module Locked for Editing
+                </strong>
+                <span style={{ fontSize: "0.875rem", color: "var(--color-amber-700, #b45309)" }}>
+                  A student is actively taking this test. Questions, content, and publishing settings cannot be modified until all active attempts are submitted.
+                </span>
+              </div>
+            </div>
+          )}
           {/* Rendered at this level - not inside either branch below - so the
               review modal pops up the moment extraction succeeds regardless of
               whether a part happens to be selected yet. It used to live inside
@@ -1227,9 +1230,6 @@ export function ModuleEditor() {
                 busy={busy}
                 onToggleAiEvaluation={togglePartAiEvaluation}
                 onUpdateInstructions={updatePartInstructions}
-                partTitle={partTitle}
-                onPartTitleChange={setPartTitle}
-                onSavePartTitle={savePartHeader}
               />
 
             {selectedPart.section_type === "listening" && (

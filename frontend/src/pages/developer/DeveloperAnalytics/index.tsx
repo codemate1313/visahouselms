@@ -4,6 +4,7 @@ import { extractErrorMessage } from "@/api/errors";
 import { BarChart } from "@/components/charts/BarChart";
 import { DEVELOPER_ACCESS_SLUG } from "@/config/developerAccess";
 import { PageHeader } from "@/components/ui";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import "./DeveloperAnalytics.css";
 
 const developerSlug = DEVELOPER_ACCESS_SLUG;
@@ -66,7 +67,7 @@ export function DeveloperAnalytics() {
   }, []);
 
   if (error) return <p className="error-text">{error}</p>;
-  if (!data) return <p>Loading analytics…</p>;
+  if (!data) return <RouteLoadingState />;
 
   const dayChart = data.traffic.views_per_day.map((row) => ({
     label: row.day.slice(5), // MM-DD

@@ -11,6 +11,7 @@ import { commonActions } from "@/content/common.strings";
 import { Icon } from "@/components/icons";
 import { Button, SearchableSelect } from "@/components/ui";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
+import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { formatDate, formatDateTime } from "@/utils/date";
 
 interface PaymentDetail {
@@ -486,11 +487,7 @@ export function Invoice() {
   }
 
   if (!payment) {
-    return (
-      <div className="invoice-page-container" style={{ textAlign: "center", padding: "60px 0" }}>
-        <p className="hint">{strings.loading}</p>
-      </div>
-    );
+    return <RouteLoadingState />;
   }
 
   const finalAmtNum = Number(payment.final_amount) || 1;

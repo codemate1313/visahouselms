@@ -3,6 +3,7 @@ from math import ceil
 from typing import List, Optional, Tuple
 
 from fastapi import HTTPException, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.config import settings
@@ -1013,7 +1014,6 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 InstituteModule.institute_id == user.institute_id,
                 InstituteModule.is_active.is_(True),
                 ExamModule.status == "published",
-                ExamModule.is_visible.is_(True),
                 ExamModule.deleted_at.is_(None),
             )
             .order_by(ExamModule.created_at.desc(), ExamModule.id.desc())
@@ -1038,7 +1038,7 @@ def my_current_plan_view(db: Session, user: User) -> dict:
             if sub_state in (STATE_ACTIVE, STATE_GRACE):
                 unlocked_ids.update(
                     m.id for m in sub.plan.modules
-                    if m.status == "published" and m.is_visible and m.deleted_at is None
+                    if m.status == "published" and m.deleted_at is None
                 )
 
         # The ledger is what actually gates starting a test, so the page must
@@ -1081,7 +1081,18 @@ def my_current_plan_view(db: Session, user: User) -> dict:
                 **_module_attempt_info(module),
             })
     else:
-        for module in all_published_modules:
+        student_modules = (
+            db.query(ExamModule)
+            .filter(
+                ExamModule.status == "published",
+                ExamModule.deleted_at.is_(None),
+                or_(ExamModule.is_visible.is_(True), ExamModule.id.in_(unlocked_ids)),
+            )
+            .order_by(ExamModule.created_at.desc(), ExamModule.id.desc())
+            .all()
+        ) if unlocked_ids else all_published_modules
+
+        for module in student_modules:
             modules_list.append({
                 "module_id": module.id,
                 "title": module.title,
