@@ -26,6 +26,8 @@ interface PaymentGatewaysForm {
   payu_mode: string;
   /** Which gateway takes rupee payments when more than one is configured. */
   inr_gateway: string;
+  /** The same choice for international (USD) sales. */
+  usd_gateway: string;
 }
 
 export function PaymentGatewaysTab() {
@@ -53,6 +55,7 @@ export function PaymentGatewaysTab() {
     payu_salt: "",
     payu_mode: "test",
     inr_gateway: "razorpay",
+    usd_gateway: "stripe",
   });
   const showInfo = useToastStore((state) => state.showInfo);
   const originalRef = useRef<PaymentGatewaysForm | null>(null);
@@ -100,6 +103,7 @@ export function PaymentGatewaysTab() {
         payu_salt: data.payu_salt ?? "",
         payu_mode: data.payu_mode ?? "test",
         inr_gateway: data.inr_gateway ?? "razorpay",
+        usd_gateway: data.usd_gateway ?? "stripe",
       };
       setForm(nextForm);
       originalRef.current = nextForm;
@@ -552,7 +556,19 @@ export function PaymentGatewaysTab() {
               </select>
               <small style={{ color: "var(--text-muted)" }}>
                 Both can stay configured. If the one chosen here is not usable, the other is used rather than leaving
-                students unable to pay. USD always goes to Stripe.
+                students unable to pay.
+              </small>
+            </div>
+            <div>
+              <label style={{ fontWeight: 700, fontSize: "0.8125rem" }}>International (USD) payments go to</label>
+              <select value={form.usd_gateway} onChange={(e) => setForm({ ...form, usd_gateway: e.target.value })}>
+                <option value="stripe">Stripe</option>
+                <option value="payu">PayU</option>
+              </select>
+              <small style={{ color: "var(--text-muted)" }}>
+                PayU can only take a USD payment if PayU has switched cross-border acceptance on for your merchant
+                account - the setting here does not enable it. Settlement still reaches you in INR, so the student's
+                bank does the conversion.
               </small>
             </div>
           </div>

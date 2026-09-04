@@ -70,6 +70,12 @@ def list_plans(db: Session, audience: Optional[str] = None) -> List[dict]:
     return [_serialize(plan, counts.get(plan.id, 0)) for plan in plans]
 
 
+def _usd_price_effective(plan) -> Decimal:
+    from app.services.payment_service import usd_price_for
+
+    return usd_price_for(plan)
+
+
 def _serialize(plan: Plan, subscription_count: Optional[int] = None) -> dict:
     data = {
         "id": plan.id,
@@ -87,6 +93,11 @@ def _serialize(plan: Plan, subscription_count: Optional[int] = None) -> dict:
         "is_internal": plan.is_internal,
         "is_international_enabled": plan.is_international_enabled,
         "usd_price": str(plan.usd_price) if plan.usd_price is not None else None,
+        # What an overseas student is actually charged, so the catalogue shows
+        # the number the checkout will use rather than converting again in the
+        # browser and disagreeing with it by a few cents.
+        "usd_price_effective": str(_usd_price_effective(plan)),
+        "usd_price_is_estimated": plan.usd_price is None,
         "features": list(plan.features or []),
         "ai_evaluation_limit": plan.ai_evaluation_limit,
         "is_popular": bool(plan.is_popular),
@@ -553,6 +564,11 @@ def _landing_group(db: Session, audience: str, counts: dict) -> List[dict]:
                 "currency": plan.currency,
                 "is_international_enabled": plan.is_international_enabled,
                 "usd_price": str(plan.usd_price) if plan.usd_price is not None else None,
+        # What an overseas student is actually charged, so the catalogue shows
+        # the number the checkout will use rather than converting again in the
+        # browser and disagreeing with it by a few cents.
+        "usd_price_effective": str(_usd_price_effective(plan)),
+        "usd_price_is_estimated": plan.usd_price is None,
                 "duration_days": plan.duration_days,
                 "audience": plan.audience,
                 "billing_period": _billing_period(plan.duration_days),

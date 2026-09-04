@@ -11,6 +11,7 @@ from sqlalchemy import and_, or_
 
 from sqlalchemy.orm import Session, joinedload
 
+from app.config import settings
 from app.core.payment_gateway import get_gateway
 from app.models.audit_log import AuditLog
 from app.models.coupon import Coupon
@@ -519,6 +520,20 @@ def get_user_payment_invoice(db: Session, user_id: int, payment_id: int) -> dict
     return data
 
 
+def usd_price_for(plan) -> Decimal:
+    """What this plan costs in dollars.
+
+    The price an admin typed always wins. When they have not set one - which is
+    most plans - it is converted from the rupee price rather than leaving the
+    plan unsellable to anyone outside India.
+    """
+    if plan.usd_price is not None:
+        return Decimal(plan.usd_price)
+    from app.services import currency_conversion_service
+
+    return currency_conversion_service.inr_to_usd(Decimal(plan.price))
+
+
 def get_public_payment_config(db: Session) -> dict:
     gw_settings = get_settings_group(db, "payment_gateways", mask_secrets=True)
     return {
@@ -527,9 +542,44 @@ def get_public_payment_config(db: Session) -> dict:
         "stripe_enabled": gw_settings.get("stripe_enabled") == "true",
         "stripe_publishable_key": gw_settings.get("stripe_publishable_key") if gw_settings.get("stripe_enabled") == "true" else None,
         "payu_enabled": gw_settings.get("payu_enabled") == "true",
-        # Which gateway a rupee payment is sent to when both are configured.
+        # Which gateway each kind of payment is sent to when more than one is
+        # configured for it.
         "inr_gateway": _inr_gateway(gw_settings),
+        "usd_gateway": _usd_gateway(gw_settings),
     }
+
+
+def _payu_ready(gw_settings: dict) -> bool:
+    return (
+        gw_settings.get("payu_enabled") == "true"
+        and bool(gw_settings.get("payu_merchant_key"))
+        and bool(gw_settings.get("payu_salt"))
+    )
+
+
+def _usd_gateway(gw_settings: dict) -> str:
+    """Stripe or PayU for an international sale.
+
+    PayU can take a non-INR payment only if PayU has switched cross-border
+    acceptance on for the merchant account - the currency field alone does not
+    do it - so this stays an explicit choice rather than something the app
+    decides on the admin's behalf. Settlement still lands in INR either way,
+    which is the part worth knowing before choosing it over Stripe.
+    """
+    stripe_ready = (
+        gw_settings.get("stripe_enabled") == "true"
+        and bool(gw_settings.get("stripe_secret_key"))
+    )
+    preferred = (gw_settings.get("usd_gateway") or "stripe").lower()
+    if preferred == "payu" and _payu_ready(gw_settings):
+        return "payu"
+    if preferred == "stripe" and stripe_ready:
+        return "stripe"
+    if stripe_ready:
+        return "stripe"
+    if _payu_ready(gw_settings):
+        return "payu"
+    return ""
 
 
 def _inr_gateway(gw_settings: dict) -> str:
@@ -544,11 +594,7 @@ def _inr_gateway(gw_settings: dict) -> str:
         and bool(gw_settings.get("razorpay_key_id"))
         and bool(gw_settings.get("razorpay_key_secret"))
     )
-    payu_ready = (
-        gw_settings.get("payu_enabled") == "true"
-        and bool(gw_settings.get("payu_merchant_key"))
-        and bool(gw_settings.get("payu_salt"))
-    )
+    payu_ready = _payu_ready(gw_settings)
     preferred = (gw_settings.get("inr_gateway") or "razorpay").lower()
     if preferred == "payu" and payu_ready:
         return "payu"
@@ -569,6 +615,9 @@ def _create_payu_order(
     coupon_code: Optional[str],
     user_id: int,
     plan_id: int,
+    *,
+    currency: str = "INR",
+    base_price: Optional[Decimal] = None,
 ) -> dict:
     """A signed PayU form for the browser to post.
 
@@ -579,17 +628,37 @@ def _create_payu_order(
     """
     from app.core import payu_gateway
 
-    discount, coupon = coupon_service.validate_and_price(
-        db, coupon_code, plan.price, "plan", plan_id, buyer.email
-    )
-    gst_calc = calculate_gst_and_totals(plan, discount)
-    final_amount = gst_calc["final_amount"]
+    currency = (currency or "INR").upper()
+    is_international = currency != "INR"
+    price = base_price if base_price is not None else plan.price
+
+    if is_international:
+        # Indian GST is not charged on an international sale, which is how the
+        # Stripe path already prices USD - the two must agree or the same plan
+        # costs different amounts depending on which gateway took it.
+        discount, coupon = coupon_service.validate_and_price(
+            db, coupon_code, price, "plan", plan_id, buyer.email, currency=currency
+        )
+        final_amount = price - discount
+        gst_calc = {
+            "subtotal_amount": final_amount,
+            "gst_rate_id": None,
+            "gst_percentage": Decimal("0.00"),
+            "gst_tax_type": "exclusive",
+            "gst_amount": Decimal("0.00"),
+        }
+    else:
+        discount, coupon = coupon_service.validate_and_price(
+            db, coupon_code, price, "plan", plan_id, buyer.email
+        )
+        gst_calc = calculate_gst_and_totals(plan, discount)
+        final_amount = gst_calc["final_amount"]
 
     payment = Payment(
         source="b2c",
         user_id=user_id,
         plan_id=plan_id,
-        amount=plan.price,
+        amount=price,
         discount_amount=discount,
         subtotal_amount=gst_calc["subtotal_amount"],
         gst_rate_id=gst_calc["gst_rate_id"],
@@ -598,7 +667,7 @@ def _create_payu_order(
         gst_amount=gst_calc["gst_amount"],
         final_amount=final_amount,
         amount_paid=Decimal("0.00"),
-        currency=(plan.currency or "INR").upper(),
+        currency=currency,
         coupon_id=coupon.id if coupon else None,
         gateway="payu",
         status=STATUS_PENDING,
@@ -630,6 +699,7 @@ def _create_payu_order(
         phone=(getattr(buyer, "phone", "") or "").strip(),
         success_url=f"{base}/api/v1/payments/webhook/payu/return",
         failure_url=f"{base}/api/v1/payments/webhook/payu/return",
+        currency=currency,
         udf={"udf1": str(payment.id), "udf2": str(user_id), "udf3": str(plan_id)},
     )
 
@@ -639,7 +709,7 @@ def _create_payu_order(
         "action_url": checkout["action"],
         "fields": checkout["fields"],
         "amount": float(final_amount),
-        "currency": (plan.currency or "INR").upper(),
+        "currency": currency,
         "plan_name": plan.name,
         "payment_id": payment.id,
     }
@@ -661,19 +731,30 @@ def create_user_plan_order(
     buyer = db.query(User).filter(User.id == user_id).first()
 
     # Resolve currency: USD if requested or plan is international-only, otherwise plan default (INR)
+    # Rupees inside India, dollars outside it - so every plan has to have a
+    # dollar price, not only the ones somebody remembered to tick. Without this
+    # an overseas student saw USD on the page, clicked buy, and was charged the
+    # rupee amount instead: the checkout quietly fell back to INR whenever a
+    # plan had no explicit `usd_price`.
     requested_currency = (target_currency or plan.currency or "INR").upper()
-    is_usd = requested_currency == "USD" and plan.is_international_enabled and plan.usd_price is not None
+    is_usd = requested_currency == "USD"
     effective_currency = "USD" if is_usd else (plan.currency or "INR").upper()
-    effective_base_price = plan.usd_price if is_usd else plan.price
+    effective_base_price = usd_price_for(plan) if is_usd else plan.price
 
     gw_settings = get_settings_group(db, "payment_gateways", mask_secrets=False)
 
-    # 1. Stripe Checkout for USD / International
+    # 1. International / USD
     if is_usd:
+        if _usd_gateway(gw_settings) == "payu":
+            return _create_payu_order(
+                db, gw_settings, plan, buyer, coupon_code, user_id, plan_id,
+                currency="USD", base_price=effective_base_price,
+            )
+
         stripe_enabled = gw_settings.get("stripe_enabled") == "true"
         secret_key = gw_settings.get("stripe_secret_key")
         if not stripe_enabled or not secret_key:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Stripe payment gateway is not configured for international USD payments.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No payment gateway is configured for international USD payments.")
 
         discount, coupon = coupon_service.validate_and_price(
             db, coupon_code, effective_base_price, "plan", plan_id, buyer.email, currency=effective_currency

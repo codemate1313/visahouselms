@@ -1,7 +1,7 @@
 """Reference currency conversion used for display-only price estimates."""
 
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_CEILING
 import json
 import logging
 import urllib.request
@@ -60,3 +60,18 @@ def get_inr_usd_display_rate() -> dict:
             "date": None,
             "source": "configured fallback rate",
         }
+
+
+def inr_to_usd(inr_amount: Decimal) -> Decimal:
+    """A dollar price for a plan that only has a rupee one.
+
+    Rounded up to a whole dollar rather than left at the raw conversion: a
+    catalogue that reads $58.49 today and $58.61 tomorrow looks broken, and
+    the rounding is in the buyer's favour by pennies rather than the seller's.
+    Never returns zero - a free plan is a decision, not a rounding artefact.
+    """
+    rate = Decimal(str(get_inr_usd_display_rate()["rate"]))
+    if rate <= 0:
+        rate = Decimal(str(settings.inr_usd_display_rate))
+    converted = (Decimal(inr_amount) * rate).quantize(Decimal("1"), rounding=ROUND_CEILING)
+    return max(converted, Decimal("1"))

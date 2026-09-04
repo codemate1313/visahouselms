@@ -514,6 +514,10 @@ export interface StudentPlanCatalogItem {
   entitled_until?: string | null;
   is_international_enabled?: boolean;
   usd_price?: string | null;
+  /** What an overseas student is charged: the explicit USD price when one is
+   *  set, otherwise the server's conversion from the rupee price. */
+  usd_price_effective?: string | null;
+  usd_price_is_estimated?: boolean;
   gst_rate_id?: number | null;
   gst_rate?: {
     id: number;

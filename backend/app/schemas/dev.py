@@ -111,6 +111,9 @@ class PaymentGatewaySettingsIn(BaseModel):
     # Which gateway takes rupee payments when more than one is configured.
     # Both can stay set up; this decides which one a student is sent to.
     inr_gateway: Optional[str] = "razorpay"
+    # The same choice for international (USD) sales. PayU only belongs here if
+    # PayU has enabled cross-border acceptance on the merchant account.
+    usd_gateway: Optional[str] = "stripe"
 
 
 class StaticOtpSettingsIn(BaseModel):

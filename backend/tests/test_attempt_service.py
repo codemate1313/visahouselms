@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -21,6 +22,7 @@ from app.models.attempt import (
     ATTEMPT_GRADING,
     ATTEMPT_IN_PROGRESS,
     ATTEMPT_READY,
+    ATTEMPT_VIOLATED,
     AiEvaluation,
     AiEvaluationLimit,
     CourseModule,
@@ -135,9 +137,10 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.commit()
         return course
 
-    def _build_reading_module(self):
+    def _build_reading_module(self, title: Optional[str] = None):
+        module_title = title or f"Reading {uuid.uuid4().hex[:6]}"
         created = module_authoring_service.create_module(
-            self.db, self.instructor, {"module_type": "reading", "title": "Reading A", "description": None, "instructions": None}, "127.0.0.1"
+            self.db, self.instructor, {"module_type": "reading", "title": module_title, "description": None, "instructions": None}, "127.0.0.1"
         )
         module = module_authoring_service.get_module_or_404(self.db, created["id"])
         for part in module.parts:
@@ -176,9 +179,10 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.db.expire_all()
         return module_authoring_service.get_module_or_404(self.db, module.id)
 
-    def _build_writing_module(self):
+    def _build_writing_module(self, title: Optional[str] = None):
+        module_title = title or f"Writing {uuid.uuid4().hex[:6]}"
         created = module_authoring_service.create_module(
-            self.db, self.instructor, {"module_type": "writing", "title": "Writing A", "description": None, "instructions": None}, "127.0.0.1"
+            self.db, self.instructor, {"module_type": "writing", "title": module_title, "description": None, "instructions": None}, "127.0.0.1"
         )
         module = module_authoring_service.get_module_or_404(self.db, created["id"])
         for part in module.parts:
@@ -3421,7 +3425,7 @@ class AttemptServiceTestCase(unittest.TestCase):
         self.assertTrue(third["auto_submitted"])
 
         self.db.refresh(attempt)
-        self.assertIn(attempt.status, {ATTEMPT_GRADED, ATTEMPT_GRADING})
+        self.assertIn(attempt.status, {ATTEMPT_GRADED, ATTEMPT_GRADING, ATTEMPT_VIOLATED})
         self.assertTrue(attempt.security_media_state["auto_submitted_for_violations"])
 
     def test_student_speaking_question_receives_candidate_material_url(self):

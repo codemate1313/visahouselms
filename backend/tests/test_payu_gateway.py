@@ -1,4 +1,5 @@
 import unittest
+import unittest.mock
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -12,7 +13,7 @@ from app.models.payment import Payment
 from app.models.plan import Plan
 from app.models.role import STUDENT, Role
 from app.models.user import User
-from app.services import payment_service
+from app.services import currency_conversion_service, payment_service
 from app.services.settings_service import set_settings_group
 
 SALT = "eCwWELxi"
@@ -143,6 +144,26 @@ class PayuSettlementTests(unittest.TestCase):
         reply["hash"] = payu_gateway._sha512(payu_gateway._response_hash_string(reply, SALT))
         return reply
 
+    def test_an_international_sale_carries_no_indian_gst(self):
+        """The same plan must not cost more because PayU took the payment."""
+        self.plan.usd_price = Decimal("59.00")
+        self.plan.is_international_enabled = True
+        self.db.commit()
+
+        order = payment_service._create_payu_order(
+            self.db, {"payu_merchant_key": KEY, "payu_salt": SALT, "payu_mode": "test"},
+            self.plan, self.student, None, self.student.id, self.plan.id,
+            currency="USD", base_price=Decimal("59.00"),
+        )
+
+        self.assertEqual(order["currency"], "USD")
+        self.assertEqual(order["fields"]["currency"], "USD")
+        self.assertEqual(order["fields"]["amount"], "59.00")
+        payment = self.db.query(Payment).filter_by(id=order["payment_id"]).one()
+        self.assertEqual(payment.currency, "USD")
+        self.assertEqual(payment.gst_amount, Decimal("0.00"))
+        self.assertEqual(payment.final_amount, Decimal("59.00"))
+
     def test_a_forged_success_does_not_pay_for_a_plan(self):
         payment = self._pending_payment()
         forged = self._signed_reply(payment)
@@ -197,6 +218,103 @@ class PayuSettlementTests(unittest.TestCase):
         self.assertEqual(
             self.db.query(Payment).filter_by(status="paid").count(), 1
         )
+
+
+class PayuInternationalTests(unittest.TestCase):
+    def test_the_currency_is_posted_but_never_hashed(self):
+        """PayU signs the amount, not the currency.
+
+        Adding it to the hash string is the obvious mistake here, and it would
+        make every international payment fail verification.
+        """
+        usd = payu_gateway.build_checkout(
+            merchant_key=KEY, salt=SALT, mode="test", txnid="vh9xusd",
+            amount=Decimal("59"), product_info="Plan", first_name="Sam",
+            email="sam@example.com", phone="", success_url="https://x/s",
+            failure_url="https://x/f", currency="usd",
+        )
+        self.assertEqual(usd["fields"]["currency"], "USD")
+        self.assertNotIn("USD", payu_gateway._request_hash_string(usd["fields"], SALT))
+
+        inr = payu_gateway.build_checkout(
+            merchant_key=KEY, salt=SALT, mode="test", txnid="vh9xusd",
+            amount=Decimal("59"), product_info="Plan", first_name="Sam",
+            email="sam@example.com", phone="", success_url="https://x/s",
+            failure_url="https://x/f",
+        )
+        # Same signature either way - the currency changes nothing about it.
+        self.assertEqual(usd["fields"]["hash"], inr["fields"]["hash"])
+        self.assertEqual(inr["fields"]["currency"], "INR")
+
+
+class UsdGatewayChoiceTests(unittest.TestCase):
+    def test_stripe_keeps_international_unless_payu_is_chosen(self):
+        both = {
+            "stripe_enabled": "true", "stripe_secret_key": "sk_test",
+            "payu_enabled": "true", "payu_merchant_key": KEY, "payu_salt": SALT,
+        }
+        # Nothing chosen: international stays where it was.
+        self.assertEqual(payment_service._usd_gateway(both), "stripe")
+        self.assertEqual(payment_service._usd_gateway({**both, "usd_gateway": "payu"}), "payu")
+        # Chosen but unusable falls through rather than blocking the sale.
+        self.assertEqual(
+            payment_service._usd_gateway({**both, "usd_gateway": "payu", "payu_salt": ""}), "stripe"
+        )
+        self.assertEqual(payment_service._usd_gateway({"usd_gateway": "payu"}), "")
+
+
+class UsdPricingTests(unittest.TestCase):
+    """Rupees in India, dollars outside it - for every plan, not only the ones
+    somebody remembered to tick."""
+
+    def setUp(self) -> None:
+        self.engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(self.engine)
+        self.db = sessionmaker(bind=self.engine)()
+
+    def tearDown(self) -> None:
+        self.db.close()
+        self.engine.dispose()
+
+    def _plan(self, **kwargs):
+        plan = Plan(
+            name="Plan", price=Decimal("4999.00"), duration_days=30,
+            student_limit=1, staff_limit=0, grace_days=7, is_active=True, currency="INR",
+        )
+        for key, value in kwargs.items():
+            setattr(plan, key, value)
+        self.db.add(plan)
+        self.db.commit()
+        return plan
+
+    def test_an_explicit_dollar_price_is_used_as_typed(self):
+        plan = self._plan(usd_price=Decimal("49.00"), is_international_enabled=True)
+        self.assertEqual(payment_service.usd_price_for(plan), Decimal("49.00"))
+
+    def test_a_plan_with_no_dollar_price_still_has_one(self):
+        """This is the case that used to charge rupees to an overseas student
+        who had been shown a dollar price."""
+        plan = self._plan()
+        with unittest.mock.patch.object(
+            currency_conversion_service, "get_inr_usd_display_rate", return_value={"rate": 0.0117}
+        ):
+            self.assertEqual(payment_service.usd_price_for(plan), Decimal("59"))
+
+    def test_the_international_flag_no_longer_decides_who_can_pay_in_dollars(self):
+        plan = self._plan(is_international_enabled=False)
+        with unittest.mock.patch.object(
+            currency_conversion_service, "get_inr_usd_display_rate", return_value={"rate": 0.0117}
+        ):
+            self.assertGreater(payment_service.usd_price_for(plan), Decimal("0"))
+
+    def test_a_converted_price_is_a_whole_dollar_and_never_zero(self):
+        with unittest.mock.patch.object(
+            currency_conversion_service, "get_inr_usd_display_rate", return_value={"rate": 0.0117}
+        ):
+            self.assertEqual(currency_conversion_service.inr_to_usd(Decimal("10")), Decimal("1"))
+            self.assertEqual(currency_conversion_service.inr_to_usd(Decimal("999")), Decimal("12"))
+            # No fractional cents drifting with the daily rate.
+            self.assertEqual(currency_conversion_service.inr_to_usd(Decimal("4999")) % 1, 0)
 
 
 class InrGatewayChoiceTests(unittest.TestCase):

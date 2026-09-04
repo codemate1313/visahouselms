@@ -95,6 +95,7 @@ def build_checkout(
     phone: str,
     success_url: str,
     failure_url: str,
+    currency: str = "INR",
     udf: Optional[dict] = None,
 ) -> dict:
     """The form the browser posts to PayU, signed and ready."""
@@ -113,6 +114,11 @@ def build_checkout(
         "surl": success_url,
         "furl": failure_url,
         "service_provider": "payu_paisa",
+        # Anything other than INR needs cross-border acceptance switched on for
+        # the merchant account by PayU; the field alone does not enable it, and
+        # a payment in a currency the account cannot take is declined at PayU's
+        # end rather than here. The currency is not part of the hash.
+        "currency": (currency or "INR").upper(),
     }
     for name in UDF_FIELDS:
         fields[name] = str((udf or {}).get(name, ""))

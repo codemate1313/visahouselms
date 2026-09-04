@@ -95,7 +95,6 @@ GEMINI_EVALUATION_MODELS = {
     "gemini-2.0-flash",
     "gemini-2.0-flash-lite",
     "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
     "gemini-2.5-pro",
 }
 # Preference order when a model has to be chosen for us - the configured one is
@@ -105,7 +104,6 @@ GEMINI_EVALUATION_MODELS = {
 GEMINI_FLASH_PREFERENCE = (
     "gemini-2.5-flash",
     "gemini-2.0-flash",
-    "gemini-2.5-flash-lite",
     "gemini-2.0-flash-lite",
 )
 # A paper set to a "pro" model was chosen for marking quality. Falling back to
@@ -124,6 +122,7 @@ GEMINI_RETIRED_MODELS = {
     "gemini-flash-latest": "flash",
     "gemini-1.5-pro": "pro",
     "gemini-pro-latest": "pro",
+    "gemini-2.5-flash-lite": "flash",
 }
 # The live directory, cached so marking a paper never waits on Google's model
 # list - the scheduler refreshes it in the background instead.
@@ -564,7 +563,7 @@ def gemini_model_chain(
 def _default_model_options(provider: str, model: Optional[str] = None) -> list[dict]:
     if provider == "gemini":
         selected = _resolve_model_for_provider(provider, model)
-        values = [selected, DEFAULT_GEMINI_MODEL, "gemini-2.5-flash-lite", "gemini-2.5-pro"]
+        values = [selected, DEFAULT_GEMINI_MODEL, "gemini-2.0-flash-lite", "gemini-2.5-pro"]
         return [_model_option(value) for value in dict.fromkeys(value for value in values if value)]
     if provider == "openai":
         selected = _resolve_model_for_provider(provider, model)
@@ -2684,8 +2683,10 @@ def _interlocutor_instruction(current_prompt: str, next_prompt: str, next_turn_t
 
 
 def _gemini_interlocutor(config: dict, prompt: str, audio_b64: str, mime_type: str) -> dict:
-    model = str(config.get("model") or DEFAULT_GEMINI_MODEL).removeprefix("models/")
-    url = f"{GEMINI_API_ROOT}/models/{model}:generateContent"
+    requested_model = (config.get("model") or DEFAULT_GEMINI_MODEL).replace("–", "-").replace("—", "-").strip().removeprefix("models/")
+    model_chain = gemini_model_chain(
+        requested_model, config.get("live_models"), skill=SKILL_SPEAKING
+    )
     payload = {
         "contents": [{"parts": [
             {"text": prompt},
@@ -2693,8 +2694,17 @@ def _gemini_interlocutor(config: dict, prompt: str, audio_b64: str, mime_type: s
         ]}],
         "generationConfig": {"responseMimeType": "application/json", "temperature": 0.25},
     }
+    headers = _gemini_headers(config["api_key"])
     with httpx.Client(timeout=45.0) as client:
-        response = client.post(url, headers=_gemini_headers(config["api_key"]), json=payload)
+        response = None
+        for index, candidate in enumerate(model_chain):
+            url = f"{GEMINI_API_ROOT}/models/{candidate}:generateContent"
+            response = client.post(url, headers=headers, json=payload)
+            last_candidate = index == len(model_chain) - 1
+            if _model_is_gone(response) and not last_candidate:
+                logger.warning("Gemini interlocutor model %s is no longer available; trying %s", candidate, model_chain[index + 1])
+                continue
+            break
         response.raise_for_status()
         data = response.json()
     return json.loads(data["candidates"][0]["content"]["parts"][0]["text"])

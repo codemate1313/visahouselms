@@ -114,9 +114,10 @@ export function CheckoutModal({ plan, selectedCurrency = "INR", couponCode, onCo
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
 
-  const isUSD = selectedCurrency === "USD" && plan.is_international_enabled && plan.usd_price;
+  // Every plan has a dollar price now - explicit, or converted by the server.
+  const isUSD = selectedCurrency === "USD" && Boolean(plan.usd_price_effective ?? plan.usd_price);
   const currencyCode = isUSD ? "USD" : (plan.currency || "INR");
-  const basePrice = parseFloat(isUSD ? (plan.usd_price || "0") : plan.price) || 0;
+  const basePrice = parseFloat(isUSD ? (plan.usd_price_effective ?? plan.usd_price ?? "0") : plan.price) || 0;
   const gst = isUSD ? null : plan.gst_rate;
   let gstAmount = 0;
   let subtotal = basePrice;
