@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.core.password_policy import validate_password_strength
 
@@ -123,11 +123,27 @@ class DirectStudentCreate(BaseModel):
     last_name: str
     phone_number: str
     address: Optional[str] = None
+    # Optional: assign a plan in the same step, recording the cash (or other
+    # manual method) the admin collected in person - mirrors the b2b
+    # RecordPaymentRequest shape used for institute payments.
+    plan_id: Optional[int] = None
+    payment_method_id: Optional[int] = None
+    coupon_code: Optional[str] = None
+    gateway_reference: Optional[str] = None
+    amount_received: Optional[float] = Field(default=None, gt=0)
 
     @field_validator("phone_number")
     @classmethod
     def check_phone_number(cls, value: str) -> str:
         return _clean_required_phone(value)
+
+    @field_validator("amount_received", mode="before")
+    @classmethod
+    def normalize_amount_received(cls, value):
+        if isinstance(value, str):
+            value = value.replace(",", ".").strip()
+            return float(value) if value else None
+        return value
 
 
 class SessionLocationOut(BaseModel):

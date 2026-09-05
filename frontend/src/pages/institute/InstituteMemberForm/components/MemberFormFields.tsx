@@ -1,4 +1,4 @@
-import type { ChangeEvent, FormEvent } from "react";
+import type { ChangeEvent, FormEvent, ReactNode } from "react";
 import { Badge, RequiredMark } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
 import { instituteMemberFormStrings as strings } from "../InstituteMemberForm.strings";
@@ -36,6 +36,10 @@ interface MemberFormFieldsProps {
   onSetEndDate?: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
   onCancel: () => void;
+  /** Extra form content rendered after the standard fields (and the access
+   * window, when present) but before the error/actions row - e.g. the Super
+   * Admin's optional "assign a plan" section on the direct-student form. */
+  extraFields?: ReactNode;
 }
 
 export function MemberFormFields({
@@ -50,6 +54,7 @@ export function MemberFormFields({
   onSetEndDate,
   onSubmit,
   onCancel,
+  extraFields,
 }: MemberFormFieldsProps) {
   const f = strings.fields;
   const startsOn = form.access_starts_on ?? "";
@@ -120,6 +125,8 @@ export function MemberFormFields({
             {pastSubscription && <p className="error-text">{f.accessPastSubscription}</p>}
           </fieldset>
         )}
+
+        {extraFields}
 
         {error && <p className="error-text">{error}</p>}
         <div className="form-actions">

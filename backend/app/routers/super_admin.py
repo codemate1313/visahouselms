@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
@@ -11,6 +12,7 @@ from app.models.audit_log import AuditLog
 from app.models.user import User
 from app.models.user_session import UserSession
 from app.schemas.auth import CurrentUser
+from app.schemas.payment import AdminStudentPlanPaymentRequest
 from app.schemas.user import (
     ChangePasswordRequest,
     DirectStudentCreate,
@@ -23,7 +25,7 @@ from app.schemas.user import (
     SuperAdminAccountOut,
     SuperAdminAccountUpdate,
 )
-from app.services import account_service, admin_session_service, audit_visibility, super_admin_service
+from app.services import account_service, admin_session_service, audit_visibility, payment_service, super_admin_service
 
 router = APIRouter(
     prefix="/super-admin",
@@ -141,6 +143,7 @@ def create_direct_student_user(
     db: Session = Depends(get_db),
     actor: User = Depends(get_current_user),
 ):
+    ip = _client_ip(request)
     user, temporary_password = super_admin_service.create_direct_student(
         db,
         actor,
@@ -149,12 +152,52 @@ def create_direct_student_user(
         payload.last_name,
         payload.phone_number,
         payload.address,
-        _client_ip(request),
+        ip,
     )
-    return {
+    response = {
         "user": super_admin_service.serialize_directory_user(user, None),
         "temporary_password": temporary_password,
     }
+    if payload.plan_id is not None:
+        amount_received = Decimal(str(payload.amount_received)) if payload.amount_received is not None else None
+        response["payment"] = payment_service.create_admin_student_plan_payment(
+            db,
+            actor,
+            user.id,
+            payload.plan_id,
+            payload.payment_method_id,
+            payload.coupon_code,
+            amount_received,
+            payload.gateway_reference,
+            ip,
+        )
+    return response
+
+
+@router.post("/users/{user_id}/plan-payments", status_code=status.HTTP_201_CREATED)
+def record_student_plan_payment(
+    user_id: int,
+    payload: AdminStudentPlanPaymentRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    actor: User = Depends(get_current_user),
+):
+    """Assign or renew a direct student's plan from the Super Admin panel,
+    recording whatever payment (cash, bank transfer, etc.) was collected for
+    it. Works the same whether the student never had a plan or their last one
+    has since expired - a new payment + subscription is created either way."""
+    amount_received = Decimal(str(payload.amount_received)) if payload.amount_received is not None else None
+    return payment_service.create_admin_student_plan_payment(
+        db,
+        actor,
+        user_id,
+        payload.plan_id,
+        payload.payment_method_id,
+        payload.coupon_code,
+        amount_received,
+        payload.gateway_reference,
+        _client_ip(request),
+    )
 
 
 @router.patch("/users/{user_id}", response_model=DirectoryUserOut)
@@ -428,6 +471,7 @@ def get_user_linked_details(
     from app.models.attempt import AttemptPartGrade, Enrollment, GradingQueueEntry, TestAttempt
     from app.models.payment import Payment
     from app.models.subscription import Subscription
+    from app.services import entitlement_service
 
     user = super_admin_service.get_directory_user_or_404(db, user_id, include_deleted=True)
     serialized_user = super_admin_service.serialize_directory_user(user, None)
@@ -457,6 +501,23 @@ def get_user_linked_details(
             "is_active": e.is_active,
         }
         for e in enrollments
+    ]
+
+    # A direct student's course access comes from their plan (module-level
+    # entitlements), not from the `enrollments` table above - that table only
+    # covers standalone course purchases and institute-assigned courses. Both
+    # are shown so a direct student's plan-granted modules aren't invisible
+    # here just because they hold no Enrollment row.
+    serialized_entitlements = [
+        {
+            "module_id": e["module_id"],
+            "module_title": e["module_title"] or "Unknown module",
+            "module_type": e["module_type"],
+            "expires_at": e["expires_at"].isoformat() if e["expires_at"] else None,
+            "is_live": e["is_live"],
+            "days_remaining": e["days_remaining"],
+        }
+        for e in entitlement_service.entitlements_for(db, user_id)
     ]
 
     attempts = (
@@ -605,6 +666,7 @@ def get_user_linked_details(
         "user": serialized_user,
         "sessions": serialized_sessions,
         "enrollments": serialized_enrollments,
+        "entitlements": serialized_entitlements,
         "attempts": serialized_attempts,
         "subscriptions": serialized_subscriptions,
         "payments": serialized_payments,

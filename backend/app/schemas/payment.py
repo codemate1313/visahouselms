@@ -41,6 +41,28 @@ class RecordPaymentRequest(BaseModel):
         return v
 
 
+class AdminStudentPlanPaymentRequest(BaseModel):
+    """Super Admin recording a plan payment for an existing direct student -
+    first assignment or a renewal after the previous term expired. Same
+    shape as RecordPaymentRequest, minus institute_id (the student is the
+    target, taken from the URL) and with the payment method required, since
+    there is no self-service checkout behind this to fall back on."""
+
+    plan_id: int
+    payment_method_id: int
+    coupon_code: Optional[str] = None
+    gateway_reference: Optional[str] = None
+    amount_received: Optional[float] = Field(default=None, gt=0)
+
+    @field_validator("amount_received", mode="before")
+    @classmethod
+    def normalize_amount_received(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            v = v.replace(",", ".").strip()
+            return float(v) if v else None
+        return v
+
+
 class AddInstallmentRequest(BaseModel):
     amount: float = Field(gt=0)
     payment_method_id: Optional[int] = None

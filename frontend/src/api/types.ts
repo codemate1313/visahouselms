@@ -1173,6 +1173,19 @@ export interface UserLinkedEnrollment {
   is_active: boolean;
 }
 
+/** A direct student's plan-granted access to one module - distinct from
+ * `UserLinkedEnrollment`, which only covers standalone course purchases and
+ * institute-assigned courses. A plan's Reading/Writing/etc modules show up
+ * here even though no Enrollment row exists for them. */
+export interface UserLinkedEntitlement {
+  module_id: number;
+  module_title: string;
+  module_type: string | null;
+  expires_at: string | null;
+  is_live: boolean;
+  days_remaining: number;
+}
+
 export interface UserLinkedAttempt {
   id: number;
   module_title: string;
@@ -1235,6 +1248,7 @@ export interface UserLinkedDetails {
   user: DirectoryUser;
   sessions: UserLinkedSession[];
   enrollments: UserLinkedEnrollment[];
+  entitlements: UserLinkedEntitlement[];
   attempts: UserLinkedAttempt[];
   subscriptions: UserLinkedSubscription[];
   payments: UserLinkedPayment[];

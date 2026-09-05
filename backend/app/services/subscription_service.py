@@ -755,8 +755,10 @@ def subscribe_user(
 ) -> Subscription:
     """Personal (B2C) mirror of assign() - grants a direct student a
     subscription to a plan. Not exposed as a standalone endpoint; only
-    reachable through payment_service.create_user_plan_payment, exactly how
-    assign() itself is only reachable through create_b2b_plan_payment."""
+    reachable through payment_service.create_user_plan_payment (self-service
+    checkout) and create_admin_student_plan_payment (Super Admin recording a
+    cash/manual payment), exactly how assign() itself is only reachable
+    through create_b2b_plan_payment."""
     plan = get_plan_or_404(db, plan_id)
     assert_audience(plan, AUDIENCE_DIRECT)
     if not plan.is_active:

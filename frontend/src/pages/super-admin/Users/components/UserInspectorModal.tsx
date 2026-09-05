@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { apiClient } from "@/api/client";
 import { extractErrorMessage } from "@/api/errors";
 import type { IconName } from "@/components/icons";
 import { Icon } from "@/components/icons";
 import { TableAvatar } from "@/components/TableAvatar";
-import { Badge, Button, SegmentedControl, type BadgeTone } from "@/components/ui";
+import { Badge, Button, RequiredMark, SearchableSelect, SegmentedControl, type BadgeTone } from "@/components/ui";
 import { IconButton } from "@/components/ui/IconButton/IconButton";
 import { useToastStore } from "@/store/toastStore";
 import type { DirectoryRole, DirectoryUser, UserLinkedDetails } from "@/api/types";
 import { formatCurrencyAmount } from "@/utils/currency";
+import type { PlanRow } from "@/pages/super-admin/Plans/types";
+import type { MethodRow } from "@/pages/super-admin/Payments/types";
 
 interface UserInspectorModalProps {
   userId: number;
@@ -376,31 +378,96 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
   const showSuccess = useToastStore((state) => state.showSuccess);
   const showError = useToastStore((state) => state.showError);
 
-  useEffect(() => {
-    let mounted = true;
+  // Plan assignment/renewal panel (Billing tab, direct students only) -
+  // reloaded after a successful submit so the new subscription/payment/
+  // module access show up without closing and reopening the drawer.
+  const [showPlanForm, setShowPlanForm] = useState(false);
+  const [plans, setPlans] = useState<PlanRow[]>([]);
+  const [methods, setMethods] = useState<MethodRow[]>([]);
+  const [planId, setPlanId] = useState("");
+  const [paymentMethodId, setPaymentMethodId] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [amountReceived, setAmountReceived] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [planSaving, setPlanSaving] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
+
+  function loadDetails(mountedRef?: { current: boolean }) {
     setLoading(true);
     setError(null);
+    apiClient
+      .get<UserLinkedDetails>(`/super-admin/users/${userId}/linked-details`)
+      .then(({ data: payload }) => {
+        if (!mountedRef || mountedRef.current) setData(payload);
+      })
+      .catch((err: unknown) => {
+        if (!mountedRef || mountedRef.current) setError(extractErrorMessage(err, "Failed to load user details."));
+      })
+      .finally(() => {
+        if (!mountedRef || mountedRef.current) setLoading(false);
+      });
+  }
+
+  useEffect(() => {
+    const mountedRef = { current: true };
     setData(null);
     setActiveTab("overview");
     setOpenAuditId(null);
     setRevokingSessionId(null);
-
-    apiClient
-      .get<UserLinkedDetails>(`/super-admin/users/${userId}/linked-details`)
-      .then(({ data: payload }) => {
-        if (mounted) setData(payload);
-      })
-      .catch((err: unknown) => {
-        if (mounted) setError(extractErrorMessage(err, "Failed to load user details."));
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-
+    setShowPlanForm(false);
+    loadDetails(mountedRef);
     return () => {
-      mounted = false;
+      mountedRef.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  useEffect(() => {
+    if (!showPlanForm || plans.length > 0) return;
+    apiClient
+      .get<PlanRow[]>("/super-admin/plans", { params: { audience: "direct_students" } })
+      .then(({ data: rows }) => setPlans(rows.filter((plan) => plan.is_active)));
+    apiClient
+      .get<MethodRow[]>("/super-admin/payment-methods", { params: { active_only: true } })
+      .then(({ data: rows }) => {
+        setMethods(rows);
+        const cash = rows.find((method) => method.name.trim().toLowerCase() === "cash");
+        if (cash) setPaymentMethodId((current) => current || String(cash.id));
+      });
+  }, [showPlanForm, plans.length]);
+
+  async function submitPlanPayment(event: FormEvent) {
+    event.preventDefault();
+    if (!data || !planId || !paymentMethodId) {
+      setPlanError("Choose a plan and a payment method.");
+      return;
+    }
+    setPlanSaving(true);
+    setPlanError(null);
+    try {
+      const cleanAmountReceived = amountReceived
+        ? Number(String(amountReceived).replace(/,/g, "."))
+        : null;
+      await apiClient.post(`/super-admin/users/${data.user.id}/plan-payments`, {
+        plan_id: Number(planId),
+        payment_method_id: Number(paymentMethodId),
+        coupon_code: couponCode || null,
+        amount_received: cleanAmountReceived,
+        gateway_reference: paymentReference || null,
+      });
+      showSuccess("Plan payment recorded and the student's access has been renewed.", "Plan assigned");
+      setShowPlanForm(false);
+      setPlanId("");
+      setCouponCode("");
+      setAmountReceived("");
+      setPaymentReference("");
+      loadDetails();
+    } catch (err: unknown) {
+      setPlanError(extractErrorMessage(err, "Failed to record the plan payment."));
+    } finally {
+      setPlanSaving(false);
+    }
+  }
 
   const displayName = useMemo(() => {
     if (!data) return "User profile";
@@ -615,6 +682,33 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
 
               {activeTab === "learning" && (
                 <div className="user-inspector-section">
+                  <h3>Plan access</h3>
+                  {/* A direct student's course access is granted per-module by
+                      their plan, not by a row in the enrollments table below -
+                      so this is the list that actually reflects what a plan
+                      purchase unlocked. */}
+                  {data.entitlements.length === 0 ? (
+                    <p className="user-inspector-muted">No plan-granted module access found.</p>
+                  ) : (
+                    <div className="user-inspector-list">
+                      {data.entitlements.map((entitlement) => (
+                        <article key={entitlement.module_id} className="user-inspector-list-item">
+                          <div>
+                            <strong>{entitlement.module_title}</strong>
+                            <span>
+                              {entitlement.is_live
+                                ? `${entitlement.days_remaining} day(s) remaining, until ${formatDate(entitlement.expires_at)}`
+                                : `Expired ${formatDate(entitlement.expires_at)}`}
+                            </span>
+                          </div>
+                          <Badge tone={entitlement.is_live ? "green" : "inactive"}>
+                            {entitlement.is_live ? "Active" : "Expired"}
+                          </Badge>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+
                   <h3>Enrolled courses</h3>
                   {data.enrollments.length === 0 ? (
                     <p className="user-inspector-muted">No enrolled courses found.</p>
@@ -673,6 +767,85 @@ export function UserInspectorModal({ userId, onClose }: UserInspectorModalProps)
 
               {activeTab === "billing" && (
                 <div className="user-inspector-section">
+                  {data.user.institute_id === null && (
+                    <div className="user-inspector-plan-panel">
+                      <div className="user-inspector-section-heading">
+                        <h3>Assign or renew plan</h3>
+                        <Button
+                          type="button"
+                          size="small"
+                          variant={showPlanForm ? "secondary" : "primary"}
+                          onClick={() => setShowPlanForm((v) => !v)}
+                        >
+                          {showPlanForm ? "Cancel" : "Record a plan payment"}
+                        </Button>
+                      </div>
+                      {showPlanForm && (
+                        <form className="form-card" onSubmit={submitPlanPayment}>
+                          <div className="form-grid">
+                            <div>
+                              <label>Plan<RequiredMark /></label>
+                              <SearchableSelect
+                                options={plans.map((plan) => ({
+                                  value: plan.id,
+                                  label: `${plan.name} - ${plan.currency} ${plan.price}`,
+                                }))}
+                                value={planId}
+                                onChange={(value) => setPlanId(String(value))}
+                                searchPlaceholder="Search plans..."
+                                placeholder="Select a plan..."
+                                className="form-dropdown-select"
+                              />
+                            </div>
+                            <div>
+                              <label>Payment method<RequiredMark /></label>
+                              <SearchableSelect
+                                options={methods.map((method) => ({ value: method.id, label: method.name }))}
+                                value={paymentMethodId}
+                                onChange={(value) => setPaymentMethodId(String(value))}
+                                searchPlaceholder="Search payment methods..."
+                                placeholder="Select a payment method..."
+                                className="form-dropdown-select"
+                              />
+                            </div>
+                          </div>
+                          <div className="form-grid">
+                            <div>
+                              <label>Amount received</label>
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                autoComplete="off"
+                                value={amountReceived}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/,/g, ".");
+                                  if (val === "" || /^[0-9]*\.?[0-9]*$/.test(val)) setAmountReceived(val);
+                                }}
+                                placeholder="Full price"
+                              />
+                            </div>
+                            <div>
+                              <label>Coupon code</label>
+                              <input value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
+                            </div>
+                            <div>
+                              <label>Receipt reference</label>
+                              <input value={paymentReference} onChange={(e) => setPaymentReference(e.target.value)} placeholder="e.g. cash receipt #" />
+                            </div>
+                          </div>
+                          <p className="muted-text">
+                            Leave "Amount received" blank to record the plan's full price as paid. The plan activates
+                            immediately, replacing an expired term with a fresh one.
+                          </p>
+                          {planError && <p className="error-text">{planError}</p>}
+                          <div className="form-actions">
+                            <Button type="submit" disabled={planSaving}>{planSaving ? "Recording..." : "Record payment"}</Button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
+                  )}
+
                   <h3>Subscriptions</h3>
                   {data.subscriptions.length === 0 ? (
                     <p className="user-inspector-muted">No active or previous subscriptions.</p>

@@ -18,7 +18,7 @@ from app.models.coupon import Coupon
 from app.models.institute import Institute
 from app.models.payment import Payment
 from app.models.plan import AUDIENCE_DIRECT, AUDIENCE_INSTITUTES, Plan
-from app.models.role import DEVELOPER, INSTITUTE_ADMIN, SUPER_ADMIN
+from app.models.role import DEVELOPER, INSTITUTE_ADMIN, STUDENT, SUPER_ADMIN
 from app.models.subscription import Subscription
 from app.models.user import User
 from app.services import coupon_service, institute_service, notification_service, plan_service, subscription_service
@@ -428,6 +428,105 @@ def create_user_plan_payment(
         subscription = subscription_service.subscribe_user(
             db, user_id, plan_id, ip, commit=False
         )
+        payment.subscription_id = subscription.id
+        db.add(payment)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    payment = _query_with_relations(db).filter(Payment.id == payment.id).first()
+    _notify_payment_recorded(db, payment)
+    return _serialize(payment)
+
+
+def create_admin_student_plan_payment(
+    db: Session,
+    actor: User,
+    user_id: int,
+    plan_id: int,
+    payment_method_id: Optional[int],
+    coupon_code: Optional[str] = None,
+    amount_received: Optional[Decimal] = None,
+    gateway_reference: Optional[str] = None,
+    ip: Optional[str] = None,
+) -> dict:
+    """Super Admin records a plan payment on behalf of a direct student -
+    e.g. cash collected in person while creating the student's account, or a
+    renewal recorded after the previous term expired. Same shape as
+    create_user_plan_payment but audited under the acting admin, carries a
+    payment method (cash/bank transfer/etc, same catalogue the
+    institute-facing record_payment endpoint uses), and supports a partial
+    amount_received exactly like create_b2b_plan_payment does for institutes -
+    the subscription activates immediately on any recorded amount, partial or
+    full."""
+    plan = plan_service.get_plan_or_404(db, plan_id)
+    plan_service.assert_audience(plan, AUDIENCE_DIRECT)
+    if not plan.is_active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This plan is deactivated")
+
+    buyer = db.query(User).filter(User.id == user_id).first()
+    if buyer is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+    if buyer.role.name != STUDENT:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only student accounts can hold a plan")
+    if buyer.institute_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This student's plan is managed by their institute, not billed individually",
+        )
+
+    discount, coupon = coupon_service.validate_and_price(db, coupon_code, plan.price, "plan", plan_id, buyer.email)
+    gst_calc = calculate_gst_and_totals(plan, discount)
+    final_amount = gst_calc["final_amount"]
+
+    # defaults to a full one-shot payment, same precedent as create_b2b_plan_payment,
+    # unless a smaller amount is explicitly recorded (a partial/installment payment)
+    received = final_amount if amount_received is None else amount_received
+    if received <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Amount received must be greater than zero")
+    if received > final_amount:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Amount received cannot exceed the final amount")
+
+    payment_status = _status_for_amount(received, final_amount)
+
+    payment = Payment(
+        source="b2c",
+        user_id=user_id,
+        plan_id=plan_id,
+        amount=plan.price,
+        discount_amount=discount,
+        subtotal_amount=gst_calc["subtotal_amount"],
+        gst_rate_id=gst_calc["gst_rate_id"],
+        gst_percentage=gst_calc["gst_percentage"],
+        gst_tax_type=gst_calc["gst_tax_type"],
+        gst_amount=gst_calc["gst_amount"],
+        final_amount=final_amount,
+        amount_paid=received,
+        currency=plan.currency,
+        coupon_id=coupon.id if coupon else None,
+        payment_method_id=payment_method_id,
+        gateway="manual",
+        gateway_reference=gateway_reference,
+        status=payment_status,
+        paid_at=_now() if payment_status == STATUS_PAID else None,
+    )
+    db.add(payment)
+    db.flush()
+    payment.invoice_number = f"INV-{payment.id:06d}"
+    db.add(payment)
+
+    # discount is priced in regardless of how much has actually been received
+    if coupon is not None:
+        coupon_service.redeem(db, coupon, buyer.email, user_id=user_id, payment_id=payment.id)
+
+    _audit(
+        db, actor, "payment.create", payment.id, ip,
+        {"student_id": user_id, "plan": plan.name, "status": payment_status, "source": "admin_direct"},
+    )
+
+    try:
+        subscription = subscription_service.subscribe_user(db, user_id, plan_id, ip, commit=False)
         payment.subscription_id = subscription.id
         db.add(payment)
         db.commit()
