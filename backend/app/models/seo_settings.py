@@ -11,13 +11,13 @@ class SEOSetting(Base):
     __tablename__ = "seo_settings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    site_name: Mapped[str] = mapped_column(String(255), default="LanguageCert Pro")
-    default_title: Mapped[str] = mapped_column(String(255), default="LanguageCert Pro | Computer-Delivered Exam Platform & AI Feedback")
-    title_template: Mapped[str] = mapped_column(String(255), default="%s | LanguageCert Pro")
+    site_name: Mapped[str] = mapped_column(String(255), default="Visa House LMS")
+    default_title: Mapped[str] = mapped_column(String(255), default="Visa House LMS | Computer-Delivered Exam Platform & AI Feedback")
+    title_template: Mapped[str] = mapped_column(String(255), default="%s | Visa House LMS")
     default_meta_description: Mapped[str] = mapped_column(Text, default="Experience authentic computer-delivered LanguageCert environments. Powered by instant AI Speaking evaluation, automated Writing feedback, and real-time institute tracking.")
-    default_meta_keywords: Mapped[str] = mapped_column(Text, default="LanguageCert, LanguageCert Online Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test, LanguageCert Preparation Platform")
+    default_meta_keywords: Mapped[str] = mapped_column(Text, default="Visa House LMS, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test, LanguageCert Preparation Platform")
     default_og_image: Mapped[Optional[str]] = mapped_column(String(500), nullable=True, default="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80")
-    twitter_handle: Mapped[Optional[str]] = mapped_column(String(100), default="@languagecertpro")
+    twitter_handle: Mapped[Optional[str]] = mapped_column(String(100), default="@visahouselms")
     robots_txt: Mapped[Optional[str]] = mapped_column(Text, default="User-agent: *\nAllow: /")
     custom_head_tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())

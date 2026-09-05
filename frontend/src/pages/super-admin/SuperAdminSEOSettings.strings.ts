@@ -1,13 +1,13 @@
 export const seoSettingsStrings = {
   loading: "Loading SEO settings...",
   defaults: {
-    site_name: "Visa House",
-    default_title: "Visa House | Computer-Delivered Exam Platform & AI Feedback",
-    title_template: "%s | Visa House",
+    site_name: "Visa House LMS",
+    default_title: "Visa House LMS | Computer-Delivered Exam Platform & AI Feedback",
+    title_template: "%s | Visa House LMS",
     default_meta_description: "Experience authentic computer-delivered LanguageCert environments with AI Speaking & Writing scoring.",
-    default_meta_keywords: "Visa House, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert",
+    default_meta_keywords: "Visa House LMS, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert",
     default_og_image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
-    twitter_handle: "@visahouse",
+    twitter_handle: "@visahouselms",
     robots_txt: "User-agent: *\nAllow: /",
     custom_head_tags: "",
   },
@@ -17,7 +17,7 @@ export const seoSettingsStrings = {
   fields: {
     siteName: "Site Brand Name",
     titleTemplate: "Title Template Pattern",
-    titleTemplateHint: "Use %s as page title placeholder (e.g. %s | Language CERT)",
+    titleTemplateHint: "Use %s as page title placeholder (e.g. %s | Visa House LMS)",
     defaultTitle: "Default Fallback Document Title",
     metaDescription: "Global Meta Description",
     metaKeywords: "Global SEO Keywords (Comma separated)",

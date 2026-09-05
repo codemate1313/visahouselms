@@ -29,7 +29,7 @@ class SettingsPersistenceTests(unittest.TestCase):
     def test_public_seo_read_does_not_create_default_row(self) -> None:
         response = seo_router.get_public_seo_settings(self.db)
 
-        self.assertEqual(response["site_name"], "Language CERT Pro")
+        self.assertEqual(response["site_name"], "Visa House LMS")
         self.assertEqual(self.db.query(SEOSetting).count(), 0)
 
     def test_public_contact_read_does_not_create_default_row(self) -> None:

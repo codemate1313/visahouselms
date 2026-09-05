@@ -21,13 +21,13 @@ export interface PageSEOOverride {
 }
 
 const DEFAULT_SEO: SEOSettingsData = {
-  site_name: "LanguageCert",
-  default_title: "LanguageCert | Computer-Delivered Exam Platform & AI Feedback",
-  title_template: "%s | LanguageCert",
+  site_name: "Visa House LMS",
+  default_title: "Visa House LMS | Computer-Delivered Exam Platform & AI Feedback",
+  title_template: "%s | Visa House LMS",
   default_meta_description: "Experience authentic computer-delivered LanguageCert environments. Powered by instant AI Speaking evaluation, automated Writing feedback, and real-time institute tracking.",
-  default_meta_keywords: "LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert",
+  default_meta_keywords: "Visa House LMS, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert",
   default_og_image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
-  twitter_handle: "@languagecert",
+  twitter_handle: "@visahouselms",
 };
 
 export function useSEO(pageOverride?: PageSEOOverride) {

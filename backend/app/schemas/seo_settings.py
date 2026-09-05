@@ -4,13 +4,13 @@ from pydantic import BaseModel
 
 
 class SEOSettingBase(BaseModel):
-    site_name: str = "LanguageCert Pro"
-    default_title: str = "LanguageCert Pro | Computer-Delivered Exam Platform & AI Feedback"
-    title_template: str = "%s | LanguageCert Pro"
+    site_name: str = "Visa House LMS"
+    default_title: str = "Visa House LMS | Computer-Delivered Exam Platform & AI Feedback"
+    title_template: str = "%s | Visa House LMS"
     default_meta_description: str = "Experience authentic computer-delivered LanguageCert environments with AI Speaking & Writing scoring."
-    default_meta_keywords: str = "LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert"
+    default_meta_keywords: str = "Visa House LMS, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert"
     default_og_image: Optional[str] = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80"
-    twitter_handle: Optional[str] = "@languagecertpro"
+    twitter_handle: Optional[str] = "@visahouselms"
     robots_txt: Optional[str] = "User-agent: *\nAllow: /"
     custom_head_tags: Optional[str] = None
 

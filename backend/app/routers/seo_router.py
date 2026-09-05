@@ -18,13 +18,13 @@ admin_router = APIRouter(
 
 
 DEFAULT_SEO_SETTINGS = {
-    "site_name": "LanguageCert",
-    "default_title": "LanguageCert | Computer-Delivered Exam Platform & AI Feedback",
-    "title_template": "%s | LanguageCert",
+    "site_name": "Visa House LMS",
+    "default_title": "Visa House LMS | Computer-Delivered Exam Platform & AI Feedback",
+    "title_template": "%s | Visa House LMS",
     "default_meta_description": "Experience authentic computer-delivered LanguageCert environments with AI Speaking & Writing scoring.",
-    "default_meta_keywords": "LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert",
+    "default_meta_keywords": "Visa House LMS, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert",
     "default_og_image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
-    "twitter_handle": "@languagecert",
+    "twitter_handle": "@visahouselms",
     "robots_txt": "User-agent: *\nAllow: /",
     "custom_head_tags": None,
 }

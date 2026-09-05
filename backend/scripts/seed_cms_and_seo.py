@@ -21,24 +21,25 @@ def seed_cms_and_seo():
         seo = db.scalar(select(SEOSetting).limit(1))
         if not seo:
             seo = SEOSetting(
-                site_name="LanguageCert",
-                default_title="LanguageCert | Computer-Delivered Exam Platform & AI Feedback",
-                title_template="%s | LanguageCert",
+                site_name="Visa House LMS",
+                default_title="Visa House LMS | Computer-Delivered Exam Platform & AI Feedback",
+                title_template="%s | Visa House LMS",
                 default_meta_description="Master computer-delivered LanguageCert with real-time exam simulations, instant AI Speaking audio analysis, auto-graded Writing feedback, and institute tracking.",
-                default_meta_keywords="LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test",
+                default_meta_keywords="Visa House LMS, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test",
                 default_og_image="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
-                twitter_handle="@languagecert",
+                twitter_handle="@visahouselms",
                 robots_txt="User-agent: *\nAllow: /",
             )
             db.add(seo)
             print("--> Seeded default SEO settings.")
         else:
-            seo.site_name = "LanguageCert"
-            seo.default_title = "LanguageCert | Computer-Delivered Exam Platform & AI Feedback"
-            seo.title_template = "%s | LanguageCert"
+            seo.site_name = "Visa House LMS"
+            seo.default_title = "Visa House LMS | Computer-Delivered Exam Platform & AI Feedback"
+            seo.title_template = "%s | Visa House LMS"
             seo.default_meta_description = "Master computer-delivered LanguageCert with real-time exam simulations, instant AI Speaking audio analysis, auto-graded Writing feedback, and institute tracking."
-            seo.default_meta_keywords = "LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test"
-            print("--> Updated SEO settings to LanguageCert.")
+            seo.default_meta_keywords = "Visa House LMS, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test"
+            seo.twitter_handle = "@visahouselms"
+            print("--> Updated SEO settings to Visa House LMS.")
 
         # 2. Upsert Testimonials
         testimonials_data = [
@@ -68,7 +69,7 @@ def seed_cms_and_seo():
                 "target_score": "Achieved Band 7.5",
                 "avatar_url": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80",
                 "rating": 5,
-                "quote": "LanguageCert Pro delivers full coverage. The multi-accent Listening audio tracks matched the actual exam audio perfectly!",
+                "quote": "Visa House LMS delivers full coverage. The multi-accent Listening audio tracks matched the actual exam audio perfectly!",
                 "is_active": True,
                 "display_order": 3,
             },
@@ -88,7 +89,7 @@ def seed_cms_and_seo():
                 "target_score": "Achieved Band 8.5 (CLB 10)",
                 "avatar_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80",
                 "rating": 5,
-                "quote": "I needed CLB 9+ for my PR points. LanguageCert Pro's automated Reading and Listening scoring gave me immediate breakdown on weak question types.",
+                "quote": "I needed CLB 9+ for my PR points. Visa House LMS's automated Reading and Listening scoring gave me immediate breakdown on weak question types.",
                 "is_active": True,
                 "display_order": 5,
             },
