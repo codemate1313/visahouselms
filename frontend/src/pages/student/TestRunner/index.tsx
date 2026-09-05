@@ -167,11 +167,21 @@ export function TestRunner() {
   });
   const [secondsLeft, setSecondsLeft] = useState(0);
   /* When the candidate first opened a Reading or Writing part. The block's
-     allowance is counted from here, and it is kept in session storage so a
-     reload resumes the same countdown instead of handing out a fresh one. */
+     allowance is counted from here, and it is kept in local storage - not
+     session storage - so closing the browser and reopening the attempt in a
+     new tab resumes the same countdown instead of handing out a fresh full
+     block. A value written before this fix (session storage) is migrated
+     across once so nobody mid-attempt loses their elapsed time. */
   const [readingWritingStartedAt, setReadingWritingStartedAt] = useState<number | null>(() => {
-    const stored = Number(sessionStorage.getItem(securityStorageKey(id, "rw-started-at")));
-    return Number.isFinite(stored) && stored > 0 ? stored : null;
+    const key = securityStorageKey(id, "rw-started-at");
+    const fromLocal = Number(localStorage.getItem(key));
+    if (Number.isFinite(fromLocal) && fromLocal > 0) return fromLocal;
+    const fromSession = Number(sessionStorage.getItem(key));
+    if (Number.isFinite(fromSession) && fromSession > 0) {
+      localStorage.setItem(key, String(fromSession));
+      return fromSession;
+    }
+    return null;
   });
   const [submitting, setSubmitting] = useState(false);
   const [sealingSpeakingPhase, setSealingSpeakingPhase] = useState(false);
@@ -681,7 +691,7 @@ export function TestRunner() {
     if (attempt?.status !== "in_progress") return;
     if (readingWritingStartedAt !== null) return;
     const startedAt = Date.now();
-    sessionStorage.setItem(securityStorageKey(id, "rw-started-at"), String(startedAt));
+    localStorage.setItem(securityStorageKey(id, "rw-started-at"), String(startedAt));
     setReadingWritingStartedAt(startedAt);
   }, [attempt?.status, combinedBlockSeconds, id, readingWritingStartedAt, timerVisible]);
   const attemptStatus = attempt?.status;
@@ -1647,6 +1657,22 @@ export function TestRunner() {
         return Boolean(ans);
       });
       if (hasAnswers && !aiEvaluatedPartsRef.current.has(partId)) {
+        // The evaluation reads the answer text already saved server-side, not
+        // whatever is in this request's body. A student who finishes typing
+        // and clicks Next inside the debounce window would otherwise have
+        // the part evaluated against the previous save, missing the last
+        // edit - so any save still sitting on its debounce timer for this
+        // part's questions is sent and awaited first.
+        const partQuestionIds = new Set(currentPart.questions.map((q) => q.id));
+        const pendingForPart = Object.entries(debounceTimers.current).filter(
+          ([questionId]) => partQuestionIds.has(Number(questionId)),
+        );
+        for (const [questionId, entry] of pendingForPart) {
+          clearTimeout(entry.timer);
+          delete debounceTimers.current[Number(questionId)];
+        }
+        await Promise.all(pendingForPart.map(([, entry]) => entry.run()));
+
         aiEvaluatedPartsRef.current.add(partId);
         void apiClient.post(`/student/attempts/${id}/parts/${partId}/ai-evaluate`, {}, {
           headers: { ...securityHeaders(), "X-Skip-Loader": "1" }

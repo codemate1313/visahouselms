@@ -135,6 +135,30 @@ class VoucherPurchaseTests(unittest.TestCase):
         self.assertEqual(vouchers[0]["status"], "completed")
         self.assertTrue(vouchers[0]["raw_code"])
 
+    def test_admin_deleting_the_reserved_code_fails_a_later_verify(self) -> None:
+        """An admin's delete_voucher_codes call is expected to skip a reserved
+        code (see test_bulk_delete_removes_only_unused_codes), but this is the
+        backstop for any path that still marks one deleted mid-checkout - the
+        purchase must fail cleanly rather than hand over a code the platform
+        considers gone."""
+        order = self._place_order()
+        purchase = self.db.get(VoucherPurchase, order["purchase_id"])
+        code = self.db.get(VoucherCode, purchase.voucher_code_id)
+        code.deleted_at = voucher_service._now()
+        code.status = "disabled"
+        self.db.commit()
+
+        with self.assertRaises(HTTPException) as ctx:
+            voucher_service.verify_voucher_payment(
+                db=self.db,
+                purchase_id=order["purchase_id"],
+                razorpay_payment_id="pay_123",
+                razorpay_order_id=ORDER_ID,
+                razorpay_signature=_signature(ORDER_ID, "pay_123"),
+            )
+        self.assertEqual(ctx.exception.status_code, 409)
+        self.assertEqual(self._my_vouchers(), [])
+
     def test_failed_purchase_is_not_listed_as_a_voucher(self) -> None:
         order = self._place_order()
         with self.assertRaises(HTTPException):
@@ -321,9 +345,24 @@ class VoucherPurchaseTests(unittest.TestCase):
 
         self.assertEqual(result["deleted"], 2)
         self.assertEqual(result["skipped"], 1)
-        self.assertIsNotNone(self.db.get(VoucherCode, reserved_code_id))
-        self.assertIsNone(self.db.get(VoucherCode, unused_codes[0].id))
-        self.assertIsNone(self.db.get(VoucherCode, unused_codes[1].id))
+        self.assertEqual(result["skipped_reserved"], 1)
+
+        # The reserved code is a checkout in progress - it must be left
+        # completely untouched, not soft-deleted, so a payment that verifies a
+        # moment later still finds a live, "reserved" code to complete against.
+        reserved_code = self.db.get(VoucherCode, reserved_code_id)
+        self.assertIsNone(reserved_code.deleted_at)
+        self.assertEqual(reserved_code.status, "reserved")
+
+        # Deletion in this service is a soft delete everywhere else
+        # (voucher types, offerings, single codes), so the bulk path is
+        # expected to match: the row survives with `deleted_at` stamped and
+        # `status` flipped to "disabled", not removed outright.
+        for code in unused_codes[:2]:
+            deleted_code = self.db.get(VoucherCode, code.id)
+            self.assertIsNotNone(deleted_code)
+            self.assertIsNotNone(deleted_code.deleted_at)
+            self.assertEqual(deleted_code.status, "disabled")
 
 
 if __name__ == "__main__":

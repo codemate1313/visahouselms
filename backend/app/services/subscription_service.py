@@ -950,11 +950,19 @@ def my_current_plan_view(db: Session, user: User) -> dict:
         dev_unlimited_speaking = _dev_unlimited_speaking_attempts(db, module)
         retake_avail = (module.id in available_retake_module_ids or dev_unlimited_speaking) and not is_violated and not is_final
 
-        if is_violated or (is_final and has_att):
+        if is_violated:
             sittings_left = 0
             retake_avail = False
             is_exh = True
         else:
+            # A Final Test with a prior attempt used to be forced exhausted
+            # here regardless of `sittings_remaining` - so buying a second
+            # sitting still showed "Exhausted (0 remaining)", because this
+            # branch never even asked the entitlement how many sittings had
+            # been bought. `retake_avail` already excludes final tests above,
+            # so falling through to the same sittings-based check as every
+            # other module type is enough: a fresh purchase increments
+            # `sittings_granted`, and this now actually sees it.
             sittings_left = (
                 _entitlements.sittings_remaining(db, user.id, module.id)
                 if user.institute_id is None else 0

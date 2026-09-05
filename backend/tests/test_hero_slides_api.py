@@ -109,6 +109,18 @@ class HeroSlidesApiTestCase(unittest.TestCase):
         self.assertTrue(all(slide["cta_link"] for slide in home.json()))
         self.assertTrue(all(len(slide["stats"]) == 3 for slide in home.json()))
 
+    def test_seeding_a_fresh_database_does_not_collide_on_id(self):
+        """Regression test: DEFAULT_SLIDES once hardcoded `"id": 2` on one
+        entry. On a brand new database this collided with the id SQLite
+        autoincrements for the second slide in the list, and the very first
+        request to hit an empty table raised `UNIQUE constraint failed:
+        hero_slides.id` instead of seeding. Hitting the unfiltered endpoint
+        first is what reproduces it: it seeds every location in one commit,
+        which is exactly the moment the collision fired."""
+        response = self.client.get("/hero-slides")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.db.query(HeroSlide).count(), 6)
+
     def test_public_read_seeds_only_once(self):
         self.client.get("/hero-slides", params={"location": "home"})
         self.client.get("/hero-slides", params={"location": "home"})

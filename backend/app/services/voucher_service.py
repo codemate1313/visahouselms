@@ -542,6 +542,19 @@ def _complete_purchase(db: Session, purchase: VoucherPurchase) -> dict:
     # double-verify, or re-serializing an already-completed purchase) returns the
     # same data without sending a second code email or re-stamping the code.
     already_done = purchase.status == "completed" and code_row.status == "purchased"
+
+    # Deletion is meant to skip a code that is reserved (see delete_voucher_codes),
+    # but that check and this one are not atomic with each other, so this is the
+    # backstop: a code an admin soft-deleted or otherwise moved out of "reserved"
+    # between the reservation and now must not be silently handed over just
+    # because payment verified. Support already sees this purchase and can
+    # re-key it to a fresh code.
+    if not already_done and (code_row.deleted_at is not None or code_row.status != "reserved"):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The reserved code is no longer available. Support has been notified.",
+        )
+
     if not already_done:
         code_row.status = "purchased"
         code_row.purchased_at = _now()
@@ -829,10 +842,18 @@ def delete_voucher_type(db: Session, type_id: int) -> dict:
         VoucherOffering.deleted_at.is_(None),
     ).update({"deleted_at": now_dt, "is_active": False}, synchronize_session=False)
 
-    # 3. Soft delete / disable all unpurchased codes
+    # 3. Soft delete / disable all unpurchased codes - except one reserved for
+    # a checkout in progress right now. A code moves to "reserved" the moment
+    # a student starts paying for it (create_voucher_order) and only leaves
+    # that state when the purchase completes or fails; deleting it out from
+    # under that window would let the type-delete race a payment that is
+    # already committed to a specific code. It is left alone here and will be
+    # sold or released back to the pool as normal once the checkout resolves -
+    # by then the type is gone, so it will not be offered again.
     db.query(VoucherCode).filter(
         VoucherCode.voucher_type_id == type_id,
         VoucherCode.deleted_at.is_(None),
+        VoucherCode.status != "reserved",
     ).update({"deleted_at": now_dt, "status": "disabled"}, synchronize_session=False)
 
     db.commit()
@@ -855,6 +876,16 @@ def delete_voucher_code(db: Session, code_id: int) -> dict:
     vc = db.query(VoucherCode).filter(VoucherCode.id == code_id, VoucherCode.deleted_at.is_(None)).first()
     if not vc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voucher code not found")
+    # A code held "reserved" is on a student's payment screen right now; if
+    # they finish paying a moment after this deletes it, `_complete_purchase`
+    # would either hand a supposedly-deleted code to them or fail out from
+    # under a completed charge. Refusing the delete keeps that outcome from
+    # depending on which request happens to land first.
+    if vc.status == "reserved":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This code is reserved for a checkout in progress and cannot be deleted right now",
+        )
 
     now_dt = _now()
     vc.deleted_at = now_dt
@@ -869,16 +900,31 @@ def delete_voucher_codes(db: Session, code_ids: List[int]) -> dict:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No voucher codes selected")
 
     now_dt = _now()
+    # Codes currently reserved for an in-progress checkout are left alone -
+    # see delete_voucher_code - and counted as skipped rather than deleted, so
+    # a bulk delete can never silently pull a code out from under a payment
+    # that is already committed to it.
+    reserved_count = db.query(VoucherCode).filter(
+        VoucherCode.id.in_(unique_ids),
+        VoucherCode.deleted_at.is_(None),
+        VoucherCode.status == "reserved",
+    ).count()
     deleted = db.query(VoucherCode).filter(
         VoucherCode.id.in_(unique_ids),
         VoucherCode.deleted_at.is_(None),
+        VoucherCode.status != "reserved",
     ).update({"deleted_at": now_dt, "status": "disabled"}, synchronize_session=False)
 
     db.commit()
+    skipped = len(unique_ids) - deleted
+    message = f"Deleted {deleted} voucher code{'s' if deleted != 1 else ''}."
+    if reserved_count:
+        message += f" {reserved_count} skipped because {'it is' if reserved_count == 1 else 'they are'} reserved for a checkout in progress."
     return {
-        "message": f"Deleted {deleted} voucher code{'s' if deleted != 1 else ''}.",
+        "message": message,
         "deleted": deleted,
-        "skipped": len(unique_ids) - deleted,
+        "skipped": skipped,
+        "skipped_reserved": reserved_count,
     }
 
 

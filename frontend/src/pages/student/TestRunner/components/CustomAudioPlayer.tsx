@@ -27,6 +27,7 @@ export function CustomAudioPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isScrubbing, setIsScrubbing] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // Sync state with HTML5 audio events
   const handleTimeUpdate = () => {
@@ -62,8 +63,25 @@ export function CustomAudioPlayer({
     } else {
       audioRef.current.play().catch((err) => {
         console.warn("Audio playback failed:", err);
+        setHasError(true);
       });
     }
+  };
+
+  const handleAudioError = () => {
+    setIsPlaying(false);
+    setHasError(true);
+  };
+
+  const handleRetry = () => {
+    setHasError(false);
+    const audioEl = audioRef.current;
+    if (!audioEl) return;
+    audioEl.load();
+    audioEl.play().catch((err) => {
+      console.warn("Audio playback failed:", err);
+      setHasError(true);
+    });
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,9 +127,31 @@ export function CustomAudioPlayer({
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setHasError(false);
   }, [src]);
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  if (hasError) {
+    return (
+      <div className={`custom-audio-player-container ${className}`}>
+        <audio ref={audioRef} src={src} preload={preload} onError={handleAudioError} />
+        <div className="custom-audio-player-error" role="alert" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span>This audio failed to load.</span>
+          <IconButton
+            className="custom-audio-retry-btn"
+            onClick={handleRetry}
+            label="Retry loading audio"
+            icon={
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08a5.996 5.996 0 0 1-5.65 4c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L14 11h7V4l-3.35 2.35z" />
+              </svg>
+            }
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`custom-audio-player-container ${className}`}>
@@ -124,6 +164,7 @@ export function CustomAudioPlayer({
         onEnded={handleAudioEnded}
         onPlay={handleAudioPlay}
         onPause={handleAudioPause}
+        onError={handleAudioError}
       />
 
       <div className="custom-audio-player-controls">

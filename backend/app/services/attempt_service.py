@@ -345,11 +345,13 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="This test was terminated due to security violations and cannot be taken again.",
             )
-        if is_final and pa.status != ATTEMPT_READY:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="You have already attempted the final test. Final tests cannot be retaken.",
-            )
+        # A Final Test with any non-onboarding prior attempt used to be
+        # refused outright here, before a purchased sitting was ever
+        # considered - so a student who bought and completed one, then paid
+        # for a second, still had every further start blocked at this point.
+        # Whether a paid sitting covers a new attempt is decided below,
+        # alongside every other module type; this loop only screens for
+        # violations.
 
     prior_sittings = (
         db.query(TestAttempt)
@@ -371,16 +373,21 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
 
             has_paid_sitting = entitlement_service.sittings_remaining(db, user.id, module.id) > 0
 
-        if is_final:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="You have already attempted the final test. Final tests cannot be retaken.",
-            )
-
         if not has_paid_sitting and not dev_unlimited_speaking:
-            retake_request = retake_service.get_available_retake(db, user.id, module.id)
-        if retake_request is None and not has_paid_sitting and not dev_unlimited_speaking:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL)
+            # A Final Test is not eligible for a staff-approved goodwill
+            # retake - that path stays reserved for the other module types -
+            # but it must still fall through to the same "paid sitting covers
+            # this" check everyone else gets rather than being refused before
+            # that check ever runs.
+            if not is_final:
+                retake_request = retake_service.get_available_retake(db, user.id, module.id)
+            if retake_request is None:
+                if is_final:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="You have already attempted the final test. Buy another sitting to take it again.",
+                    )
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL)
 
     now = _now()
     # Provisional only. The attempt is created READY - the candidate is at the

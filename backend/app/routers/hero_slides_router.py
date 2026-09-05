@@ -92,14 +92,20 @@ DEFAULT_SLIDES: List[dict] = [
         "display_order": 1,
     },
     {
-        "id": 2,
-        "location": "home",
+        # This slide was miscopied as "home" with a stray hardcoded "id": 2
+        # (colliding with the id the database autoincrements for the second
+        # home slide above, which broke first-time seeding on a fresh
+        # database) and a display_order duplicating the "LanguageCert
+        # PLATFORM" login slide below. Its content and stock-photo image are
+        # unmistakably the login/register panel's, so it belongs here with
+        # the other two login slides, filling the order-0 slot they left open.
+        "location": "login",
         "badge": "REAL-TIME SIMULATION",
         "title": "Interactive Practice & AI Mock Tests",
         "subtitle": "Deliver authentic computer-delivered LanguageCert exam environments with live speaking evaluation and instant feedback.",
         "image_url": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop",
         "stats": [],
-        "display_order": 1,
+        "display_order": 0,
     },
     {
         "location": "login",

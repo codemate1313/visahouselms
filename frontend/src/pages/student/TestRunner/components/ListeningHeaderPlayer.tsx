@@ -21,6 +21,10 @@ interface ListeningHeaderPlayerProps {
 const START_DELAY_SECONDS = 5;
 /** Seconds to leave the finished part on screen before moving on. */
 const END_DELAY_SECONDS = 5;
+/** If playback starts but the browser never reports the track's length by
+ *  this point, the request has stalled or silently dropped without firing a
+ *  native `error` event - treated the same as one. */
+const STALL_TIMEOUT_MS = 15000;
 /** Volume is a preference, so it outlives the tab. */
 const VOLUME_KEY = "vh:listening:volume";
 
@@ -144,6 +148,14 @@ export function ListeningHeaderPlayer({
   const [volume, setVolume] = useState(readStoredVolume);
   const [playlistIndex, setPlaylistIndex] = useState(0);
   const resumedRef = useRef(false);
+  /* Set by the native `error` event (a 404, a decode failure) or by the
+     watchdog below (metadata that never arrives at all - a stalled or
+     silently dropped request the browser never reports as an error). Either
+     way, the candidate must never be left staring at a countdown or a
+     progress bar that will never move. */
+  const [audioError, setAudioError] = useState(false);
+  const stallWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
 
   // Determine audio tracks
   // 1) Part-level media asset (Heading MP3 or full continuous MP3)
@@ -228,6 +240,48 @@ export function ListeningHeaderPlayer({
     void releaseAfterComplete();
   };
 
+  /* A broken recording must never be a dead end: the candidate gets a way to
+     retry it, and - if it still won't play - a way to move on rather than
+     being locked out of the rest of the paper. The failure is written down
+     locally so it can be surfaced to a grader/support reviewing the attempt;
+     there is no scoring penalty either way. */
+  const audioFailedKey = `vh:listening:audio_failed:${attemptId}:${currentPart.id}:${playlistIndex}`;
+
+  const handleAudioError = useCallback(() => {
+    if (stallWatchdogRef.current) {
+      clearTimeout(stallWatchdogRef.current);
+      stallWatchdogRef.current = null;
+    }
+    console.error("Listening audio failed to load or play:", currentAudioUrl);
+    writeStorage(getLocalStorage(), audioFailedKey, "true");
+    setAudioError(true);
+    // The candidate must not be stuck on a countdown or a "playing" state
+    // that will never resolve, but the section stays put until they choose
+    // retry or continue - so nothing advances on their behalf.
+    setNavigationLock(true);
+  }, [audioFailedKey, currentAudioUrl, setNavigationLock]);
+
+  const handleRetryAudio = () => {
+    setAudioError(false);
+    resumedRef.current = false;
+    const audioEl = audioRef.current;
+    if (audioEl) {
+      audioEl.load();
+    }
+    setRetryToken((token) => token + 1);
+  };
+
+  const handleContinueAfterAudioFailure = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    removeStorage(getSessionStorage(), storageKey);
+    writeStorage(getLocalStorage(), completedKey, "true");
+    setAudioError(false);
+    setPhase("finished");
+    void releaseAfterComplete();
+  };
+
   /* The countdown holds the part locked before a note is played, then starts
      the recording. Navigation stays locked from the moment the part opens so
      nobody can skip ahead during the silence. */
@@ -251,6 +305,7 @@ export function ListeningHeaderPlayer({
     }
 
     setNavigationLock(true);
+    setAudioError(false);
     const start = () => {
       setPhase("playing");
       const audioEl = audioRef.current;
@@ -266,14 +321,33 @@ export function ListeningHeaderPlayer({
       }
       audioRef.current?.play().catch((err) => {
         // Autoplay policy fallback: if the browser blocks autoplay, the first
-        // interaction with the page unlocks it.
+        // interaction with the page unlocks it. A genuinely broken source
+        // (missing file, unsupported format) also rejects here, but it also
+        // fires the element's native `error` event, which `handleAudioError`
+        // already handles - so this stays a warning, not a second error path.
         console.warn("Autoplay blocked by browser policy:", err);
       });
+      // Backstop for a request that neither plays nor errors - a stalled
+      // connection, a proxy that swallows the response silently. If metadata
+      // still hasn't arrived by the deadline, treat it as failed so the
+      // candidate is never left watching a countdown that will never resolve.
+      if (stallWatchdogRef.current) clearTimeout(stallWatchdogRef.current);
+      stallWatchdogRef.current = window.setTimeout(() => {
+        const el = audioRef.current;
+        const loaded = el && Number.isFinite(el.duration) && el.duration > 0;
+        if (!loaded) handleAudioError();
+      }, STALL_TIMEOUT_MS);
     };
 
     if (!waitsBeforeStart) {
       start();
-      return () => setNavigationLock(false);
+      return () => {
+        if (stallWatchdogRef.current) {
+          clearTimeout(stallWatchdogRef.current);
+          stallWatchdogRef.current = null;
+        }
+        setNavigationLock(false);
+      };
     }
 
     setPhase("waiting");
@@ -291,11 +365,15 @@ export function ListeningHeaderPlayer({
     return () => {
       window.clearInterval(ticker);
       window.clearTimeout(starter);
+      if (stallWatchdogRef.current) {
+        clearTimeout(stallWatchdogRef.current);
+        stallWatchdogRef.current = null;
+      }
       setNavigationLock(false);
     };
     // `isCompletedInitial` is deliberately not a dependency - see above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAudioUrl, waitsBeforeStart, resumeFrom, setNavigationLock]);
+  }, [currentAudioUrl, waitsBeforeStart, resumeFrom, setNavigationLock, retryToken, handleAudioError]);
 
   // A new track gets its own single resume.
   useEffect(() => { resumedRef.current = false; }, [storageKey]);
@@ -317,6 +395,12 @@ export function ListeningHeaderPlayer({
   const handleDurationChange = () => {
     const audioEl = audioRef.current;
     if (audioEl) readDuration(audioEl);
+    // Metadata arrived, so the track is genuinely loading - the stall
+    // watchdog's job is done for this track.
+    if (stallWatchdogRef.current) {
+      clearTimeout(stallWatchdogRef.current);
+      stallWatchdogRef.current = null;
+    }
   };
 
   /* A playlist part swaps the source under the same element, and the readout
@@ -325,6 +409,7 @@ export function ListeningHeaderPlayer({
   useEffect(() => {
     setCurrentTime(0);
     setDuration(0);
+    setAudioError(false);
   }, [currentAudioUrl]);
 
   const handleTimeUpdate = () => {
@@ -398,12 +483,29 @@ export function ListeningHeaderPlayer({
       onLoadedMetadata={handleDurationChange}
       onDurationChange={handleDurationChange}
       onEnded={handleEnded}
+      onError={handleAudioError}
       onPlay={() => {
         setPhase("playing");
         setNavigationLock(true);
       }}
     />
   );
+
+  /* Shown instead of the normal status line the moment playback fails, in
+     either skin. Retry re-requests the same track; Continue marks the part
+     done (without a listen) and hands over exactly as a finished recording
+     would, so the candidate is never stuck on a part that cannot play. */
+  const errorBanner = audioError ? (
+    <span className="lca-listening-audio-error" role="alert" style={{ display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+      This recording failed to load. You can retry it or continue without it.
+      <Button type="button" variant="secondary" onClick={handleRetryAudio} style={{ padding: "4px 10px", fontSize: "12px" }}>
+        Retry
+      </Button>
+      <Button type="button" variant="danger" onClick={handleContinueAfterAudioFailure} style={{ padding: "4px 10px", fontSize: "12px" }}>
+        Continue without this recording
+      </Button>
+    </span>
+  ) : null;
 
   /* The exam transport is deliberately tiny and inert: a pause disc that
      reports state without accepting a click, and a volume slider. Elapsed
@@ -452,7 +554,7 @@ export function ListeningHeaderPlayer({
             holds its line whether or not there is anything to announce, so the
             paper below does not shift when the message changes. */}
         <p className="lc-audio-status" role="status">
-          {statusText}
+          {audioError ? errorBanner : statusText}
           {showSkip && (
             <Button
               type="button"
@@ -483,6 +585,7 @@ export function ListeningHeaderPlayer({
         onLoadedMetadata={handleDurationChange}
         onDurationChange={handleDurationChange}
         onEnded={handleEnded}
+        onError={handleAudioError}
         onPlay={() => {
           setPhase("playing");
           onAudioLockChange?.(true);
@@ -492,7 +595,9 @@ export function ListeningHeaderPlayer({
         {/* Status indicator */}
         <div className="lca-listening-status">
           <span className={`lca-listening-pulse${phase === "playing" ? " is-active" : ""}`} />
-          {statusText && <span className="lca-listening-status-text" role="status">{statusText}</span>}
+          {audioError
+            ? errorBanner
+            : (statusText && <span className="lca-listening-status-text" role="status">{statusText}</span>)}
         </div>
 
         {/* Locked progress bar */}
