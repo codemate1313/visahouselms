@@ -8,6 +8,8 @@ interface LcPartPagerProps {
   onRequestSubmit: () => void;
   isNavigationLocked?: boolean;
   submitting?: boolean;
+  previousPartIndex?: number | null;
+  nextPartIndex?: number | null;
 }
 
 /**
@@ -25,21 +27,31 @@ export function LcPartPager({
   onRequestSubmit,
   isNavigationLocked = false,
   submitting = false,
+  previousPartIndex,
+  nextPartIndex,
 }: LcPartPagerProps) {
   const t = strings.header;
-  const hasPrevious = partIndex > 0;
-  const hasNext = partIndex < partCount - 1;
+  const hasPrevious = previousPartIndex !== undefined
+    ? previousPartIndex !== null
+    : partIndex > 0;
+  const previousTarget = previousPartIndex !== undefined ? previousPartIndex : partIndex - 1;
+
+  const hasNext = nextPartIndex !== undefined
+    ? nextPartIndex !== null
+    : partIndex < partCount - 1;
+  const nextTarget = nextPartIndex !== undefined ? nextPartIndex : partIndex + 1;
+
   if (partCount <= 0) return null;
 
   return (
     <div className="lc-pager" aria-label={t.partNavigationAriaLabel}>
-      {hasPrevious && (
+      {hasPrevious && previousTarget !== null && (
         <Button
           type="button"
           variant="secondary"
           className="lc-pager-button"
           disabled={isNavigationLocked}
-          onClick={() => onSelectPart(partIndex - 1)}
+          onClick={() => onSelectPart(previousTarget)}
           title={isNavigationLocked ? t.navigationLocked : undefined}
         >
           {t.previous}
@@ -50,8 +62,8 @@ export function LcPartPager({
         className="lc-pager-button"
         disabled={isNavigationLocked || submitting}
         onClick={() => {
-          if (hasNext) {
-            onSelectPart(partIndex + 1);
+          if (hasNext && nextTarget !== null) {
+            onSelectPart(nextTarget);
           } else {
             onRequestSubmit();
           }

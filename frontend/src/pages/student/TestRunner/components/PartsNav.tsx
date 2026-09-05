@@ -20,6 +20,8 @@ interface PartsNavProps {
   isNavigationLocked?: boolean;
   /** Final Test only: the PeopleCert section rail replaces the standard nav. */
   languageCertSkin?: boolean;
+  /** Callback to determine if a part belongs to an already completed/sealed section */
+  isPartLocked?: (index: number, part: Attempt["parts"][number]) => boolean;
 }
 
 export function formatPartTitle(title: string) {
@@ -38,6 +40,7 @@ export function PartsNav({
   onSelectPart,
   isNavigationLocked = false,
   languageCertSkin = false,
+  isPartLocked,
 }: PartsNavProps) {
   const t = strings.nav;
 
@@ -58,7 +61,8 @@ export function PartsNav({
                    rides alongside it, and its own screen-reader-only text
                    says the word the icon can't. */
                 const isComplete = complete && index !== partIndex;
-                const locked = isNavigationLocked && index !== partIndex;
+                const isSectionLocked = Boolean(isPartLocked?.(index, part));
+                const locked = (isNavigationLocked || isSectionLocked) && index !== partIndex;
                 return (
                   /* The flag is a sibling of the tab rather than something
                      drawn on it, so it keeps its own column and the tabs stay
@@ -68,10 +72,10 @@ export function PartsNav({
                     <button
                       type="button"
                       disabled={locked}
-                      className={`lc-rail-tab${index === partIndex ? " is-active" : ""}${isComplete ? " is-complete" : ""}`}
-                      onClick={() => !isNavigationLocked && onSelectPart(index)}
+                      className={`lc-rail-tab${index === partIndex ? " is-active" : ""}${isComplete ? " is-complete" : ""}${locked ? " is-disabled" : ""}${isSectionLocked ? " is-locked" : ""}`}
+                      onClick={() => !locked && onSelectPart(index)}
                       aria-current={index === partIndex ? "step" : undefined}
-                      title={locked ? t.navigationLocked : undefined}
+                      title={isSectionLocked ? strings.submitModal.completedSectionLocked : locked ? t.navigationLocked : undefined}
                     >
                       <span className="lc-rail-tab-content">
                         {isComplete && <Icon name="check" className="lc-rail-tab-check" />}
@@ -96,15 +100,17 @@ export function PartsNav({
           <h2>{group.label}</h2>
           {group.parts.map(({ part, index }) => {
             const complete = part.question_count > 0 && part.answered_count === part.question_count;
+            const isSectionLocked = Boolean(isPartLocked?.(index, part));
+            const locked = (isNavigationLocked || isSectionLocked) && index !== partIndex;
             return (
               <button
                 type="button"
                 key={part.id}
-                disabled={isNavigationLocked && index !== partIndex}
-                className={`test-runner-part-tab${index === partIndex ? " is-active" : ""}${complete ? " is-complete" : ""}${isNavigationLocked && index !== partIndex ? " is-disabled" : ""}`}
-                onClick={() => !isNavigationLocked && onSelectPart(index)}
+                disabled={locked}
+                className={`test-runner-part-tab${index === partIndex ? " is-active" : ""}${complete ? " is-complete" : ""}${locked ? " is-disabled" : ""}${isSectionLocked ? " is-locked" : ""}`}
+                onClick={() => !locked && onSelectPart(index)}
                 aria-current={index === partIndex ? "step" : undefined}
-                title={isNavigationLocked && index !== partIndex ? strings.nav.navigationLocked : undefined}
+                title={isSectionLocked ? strings.submitModal.completedSectionLocked : locked ? strings.nav.navigationLocked : undefined}
               >
                 <span>{formatPartTitle(part.title)}</span>
               </button>

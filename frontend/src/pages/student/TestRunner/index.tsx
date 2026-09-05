@@ -43,6 +43,7 @@ import { SourcePane } from "./components/SourcePane";
 import { QuestionPane } from "./components/QuestionPane";
 import { TestRunnerFooter } from "./components/TestRunnerFooter";
 import { SubmitConfirmModal } from "./components/SubmitConfirmModal";
+import { Button } from "@/components/ui/Button/Button";
 import { FullscreenGate } from "./components/FullscreenGate";
 import { DesktopRequiredNotice } from "./components/DesktopRequiredNotice";
 import { ViolationPolicyModal } from "./components/ViolationPolicyModal";
@@ -78,6 +79,13 @@ const FINAL_TEST_CLOSED_ERROR = "This Final Test can no longer be resumed";
    browser tab changes; anything inside this window is the same departure. */
 const LEFT_EXAM_FLAG_WINDOW_MS = 1500;
 
+export const COMPOSITE_SECTION_ORDER: Record<string, number> = {
+  listening: 0,
+  reading: 1,
+  writing: 2,
+  speaking: 3,
+};
+
 /** Where a candidate resumes when the part they are pointed at is a speaking
     part. Speaking is sat in order, so any speaking target - a saved index, a
     hand-edited `?part=` - resolves to the first speaking part still owed a
@@ -93,14 +101,31 @@ function speakingEntryIndex(parts: Attempt["parts"], candidateIndex: number): nu
   return firstUnfinished >= 0 ? firstUnfinished : candidateIndex;
 }
 
-function resumeEntryIndex(parts: Attempt["parts"], resumePartId: number | null | undefined, fallbackIndex: number): number {
+function resumeEntryIndex(
+  parts: Attempt["parts"],
+  resumePartId: number | null | undefined,
+  fallbackIndex: number,
+  minSectionOrder = 0,
+): number {
   const serverIndex = resumePartId ? parts.findIndex((part) => part.id === resumePartId) : -1;
-  if (serverIndex >= 0) return serverIndex;
+  if (serverIndex >= 0) {
+    const sOrder = COMPOSITE_SECTION_ORDER[parts[serverIndex]?.section_type] ?? 0;
+    if (sOrder >= minSectionOrder) return serverIndex;
+  }
   const firstIncomplete = parts.findIndex(
-    (part) => part.question_count > 0 && part.answered_count < part.question_count,
+    (part) =>
+      part.question_count > 0
+      && part.answered_count < part.question_count
+      && (COMPOSITE_SECTION_ORDER[part.section_type] ?? 0) >= minSectionOrder,
   );
   if (firstIncomplete >= 0) return firstIncomplete;
-  return Math.min(Math.max(fallbackIndex, 0), Math.max(parts.length - 1, 0));
+  const clampedFallback = Math.min(Math.max(fallbackIndex, 0), Math.max(parts.length - 1, 0));
+  const fallbackOrder = COMPOSITE_SECTION_ORDER[parts[clampedFallback]?.section_type] ?? 0;
+  if (fallbackOrder >= minSectionOrder) return clampedFallback;
+  const firstEligible = parts.findIndex(
+    (part) => (COMPOSITE_SECTION_ORDER[part.section_type] ?? 0) >= minSectionOrder,
+  );
+  return firstEligible >= 0 ? firstEligible : clampedFallback;
 }
 
 export function TestRunner() {
@@ -151,6 +176,8 @@ export function TestRunner() {
   const [submitting, setSubmitting] = useState(false);
   const [sealingSpeakingPhase, setSealingSpeakingPhase] = useState(false);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [confirmWriting, setConfirmWriting] = useState(false);
+  const [pendingWritingIndex, setPendingWritingIndex] = useState<number | null>(null);
   const [isListeningLocked, setIsListeningLocked] = useState(false);
   const [isListeningHandoverLocked, setIsListeningHandoverLocked] = useState(false);
   const hasSpeakingPart = attempt?.parts.some((part) => part.section_type === "speaking") ?? false;
@@ -266,13 +293,14 @@ export function TestRunner() {
   const activeHeartbeatPartId = attempt?.parts[partIndex]?.id ?? null;
   const currentPart = attempt?.parts[partIndex];
   const isListeningPart = currentPart?.section_type === "listening";
+  const isCompositeAttempt = Boolean(
+    attempt && isSplitCompositeModule(attempt.module_type),
+  );
   const isSplitCompositeAttempt = Boolean(
-    attempt
-      && isSplitCompositeModule(attempt.module_type)
-      && attempt.parts.some((part) => part.section_type === "speaking"),
+    isCompositeAttempt && attempt?.parts.some((part) => part.section_type === "speaking"),
   );
   const isListeningSectionIncomplete = Boolean(
-    isSplitCompositeAttempt
+    isCompositeAttempt
       && isListeningPart
       && attempt?.parts.some(
         (part) => part.section_type === "listening"
@@ -287,6 +315,14 @@ export function TestRunner() {
      - so every navigation control is locked for its duration. */
   const isSpeakingPart = currentPart?.section_type === "speaking";
   const isNavigationLocked = isListeningLocked || isListeningHandoverLocked || isListeningSectionIncomplete || isSpeakingPart;
+  const isPartLocked = useCallback((_index: number, part: Attempt["parts"][number]) => {
+    if (!isCompositeAttempt || !currentPart) return false;
+    const targetOrder = COMPOSITE_SECTION_ORDER[part.section_type] ?? 0;
+    const currentOrder = COMPOSITE_SECTION_ORDER[currentPart.section_type] ?? 0;
+    if (targetOrder < currentOrder) return true;
+    if (currentOrder === 0 && targetOrder > 1) return true;
+    return false;
+  }, [isCompositeAttempt, currentPart]);
   const currentPartRef = useRef(currentPart);
   useEffect(() => {
     currentPartRef.current = currentPart;
@@ -370,11 +406,19 @@ export function TestRunner() {
           .every((part) => part.question_count === 0 || part.answered_count >= part.question_count);
         const requestedSpeaking = data.parts[restoredIndex]?.section_type === "speaking";
         const firstSpeakingIndex = data.parts.findIndex((part) => part.section_type === "speaking");
+        const listeningCompleted = localStorage.getItem(`vh:listening:all_completed:${id}`) === "true";
+        const readingCompleted = localStorage.getItem(`vh:reading:all_completed:${id}`) === "true";
+        const candidateSectionOrder = COMPOSITE_SECTION_ORDER[data.parts[restoredIndex]?.section_type] ?? 0;
+        const minOrder = readingCompleted || candidateSectionOrder >= 2
+          ? 2
+          : listeningCompleted || candidateSectionOrder >= 1
+            ? 1
+            : 0;
         const phaseIndex = splitComposite && speakingStarted && firstSpeakingIndex >= 0
           ? firstSpeakingIndex
           : splitComposite && requestedSpeaking && !mainPaperComplete
-            ? 0
-            : resumeEntryIndex(data.parts, data.resume_part_id, restoredIndex);
+            ? (minOrder >= 1 ? (data.parts.findIndex((p) => (COMPOSITE_SECTION_ORDER[p.section_type] ?? 0) >= minOrder) || 0) : 0)
+            : resumeEntryIndex(data.parts, data.resume_part_id, restoredIndex, isSplitCompositeModule(data.module_type) ? minOrder : 0);
         const resolvedPartIndex = speakingEntryIndex(data.parts, phaseIndex);
         setPartIndex(resolvedPartIndex);
 
@@ -647,7 +691,10 @@ export function TestRunner() {
     if (attempt?.id && isReadingOrWriting) {
       localStorage.setItem(`vh:listening:all_completed:${attempt.id}`, "true");
     }
-  }, [attempt?.id, isReadingOrWriting]);
+    if (attempt?.id && currentPart?.section_type === "writing") {
+      localStorage.setItem(`vh:reading:all_completed:${attempt.id}`, "true");
+    }
+  }, [attempt?.id, isReadingOrWriting, currentPart?.section_type]);
 
   /* Armed off `securityAuthorized` rather than from inside `startSecureSession`,
      because a resumed attempt comes back already authorised from the server and
@@ -1554,7 +1601,16 @@ export function TestRunner() {
   async function selectPart(index: number, force = false) {
     if (isNavigationLocked && !force && index !== partIndex) return;
     const selectedPart = attempt?.parts[index];
-    if (isSplitCompositeAttempt && selectedPart && currentPart) {
+    if (isCompositeAttempt && selectedPart && currentPart) {
+      const targetOrder = COMPOSITE_SECTION_ORDER[selectedPart.section_type] ?? 0;
+      const currentOrder = COMPOSITE_SECTION_ORDER[currentPart.section_type] ?? 0;
+      if (targetOrder < currentOrder && !force) return;
+      if (currentOrder === 0 && targetOrder > 1 && !force) return;
+      if (currentPart.section_type === "reading" && selectedPart.section_type === "writing" && !force) {
+        setPendingWritingIndex(index);
+        setConfirmWriting(true);
+        return;
+      }
       const targetIsSpeaking = selectedPart.section_type === "speaking";
       if (isSpeakingPhase && !targetIsSpeaking) return;
       if (!isSpeakingPhase && targetIsSpeaking && !force) return;
@@ -1979,7 +2035,17 @@ export function TestRunner() {
   const speakingParts = attempt.parts.filter((part) => part.section_type === "speaking");
   const speakingPartNumber = speakingParts.findIndex((part) => part.id === currentPart.id) + 1;
   const phasePartPosition = phasePartEntries.findIndex(({ index }) => index === partIndex);
-  const previousPhasePartIndex = phasePartPosition > 0 ? phasePartEntries[phasePartPosition - 1]?.index ?? null : null;
+  const previousPhaseEntry = phasePartPosition > 0 ? phasePartEntries[phasePartPosition - 1] : null;
+  const isPreviousInEarlierSection = Boolean(
+    isCompositeAttempt
+      && previousPhaseEntry
+      && currentPart
+      && (COMPOSITE_SECTION_ORDER[previousPhaseEntry.part.section_type] ?? 0)
+        < (COMPOSITE_SECTION_ORDER[currentPart.section_type] ?? 0),
+  );
+  const previousPhasePartIndex = phasePartPosition > 0 && !isPreviousInEarlierSection
+    ? previousPhaseEntry?.index ?? null
+    : null;
   const nextPhasePartIndex = phasePartPosition >= 0 && phasePartPosition < phasePartEntries.length - 1
     ? phasePartEntries[phasePartPosition + 1]?.index ?? null
     : null;
@@ -2030,6 +2096,7 @@ export function TestRunner() {
             onSelectPart={selectPart}
             isNavigationLocked={isNavigationLocked}
             languageCertSkin={languageCertSkin}
+            isPartLocked={isPartLocked}
           />
         )}
 
@@ -2054,6 +2121,8 @@ export function TestRunner() {
             <LcPartPager
               partIndex={phasePartPosition}
               partCount={phasePartEntries.length}
+              previousPartIndex={previousPhasePartIndex !== null ? phasePartPosition - 1 : null}
+              nextPartIndex={nextPhasePartIndex !== null ? phasePartPosition + 1 : null}
               onSelectPart={(index) => {
                 const target = phasePartEntries[index];
                 if (target) void selectPart(target.index);
@@ -2147,6 +2216,51 @@ export function TestRunner() {
           continueToSpeaking={isSplitCompositeAttempt && !isSpeakingPhase}
           onDeferSpeaking={isSplitCompositeAttempt && !isSpeakingPhase ? deferSpeakingPhase : undefined}
         />
+      )}
+
+      {confirmWriting && (
+        <div className="modal-backdrop" onClick={() => setConfirmWriting(false)}>
+          <div className="modal-card speaking-choice-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>{strings.submitModal.writingHeading}</h2>
+            <p>
+              {(() => {
+                const readingParts = attempt?.parts.filter((p) => p.section_type === "reading") ?? [];
+                const readingAnswered = readingParts.reduce((sum, p) => sum + p.answered_count, 0);
+                const readingTotal = readingParts.reduce((sum, p) => sum + p.question_count, 0);
+                return readingTotal > 0
+                  ? `${strings.submitModal.summary(readingAnswered, readingTotal)} ${strings.submitModal.writingWarning}`
+                  : strings.submitModal.writingWarning;
+              })()}
+            </p>
+            <div className="form-actions">
+              <Button
+                variant="secondary"
+                className="secondary-button"
+                onClick={() => {
+                  setConfirmWriting(false);
+                  setPendingWritingIndex(null);
+                }}
+              >
+                {strings.submitModal.reviewReading}
+              </Button>
+              <Button
+                onClick={() => {
+                  const target = pendingWritingIndex;
+                  setConfirmWriting(false);
+                  setPendingWritingIndex(null);
+                  if (attempt?.id) {
+                    localStorage.setItem(`vh:reading:all_completed:${attempt.id}`, "true");
+                  }
+                  if (target !== null) {
+                    void selectPart(target, true);
+                  }
+                }}
+              >
+                {strings.submitModal.startWritingNow}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {violationModal}
