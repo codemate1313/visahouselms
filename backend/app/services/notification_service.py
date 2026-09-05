@@ -137,9 +137,14 @@ def create_notification(
     link_url: Optional[str] = None,
     attempt_id: Optional[int] = None,
     push: bool = True,
+    dedupe: bool = True,
 ) -> StudentNotification:
     """Generic in-app notification creator for producers outside grading/announcements
-    (e.g. support tickets). Also attempts a best-effort push to the same user."""
+    (e.g. support tickets). Also attempts a best-effort push to the same user.
+
+    `dedupe` is for the events that can legitimately happen twice on one
+    attempt - a retake refused, requested again, then approved - where the
+    one-per-attempt rule would swallow the second decision entirely."""
     # A developer's actions notify no one. This is the single choke point every
     # in-app notification passes through - notify_roles and notify_users both
     # land here, as do the direct callers - so guarding it once keeps the
@@ -156,7 +161,7 @@ def create_notification(
             link_url=link_url,
             created_at=_now(),
         )
-    if attempt_id is not None:
+    if attempt_id is not None and dedupe:
         # One notification of a kind per attempt per person. The recipient has
         # to be part of the match: without it the first grader to be notified
         # about a submission would silently swallow everyone else's copy, so
@@ -418,21 +423,70 @@ def notify_retake_requested(db: Session, request: RetakeRequest) -> None:
     )
 
 
+def send_retake_resolved_email(db: Session, request: RetakeRequest) -> None:
+    """Best-effort decision email for a reviewed retake request.
+
+    The in-app notification only reaches a candidate who happens to open the
+    portal; an approved retake that nobody looks at expires unused, so the
+    decision is mailed as well.
+    """
+    student = request.student
+    if not student or not student.email:
+        return
+    try:
+        from app.config import settings
+        from app.services import email_template_service
+
+        approved = request.status == "approved"
+        base = settings.frontend_url.rstrip("/")
+        action_url = (
+            f"{base}/student/my-courses"
+            if approved
+            else f"{base}/student/attempts/{request.attempt_id}/result/details"
+        )
+        subject, plain, html = email_template_service.render_retake_decision_email(
+            student.first_name or "there",
+            request.attempt.module.title,
+            approved,
+            (request.review_note or "").strip() or None,
+            action_url,
+        )
+        send_notification_email(db, student.email, subject, plain, html_body=html, user_id=student.id)
+    except Exception:
+        logger.exception("Failed to send retake decision email for request %s", request.id)
+
+
 def notify_retake_resolved(db: Session, request: RetakeRequest) -> None:
     attempt = request.attempt
+    approved = request.status == "approved"
     create_notification(
         db,
         user_id=request.student_id,
         kind=RETAKE_RESOLVED,
-        title=f"Retake request {request.status}: {attempt.module.title}",
-        message=(
-            "Your retake has been approved - you can start a new attempt from the module."
-            if request.status == "approved"
-            else "Your retake request was not approved."
+        title=(
+            f"Retake approved: {attempt.module.title}"
+            if approved
+            else f"Retake request not approved: {attempt.module.title}"
         ),
-        link_url=f"/student/attempts/{attempt.id}/result/details",
+        message=(
+            # Point an approved candidate at the screen that can actually start
+            # the retake, not back at the result they already have.
+            f"Your retake request for {attempt.module.title} has been approved. "
+            "Open My Tests to start your new attempt."
+            if approved
+            else f"Your retake request for {attempt.module.title} was not approved."
+        ),
+        link_url=(
+            "/student/my-courses"
+            if approved
+            else f"/student/attempts/{attempt.id}/result/details"
+        ),
         attempt_id=attempt.id,
+        # A refused request can be raised again on the same attempt and approved
+        # the second time round - both decisions have to reach the candidate.
+        dedupe=False,
     )
+    send_retake_resolved_email(db, request)
 
 
 def notify_system_job_failed(db: Session, job_type: str, detail: str) -> None:

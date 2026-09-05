@@ -4,6 +4,7 @@ import { apiClient } from "@/api/client";
 import type { AttemptSummary } from "@/api/types";
 import { Badge, PageHeader, SearchableSelect } from "@/components/ui";
 import { Button } from "@/components/ui/Button/Button";
+import { Icon } from "@/components/icons";
 import { RouteLoadingState } from "@/components/RouteLoadingState";
 import { formatDateTime } from "@/utils/date";
 import { studentAttemptsStrings as strings } from "./StudentAttempts.strings";
@@ -178,14 +179,18 @@ export function StudentAttempts() {
               to={attemptTargetUrl(attempt)}
               style={{ textDecoration: "none" }}
             >
-              <Button variant="outline" size="sm">{strings.resumeTest}</Button>
+              <Button variant="outline" size="sm" rightIcon={<Icon name="arrowRight" />}>
+                {strings.resumeTest}
+              </Button>
             </Link>
           ) : (
             <Link
               to={`/student/attempts/${attempt.id}/result`}
               style={{ textDecoration: "none" }}
             >
-              <Button variant="outline" size="sm">{strings.viewResult}</Button>
+              <Button variant="outline" size="sm" rightIcon={<Icon name="arrowRight" />}>
+                {strings.viewResult}
+              </Button>
             </Link>
           )}
         </td>

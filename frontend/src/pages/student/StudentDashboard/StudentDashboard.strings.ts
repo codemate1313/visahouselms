@@ -11,6 +11,15 @@ export const studentDashboardStrings = {
     resume: "Continue test",
     startSpeaking: "Start Speaking",
   },
+  retakes: {
+    eyebrow: "Approved retakes",
+    heading: (count: number) =>
+      count === 1 ? "1 test you can attempt again" : `${count} tests you can attempt again`,
+    subtitle: "Your retake request was approved. These tests are open for a fresh attempt.",
+    badge: "Retake approved",
+    rowNote: "A new sitting has been unlocked for you",
+    action: "Start retake",
+  },
   loadError: "Failed to load your dashboard.",
   loading: "Loading...",
   eyebrow: "Student Dashboard",

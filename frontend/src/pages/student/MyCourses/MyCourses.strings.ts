@@ -57,6 +57,7 @@ export const myCoursesStrings = {
     exhaustedChip: "Attempt Exhausted",
     attemptedChip: "Attempt Completed",
     retakeAvailableChip: "Retake Approved",
+    retakeAvailableTooltip: "Your retake request was approved - you can sit this test again.",
     exhaustedBtn: "Attempt Exhausted",
     viewResultBtn: "View Result",
     startRetakeBtn: "Start Retake",

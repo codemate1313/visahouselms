@@ -9,6 +9,7 @@
   font-weight: 600;
   white-space: nowrap;
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.05s, color 0.15s;
+  text-decoration: none !important;
 }
 
 .ui-btn:active:not(:disabled) {
@@ -145,20 +146,24 @@ button.ui-btn-text:hover:not(:disabled) {
 
 .ui-btn-ghost,
 button.ui-btn-ghost,
+a.ui-btn-ghost,
 .ui-btn-outline,
-button.ui-btn-outline {
+button.ui-btn-outline,
+a.ui-btn-outline {
   background: transparent;
-  color: var(--text) !important;
+  color: var(--text);
   border: 1px solid var(--border);
   box-shadow: none;
 }
 
 .ui-btn-ghost:hover:not(:disabled),
 button.ui-btn-ghost:hover:not(:disabled),
+a.ui-btn-ghost:hover:not(:disabled),
 .ui-btn-outline:hover:not(:disabled),
-button.ui-btn-outline:hover:not(:disabled) {
+button.ui-btn-outline:hover:not(:disabled),
+a.ui-btn-outline:hover:not(:disabled) {
   background: var(--surface-muted);
-  color: var(--text) !important;
+  color: var(--text);
   border-color: var(--border-hover, #a1a1aa);
 }
 
@@ -224,16 +229,25 @@ button.ui-btn-outline:hover:not(:disabled) {
 }
 
 [data-theme="dark"] .ui-btn-ghost,
-[data-theme="dark"] .ui-btn-outline {
-  color: #e4e4e7;
-  border-color: rgba(255, 255, 255, 0.14);
+[data-theme="dark"] button.ui-btn-ghost,
+[data-theme="dark"] a.ui-btn-ghost,
+[data-theme="dark"] .ui-btn-outline,
+[data-theme="dark"] button.ui-btn-outline,
+[data-theme="dark"] a.ui-btn-outline {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 [data-theme="dark"] .ui-btn-ghost:hover:not(:disabled),
-[data-theme="dark"] .ui-btn-outline:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  color: #f7f7f8 !important;
-  border-color: rgba(255, 255, 255, 0.24);
+[data-theme="dark"] button.ui-btn-ghost:hover:not(:disabled),
+[data-theme="dark"] a.ui-btn-ghost:hover:not(:disabled),
+[data-theme="dark"] .ui-btn-outline:hover:not(:disabled),
+[data-theme="dark"] button.ui-btn-outline:hover:not(:disabled),
+[data-theme="dark"] a.ui-btn-outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
 [data-theme="dark"] .ui-btn-primary:disabled,

@@ -15,6 +15,7 @@ import { RecentActivityPanel } from "./components/RecentActivityPanel";
 import type { TestProgressItem } from "./types";
 import { DailyEnglishChallenge } from "./components/DailyEnglishChallenge";
 import { UnfinishedTestsPanel } from "./components/UnfinishedTestsPanel";
+import { RetakeAvailablePanel } from "./components/RetakeAvailablePanel";
 
 export function StudentDashboard() {
   const user = useAuthStore((state) => state.user);
@@ -96,6 +97,8 @@ export function StudentDashboard() {
       </div>
 
       <UnfinishedTestsPanel attempts={attempts} />
+
+      <RetakeAvailablePanel modules={assignedModules} />
 
       <StatCardsGrid stats={statCards} />
 

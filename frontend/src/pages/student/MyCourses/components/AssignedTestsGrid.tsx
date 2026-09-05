@@ -66,9 +66,9 @@ export function AssignedTestsGrid({ modules, starting, onStartModule }: Assigned
                   <span>Completed</span>
                 </span>
               ) : retakeAvailable ? (
-                <span className="premium-status-badge is-retake">
+                <span className="premium-status-badge is-retake" title={strings.attemptStatus.retakeAvailableTooltip}>
                   <span className="badge-dot" />
-                  <span>Retake Ready</span>
+                  <span>{strings.attemptStatus.retakeAvailableChip}</span>
                 </span>
               ) : isDemo && !isLocked ? (
                 <span className="premium-status-badge is-demo" title={strings.demo.chipTooltip}>

@@ -6083,12 +6083,155 @@ button.danger-text:hover,
 .sd-unfinished-action {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
   white-space: nowrap;
+  text-decoration: none !important;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--institute-primary, var(--primary, #0b2388));
+  color: #ffffff !important;
+  border: 1px solid transparent;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--institute-primary, var(--primary, #0b2388)) 25%, transparent);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sd-unfinished-action:hover {
+  text-decoration: none !important;
+  color: #ffffff !important;
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px color-mix(in srgb, var(--institute-primary, var(--primary, #0b2388)) 35%, transparent);
+}
+
+.sd-unfinished-action .sd-unfinished-action-icon {
+  width: 15px;
+  height: 15px;
+  transition: transform 0.2s ease;
+}
+
+.sd-unfinished-action:hover .sd-unfinished-action-icon {
+  transform: translateX(3px);
+}
+
+/* Dark mode polish for unfinished tests action button */
+[data-theme="dark"] .sd-unfinished-action {
+  background: var(--institute-primary, var(--primary, #2563eb));
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), 0 0 12px color-mix(in srgb, var(--institute-primary, var(--primary, #2563eb)) 30%, transparent);
+  text-decoration: none !important;
+}
+
+[data-theme="dark"] .sd-unfinished-action:hover {
+  background: color-mix(in srgb, var(--institute-primary, var(--primary, #2563eb)) 90%, #ffffff);
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--institute-primary, var(--primary, #2563eb)) 45%, transparent);
+  text-decoration: none !important;
 }
 
 @media (max-width: 640px) {
   .sd-unfinished-action {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   Student dashboard - approved retakes
+   --------------------------------------------------------------------------
+   Sits directly under the unfinished tests: an approved retake is an opened
+   door the candidate has not walked through yet. Green rather than the primary
+   accent, so it reads as "granted" next to the urgency above it, and it
+   vanishes when nothing is approved and unused.
+   ========================================================================== */
+
+.sd-retake-panel {
+  border-left: 3px solid var(--success, #16a34a);
+}
+
+.sd-retake-list {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sd-retake-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--success, #16a34a) 28%, var(--border));
+  border-radius: var(--radius-sm, 10px);
+  background: color-mix(in srgb, var(--success, #16a34a) 6%, var(--surface-muted));
+}
+
+.sd-retake-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.sd-retake-copy strong {
+  font-size: 14.5px;
+  color: var(--text);
+}
+
+.sd-retake-copy span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.sd-retake-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  text-decoration: none !important;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--success, #16a34a);
+  color: #ffffff !important;
+  border: 1px solid transparent;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--success, #16a34a) 25%, transparent);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sd-retake-action:hover {
+  text-decoration: none !important;
+  color: #ffffff !important;
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px color-mix(in srgb, var(--success, #16a34a) 35%, transparent);
+}
+
+/* --success is a light mint in dark mode, which white text cannot sit on -
+   the button keeps its own deeper green so the label stays readable. */
+[data-theme="dark"] .sd-retake-action {
+  background: #15803d;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3), 0 0 12px rgba(21, 128, 61, 0.35);
+}
+
+[data-theme="dark"] .sd-retake-action:hover {
+  background: #16a34a;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.45);
+}
+
+@media (max-width: 640px) {
+  .sd-retake-action {
     flex: 1 1 100%;
     justify-content: center;
   }

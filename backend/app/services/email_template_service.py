@@ -821,3 +821,107 @@ The Visa House Team
     return subject, plain, html
 
 
+
+
+def render_retake_decision_email(
+    first_name: str,
+    module_title: str,
+    approved: bool,
+    review_note: str | None,
+    action_url: str,
+) -> tuple[str, str, str]:
+    """Returns (subject, plain_text, html_content) for a reviewed retake request.
+
+    The approval mail is the only place a candidate is told the second sitting
+    is theirs without having to open the portal and look, so it names the test
+    and links straight at My Tests where the retake is started.
+    """
+    note_plain = f"\nReviewer note: {review_note}\n" if review_note else ""
+    note_html = (
+        f"""
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin: 16px 0 20px 0;">
+          <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 700; color: #64748b; letter-spacing: 0.06em; text-transform: uppercase;">
+            Reviewer note
+          </p>
+          <p style="margin: 0; font-size: 14px; color: #334155; line-height: 1.6;">{review_note}</p>
+        </div>
+        """
+        if review_note
+        else ""
+    )
+
+    if approved:
+        subject = f"Retake approved: {module_title}"
+        plain = f"""Hi {first_name},
+
+Good news - your retake request for "{module_title}" has been approved.
+
+A fresh attempt is now waiting for you. Open My Tests in your student portal and the test will show a "Retake Approved" tag with a Start Retake button.
+{note_plain}
+Start your retake here:
+{action_url}
+
+Warm regards,
+The Visa House Team
+"""
+        content_html = f"""
+        <p style="margin-top: 0; font-size: 15px; color: #334155; line-height: 1.6;">
+          Hi <strong style="color: #0f172a;">{first_name}</strong>,
+        </p>
+        <p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 16px 0;">
+          Good news - your retake request for <strong style="color: #0f172a;">{module_title}</strong> has been approved.
+        </p>
+        <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 18px; margin: 16px 0 20px 0;">
+          <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #065f46;">
+            What happens next:
+          </p>
+          <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #064e3b; line-height: 1.6;">
+            <li>A fresh attempt has been unlocked on your account.</li>
+            <li>Open <strong>My Tests</strong> - the test now shows a <strong>Retake Approved</strong> tag.</li>
+            <li>Press <strong>Start Retake</strong> when you are ready to sit it again.</li>
+          </ul>
+        </div>
+        {note_html}
+        """
+        html = render_base_email(
+            badge_label="RETAKE APPROVED",
+            title="Your retake has been approved",
+            subtitle=f"A second sitting of {module_title} is now available to you.",
+            content_html=content_html,
+            action_url=action_url,
+            action_text="Start Your Retake",
+            badge_color="#059669",
+        )
+    else:
+        subject = f"Retake request update: {module_title}"
+        plain = f"""Hi {first_name},
+
+Your retake request for "{module_title}" has been reviewed and was not approved on this occasion.
+{note_plain}
+Your existing result and feedback remain available in your student portal. If you would like this reconsidered, please contact your institute administrator or our support team.
+
+Warm regards,
+The Visa House Team
+"""
+        content_html = f"""
+        <p style="margin-top: 0; font-size: 15px; color: #334155; line-height: 1.6;">
+          Hi <strong style="color: #0f172a;">{first_name}</strong>,
+        </p>
+        <p style="font-size: 15px; color: #334155; line-height: 1.7; margin: 0 0 16px 0;">
+          Your retake request for <strong style="color: #0f172a;">{module_title}</strong> has been reviewed, and it was not approved on this occasion.
+        </p>
+        {note_html}
+        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin: 0;">
+          Your existing result and examiner feedback remain available in your portal. If you would like this reconsidered, please contact your institute administrator or our support team.
+        </p>
+        """
+        html = render_base_email(
+            badge_label="RETAKE REVIEWED",
+            title="Retake request not approved",
+            subtitle="Your request has been reviewed by the assessment team.",
+            content_html=content_html,
+            action_url=action_url,
+            action_text="View Your Result",
+            badge_color="#b91c2b",
+        )
+    return subject, plain, html

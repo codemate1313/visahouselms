@@ -48,9 +48,9 @@ export function UnfinishedTestsPanel({ attempts }: { attempts: AttemptSummary[] 
               <Badge tone={speakingLeft ? "amber" : "info"}>
                 {speakingLeft ? t.speakingBadge : t.resumeBadge}
               </Badge>
-              <Link className="ui-btn ui-btn-primary sd-unfinished-action" to={attemptTargetUrl(attempt)}>
-                {speakingLeft ? t.startSpeaking : t.resume}
-                <Icon name="arrowRight" />
+              <Link className="ui-btn ui-btn-primary ui-btn-sm sd-unfinished-action" to={attemptTargetUrl(attempt)}>
+                <span>{speakingLeft ? t.startSpeaking : t.resume}</span>
+                <Icon name="arrowRight" className="sd-unfinished-action-icon" />
               </Link>
             </li>
           );
