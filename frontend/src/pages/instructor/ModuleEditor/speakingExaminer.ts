@@ -11,7 +11,7 @@ export const DEFAULT_EXAMINER_ID = "sonia";
 export const SONIA_EXAMINER: SpeakingExaminer = {
   id: DEFAULT_EXAMINER_ID,
   name: "Instructor",
-  title: "Senior Language CERT Speaking Examiner",
+  title: "Senior LanguageCert Speaking Examiner",
   gender: "female",
   accent: "British English",
 };

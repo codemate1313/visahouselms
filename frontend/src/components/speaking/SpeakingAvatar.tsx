@@ -50,7 +50,7 @@ interface PromptSegment {
 const SONIA: Examiner = {
   id: "sonia",
   name: "Instructor",
-  title: "Senior Language CERT Speaking Examiner",
+  title: "Senior LanguageCert Speaking Examiner",
   gender: "female",
   voice: "en-GB-SoniaNeural",
   accent: "British English",
@@ -376,7 +376,7 @@ export function SpeakingAvatar({
             ) : (
               <span className="examiner-status-badge">
                 <span className="status-dot-pulse" />
-                {inGap ? "Examiner Pausing..." : hasPlayedPrompt ? "Examiner Audio Played" : audioFullUrl ? "Click Avatar to Listen" : "Language CERT Examiner Ready"}
+                {inGap ? "Examiner Pausing..." : hasPlayedPrompt ? "Examiner Audio Played" : audioFullUrl ? "Click Avatar to Listen" : "LanguageCert Examiner Ready"}
               </span>
             )}
           </div>
@@ -422,7 +422,7 @@ export function SpeakingAvatar({
         {/* Examiner Information & Prompt Content */}
         <div className="avatar-info-panel">
           <div className="avatar-badge-row">
-            <span className="examiner-role-tag">Language CERT Live Examiner</span>
+            <span className="examiner-role-tag">LanguageCert Live Examiner</span>
 
             {isCandidateRecording ? (
               <span className="examiner-status-badge recording">
@@ -447,7 +447,7 @@ export function SpeakingAvatar({
           </div>
 
           <h3 className="examiner-name-title">
-            {examiner ? `${examiner.name} — ${examiner.title}` : "Language CERT Senior Examiner"}
+            {examiner ? `${examiner.name} — ${examiner.title}` : "LanguageCert Senior Examiner"}
           </h3>
 
           <p className="prompt-text-display">

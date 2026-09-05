@@ -96,7 +96,7 @@ export const paymentsStrings = {
     pageOf: (page: number, totalPages: number, total: number) => `Page ${page} of ${totalPages} (${total} total)`,
   },
   pdf: {
-    header: "Language CERT — Payment Transactions Report",
+    header: "LanguageCert — Payment Transactions Report",
     generatedPrefix: "Generated:",
     columns: ["#", "Invoice", "Source", "Institute / Plan", "Reference", "Amount Paid", "Due Amount", "Status", "Date"],
   },

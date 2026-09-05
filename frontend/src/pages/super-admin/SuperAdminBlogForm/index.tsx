@@ -54,7 +54,7 @@ export function SuperAdminBlogForm() {
       ...prev,
       title: newTitle,
       slug: prev.slug && isEdit ? prev.slug : generatedSlug,
-      meta_title: prev.meta_title ? prev.meta_title : `${newTitle} | Language CERT`,
+      meta_title: prev.meta_title ? prev.meta_title : `${newTitle} | LanguageCert`,
     }));
   }
 

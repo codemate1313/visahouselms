@@ -181,7 +181,7 @@ function routeMatches(pathname: string, matcher: PageMetaRoute["match"]): boolea
 function getPageMeta(pathname: string, user: any): PageMeta {
   const userGreetingName = getUserDisplayName(user);
   const route = namedPageRoutes.find((item) => routeMatches(pathname, item.match));
-  if (!route) return { eyebrow: "Language CERT", title: "Portal Workspace" };
+  if (!route) return { eyebrow: "LanguageCert", title: "Portal Workspace" };
   return {
     eyebrow: route.eyebrow,
     title: typeof route.title === "function" ? route.title(userGreetingName) : route.title,

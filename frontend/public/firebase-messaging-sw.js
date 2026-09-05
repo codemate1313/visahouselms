@@ -19,7 +19,7 @@ if (firebaseConfig.apiKey) {
   const messaging = firebase.messaging();
 
   messaging.onBackgroundMessage((payload) => {
-    const title = payload.notification?.title || "Language CERT";
+    const title = payload.notification?.title || "LanguageCert";
     const body = payload.notification?.body || "";
     const link = payload.fcmOptions?.link || payload.data?.link_url || "/";
     self.registration.showNotification(title, {

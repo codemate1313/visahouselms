@@ -11,11 +11,11 @@ class SEOSetting(Base):
     __tablename__ = "seo_settings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    site_name: Mapped[str] = mapped_column(String(255), default="Language CERT Pro")
-    default_title: Mapped[str] = mapped_column(String(255), default="Language CERT Pro | Computer-Delivered Exam Platform & AI Feedback")
-    title_template: Mapped[str] = mapped_column(String(255), default="%s | Language CERT Pro")
-    default_meta_description: Mapped[str] = mapped_column(Text, default="Experience authentic computer-delivered Language CERT environments. Powered by instant AI Speaking evaluation, automated Writing feedback, and real-time institute tracking.")
-    default_meta_keywords: Mapped[str] = mapped_column(Text, default="Language CERT, Language CERT Online Practice, AI Language CERT Evaluation, Computer Delivered Language CERT, Language CERT Mock Test, Language CERT Preparation Platform")
+    site_name: Mapped[str] = mapped_column(String(255), default="LanguageCert Pro")
+    default_title: Mapped[str] = mapped_column(String(255), default="LanguageCert Pro | Computer-Delivered Exam Platform & AI Feedback")
+    title_template: Mapped[str] = mapped_column(String(255), default="%s | LanguageCert Pro")
+    default_meta_description: Mapped[str] = mapped_column(Text, default="Experience authentic computer-delivered LanguageCert environments. Powered by instant AI Speaking evaluation, automated Writing feedback, and real-time institute tracking.")
+    default_meta_keywords: Mapped[str] = mapped_column(Text, default="LanguageCert, LanguageCert Online Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test, LanguageCert Preparation Platform")
     default_og_image: Mapped[Optional[str]] = mapped_column(String(500), nullable=True, default="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80")
     twitter_handle: Mapped[Optional[str]] = mapped_column(String(100), default="@languagecertpro")
     robots_txt: Mapped[Optional[str]] = mapped_column(Text, default="User-agent: *\nAllow: /")

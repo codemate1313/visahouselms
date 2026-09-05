@@ -6,7 +6,7 @@ export const invoiceStrings = {
   emailReceipt: "Email Receipt",
   recordPayment: "Record Payment",
   markAsPaid: "Mark Fully Paid",
-  companyName: "Visa House / Language CERT",
+  companyName: "Visa House / LanguageCert",
   companySubtitle: "Official SaaS Subscription Invoice & Tax Receipt",
   billedTo: "Billed To",
   directCustomer: "Direct Customer",

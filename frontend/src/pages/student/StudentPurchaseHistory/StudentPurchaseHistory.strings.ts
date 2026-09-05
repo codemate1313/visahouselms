@@ -51,7 +51,7 @@ export const studentPurchaseHistoryStrings = {
   invoiceModal: {
     title: "Tax Invoice & Official Receipt",
     issuedBy: "Issued By",
-    companyName: "Visa House Language CERT",
+    companyName: "Visa House LanguageCert",
     companyTagline: "Official Direct Student Subscription Receipt",
     billedTo: "Billed To",
     invoiceNo: "Invoice Number",

@@ -130,17 +130,18 @@ export function SuperAdminSEOSettings() {
               rows={3}
               value={formData.default_meta_description}
               onChange={(e) => setFormData({ ...formData, default_meta_description: e.target.value })}
-              placeholder="e.g. Experience authentic computer-delivered Language CERT environments with AI Speaking & Writing scoring."
+              placeholder="e.g. Experience authentic computer-delivered LanguageCert environments with AI Speaking & Writing scoring."
             />
           </div>
 
-          <div style={{ marginTop: 16 }}>
-            <label>{strings.fields.metaKeywords}</label>
-            <textarea
-              rows={2}
+          <div className="form-group">
+            <label htmlFor="meta_keywords">{strings.fields.metaKeywords}</label>
+            <input
+              id="meta_keywords"
+              type="text"
               value={formData.default_meta_keywords}
-              onChange={(e) => setFormData({ ...formData, default_meta_keywords: e.target.value })}
-              placeholder="e.g. Visa House, Language CERT Practice, AI Language CERT Evaluation, Computer Delivered Language CERT"
+              onChange={(e) => setFormData((prev) => ({ ...prev, default_meta_keywords: e.target.value }))}
+              placeholder="e.g. Visa House, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert"
             />
           </div>
         </div>

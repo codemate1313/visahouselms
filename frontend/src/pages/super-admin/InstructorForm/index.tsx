@@ -40,7 +40,7 @@ export function InstructorForm({ basePath = "/super-admin" }: { basePath?: strin
     if (isNew) return;
     apiClient.get<InstructorAccount>(`/super-admin/instructors/${id}`)
       .then(({ data }) => {
-        const loadedTitle = data.title ?? "Language CERT Instructor";
+        const loadedTitle = data.title ?? "LanguageCert Instructor";
         const loadedDob = data.dob ? data.dob.split("T")[0] : "";
         const loadedAvatarPath = data.avatar_path ?? "";
         setEmail(data.email ?? "");

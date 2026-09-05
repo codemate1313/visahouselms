@@ -276,7 +276,7 @@ export function StudentPurchaseHistory() {
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(148, 163, 184);
-    doc.text("Official Tax Receipt issued by Visa House Language CERT Platform. Digitally Verified.", 105, 280, {
+    doc.text("Official Tax Receipt issued by Visa House LanguageCert Platform. Digitally Verified.", 105, 280, {
       align: "center",
     });
 

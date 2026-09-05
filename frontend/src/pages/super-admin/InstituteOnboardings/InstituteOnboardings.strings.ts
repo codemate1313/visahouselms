@@ -37,7 +37,7 @@ export const instituteOnboardingsStrings = {
     confirmText: "Delete Draft",
   },
   pdf: {
-    header: "Language CERT — Institute Onboarding Report",
+    header: "LanguageCert — Institute Onboarding Report",
     generatedPrefix: "Generated:",
     columns: ["#", "Institute", "Contact Email", "Agreement", "Payment", "Allocation", "Courses", "Status"],
     notRecorded: "Not recorded",

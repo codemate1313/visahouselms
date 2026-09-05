@@ -39,11 +39,11 @@ export const DEFAULT_LOGIN_SLIDES: HeroSlideRecord[] = [
   {
     id: -1,
     location: "login",
-    badge: "Language CERT PLATFORM",
+    badge: "LanguageCert PLATFORM",
     title: "Smart Evaluation & Institute Analytics",
     highlight: null,
     subtitle:
-      "Empowering institutes and students with real-time Language CERT scoring, automated grading, and comprehensive analytics.",
+      "Empowering institutes and students with real-time LanguageCert scoring, automated grading, and comprehensive analytics.",
     image_url: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1200&auto=format&fit=crop",
     cta_text: null,
     cta_link: null,
@@ -60,7 +60,7 @@ export const DEFAULT_LOGIN_SLIDES: HeroSlideRecord[] = [
     title: "Interactive Practice & AI Mock Tests",
     highlight: null,
     subtitle:
-      "Deliver authentic computer-delivered Language CERT exam environments with live speaking evaluation and instant feedback.",
+      "Deliver authentic computer-delivered LanguageCert exam environments with live speaking evaluation and instant feedback.",
     image_url: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1200&auto=format&fit=crop",
     cta_text: null,
     cta_link: null,
@@ -133,7 +133,7 @@ export async function resetHeroSlides(location: HeroLocation): Promise<HeroSlide
 export function emptyHeroSlideDraft(location: HeroLocation): HeroSlideDraft {
   return {
     location,
-    badge: location === "login" ? "Language CERT PLATFORM" : "",
+    badge: location === "login" ? "LanguageCert PLATFORM" : "",
     title: "",
     highlight: "",
     subtitle: "",

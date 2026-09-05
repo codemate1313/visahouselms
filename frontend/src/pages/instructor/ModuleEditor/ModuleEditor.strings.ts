@@ -244,7 +244,7 @@ export const moduleEditorStrings = {
   avatarPreview: {
     title: "Examiner avatar preview",
     headingTitle: "Heading preview",
-    defaultExaminer: "Language CERT Senior Examiner",
+    defaultExaminer: "LanguageCert Senior Examiner",
     hint: "Play the question in the examiner voice to check it before saving.",
     generate: "Play examiner preview",
     generating: "Preparing examiner audio...",

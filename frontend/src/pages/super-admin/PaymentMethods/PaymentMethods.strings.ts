@@ -43,7 +43,7 @@ export const paymentMethodsStrings = {
     delete: "Failed to delete payment method.",
   },
   pdf: {
-    header: "Language CERT — Payment Methods",
+    header: "LanguageCert — Payment Methods",
     columns: ["#", "Payment Method Name", "Status"],
   },
   excel: {

@@ -17,15 +17,15 @@ def seed_cms_and_seo():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
-        # 1. Seed SEO Settings
+        # 1. Seed / Update SEO Settings
         seo = db.scalar(select(SEOSetting).limit(1))
         if not seo:
             seo = SEOSetting(
-                site_name="Language CERT Pro",
-                default_title="Language CERT Pro | Computer-Delivered Exam Platform & AI Feedback",
-                title_template="%s | Language CERT Pro",
-                default_meta_description="Master computer-delivered Language CERT with real-time exam simulations, instant AI Speaking audio analysis, auto-graded Writing feedback, and institute tracking.",
-                default_meta_keywords="Language CERT, Language CERT Practice, AI Language CERT Evaluation, Computer Delivered Language CERT, Language CERT Mock Test, Band 8 Preparation",
+                site_name="LanguageCert Pro",
+                default_title="LanguageCert Pro | Computer-Delivered Exam Platform & AI Feedback",
+                title_template="%s | LanguageCert Pro",
+                default_meta_description="Master computer-delivered LanguageCert with real-time exam simulations, instant AI Speaking audio analysis, auto-graded Writing feedback, and institute tracking.",
+                default_meta_keywords="LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test, Band 8 Preparation",
                 default_og_image="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
                 twitter_handle="@languagecertpro",
                 robots_txt="User-agent: *\nAllow: /",
@@ -33,7 +33,12 @@ def seed_cms_and_seo():
             db.add(seo)
             print("--> Seeded default SEO settings.")
         else:
-            print("--> SEO settings verified.")
+            seo.site_name = "LanguageCert Pro"
+            seo.default_title = "LanguageCert Pro | Computer-Delivered Exam Platform & AI Feedback"
+            seo.title_template = "%s | LanguageCert Pro"
+            seo.default_meta_description = "Master computer-delivered LanguageCert with real-time exam simulations, instant AI Speaking audio analysis, auto-graded Writing feedback, and institute tracking."
+            seo.default_meta_keywords = "LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test, Band 8 Preparation"
+            print("--> Updated SEO settings to LanguageCert Pro.")
 
         # 2. Upsert Testimonials
         testimonials_data = [
@@ -63,7 +68,7 @@ def seed_cms_and_seo():
                 "target_score": "Achieved Band 7.5",
                 "avatar_url": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&auto=format&fit=crop&q=80",
                 "rating": 5,
-                "quote": "Language CERT Pro delivers full coverage. The multi-accent Listening audio tracks matched the actual exam audio perfectly!",
+                "quote": "LanguageCert Pro delivers full coverage. The multi-accent Listening audio tracks matched the actual exam audio perfectly!",
                 "is_active": True,
                 "display_order": 3,
             },
@@ -83,7 +88,7 @@ def seed_cms_and_seo():
                 "target_score": "Achieved Band 8.5 (CLB 10)",
                 "avatar_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80",
                 "rating": 5,
-                "quote": "I needed CLB 9+ for my PR points. Language CERT Pro's automated Reading and Listening scoring gave me immediate breakdown on weak question types.",
+                "quote": "I needed CLB 9+ for my PR points. LanguageCert Pro's automated Reading and Listening scoring gave me immediate breakdown on weak question types.",
                 "is_active": True,
                 "display_order": 5,
             },
@@ -93,7 +98,7 @@ def seed_cms_and_seo():
                 "target_score": "Achieved Band 8.0",
                 "avatar_url": "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=200&auto=format&fit=crop&q=80",
                 "rating": 5,
-                "quote": "The mock exam user interface is identical to the official computer-delivered Language CERT test center environment. No surprises on exam day!",
+                "quote": "The mock exam user interface is identical to the official computer-delivered LanguageCert test center environment. No surprises on exam day!",
                 "is_active": True,
                 "display_order": 6,
             },
@@ -124,17 +129,17 @@ def seed_cms_and_seo():
         # 3. Upsert Educational Blog Posts
         blogs_data = [
             {
-                "title": "10 Proven Strategies to Score Band 8.0+ in Language CERT Speaking Part 2 & 3",
-                "slug": "language-cert-speaking-band-8-strategies",
+                "title": "10 Proven Strategies to Score Band 8.0+ in LanguageCert Speaking Part 2 & 3",
+                "slug": "languagecert-speaking-band-8-strategies",
                 "summary": "Master the 1-minute cue card preparation time, structure extended responses with idiomatic expressions, and maintain natural fluency under pressure.",
                 "category": "Speaking Tips",
-                "tags": "Language CERT Speaking, Band 8, Fluency, Cue Card, Pronunciation",
-                "author_name": "Dr. Elena Rostova (Language CERT Senior Examiner)",
+                "tags": "LanguageCert Speaking, Band 8, Fluency, Cue Card, Pronunciation",
+                "author_name": "Dr. Elena Rostova (LanguageCert Senior Examiner)",
                 "read_time_minutes": 6,
                 "featured_image_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80",
-                "content_markdown": """# 10 Proven Strategies to Score Band 8.0+ in Language CERT Speaking Part 2 & 3
+                "content_markdown": """# 10 Proven Strategies to Score Band 8.0+ in LanguageCert Speaking Part 2 & 3
 
-Scoring Band 8.0 or higher in Language CERT Speaking requires more than just speaking fluent English; it demands strategic delivery, rich lexical resource, and grammatical accuracy under strict timing constraints.
+Scoring Band 8.0 or higher in LanguageCert Speaking requires more than just speaking fluent English; it demands strategic delivery, rich lexical resource, and grammatical accuracy under strict timing constraints.
 
 ## 1. Maximize Your 1-Minute Preparation Time
 When handed the paper cue card in Part 2, do not write full sentences. Use a quick 4-point bullet outline:
@@ -155,24 +160,24 @@ The AI evaluation engine checks phoneme clarity, pause cadence, and stress. Avoi
 ---
 
 ### Pro Tip for Test Day
-Record your practice sessions on the Language CERT audio engine to track your Words Per Minute (WPM) and pause distribution!
+Record your practice sessions on the LanguageCert audio engine to track your Words Per Minute (WPM) and pause distribution!
 """,
                 "is_published": True,
-                "meta_title": "Language CERT Speaking Band 8.0+ Preparation Guide | Language CERT",
-                "meta_description": "Discover expert strategies to ace Language CERT Speaking Part 2 Cue Cards and Part 3 abstract discussions with Band 8 fluency.",
+                "meta_title": "LanguageCert Speaking Band 8.0+ Preparation Guide | LanguageCert",
+                "meta_description": "Discover expert strategies to ace LanguageCert Speaking Part 2 Cue Cards and Part 3 abstract discussions with Band 8 fluency.",
             },
             {
-                "title": "Demystifying Computer-Delivered Language CERT Reading: Speed-Reading & Keyword Matching",
-                "slug": "computer-delivered-language-cert-reading-mastery",
+                "title": "Demystifying Computer-Delivered LanguageCert Reading: Speed-Reading & Keyword Matching",
+                "slug": "computer-delivered-languagecert-reading-mastery",
                 "summary": "Learn how to leverage split-screen passage views, sticky question navigation, and live text highlighting to finish all 40 questions in under 55 minutes.",
                 "category": "Reading Passages",
-                "tags": "Language CERT Reading, Computer Delivered, Time Management, True False Not Given",
+                "tags": "LanguageCert Reading, Computer Delivered, Time Management, True False Not Given",
                 "author_name": "James Miller (Chief Academic Officer)",
                 "read_time_minutes": 7,
                 "featured_image_url": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&auto=format&fit=crop&q=80",
-                "content_markdown": """# Demystifying Computer-Delivered Language CERT Reading
+                "content_markdown": """# Demystifying Computer-Delivered LanguageCert Reading
 
-The computer-delivered Language CERT Reading test offers distinct advantages over paper-based tests, provided you know how to use the digital interface effectively.
+The computer-delivered LanguageCert Reading test offers distinct advantages over paper-based tests, provided you know how to use the digital interface effectively.
 
 ## Split-Screen Efficiency
 With split-screen viewing, the passage remains pinned on the left side while questions stay accessible on the right. 
@@ -189,21 +194,21 @@ With split-screen viewing, the passage remains pinned on the left side while que
 Practice on authentic split-screen passage views to build rapid scanning muscle memory!
 """,
                 "is_published": True,
-                "meta_title": "Computer Delivered Language CERT Reading Guide & Tips | Language CERT",
-                "meta_description": "Master split-screen reading, keyword highlighting, and T/F/NG question techniques for computer-delivered Language CERT.",
+                "meta_title": "Computer Delivered LanguageCert Reading Guide & Tips | LanguageCert",
+                "meta_description": "Master split-screen reading, keyword highlighting, and T/F/NG question techniques for computer-delivered LanguageCert.",
             },
             {
                 "title": "How to Structure Band 8.0 Task 2 Essays: TR, CC, LR, and GRA Unpacked",
-                "slug": "language-cert-writing-task-2-band-8-structure",
+                "slug": "languagecert-writing-task-2-band-8-structure",
                 "summary": "A complete breakdown of the official 4 evaluation criteria. Includes paragraph templates for Agree/Disagree, Discussion, and Problem-Solution prompts.",
                 "category": "Writing Assessor",
-                "tags": "Language CERT Writing, Task 2, Essay Structure, Band 8, Grammar",
+                "tags": "LanguageCert Writing, Task 2, Essay Structure, Band 8, Grammar",
                 "author_name": "Dr. Elena Rostova",
                 "read_time_minutes": 8,
                 "featured_image_url": "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop&q=80",
                 "content_markdown": """# How to Structure Band 8.0 Task 2 Essays
 
-To achieve a 7.5+ in Language CERT Writing Task 2, your essay must demonstrate balance across all four official criteria: Task Response (TR), Coherence and Cohesion (CC), Lexical Resource (LR), and Grammatical Range and Accuracy (GRA).
+To achieve a 7.5+ in LanguageCert Writing Task 2, your essay must demonstrate balance across all four official criteria: Task Response (TR), Coherence and Cohesion (CC), Lexical Resource (LR), and Grammatical Range and Accuracy (GRA).
 
 ## 4-Paragraph Essay Template
 1. **Introduction (30-40 words)**: Paraphrase the prompt + clear thesis statement outlining your main position.
@@ -211,24 +216,24 @@ To achieve a 7.5+ in Language CERT Writing Task 2, your essay must demonstrate b
 3. **Body Paragraph 2 (80-90 words)**: Counter-argument or secondary main point + explanation + supporting evidence.
 4. **Conclusion (30-40 words)**: Restate thesis in new words + summarizing takeaway.
 
-Use the AI Writing Assessor on Language CERT for real-time criterion-by-criterion scoring!
+Use the AI Writing Assessor on LanguageCert for real-time criterion-by-criterion scoring!
 """,
                 "is_published": True,
-                "meta_title": "Language CERT Writing Task 2 Band 8 Structure & Examples | Language CERT",
-                "meta_description": "Learn how to structure Task 2 Language CERT essays with high Task Response, advanced vocabulary, and zero grammatical errors.",
+                "meta_title": "LanguageCert Writing Task 2 Band 8 Structure & Examples | LanguageCert",
+                "meta_description": "Learn how to structure Task 2 LanguageCert essays with high Task Response, advanced vocabulary, and zero grammatical errors.",
             },
             {
-                "title": "Ace the Language CERT Listening Test: Section 1-4 Note-Taking & Multi-Accent Audio Strategies",
-                "slug": "language-cert-listening-audio-strategies",
+                "title": "Ace the LanguageCert Listening Test: Section 1-4 Note-Taking & Multi-Accent Audio Strategies",
+                "slug": "languagecert-listening-audio-strategies",
                 "summary": "Recognize common audio distractors, master British, Australian, and North American accent variations, and lock in 40/40 in Listening.",
                 "category": "Listening Practice",
-                "tags": "Language CERT Listening, Accents, Note Taking, Distractors, Band 9",
-                "author_name": "Sarah Jenkins (Master Language CERT Trainer)",
+                "tags": "LanguageCert Listening, Accents, Note Taking, Distractors, Band 9",
+                "author_name": "Sarah Jenkins (Master LanguageCert Trainer)",
                 "read_time_minutes": 6,
                 "featured_image_url": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
-                "content_markdown": """# Ace the Language CERT Listening Test: Section 1-4 Note-Taking & Multi-Accent Audio Strategies
+                "content_markdown": """# Ace the LanguageCert Listening Test: Section 1-4 Note-Taking & Multi-Accent Audio Strategies
 
-The Language CERT Listening test evaluates your ability to understand main ideas, specific factual information, opinions, and attitudes across various English accents.
+The LanguageCert Listening test evaluates your ability to understand main ideas, specific factual information, opinions, and attitudes across various English accents.
 
 ## Key Accent Challenges
 1. **Received Pronunciation (British)**: Subtle vowel shifts and non-rhotic 'r' sounds.
@@ -243,21 +248,21 @@ In Section 1 and Section 2, speakers often state information and then correct th
 Always wait until the full clause is spoken before committing your answer!
 """,
                 "is_published": True,
-                "meta_title": "Language CERT Listening Test Preparation & Accent Tips | Language CERT",
-                "meta_description": "Master Language CERT Listening Section 1-4 note-taking skills, avoid distractors, and understand multi-accent recordings.",
+                "meta_title": "LanguageCert Listening Test Preparation & Accent Tips | LanguageCert",
+                "meta_description": "Master LanguageCert Listening Section 1-4 note-taking skills, avoid distractors, and understand multi-accent recordings.",
             },
             {
-                "title": "Computer-Delivered vs Paper-Based Language CERT: Which Test Format Fits You Best?",
-                "slug": "computer-delivered-vs-paper-based-language-cert",
+                "title": "Computer-Delivered vs Paper-Based LanguageCert: Which Test Format Fits You Best?",
+                "slug": "computer-delivered-vs-paper-based-languagecert",
                 "summary": "Compare typing speed vs handwriting, result turnaround times, noise-canceling headphones, and split-screen advantages before booking your exam.",
                 "category": "General Guidance",
-                "tags": "Language CERT Comparison, Computer Delivered, Test Center, Format Guide",
+                "tags": "LanguageCert Comparison, Computer Delivered, Test Center, Format Guide",
                 "author_name": "James Miller (Chief Academic Officer)",
                 "read_time_minutes": 5,
                 "featured_image_url": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=80",
-                "content_markdown": """# Computer-Delivered vs Paper-Based Language CERT: Which Test Format Fits You Best?
+                "content_markdown": """# Computer-Delivered vs Paper-Based LanguageCert: Which Test Format Fits You Best?
 
-Choosing between Computer-Delivered (CD) and Paper-Based Language CERT is a pivotal decision in your exam preparation journey.
+Choosing between Computer-Delivered (CD) and Paper-Based LanguageCert is a pivotal decision in your exam preparation journey.
 
 ## Comparison Matrix
 
@@ -271,19 +276,19 @@ Choosing between Computer-Delivered (CD) and Paper-Based Language CERT is a pivo
 If you type at 30+ Words Per Minute (WPM) and prefer clear digital audio, the Computer-Delivered format offers a seamless test experience.
 """,
                 "is_published": True,
-                "meta_title": "Computer Delivered vs Paper-Based Language CERT Comparison | Language CERT",
-                "meta_description": "Detailed comparison between computer-delivered and paper-based Language CERT tests to help you choose the right format.",
+                "meta_title": "Computer Delivered vs Paper-Based LanguageCert Comparison | LanguageCert",
+                "meta_description": "Detailed comparison between computer-delivered and paper-based LanguageCert tests to help you choose the right format.",
             },
             {
-                "title": "Mastering Language CERT Writing Task 1: Describing Bar Charts, Line Graphs & Process Diagrams",
-                "slug": "language-cert-writing-task-1-data-description",
+                "title": "Mastering LanguageCert Writing Task 1: Describing Bar Charts, Line Graphs & Process Diagrams",
+                "slug": "languagecert-writing-task-1-data-description",
                 "summary": "Learn how to craft an impactful overview sentence, select key trend highlights, and avoid spending over 20 minutes on Task 1.",
                 "category": "Writing Assessor",
                 "tags": "Writing Task 1, Data Visuals, Overview Paragraph, Comparison Vocabulary",
                 "author_name": "Dr. Elena Rostova",
                 "read_time_minutes": 7,
                 "featured_image_url": "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=800&auto=format&fit=crop&q=80",
-                "content_markdown": """# Mastering Language CERT Writing Task 1: Describing Bar Charts, Line Graphs & Process Diagrams
+                "content_markdown": """# Mastering LanguageCert Writing Task 1: Describing Bar Charts, Line Graphs & Process Diagrams
 
 Writing Task 1 tests your ability to select and report main features, make comparisons where relevant, and summarize visual information in 150+ words within 20 minutes.
 
@@ -297,8 +302,8 @@ Writing Task 1 tests your ability to select and report main features, make compa
 - Instead of *'went down'*: *suffered a sharp decline*, *plummeted*, *bottomed out*.
 """,
                 "is_published": True,
-                "meta_title": "Language CERT Writing Task 1 Guide & Visual Vocabulary | Language CERT",
-                "meta_description": "Master Language CERT Writing Task 1 line graphs, bar charts, pie charts, and process diagrams with Band 8 vocabulary.",
+                "meta_title": "LanguageCert Writing Task 1 Guide & Visual Vocabulary | LanguageCert",
+                "meta_description": "Master LanguageCert Writing Task 1 line graphs, bar charts, pie charts, and process diagrams with Band 8 vocabulary.",
             },
         ]
 

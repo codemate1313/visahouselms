@@ -148,7 +148,7 @@ export function Invoice() {
     doc.setTextColor(100, 116, 139); // Slate 500
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "normal");
-    doc.text("Language CERT Assessment Platform", 35, 24);
+    doc.text("LanguageCert Assessment Platform", 35, 24);
 
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184); // Slate 400
@@ -357,7 +357,7 @@ export function Invoice() {
     doc.setTextColor(71, 85, 105);
 
     const bulletPoints = [
-      "• Access License: Grants access to Language CERT module test exams.",
+      "• Access License: Grants access to LanguageCert module test exams.",
       "• Non-Transferable: Digital subscriptions and vouchers are strictly non-transferable.",
       "• Billing Support: Reach out to support@visahouse.com for any billing inquiries.",
       "• Authentic Document: System generated electronic tax invoice. No signature needed.",

@@ -126,7 +126,7 @@ export const plansStrings = {
     deactivateTitle: "Deactivate Plan",
   },
   pdf: {
-    header: "Language CERT — Subscription Plans Report",
+    header: "LanguageCert — Subscription Plans Report",
     generatedPrefix: "Generated:",
     columns: ["#", "Plan Name", "Price", "Duration", "Limits (Students/Staff)", "Grace", "Courses", "Subs", "Status"],
   },

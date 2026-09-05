@@ -10,7 +10,7 @@ export const terminalStrings = {
     open: "Failed to open terminal.",
   },
   banner: {
-    welcome: "Language CERT terminal - preset commands only.",
+    welcome: "LanguageCert terminal - preset commands only.",
     selectCommand: "Select a command from the palette on the left.",
   },
   connectionClosed: "Connection closed.",

@@ -69,7 +69,7 @@ export function openRazorpayCheckout(options: OpenCheckoutOptions): void {
     key: options.keyId,
     amount: options.amount,
     currency: options.currency,
-    name: "Visa House Language CERT",
+    name: "Visa House LanguageCert",
     description: options.description,
     image: "/brand/vh-mark-96.png",
     order_id: options.orderId,

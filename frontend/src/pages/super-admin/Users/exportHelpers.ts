@@ -27,7 +27,7 @@ export function exportUsersPDF(users: DirectoryUser[], title: string, showInstit
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text(`Language CERT — ${title}`, 14, 12);
+  doc.text(`LanguageCert — ${title}`, 14, 12);
 
   const head = showInstitute
     ? ["#", "Name", "Email", "Institute", "Status", "Created"]

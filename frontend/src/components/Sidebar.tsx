@@ -101,7 +101,7 @@ function getActiveSectionKey(sections: MenuSection[], activeKey: string | null):
 }
 
 export function Sidebar({
-  brandTitle = "Language CERT",
+  brandTitle = "LanguageCert",
   brandSubtitle,
   brandLogoUrl,
   sections,
