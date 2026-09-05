@@ -200,8 +200,9 @@ export function Sidebar({
     opacity: 0,
   });
 
-  // Calculate sliding indicator position whenever activeKey or route changes
+  // Calculate sliding indicator position whenever activeKey, sections, or route changes
   useLayoutEffect(() => {
+    let rafId: number;
     const updateIndicator = () => {
       if (!navRef.current) return;
       const activeEl = navRef.current.querySelector<HTMLElement>(
@@ -227,10 +228,23 @@ export function Sidebar({
     };
 
     updateIndicator();
+    // Schedule a frame after render to ensure layout has settled
+    rafId = requestAnimationFrame(updateIndicator);
 
-    if (!navRef.current) return;
+    if (!navRef.current) return () => cancelAnimationFrame(rafId);
     const observer = new ResizeObserver(updateIndicator);
     observer.observe(navRef.current);
+
+    // Observe DOM mutations so indicator repositions immediately if items are dynamically added/removed
+    const mutationObserver = new MutationObserver(() => {
+      updateIndicator();
+    });
+    mutationObserver.observe(navRef.current, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
     const parentSidebar = navRef.current.closest(".huge-sidebar");
     if (parentSidebar) {
@@ -238,12 +252,14 @@ export function Sidebar({
     }
 
     return () => {
+      cancelAnimationFrame(rafId);
       observer.disconnect();
+      mutationObserver.disconnect();
       if (parentSidebar) {
         parentSidebar.removeEventListener("transitionend", updateIndicator);
       }
     };
-  }, [activeKey, location.pathname, expandedKeys, expandedSectionKeys, isCollapsed]);
+  }, [sections, activeKey, location.pathname, expandedKeys, expandedSectionKeys, isCollapsed]);
 
   const toggleAccordion = (item: MenuItem) => {
     if (isCollapsed) {

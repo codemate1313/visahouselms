@@ -63,8 +63,23 @@ export function useStudentAccess(): StudentAccess {
   const initialCached = cacheKey && cachedAccess?.key === cacheKey && cachedAccess.expiresAt > Date.now()
     ? isPlanActive(cachedAccess.plan)
     : null;
-  const [loading, setLoading] = useState(initialCached === null);
-  const [hasActivePlan, setHasActivePlan] = useState(initialCached ?? false);
+
+  const getSessionCached = (): boolean | null => {
+    if (initialCached !== null) return initialCached;
+    if (!userId) return null;
+    try {
+      const stored = sessionStorage.getItem(`student_active_plan_${userId}`);
+      if (stored === "true") return true;
+      if (stored === "false") return false;
+    } catch {
+      // ignore storage errors
+    }
+    return null;
+  };
+
+  const sessionInitial = getSessionCached();
+  const [loading, setLoading] = useState(sessionInitial === null);
+  const [hasActivePlan, setHasActivePlan] = useState(sessionInitial ?? false);
 
   useEffect(() => {
     if (!cacheKey) {
@@ -74,11 +89,19 @@ export function useStudentAccess(): StudentAccess {
     }
 
     let active = true;
-    setLoading(true);
+    setLoading(sessionInitial === null);
     getCachedStudentCurrentPlan(cacheKey)
       .then((plan) => {
         if (!active) return;
-        setHasActivePlan(isPlanActive(plan));
+        const activePlan = isPlanActive(plan);
+        setHasActivePlan(activePlan);
+        try {
+          if (userId) {
+            sessionStorage.setItem(`student_active_plan_${userId}`, String(activePlan));
+          }
+        } catch {
+          // ignore storage errors
+        }
       })
       .catch(() => {
         if (active) setHasActivePlan(false);
@@ -89,7 +112,7 @@ export function useStudentAccess(): StudentAccess {
     return () => {
       active = false;
     };
-  }, [cacheKey]);
+  }, [cacheKey, userId, sessionInitial]);
 
   return { loading, hasActivePlan };
 }
