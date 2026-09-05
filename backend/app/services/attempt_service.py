@@ -1278,21 +1278,6 @@ def seal_main_paper_for_speaking(db: Session, attempt: TestAttempt, *, start_now
             detail="This attempt does not have a separate Speaking phase",
         )
 
-    answers_by_question = {answer.question_id for answer in attempt.answers}
-    incomplete_parts: list[str] = []
-    for part in sorted(attempt.module.parts, key=lambda item: item.sort_order):
-        if part.section_type not in MAIN_PAPER_SECTION_TYPES:
-            continue
-        question_ids = [question.id for question in _ordered_questions(attempt, part)]
-        if question_ids and any(question_id not in answers_by_question for question_id in question_ids):
-            incomplete_parts.append(part.title or part.part_code or part.section_type.title())
-
-    if incomplete_parts:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Complete {', '.join(incomplete_parts)} before moving to Speaking",
-        )
-
     # `start_now` was accepted and then ignored - every seal started the
     # interview immediately, so a candidate who wanted to come back to Speaking
     # later had no way to say so. Pending is the phase for that: the main paper
@@ -1492,19 +1477,6 @@ def submit_attempt(
     if attempt.status != ATTEMPT_IN_PROGRESS:
         # idempotent: a retried submit just returns the current state
         return get_student_view(db, attempt)
-
-    is_expired = attempt.expires_at is not None and attempt.expires_at - timedelta(seconds=15) <= _now()
-    if require_complete_speaking and not is_expired:
-        missing_recordings = _missing_speaking_recordings(attempt)
-        if missing_recordings:
-            count = len(missing_recordings)
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    f"{count} Speaking recording{'s are' if count != 1 else ' is'} missing. "
-                    "Complete every Speaking response before submitting the test."
-                ),
-            )
 
     attempt.status = ATTEMPT_SUBMITTED
     attempt.submitted_at = _now()
