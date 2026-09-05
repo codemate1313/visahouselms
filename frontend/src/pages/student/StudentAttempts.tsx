@@ -177,18 +177,36 @@ export function StudentAttempts() {
           {attempt.status === "ready" || attempt.status === "in_progress" ? (
             <Link
               to={attemptTargetUrl(attempt)}
+              className="student-attempt-action-link"
               style={{ textDecoration: "none" }}
+              title={strings.resumeTest}
+              aria-label={strings.resumeTest}
             >
-              <Button variant="outline" size="sm" rightIcon={<Icon name="arrowRight" />}>
+              <Button
+                variant="primary"
+                size="sm"
+                rightIcon={<Icon name="arrowRight" />}
+                title={strings.resumeTest}
+                aria-label={strings.resumeTest}
+              >
                 {strings.resumeTest}
               </Button>
             </Link>
           ) : (
             <Link
               to={`/student/attempts/${attempt.id}/result`}
+              className="student-attempt-action-link"
               style={{ textDecoration: "none" }}
+              title={strings.viewResult}
+              aria-label={strings.viewResult}
             >
-              <Button variant="outline" size="sm" rightIcon={<Icon name="arrowRight" />}>
+              <Button
+                variant="primary"
+                size="sm"
+                rightIcon={<Icon name="arrowRight" />}
+                title={strings.viewResult}
+                aria-label={strings.viewResult}
+              >
                 {strings.viewResult}
               </Button>
             </Link>
