@@ -7,7 +7,7 @@ interface ListeningChoiceGroupsProps {
   savingIds: Set<number>;
   /** Listening 2 splits the same answer sheet into labelled conversations. */
   grouped?: boolean;
-  onChangeResponse: (questionId: number, response: AttemptResponse) => void;
+  onChangeResponse: (questionId: number, response: AttemptResponse, debounce?: boolean) => void;
   /** Final Test only: forwarded so the answer sheet renders in the exam skin. */
   languageCertSkin?: boolean;
 }
@@ -99,7 +99,10 @@ export function ListeningChoiceGroups({
                   saving={savingIds.has(question.id)}
                   recording={false}
                   languageCertSkin={languageCertSkin}
-                  onChange={(response) => onChangeResponse(question.id, response)}
+                  /* Forward the debounce flag: typed answers ask to be saved
+                     on a pause, and dropping it here fired one PUT per
+                     keystroke. */
+                  onChange={(response, debounce) => onChangeResponse(question.id, response, debounce)}
                   onRecord={() => {}}
                 />
               );

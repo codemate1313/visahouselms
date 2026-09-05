@@ -1,5 +1,5 @@
 export const studentLayoutStrings = {
-  defaultBrandTitle: "Visa House",
+  defaultBrandTitle: "LanguageCert",
   defaultBrandSubtitle: "Student Portal",
   instituteStudent: "Institute Student",
   directStudent: "Direct Student",

@@ -39,7 +39,7 @@ EXAMINER_PROFILES = {
     "ryan": {
         "id": "ryan",
         "name": "Instructor",
-        "title": "Senior Language CERT Speaking Examiner",
+        "title": "Senior LanguageCert Speaking Examiner",
         "gender": "male",
         "voice": "en-GB-RyanNeural",
         "accent": "British English",
@@ -48,7 +48,7 @@ EXAMINER_PROFILES = {
     "jenny": {
         "id": "jenny",
         "name": "Instructor",
-        "title": "Language CERT Speaking Specialist",
+        "title": "LanguageCert Speaking Specialist",
         "gender": "female",
         "voice": "en-US-JennyNeural",
         "accent": "US English",
@@ -57,7 +57,7 @@ EXAMINER_PROFILES = {
     "guy": {
         "id": "guy",
         "name": "Instructor",
-        "title": "Language CERT Speaking Specialist",
+        "title": "LanguageCert Speaking Specialist",
         "gender": "male",
         "voice": "en-US-GuyNeural",
         "accent": "US English",

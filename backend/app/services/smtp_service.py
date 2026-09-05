@@ -108,8 +108,9 @@ def send_test_email(db: Session, to_address: str) -> None:
     send_email(
         db,
         to_address,
-        "Language CERT - SMTP test",
-        "This is a test email from your Language CERT Platform Settings. SMTP is working.",
+        "LanguageCert - SMTP test",
+        "This is a test email from your LanguageCert Platform Settings. SMTP is working.",
+        "<p>This is a test email from your <strong>LanguageCert Platform Settings</strong>. SMTP is working.</p>",
     )
 
 

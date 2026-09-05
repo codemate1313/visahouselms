@@ -30,24 +30,33 @@ export function ConfirmModal({
   const descriptionId = useId();
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
   const onCloseRef = useRef(onClose);
+  /* Read through a ref inside the Escape handler so the focus effect below
+     depends on `isOpen` alone: keying it to `loading` too tore focus away and
+     handed it back to the page behind every time a confirm started or
+     finished, mid-dialog. */
+  const loadingRef = useRef(loading);
 
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
 
   useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  useEffect(() => {
     if (!isOpen) return;
     const previousFocus = document.activeElement as HTMLElement | null;
     cancelButtonRef.current?.focus();
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !loading) onCloseRef.current();
+      if (event.key === "Escape" && !loadingRef.current) onCloseRef.current();
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       previousFocus?.focus();
     };
-  }, [isOpen, loading]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

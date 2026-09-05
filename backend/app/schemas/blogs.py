@@ -9,9 +9,9 @@ class BlogPostBase(BaseModel):
     summary: str
     content_markdown: str
     featured_image_url: Optional[str] = None
-    category: str = "Language CERT Tips"
-    tags: Optional[str] = "Language CERT, Preparation"
-    author_name: str = "Language CERT Editorial Team"
+    category: str = "LanguageCert Tips"
+    tags: Optional[str] = "LanguageCert, Preparation"
+    author_name: str = "LanguageCert Editorial Team"
     read_time_minutes: int = 5
     is_published: bool = True
     meta_title: Optional[str] = None

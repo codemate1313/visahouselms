@@ -18,13 +18,13 @@ admin_router = APIRouter(
 
 
 DEFAULT_SEO_SETTINGS = {
-    "site_name": "Language CERT Pro",
-    "default_title": "Language CERT Pro | Computer-Delivered Exam Platform & AI Feedback",
-    "title_template": "%s | Language CERT Pro",
-    "default_meta_description": "Experience authentic computer-delivered Language CERT environments with AI Speaking & Writing scoring.",
-    "default_meta_keywords": "Language CERT, Language CERT Practice, AI Language CERT Evaluation, Computer Delivered Language CERT",
+    "site_name": "LanguageCert",
+    "default_title": "LanguageCert | Computer-Delivered Exam Platform & AI Feedback",
+    "title_template": "%s | LanguageCert",
+    "default_meta_description": "Experience authentic computer-delivered LanguageCert environments with AI Speaking & Writing scoring.",
+    "default_meta_keywords": "LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert",
     "default_og_image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
-    "twitter_handle": "@languagecertpro",
+    "twitter_handle": "@languagecert",
     "robots_txt": "User-agent: *\nAllow: /",
     "custom_head_tags": None,
 }

@@ -2021,7 +2021,7 @@ def _payload(attempt: TestAttempt, part: ExamModulePart) -> dict:
         "rubric": part.rubric or [],
         "responses": responses,
         "instructions": (
-            "You are an expert Language CERT and CEFR language examiner. "
+            "You are an expert LanguageCert and CEFR language examiner. "
             "Analyze the student's submission carefully against the provided rubric criteria. "
             "Evaluate whether the candidate fulfilled all specific question requirements, "
             "passages, visual materials (if provided), and word count constraints. "
@@ -2118,7 +2118,7 @@ def _batch_payload(attempt: TestAttempt, parts: list[ExamModulePart]) -> dict:
         "is_final": bool(attempt.is_final),
         "parts": payload_parts,
         "instructions": (
-            "You are an expert Language CERT and CEFR examiner. "
+            "You are an expert LanguageCert and CEFR examiner. "
             "Evaluate each part independently, against its own rubric and its own skill: "
             "Writing parts are marked on the written response, Speaking parts on the recording. "
             "Evaluate whether the candidate fulfilled all specific question requirements, "

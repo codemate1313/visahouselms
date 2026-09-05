@@ -21,24 +21,24 @@ def seed_cms_and_seo():
         seo = db.scalar(select(SEOSetting).limit(1))
         if not seo:
             seo = SEOSetting(
-                site_name="LanguageCert Pro",
-                default_title="LanguageCert Pro | Computer-Delivered Exam Platform & AI Feedback",
-                title_template="%s | LanguageCert Pro",
+                site_name="LanguageCert",
+                default_title="LanguageCert | Computer-Delivered Exam Platform & AI Feedback",
+                title_template="%s | LanguageCert",
                 default_meta_description="Master computer-delivered LanguageCert with real-time exam simulations, instant AI Speaking audio analysis, auto-graded Writing feedback, and institute tracking.",
-                default_meta_keywords="LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test, Band 8 Preparation",
+                default_meta_keywords="LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test",
                 default_og_image="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80",
-                twitter_handle="@languagecertpro",
+                twitter_handle="@languagecert",
                 robots_txt="User-agent: *\nAllow: /",
             )
             db.add(seo)
             print("--> Seeded default SEO settings.")
         else:
-            seo.site_name = "LanguageCert Pro"
-            seo.default_title = "LanguageCert Pro | Computer-Delivered Exam Platform & AI Feedback"
-            seo.title_template = "%s | LanguageCert Pro"
+            seo.site_name = "LanguageCert"
+            seo.default_title = "LanguageCert | Computer-Delivered Exam Platform & AI Feedback"
+            seo.title_template = "%s | LanguageCert"
             seo.default_meta_description = "Master computer-delivered LanguageCert with real-time exam simulations, instant AI Speaking audio analysis, auto-graded Writing feedback, and institute tracking."
-            seo.default_meta_keywords = "LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test, Band 8 Preparation"
-            print("--> Updated SEO settings to LanguageCert Pro.")
+            seo.default_meta_keywords = "LanguageCert, LanguageCert Practice, AI LanguageCert Evaluation, Computer Delivered LanguageCert, LanguageCert Mock Test"
+            print("--> Updated SEO settings to LanguageCert.")
 
         # 2. Upsert Testimonials
         testimonials_data = [

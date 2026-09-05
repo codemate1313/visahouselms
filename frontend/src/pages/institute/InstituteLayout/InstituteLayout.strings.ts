@@ -1,5 +1,5 @@
 export const instituteLayoutStrings = {
-  brandTitle: "Visa House",
+  brandTitle: "LanguageCert",
   brandSubtitle: "Institute Admin",
   roleLabel: "Institute Admin",
   notificationEyebrow: "Institute updates",

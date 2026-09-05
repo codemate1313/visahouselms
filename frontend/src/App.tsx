@@ -55,22 +55,22 @@ function App() {
     };
     document.addEventListener("play", handlePlay, true);
 
-    // Prevent mouse wheel scrolling from changing values in number/range inputs across all forms
+    /* Prevent mouse wheel scrolling from changing values in number/range
+       inputs across all forms. Browsers only apply the wheel to such a field
+       while it holds focus, so blocking the event there is enough - the field
+       used to be blurred instead, which threw the caret out of whatever the
+       user was editing on any scroll, even one nowhere near the field. */
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement | null;
       if (
         target instanceof HTMLInputElement &&
-        (target.type === "number" || target.type === "range")
+        (target.type === "number" || target.type === "range") &&
+        document.activeElement === target
       ) {
-        target.blur();
-      } else if (
-        document.activeElement instanceof HTMLInputElement &&
-        (document.activeElement.type === "number" || document.activeElement.type === "range")
-      ) {
-        document.activeElement.blur();
+        e.preventDefault();
       }
     };
-    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("wheel", handleWheel, { passive: false });
 
     // Auto-adjust height for all textareas according to content entered
     const autoResize = (el: HTMLTextAreaElement) => {
