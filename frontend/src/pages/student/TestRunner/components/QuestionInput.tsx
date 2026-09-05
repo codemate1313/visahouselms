@@ -48,7 +48,10 @@ export function QuestionInput({
       aria-label={`Answer for question ${index}`}
       placeholder="Type answer here"
       onChange={(e) => onChange({ text: e.target.value }, true)}
-      disabled={saving}
+      /* Left enabled while an autosave is in flight, as the essay textarea
+         already is: disabling steals focus from the field the candidate is
+         still typing in. The "Saving..." hint carries the state instead. */
+      aria-busy={saving}
     />
   );
 

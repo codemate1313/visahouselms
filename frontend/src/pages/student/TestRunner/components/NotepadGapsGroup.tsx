@@ -96,7 +96,12 @@ export function NotepadGapsGroup({
                     className={`test-runner-text-input${overLimit ? " is-error" : ""}`}
                     value={value}
                     aria-label={`Answer for question ${number}`}
-                    disabled={savingIds.has(token.question.id)}
+                    /* Autosave must never take the field away mid-answer:
+                       disabling an input blurs it, so the caret jumped out of
+                       the blank every time a debounced save went out. The save
+                       is versioned per question, so editing during one in
+                       flight is safe - the newer revision wins. */
+                    aria-busy={savingIds.has(token.question.id)}
                     onChange={(event) => onChangeResponse(token.question.id, { text: event.target.value }, true)}
                   />
                 </span>
