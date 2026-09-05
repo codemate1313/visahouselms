@@ -1269,11 +1269,12 @@ body.test-runner-route-active #root {
   min-height: 0;
 }
 
-.test-runner-parts {
+.test-runner-parts:not(.lc-rail) {
   display: block;
-  width: 210px;
-  flex: 0 0 210px;
-  padding: 18px 14px;
+  width: max-content;
+  max-width: 240px;
+  flex: 0 0 auto;
+  padding: 16px 14px;
   overflow-x: hidden;
   overflow-y: auto;
   border-right: 1px solid #d9dce2;
@@ -1320,12 +1321,12 @@ body.test-runner-route-active #root {
 .test-runner-part-tab {
   display: flex;
   width: 100%;
-  min-height: 40px;
+  min-height: 38px;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  justify-content: flex-start;
+  gap: 8px;
   margin-bottom: 6px;
-  padding: 9px 8px;
+  padding: 8px 12px;
   border: 1px solid #d9dce2;
   border-radius: 4px;
   background: #ffffff;
@@ -1383,10 +1384,6 @@ body.test-runner-route-active #root {
 }
 
 .test-runner-part-tab>span:first-of-type {
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

@@ -10,8 +10,8 @@ interface SectionGroup {
 }
 
 interface PartsNavProps {
-  answeredCount: number;
-  totalQuestions: number;
+  answeredCount?: number;
+  totalQuestions?: number;
   sectionGroups: SectionGroup[];
   partIndex: number;
   onSelectPart: (index: number) => void;
@@ -33,8 +33,6 @@ export function formatPartTitle(title: string) {
 }
 
 export function PartsNav({
-  answeredCount,
-  totalQuestions,
   sectionGroups,
   partIndex,
   onSelectPart,
@@ -93,12 +91,6 @@ export function PartsNav({
 
   return (
     <nav className="test-runner-parts" aria-label={t.testSectionsAriaLabel}>
-      <div className="test-runner-progress-summary">
-        <span>{t.progress}</span>
-        <strong>
-          {answeredCount}/{totalQuestions}
-        </strong>
-      </div>
       {sectionGroups.map((group) => (
         <section className="test-runner-section-group" key={group.section}>
           <h2>{group.label}</h2>
@@ -115,9 +107,6 @@ export function PartsNav({
                 title={isNavigationLocked && index !== partIndex ? strings.nav.navigationLocked : undefined}
               >
                 <span>{formatPartTitle(part.title)}</span>
-                <span className="test-runner-part-progress">
-                  {part.answered_count}/{part.question_count}
-                </span>
               </button>
             );
           })}
