@@ -73,11 +73,6 @@ def get_available_retake(db: Session, user_id: int, module_id: int) -> Optional[
 def request_retake(db: Session, student: User, attempt: TestAttempt, reason: str) -> dict:
     if attempt.user_id != student.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attempt not found")
-    if attempt.is_final or (attempt.module and attempt.module.module_type == "final_test"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Final tests cannot be retaken.",
-        )
 
     existing = latest_retake(db, attempt.id)
     if existing is not None and existing.status == RETAKE_PENDING:
