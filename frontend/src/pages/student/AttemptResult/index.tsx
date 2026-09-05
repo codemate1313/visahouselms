@@ -170,7 +170,7 @@ export function AttemptResult() {
   const canRequestRetake =
     !attempt.is_final &&
     attempt.module_type !== "final_test" &&
-    ["submitted", "grading", "graded", "expired", "violated"].includes(attempt.status) &&
+    ["submitted", "grading", "graded", "expired"].includes(attempt.status) &&
     !attempt.retake_request;
 
   const isAiGraded = attempt.parts.some((part) => part.grade?.status === "ai_graded");
@@ -253,26 +253,6 @@ export function AttemptResult() {
           <Icon name="warning" className="attempt-violated-notice-icon" />
           <h3>{strings.violatedNotice.heading}</h3>
           <p>{strings.violatedNotice.body}</p>
-
-          {canRequestRetake && (
-            <div className="attempt-violated-retake-action">
-              <p className="attempt-violated-retake-subtext">
-                If you believe this occurred due to a technical error or unexpected interruption, you can raise a re-attempt request for review.
-              </p>
-              <Button
-                type="button"
-                variant="primary"
-                className="attempt-violated-retake-btn"
-                onClick={() => {
-                  setReviewError(null);
-                  setShowRetakeModal(true);
-                }}
-              >
-                <Icon name="due" />
-                <span>{strings.supportStrip.retakeBtn}</span>
-              </Button>
-            </div>
-          )}
         </div>
       ) : (
         <>

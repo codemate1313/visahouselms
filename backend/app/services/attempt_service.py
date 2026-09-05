@@ -338,19 +338,17 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         )
         .all()
     )
-    retake_request = retake_service.get_available_retake(db, user.id, module.id)
-
     for pa in prior_all_attempts:
         media = pa.security_media_state or {}
-        if (pa.status == ATTEMPT_VIOLATED or media.get("terminated_for_violations") or media.get("is_violated")) and retake_request is None:
+        if pa.status == ATTEMPT_VIOLATED or media.get("terminated_for_violations") or media.get("is_violated"):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="This test was terminated due to security violations. Raise a retake request for review.",
+                detail="This test was terminated due to security violations and cannot be taken again.",
             )
-        if is_final and pa.status != ATTEMPT_READY and retake_request is None:
+        if is_final and pa.status != ATTEMPT_READY:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="You have already attempted the final test. Raise a retake request for review.",
+                detail="You have already attempted the final test. Final tests cannot be retaken.",
             )
 
     prior_sittings = (
@@ -364,6 +362,7 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
         .count()
     )
     original_attempt = prior_sittings > 0
+    retake_request = None
 
     if original_attempt:
         has_paid_sitting = False
@@ -372,13 +371,13 @@ def start_attempt(db: Session, user: User, module: ExamModule) -> dict:
 
             has_paid_sitting = entitlement_service.sittings_remaining(db, user.id, module.id) > 0
 
-        if is_final and retake_request is None:
+        if is_final:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="You have already attempted the final test. Raise a retake request for review.",
+                detail="You have already attempted the final test. Final tests cannot be retaken.",
             )
 
-        if not has_paid_sitting and not dev_unlimited_speaking and retake_request is None:
+        if not has_paid_sitting and not dev_unlimited_speaking:
             retake_request = retake_service.get_available_retake(db, user.id, module.id)
         if retake_request is None and not has_paid_sitting and not dev_unlimited_speaking:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ALREADY_ATTEMPTED_DETAIL)
