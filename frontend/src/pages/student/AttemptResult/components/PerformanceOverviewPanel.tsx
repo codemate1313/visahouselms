@@ -13,6 +13,25 @@ interface PerformanceOverviewPanelProps {
   awaitingAiGrading?: boolean;
 }
 
+/**
+ * The headline score, rescaled to a common /100 so every module reads the same
+ * way - a Reading paper authored out of 40 and a Writing one out of 25 are
+ * otherwise two numbers a candidate cannot compare at a glance.
+ *
+ * Presentation only. The marks the server stores, grades against and reports
+ * are untouched; this just divides them out for the one figure on this card.
+ * Returns null when there is nothing sensible to scale (no marks yet, or a
+ * module authored with no marks available at all), and the caller then shows
+ * the same "pending" text it always did.
+ */
+function scoreOutOfHundred(attempt: Attempt): string | null {
+  if (attempt.raw_score == null || attempt.max_score == null) return null;
+  const earned = Number(attempt.raw_score);
+  const total = Number(attempt.max_score);
+  if (!Number.isFinite(earned) || !Number.isFinite(total) || total <= 0) return null;
+  return `${((earned / total) * 100).toFixed(2)} / 100`;
+}
+
 export function PerformanceOverviewPanel({ attempt, metrics, awaitingAiGrading }: PerformanceOverviewPanelProps) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const t = strings.overview;
@@ -86,7 +105,7 @@ export function PerformanceOverviewPanel({ attempt, metrics, awaitingAiGrading }
                 </span>
               </div>
             ) : (
-              <strong>{attempt.raw_score != null && attempt.max_score != null ? `${attempt.raw_score} / ${attempt.max_score}` : t.pending}</strong>
+              <strong>{scoreOutOfHundred(attempt) ?? t.pending}</strong>
             )}
           </div>
           <div className="result-meta-item">
